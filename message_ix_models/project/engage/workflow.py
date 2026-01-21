@@ -146,6 +146,10 @@ def calc_budget(
 
         # Target is provided in cumulative Gt 2010-2100
         value = float(bdgt)
+        log.info(
+            f"Calculating budget constraint for {scenario.model}/{scenario.scenario}: "
+            f"target budget = {value} Gt CO₂ (2010-2100)"
+        )
         # Convert Gt CO2 to Mt CO2
         value *= 1000
 
@@ -165,6 +169,11 @@ def calc_budget(
         # (from 2018 to 2100). The number of historic years are subtracted.
         # (do the extra 10 years need to be added)?
         # value /= 82 - hist_year + 10
+        
+        log.info(
+            f"Adding budget constraint to {scenario.model}/{scenario.scenario}: "
+            f"{value:.2f} Mt C-eq/a (type_emission={type_emission})"
+        )
     else:
         value = method
 
@@ -261,13 +270,21 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     #   `scenario` must have solution data.
     sr = ScenarioRunner(context)
     df = sr.retr_CO2_trajectory(scenario)
+    log.info(
+        f"Retrieved CO₂ emission trajectory from {scenario.model}/{scenario.scenario}"
+    )
 
     try:
         scenario.remove_solution()
+        log.info(f"Removed solution from {scenario.model}/{scenario.scenario}")
     except ValueError:
+        log.debug(f"No solution to remove from {scenario.model}/{scenario.scenario}")
         pass  # Solution did not exist
 
     # Add this trajectory as bound_emission values
+    log.info(
+        f"Adding emission trajectory as bound_emission"
+    )
     add_emission_trajectory.main(
         scenario,
         data=df,
@@ -305,23 +322,40 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     if config.tax_emission_scenario:
         # Retrieve CO2 prices from a different scenario
         source = Scenario(scenario.platform, **config.tax_emission_scenario)
+        log.info(
+            f"Retrieving CO₂ prices from source scenario: "
+            f"{config.tax_emission_scenario.get('model', '?')}/"
+            f"{config.tax_emission_scenario.get('scenario', '?')}"
+        )
     else:
         # Retrieve CO2 prices from `scenario` itself
         source = scenario
+        log.info(
+            f"Retrieving CO₂ prices from {scenario.model}/{scenario.scenario} itself"
+        )
 
     # Retrieve a data frame with CO₂ prices, and apply specific ``type_emission``
     df = retr_CO2_price(source).pipe(
         broadcast, type_emission=config.step_3_type_emission
+    )
+    log.info(
+        f"Retrieved CO₂ prices: {len(df)} data points for type_emission={config.step_3_type_emission}"
     )
 
     del source  # No longer used → free memory
 
     try:
         scenario.remove_solution()
+        log.info(f"Removed solution from {scenario.model}/{scenario.scenario}")
     except ValueError:
+        log.debug(f"No solution to remove from {scenario.model}/{scenario.scenario}")
         pass  # Solution did not exist
 
     with scenario.transact(message=f"Add price for {config.step_3_type_emission}"):
+        log.info(
+            f"Adding tax_emission prices to {scenario.model}/{scenario.scenario} "
+            f"(type_emission={config.step_3_type_emission})"
+        )
         scenario.add_par("tax_emission", df)
 
         # As in step_2, remove the lower bound on global CO2 emissions. This is
