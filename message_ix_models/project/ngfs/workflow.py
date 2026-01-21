@@ -389,18 +389,18 @@ def generate(context: Context) -> Workflow:
 
 
     wf.add_step(
-        "o_2c built",
+        "o_2c base built",
         "glasgow_partial_2030 solved",
         placeholder,
-        target=f"{model_name}/o_2c_built",
+        target=f"{model_name}/o_2c_base",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
-        "d_delfrag built",
+        "d_delfrag base built",
         "glasgow_partial_2030 solved",
         placeholder,
-        target=f"{model_name}/d_delfrag_built",
+        target=f"{model_name}/d_delfrag_base",
         clone=dict(keep_solution=False),
     )
 
@@ -413,33 +413,35 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "d_delfrag_2035 built",
+        "d_delfrag_2035 base built",
         "glasgow_partial_2035 solved",
         placeholder,
-        target=f"{model_name}/d_delfrag_2035_built",
+        target=f"{model_name}/d_delfrag_2035_base",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
         "glasgow_full_2030 solved",
         "base reported",
-        placeholder,
+        add_glasgow,
         target=f"{model_name}/glasgow_full_2030",
-        clone=dict(keep_solution=False),
+        start_scen = "baseline_DEFAULT",
+        level = "Full",
+        slice_yr = 2030,
     )
 
     wf.add_step(
-        "o_1p5c built",
+        "o_1p5c base built",
         "glasgow_full_2030 solved",
         placeholder,
-        target=f"{model_name}/o_1p5c_built",
+        target=f"{model_name}/o_1p5c_base",
         clone=dict(keep_solution=False),
     )
 
     for scen in _scen_en_steps:
         wf.add_step(
             f"{scen} EN1",
-            f"{scen} built",
+            f"{scen} base built",
             placeholder,
             target=f"{model_name}/{scen}_EN1",
             clone=dict(keep_solution=False),
