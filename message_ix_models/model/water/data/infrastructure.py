@@ -53,10 +53,7 @@ def _make_dist_output(
     sub_time: pd.Series,
     sdg: str,
 ) -> pd.DataFrame:
-    """Create output DataFrame for distribution technologies.
-
-    Extracted to reduce cyclomatic complexity of add_infrastructure_techs.
-    """
+    """Create output DataFrame for distribution technologies."""
     out_frames = []
     for _, dist_rows in df_out_dist.iterrows():
         use_same_year_dist = is_dummy_technology(dist_rows)
