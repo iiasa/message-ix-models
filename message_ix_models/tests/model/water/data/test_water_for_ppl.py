@@ -34,11 +34,35 @@ def _setup_valid_basins(context) -> None:
     "water_context",
     [
         # Global R11 (has 6p0)
-        {"regions": "R11", "type_reg": "global", "RCP": "no_climate", "REL": "med", "ssp": "SSP2"},
-        {"regions": "R11", "type_reg": "global", "RCP": "6p0", "REL": "med", "ssp": "SSP2"},
+        {
+            "regions": "R11",
+            "type_reg": "global",
+            "RCP": "no_climate",
+            "REL": "med",
+            "ssp": "SSP2",
+        },
+        {
+            "regions": "R11",
+            "type_reg": "global",
+            "RCP": "6p0",
+            "REL": "med",
+            "ssp": "SSP2",
+        },
         # Global R12 (no 6p0, use 7p0)
-        {"regions": "R12", "type_reg": "global", "RCP": "no_climate", "REL": "med", "ssp": "SSP2"},
-        {"regions": "R12", "type_reg": "global", "RCP": "7p0", "REL": "med", "ssp": "SSP2"},
+        {
+            "regions": "R12",
+            "type_reg": "global",
+            "RCP": "no_climate",
+            "REL": "med",
+            "ssp": "SSP2",
+        },
+        {
+            "regions": "R12",
+            "type_reg": "global",
+            "RCP": "7p0",
+            "REL": "med",
+            "ssp": "SSP2",
+        },
         # ZMB excluded: cost projections only support R11/R12/R20
     ],
     indirect=True,
@@ -177,5 +201,3 @@ def test_non_cooling_tec(water_context, water_scenario, assert_message_params):
             "year_act",
         ]
     )
-
-
