@@ -46,6 +46,76 @@ def is_dummy_technology(df_row) -> bool:
     )
 
 
+def _make_dist_output(
+    df_out_dist: pd.DataFrame,
+    scenario_info: ScenarioInfo,
+    df_node: pd.DataFrame,
+    sub_time: pd.Series,
+    sdg: str,
+) -> pd.DataFrame:
+    """Create output DataFrame for distribution technologies.
+
+    Extracted to reduce cyclomatic complexity of add_infrastructure_techs.
+    """
+    out_frames = []
+    for _, dist_rows in df_out_dist.iterrows():
+        use_same_year_dist = is_dummy_technology(dist_rows)
+        yv_ya = get_vintage_and_active_years(
+            scenario_info,
+            dist_rows["technical_lifetime_mid"],
+            same_year_only=use_same_year_dist,
+        )
+
+        if sdg != "baseline":
+            # SDG scenario: only Mf mode
+            out_frames.append(
+                make_df(
+                    "output",
+                    technology=dist_rows["tec"],
+                    value=dist_rows["out_value_mid"],
+                    unit="MCM",
+                    level=dist_rows["outlvl"],
+                    commodity=dist_rows["outcmd"],
+                    mode="Mf",
+                )
+                .pipe(broadcast, yv_ya, node_loc=df_node["node"], time=sub_time)
+                .pipe(same_node)
+                .pipe(same_time)
+            )
+        else:
+            # Baseline: both M1 and Mf modes
+            out_frames.append(
+                make_df(
+                    "output",
+                    technology=dist_rows["tec"],
+                    value=dist_rows["out_value_high"],
+                    unit="MCM",
+                    level=dist_rows["outlvl"],
+                    commodity=dist_rows["outcmd"],
+                    mode="M1",
+                )
+                .pipe(broadcast, yv_ya, node_loc=df_node["node"], time=sub_time)
+                .pipe(same_node)
+                .pipe(same_time)
+            )
+            out_frames.append(
+                make_df(
+                    "output",
+                    technology=dist_rows["tec"],
+                    value=dist_rows["out_value_mid"],
+                    unit="MCM",
+                    level=dist_rows["outlvl"],
+                    commodity=dist_rows["outcmd"],
+                    mode="Mf",
+                )
+                .pipe(broadcast, yv_ya, node_loc=df_node["node"], time=sub_time)
+                .pipe(same_node)
+                .pipe(same_time)
+            )
+
+    return pd.concat(out_frames) if out_frames else pd.DataFrame()
+
+
 def start_creating_input_dataframe(
     sdg: str,
     df_node: pd.DataFrame,
@@ -311,96 +381,11 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-    if context.SDG != "baseline":
-        for index, dist_rows in df_out_dist.iterrows():
-            # Check if this is a dummy distribution technology
-            use_same_year_dist = is_dummy_technology(dist_rows)
-
-            out_df = pd.concat(
-                [
-                    out_df,
-                    make_df(
-                        "output",
-                        technology=dist_rows["tec"],
-                        value=dist_rows["out_value_mid"],
-                        unit="MCM",
-                        level=dist_rows["outlvl"],
-                        commodity=dist_rows["outcmd"],
-                        mode="Mf",
-                    )
-                    .pipe(
-                        broadcast,
-                        get_vintage_and_active_years(
-                            scenario_info,
-                            dist_rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year_dist,
-                        ),
-                        node_loc=df_node["node"],
-                        time=sub_time,
-                    )
-                    .pipe(same_node)
-                    .pipe(same_time),
-                ]
-            )
-    else:
-        for index, dist_rows in df_out_dist.iterrows():
-            # Check if this is a dummy distribution technology
-            use_same_year_dist = is_dummy_technology(dist_rows)
-
-            # Add M1 mode output
-            out_df = pd.concat(
-                [
-                    out_df,
-                    make_df(
-                        "output",
-                        technology=dist_rows["tec"],
-                        value=dist_rows["out_value_high"],
-                        unit="MCM",
-                        level=dist_rows["outlvl"],
-                        commodity=dist_rows["outcmd"],
-                        mode="M1",
-                    )
-                    .pipe(
-                        broadcast,
-                        get_vintage_and_active_years(
-                            scenario_info,
-                            dist_rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year_dist,
-                        ),
-                        node_loc=df_node["node"],
-                        time=sub_time,
-                    )
-                    .pipe(same_node)
-                    .pipe(same_time),
-                ]
-            )
-            # Add Mf mode output
-            out_df = pd.concat(
-                [
-                    out_df,
-                    make_df(
-                        "output",
-                        technology=dist_rows["tec"],
-                        value=dist_rows["out_value_mid"],
-                        unit="MCM",
-                        level=dist_rows["outlvl"],
-                        commodity=dist_rows["outcmd"],
-                        mode="Mf",
-                    )
-                    .pipe(
-                        broadcast,
-                        get_vintage_and_active_years(
-                            scenario_info,
-                            dist_rows["technical_lifetime_mid"],
-                            same_year_only=use_same_year_dist,
-                        ),
-                        node_loc=df_node["node"],
-                        time=sub_time,
-                    )
-                    .pipe(same_node)
-                    .pipe(same_time),
-                ]
-            )
+    # Process distribution outputs using helper function
+    dist_out = _make_dist_output(
+        df_out_dist, scenario_info, df_node, sub_time, context.SDG
+    )
+    out_df = pd.concat([out_df, dist_out]) if not dist_out.empty else out_df
 
     results["output"] = out_df
 
