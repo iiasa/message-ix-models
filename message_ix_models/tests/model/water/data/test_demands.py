@@ -30,7 +30,12 @@ def test_add_sectoral_demands(water_context, water_scenario, assert_message_para
     # Check expected keys
     assert all(
         key
-        in ("demand", "historical_new_capacity", "historical_activity", "share_commodity_lo")
+        in (
+            "demand",
+            "historical_new_capacity",
+            "historical_activity",
+            "share_commodity_lo",
+        )
         for key in result.keys()
     )
 
@@ -51,13 +56,43 @@ def test_add_sectoral_demands(water_context, water_scenario, assert_message_para
     "water_context",
     [
         # Global R11 (no monthly data)
-        {"regions": "R11", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "year"},
+        {
+            "regions": "R11",
+            "type_reg": "global",
+            "RCP": "2p6",
+            "REL": "low",
+            "time": "year",
+        },
         # Global R12 (monthly exists for REL=low)
-        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "year"},
-        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "month"},
+        {
+            "regions": "R12",
+            "type_reg": "global",
+            "RCP": "2p6",
+            "REL": "low",
+            "time": "year",
+        },
+        {
+            "regions": "R12",
+            "type_reg": "global",
+            "RCP": "2p6",
+            "REL": "low",
+            "time": "month",
+        },
         # Country ZMB (monthly exists for REL=low)
-        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "low", "time": "year"},
-        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "low", "time": "month"},
+        {
+            "regions": "ZMB",
+            "type_reg": "country",
+            "RCP": "2p6",
+            "REL": "low",
+            "time": "year",
+        },
+        {
+            "regions": "ZMB",
+            "type_reg": "country",
+            "RCP": "2p6",
+            "REL": "low",
+            "time": "month",
+        },
     ],
     indirect=True,
 )

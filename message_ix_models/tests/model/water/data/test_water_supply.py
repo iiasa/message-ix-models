@@ -65,11 +65,29 @@ def test_add_water_supply(water_context, water_scenario, assert_message_params):
     "water_context",
     [
         # Global R11
-        {"regions": "R11", "type_reg": "global", "RCP": "2p6", "REL": "med", "SDG": True},
+        {
+            "regions": "R11",
+            "type_reg": "global",
+            "RCP": "2p6",
+            "REL": "med",
+            "SDG": True,
+        },
         # Global R12
-        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "med", "SDG": True},
+        {
+            "regions": "R12",
+            "type_reg": "global",
+            "RCP": "2p6",
+            "REL": "med",
+            "SDG": True,
+        },
         # Country ZMB
-        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "med", "SDG": True},
+        {
+            "regions": "ZMB",
+            "type_reg": "country",
+            "RCP": "2p6",
+            "REL": "med",
+            "SDG": True,
+        },
     ],
     indirect=True,
 )
