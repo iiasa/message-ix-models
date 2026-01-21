@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 #: Type alias for data generation functions
-DataFunc = Callable[[Context], dict[str, pd.DataFrame]]
+DataFunc = Callable[["Context"], dict[str, pd.DataFrame]]
 
 DATA_FUNCTIONS: list[DataFunc] = [
     add_water_supply,
