@@ -147,9 +147,11 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
 
 
 def get_vintage_and_active_years(
-    info: "ScenarioInfo | None", technical_lifetime: int | None = None
+    info: "ScenarioInfo",
+    technical_lifetime: int | None = None,
+    same_year_only: bool = False,
 ) -> pd.DataFrame:
-    """Calculate valid vintage-activity year combinations without scenario dependency.
+    """Get valid vintage and active year combinations.
 
     This implements similar logic as scenario.vintage_and_active_years() but
     uses the technical lifetime data directly instead of requiring it to be in
@@ -161,6 +163,9 @@ def get_vintage_and_active_years(
         Contains the base yv_ya combinations and duration_period data
     technical_lifetime : int, optional
         Technical lifetime in years. If None, returns all combinations.
+    same_year_only : bool, optional
+        If True, returns only combinations where year_vtg == year_act.
+        Useful for dummy technologies where vintage doesn't matter.
 
     Returns
     -------
@@ -170,20 +175,58 @@ def get_vintage_and_active_years(
     # Get base yv_ya from ScenarioInfo property
     yv_ya = info.yv_ya
 
-    # If no technical lifetime specified or is nan, return all combinations
+    # If same_year_only is requested, return only year_vtg == year_act combinations
+    if same_year_only:
+        same_year_mask = yv_ya["year_vtg"] == yv_ya["year_act"]
+        return yv_ya[same_year_mask].reset_index(drop=True)
+
+    # If no technical lifetime specified or is nan, default to same year
     if technical_lifetime is None or pd.isna(technical_lifetime):
         warn(
-            """no technical_lifetime provided,
-            using all year vintage year active combinations""",
+            "no technical_lifetime provided, defaulting to same year",
             UserWarning,
         )
-        return yv_ya
+        same_year_mask = yv_ya["year_vtg"] == yv_ya["year_act"]
+        return yv_ya[same_year_mask].reset_index(drop=True)
+
+    # Memory optimization: use same-year logic for short-lived technologies
+    # to reduce unused equations. Time steps are 5-year intervals pre-2060,
+    # 10-year intervals post-2060. Short lifetimes don't benefit from
+    # advance construction.
+    kink_year = 2060
+
+    has_post_kink = (yv_ya["year_act"] >= kink_year).any()
+    short_lived = technical_lifetime <= 5
+    medium_lived = technical_lifetime <= 10 and has_post_kink
+
+    if short_lived or medium_lived:
+        # Pre-2060: use same-year if lifetime <= 5
+        # Post-2060: use same-year if lifetime <= 10
+        if short_lived:
+            # Same-year for entire horizon
+            same_year_mask = yv_ya["year_vtg"] == yv_ya["year_act"]
+            return yv_ya[same_year_mask].reset_index(drop=True)
+        else:
+            # Same-year only for post-2060, normal logic for pre-2060
+            pre_kink = yv_ya[yv_ya["year_act"] < kink_year]
+            post_kink = yv_ya[yv_ya["year_act"] >= kink_year]
+
+            # Pre-2060: normal lifetime filtering
+            age = pre_kink["year_act"] - pre_kink["year_vtg"]
+            pre_kink_filtered = pre_kink[age <= technical_lifetime]
+
+            # Post-2060: same-year only
+            same_yr = post_kink["year_vtg"] == post_kink["year_act"]
+            post_kink_same_year = post_kink[same_yr]
+
+            result = pd.concat(
+                [pre_kink_filtered, post_kink_same_year], ignore_index=True
+            )
+            return result.reset_index(drop=True)
+
     # Apply simple lifetime logic: year_act - year_vtg <= technical_lifetime
-
     condition_values = yv_ya["year_act"] - yv_ya["year_vtg"]
-
     valid_mask = condition_values <= technical_lifetime
-
     result = yv_ya[valid_mask].reset_index(drop=True)
 
     return result

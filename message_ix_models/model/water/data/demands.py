@@ -231,10 +231,10 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
         df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
-            "urbann_withdrawal2_baseline"
+            "urban_withdrawal2_baseline"
         )
         df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
-            "urbann_return2_baseline"
+            "urban_return2_baseline"
         )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
@@ -938,9 +938,8 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
         * 0.95,  # 0.95 buffer factor to avoid numerical error
         unit="-",
     )
-
     df_share["value"] = df_share["value"].fillna(0)
-
+    df_share["value"] = np.clip(df_share["value"], 0, 1)
     results["share_commodity_lo"] = df_share
 
     return results

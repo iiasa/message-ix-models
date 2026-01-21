@@ -4,6 +4,10 @@ What's new
 .. Next release
 .. ============
 
+- Fix water module parameter bugs and refactor cooling (:pull:`405`):
+  infrastructure M1/Mf mode fixes, regional average shares for cooling allocation,
+  water supply level hierarchy corrections, and test suite improvements.
+
 v2026.1.15
 ==========
 

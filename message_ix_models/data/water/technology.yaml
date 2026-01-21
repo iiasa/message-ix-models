@@ -1095,11 +1095,24 @@ nexus:
       # TODO verify description
     input: { commodity: saline_supply }
 
-  basin_to_reg:
+  basin_to_reg_core:
     description: >-
-      dummy technology to map basin technologies water supply to energy technologies
+      technology to map basin surface water availability directly to energy technologies
 
-    input: { commodity: freshwater_supply }
+    input: { commodity: surfacewater_basin }
+
+  basin_to_reg_plus:
+    description: >-
+      technology to map basin freshwater to regional water supply for irrigation
+
+    input: { commodity: freshwater_basin }
+
+  reg_to_basin:
+    description: >-
+      technology for distributing water return flows from fresh cooling technologies
+      back to surface water basins based on basin availability shares
+
+    input: { commodity: water_return }
 
   ueff1:
     description: >-

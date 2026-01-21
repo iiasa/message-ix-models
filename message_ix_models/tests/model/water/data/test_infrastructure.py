@@ -1,218 +1,59 @@
 import pytest
-from message_ix import Scenario
 
-from message_ix_models import ScenarioInfo
-from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.infrastructure import (
     add_desalination,
     add_infrastructure_techs,
 )
 
 
-# NB: This also tests start_creating_input_dataframe() and prepare_input_dataframe()
-# from the same file since they are called by add_infrastructure_techs()
-@pytest.mark.parametrize("SDG", ["baseline", "not_baseline"])
-def test_add_infrastructure_techs(test_context, SDG, request):
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
-    test_context.SDG = SDG
-    test_context.time = "year"
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
-    nodes = get_codes(f"node/{test_context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
-    test_context.map_ISO_c = {test_context.regions: nodes[0]}
+@pytest.mark.parametrize(
+    "water_context",
+    [
+        # Global R11
+        {"regions": "R11", "type_reg": "global", "SDG": "baseline"},
+        {"regions": "R11", "type_reg": "global", "SDG": "not_baseline"},
+        # Global R12
+        {"regions": "R12", "type_reg": "global", "SDG": "baseline"},
+        {"regions": "R12", "type_reg": "global", "SDG": "not_baseline"},
+        # Country ZMB
+        {"regions": "ZMB", "type_reg": "country", "SDG": "baseline"},
+        {"regions": "ZMB", "type_reg": "country", "SDG": "not_baseline"},
+    ],
+    indirect=True,
+)
+def test_add_infrastructure_techs(
+    water_context, water_scenario, assert_message_params, assert_input_output_structure
+):
+    """Test add_infrastructure_techs with global and country model configurations.
 
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test water model",
-        "scenario": f"{request.node.name}/test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("year", [2020, 2030, 2040])
+    Also tests start_creating_input_dataframe() and prepare_input_dataframe()
+    since they are called by add_infrastructure_techs().
+    """
+    result = add_infrastructure_techs(context=water_context)
 
-    s.commit(comment="basic water add_infrastructure_techs test model")
-
-    test_context.set_scenario(s)
-
-    # FIXME same as above
-    test_context["water build info"] = ScenarioInfo(s)
-
-    # Call the function to be tested
-    result = add_infrastructure_techs(context=test_context)
-
-    # Assert the results
-    assert isinstance(result, dict)
-    assert "input" in result
-    assert "output" in result
-    assert all(
-        col in result["input"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_origin",
-            "node_origin",
-            "node_loc",
-            "year_vtg",
-            "year_act",
-        ]
-    )
-
-    # Check for NaN values in input DataFrame
-    assert not result["input"]["value"].isna().any(), (
-        "Input DataFrame contains NaN values"
-    )
-
-    # Check for NaN values in output DataFrame
-    assert not result["output"]["value"].isna().any(), (
-        "Output DataFrame contains NaN values"
-    )
-
-    # Check that time values are not individual characters (common bug)
-    input_time_values = result["input"]["time"].unique()
-    assert not any(len(str(val)) == 1 for val in input_time_values), (
-        f"Input DataFrame contains time values: {input_time_values}. "
-    )
-
-    output_time_values = result["output"]["time"].unique()
-    assert not any(len(str(val)) == 1 for val in output_time_values), (
-        f"Output DataFrame contains time values: {output_time_values}. "
-    )
-
-    input_duplicates = result["input"].duplicated().sum()
-    assert input_duplicates == 0, (
-        f"Input DataFrame contains {input_duplicates} duplicate rows"
-    )
-
-    output_duplicates = result["output"].duplicated().sum()
-    assert output_duplicates == 0, (
-        f"Output DataFrame contains {output_duplicates} duplicate rows"
-    )
-
-    assert all(
-        col in result["output"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_dest",
-            "node_loc",
-            "node_dest",
-            "year_vtg",
-            "year_act",
-        ]
-    )
+    # Standard MESSAGE parameter validation
+    assert_message_params(result, expected_keys=["input", "output"])
+    assert_input_output_structure(result)
 
 
-def test_add_desalination(test_context, request):
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
-    test_context.time = "year"
-    test_context.type_reg = "global"
-    test_context.regions = "R11"
-    test_context.RCP = "7p0"
+@pytest.mark.parametrize(
+    "water_context",
+    [
+        # Global R11 (has 6p0)
+        {"regions": "R11", "type_reg": "global", "RCP": "6p0"},
+        # Global R12 (no 6p0, use 7p0)
+        {"regions": "R12", "type_reg": "global", "RCP": "7p0"},
+        # Country ZMB (no 6p0, use 7p0)
+        {"regions": "ZMB", "type_reg": "country", "RCP": "7p0"},
+    ],
+    indirect=True,
+)
+def test_add_desalination(
+    water_context, water_scenario, assert_message_params, assert_input_output_structure
+):
+    """Test add_desalination with global and country model configurations."""
+    result = add_desalination(context=water_context)
 
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test water model",
-        "scenario": f"{request.node.name}/test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("year", [2020, 2030, 2040])
-
-    s.commit(comment="basic water add_infrastructure_techs test model")
-
-    test_context.set_scenario(s)
-
-    # FIXME same as above
-    test_context["water build info"] = ScenarioInfo(s)
-
-    # Call the function to be tested
-    result = add_desalination(context=test_context)
-
-    # Assert the results
-    assert isinstance(result, dict)
-    assert "input" in result
-    assert "output" in result
-    assert all(
-        col in result["input"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_origin",
-            "node_origin",
-            "node_loc",
-            "year_vtg",
-            "year_act",
-        ]
-    )
-    # Check for NaN values in input DataFrame
-    assert not result["input"]["value"].isna().any(), (
-        "Input DataFrame contains NaN values"
-    )
-
-    # Check for NaN values in output DataFrame
-    assert not result["output"]["value"].isna().any(), (
-        "Output DataFrame contains NaN values"
-    )
-
-    # Check that time values are not individual characters (common bug)
-    input_time_values = result["input"]["time"].unique()
-    assert not any(len(str(val)) == 1 for val in input_time_values), (
-        f"Input DataFrame contains time values: {input_time_values}. "
-    )
-
-    output_time_values = result["output"]["time"].unique()
-    assert not any(len(str(val)) == 1 for val in output_time_values), (
-        f"Output DataFrame contains time values: {output_time_values}. "
-    )
-
-    input_duplicates = result["input"].duplicated().sum()
-    assert input_duplicates == 0, (
-        f"Input DataFrame contains {input_duplicates} duplicate rows"
-    )
-
-    output_duplicates = result["output"].duplicated().sum()
-    assert output_duplicates == 0, (
-        f"Output DataFrame contains {output_duplicates} duplicate rows"
-    )
-
-    assert all(
-        col in result["output"].columns
-        for col in [
-            "technology",
-            "value",
-            "unit",
-            "level",
-            "commodity",
-            "mode",
-            "time",
-            "time_dest",
-            "node_loc",
-            "node_dest",
-            "year_vtg",
-            "year_act",
-        ]
-    )
+    # Standard MESSAGE parameter validation
+    assert_message_params(result, expected_keys=["input", "output"])
+    assert_input_output_structure(result)

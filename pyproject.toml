@@ -127,7 +127,6 @@ module = [
   "message_ix_models.model.material.data_util",
   "message_ix_models.model.material.demand.*",
   "message_ix_models.model.material.util",
-  "message_ix_models.model.water.*",
   # Legacy codes that may not be type hinted
   "message_ix_models.report.legacy.*",
   "message_ix_models.tools.messagev",
