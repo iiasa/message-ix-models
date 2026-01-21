@@ -10,7 +10,7 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.workflow import Workflow
 from message_ix_models.project.ngfs import interpolate_c_price
-from message_ix_models.project.engage.workflow import step_1, step_2, PolicyConfig
+from message_ix_models.project.engage.workflow import step_1, step_2, step_3, PolicyConfig
 # TODO: think about if it makes sense to integrate the interpolate_c_price function into the scenario runner
 
 
@@ -321,6 +321,35 @@ def step_2_and_solve(
     
     return scenario
 
+def step_3_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply tax_emission prices (step_3 of the EN 3 steps) and solve the scenario.
+    
+    This function loads step_3_type_emission from config, applies tax_emission prices
+    using to the specified type_emission (TCE_non-CO2 by default), and then solves the scenario.
+    """
+    # Get scenario name from context and extract base name (remove _EN2 suffix if present)
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    if scen.endswith("_EN2"):
+        scen = scen[:-4]  # Remove "_EN2" suffix to get base scenario name
+    elif scen.endswith("_EN3"):
+        scen = scen[:-4]  # Remove "_EN3" suffix to get base scenario name
+    
+    # Get step_3_type_emission from config
+    step_3_type_emission = _get_ngfs_config(context).get(scen, {}).get('step_3_type_emission')
+    if step_3_type_emission is None:
+        step_3_type_emission = ["TCE_non-CO2"]
+    elif isinstance(step_3_type_emission, str):
+        step_3_type_emission = [step_3_type_emission]
+   
+    policy_config = PolicyConfig(step_3_type_emission=step_3_type_emission)
+    
+    step_3(context, scenario, policy_config)
+    solve(context, scenario)
+    
+    return scenario
+
 # NGFS P6 scenarios:
 _scen_all = [
     "h_ndc", 
@@ -526,19 +555,11 @@ def generate(context: Context) -> Workflow:
         )
 
         wf.add_step(
-            f"{scen} EN3",
-            f"{scen} EN2",
-            placeholder,
-            target=f"{model_name}/{scen}_EN3",
-            clone=dict(keep_solution=False),
-        )
-
-        wf.add_step(
             f"{scen} solved",
-            f"{scen} EN3",
-            placeholder,
+            f"{scen} EN2",
+            step_3_and_solve,
             target=f"{model_name}/{scen}",
-            clone=dict(keep_solution=False),
+            clone=dict(keep_solution=True), # must have solution (to retrieve prices from)
         )
 
     for scen in _scen_all:
