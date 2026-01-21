@@ -145,6 +145,7 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None):
 
     return df.apply(func, axis=1)
 
+
 def get_vintage_and_active_years(
     info: "ScenarioInfo",
     technical_lifetime: int | None = None,
