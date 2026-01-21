@@ -11,24 +11,26 @@ from message_ix_models.model.water.data.demands import (
 @pytest.mark.parametrize(
     "water_context",
     [
+        # Global R11
+        {"regions": "R11", "type_reg": "global", "SDG": "baseline", "time": "year"},
+        # Global R12
+        {"regions": "R12", "type_reg": "global", "SDG": "baseline", "time": "year"},
+        # Country ZMB
         {"regions": "ZMB", "type_reg": "country", "SDG": "baseline", "time": "year"},
-        {"regions": "ZMB", "type_reg": "country", "SDG": "ambitious", "time": "month"},
+        # SDG="SDG" excluded: requires policy data files
     ],
     indirect=True,
 )
 def test_add_sectoral_demands(water_context, water_scenario, assert_message_params):
-    """Test add_sectoral_demands with country model configuration.
-
-    Note: ZMB doesn't have complete data for all STATUS fields, and R11/R12
-    lack harmonized ssp2_m_water_demands.csv files.
-    """
+    """Test add_sectoral_demands with global and country model configurations."""
     result = add_sectoral_demands(context=water_context)
 
     assert_message_params(result)
 
     # Check expected keys
     assert all(
-        key in ("demand", "historical_new_capacity", "historical_activity", "share_commodity_lo")
+        key
+        in ("demand", "historical_new_capacity", "historical_activity", "share_commodity_lo")
         for key in result.keys()
     )
 
@@ -48,13 +50,19 @@ def test_add_sectoral_demands(water_context, water_scenario, assert_message_para
 @pytest.mark.parametrize(
     "water_context",
     [
+        # Global R11 (no monthly data)
+        {"regions": "R11", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "year"},
+        # Global R12 (monthly exists for REL=low)
         {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "year"},
         {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "low", "time": "month"},
+        # Country ZMB (monthly exists for REL=low)
+        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "low", "time": "year"},
+        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "low", "time": "month"},
     ],
     indirect=True,
 )
 def test_add_water_availability(water_context, assert_message_params):
-    """Test add_water_availability with global model configuration."""
+    """Test add_water_availability with global and country model configurations."""
     # ScenarioInfo needed for year sets
     sets = {"year": [2020, 2030, 2040]}
     water_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
@@ -76,9 +84,21 @@ def test_add_water_availability(water_context, assert_message_params):
     )
 
 
-def test_add_irrigation_demand(water_scenario, test_context, assert_message_params):
-    """Test add_irrigation_demand with basic scenario."""
-    result = add_irrigation_demand(context=test_context)
+@pytest.mark.parametrize(
+    "water_context",
+    [
+        # Global R11
+        {"regions": "R11", "type_reg": "global"},
+        # Global R12
+        {"regions": "R12", "type_reg": "global"},
+        # Country ZMB
+        {"regions": "ZMB", "type_reg": "country"},
+    ],
+    indirect=True,
+)
+def test_add_irrigation_demand(water_context, water_scenario, assert_message_params):
+    """Test add_irrigation_demand with global and country model configurations."""
+    result = add_irrigation_demand(context=water_context)
 
     assert_message_params(result, expected_keys=["land_input"])
 

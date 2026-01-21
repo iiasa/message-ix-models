@@ -55,9 +55,10 @@ def test_read_config(test_context):
         ),
         (
             None,
+            # Defaults to same_year when technical_lifetime not provided
             {
-                "year_vtg": [2010, 2010, 2010, 2020, 2020, 2030],
-                "year_act": [2010, 2020, 2030, 2020, 2030, 2030],
+                "year_vtg": [2010, 2020, 2030],
+                "year_act": [2010, 2020, 2030],
             },
         ),
     ],

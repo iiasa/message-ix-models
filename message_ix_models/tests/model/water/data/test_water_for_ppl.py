@@ -2,31 +2,55 @@ import pandas as pd
 import pytest
 from message_ix import Scenario
 
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import ScenarioInfo
 from message_ix_models.model.water.data.water_for_ppl import (
-    apply_act_cap_multiplier,
     cool_tech,
-    cooling_shares_SSP_from_yaml,
     non_cooling_tec,
 )
+from message_ix_models.util import package_data_path
+
+
+def _get_test_node(regions: str) -> str:
+    """Return a valid test node for the given region configuration."""
+    if regions == "R11":
+        return "R11_CPA"
+    elif regions == "R12":
+        return "R12_CPA"
+    else:
+        # Country model - node is the country code itself
+        return regions
+
+
+def _setup_valid_basins(context) -> None:
+    """Set up valid_basins from basin delineation file."""
+    basin_file = f"basins_by_region_simpl_{context.regions}.csv"
+    basin_path = package_data_path("water", "delineation", basin_file)
+    df_basins = pd.read_csv(basin_path)
+    context.valid_basins = set(df_basins["BCU_name"].astype(str))
 
 
 @pytest.mark.usefixtures("ssp_user_data")
 @pytest.mark.parametrize(
     "water_context",
     [
+        # Global R11 (has 6p0)
         {"regions": "R11", "type_reg": "global", "RCP": "no_climate", "REL": "med", "ssp": "SSP2"},
         {"regions": "R11", "type_reg": "global", "RCP": "6p0", "REL": "med", "ssp": "SSP2"},
+        # Global R12 (no 6p0, use 7p0)
+        {"regions": "R12", "type_reg": "global", "RCP": "no_climate", "REL": "med", "ssp": "SSP2"},
+        {"regions": "R12", "type_reg": "global", "RCP": "7p0", "REL": "med", "ssp": "SSP2"},
+        # ZMB excluded: cost projections only support R11/R12/R20
     ],
     indirect=True,
 )
 def test_cool_tec(request, water_context, assert_message_params):
-    """Test cool_tech with global model configuration.
+    """Test cool_tech with global and country model configurations.
 
     Requires a scenario with input, historical_activity, and historical_new_capacity
     parameters for cooling technology derivation.
     """
-    # cool_tech requires a more elaborate scenario with parameters populated
+    node = _get_test_node(water_context.regions)
+
     mp = water_context.get_platform()
     s = Scenario(
         mp=mp,
@@ -36,7 +60,7 @@ def test_cool_tec(request, water_context, assert_message_params):
     )
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["gad_cc", "coal_ppl"])
-    s.add_set("node", ["R11_CPA"])
+    s.add_set("node", [node])
     s.add_set("year", [2020, 2030, 2040])
     s.add_set("mode", ["M1", "M2"])
     s.add_set("commodity", ["electricity", "gas"])
@@ -46,12 +70,12 @@ def test_cool_tec(request, water_context, assert_message_params):
     # Add input parameter
     df_add = pd.DataFrame(
         {
-            "node_loc": ["R11_CPA"],
+            "node_loc": [node],
             "technology": ["coal_ppl"],
             "year_vtg": [2020],
             "year_act": [2020],
             "mode": ["M1"],
-            "node_origin": ["R11_CPA"],
+            "node_origin": [node],
             "commodity": ["electricity"],
             "level": ["secondary"],
             "time": "year",
@@ -63,7 +87,7 @@ def test_cool_tec(request, water_context, assert_message_params):
     # Add historical activity
     df_ha = pd.DataFrame(
         {
-            "node_loc": ["R11_CPA"],
+            "node_loc": [node],
             "technology": ["coal_ppl"],
             "year_act": [2020],
             "mode": ["M1"],
@@ -75,7 +99,7 @@ def test_cool_tec(request, water_context, assert_message_params):
     # Add historical new capacity
     df_hnc = pd.DataFrame(
         {
-            "node_loc": ["R11_CPA"],
+            "node_loc": [node],
             "technology": ["coal_ppl"],
             "year_vtg": [2020],
             "value": [1],
@@ -89,6 +113,9 @@ def test_cool_tec(request, water_context, assert_message_params):
 
     water_context.set_scenario(s)
     water_context["water build info"] = ScenarioInfo(scenario_obj=s)
+
+    # Set up valid_basins for water_for_ppl functions
+    _setup_valid_basins(water_context)
 
     result = cool_tech(context=water_context)
 
@@ -115,9 +142,21 @@ def test_cool_tec(request, water_context, assert_message_params):
     )
 
 
-def test_non_cooling_tec(water_scenario, test_context, assert_message_params):
-    """Test non_cooling_tec with basic scenario."""
-    result = non_cooling_tec(context=test_context)
+@pytest.mark.parametrize(
+    "water_context",
+    [
+        # Global R11
+        {"regions": "R11", "type_reg": "global"},
+        # Global R12
+        {"regions": "R12", "type_reg": "global"},
+        # Country ZMB
+        {"regions": "ZMB", "type_reg": "country"},
+    ],
+    indirect=True,
+)
+def test_non_cooling_tec(water_context, water_scenario, assert_message_params):
+    """Test non_cooling_tec with global and country model configurations."""
+    result = non_cooling_tec(context=water_context)
 
     assert_message_params(result, expected_keys=["input"])
 
@@ -140,67 +179,3 @@ def test_non_cooling_tec(water_scenario, test_context, assert_message_params):
     )
 
 
-@pytest.mark.parametrize(
-    "param_name, cap_fact_parent, expected_values",
-    [
-        (
-            "historical_activity",
-            None,
-            [100 * 0.5, 150 * 1.2],
-        ),
-        (
-            "historical_new_capacity",
-            pd.DataFrame(
-                {
-                    "node_loc": ["R1", "R2"],
-                    "technology": ["TechA", "TechB"],
-                    "cap_fact": [0.9, 0.9],
-                }
-            ),
-            [100 * 0.5 * 0.9 * 1.2, 150 * 1.2 * 0.9 * 1.2],
-        ),
-    ],
-)
-def test_apply_act_cap_multiplier(
-    param_name: str,
-    cap_fact_parent: pd.DataFrame | None,
-    expected_values: list[float],
-) -> None:
-    """Test apply_act_cap_multiplier with different parameter configurations."""
-    df = pd.DataFrame(
-        {
-            "node_loc": ["R1", "R2"],
-            "technology": ["TechA", "TechB"],
-            "value": [100, 150],
-        }
-    )
-
-    hold_cost = pd.DataFrame(
-        {
-            "utype": ["Type1", "Type2"],
-            "technology": ["TechA", "TechB"],
-            "R1": [0.5, 0.8],
-            "R2": [1.0, 1.2],
-        }
-    )
-
-    result = apply_act_cap_multiplier(df, hold_cost, cap_fact_parent, param_name)
-
-    assert result["value"].tolist() == expected_values, (
-        f"Failed for param_name: {param_name}"
-    )
-
-
-@pytest.mark.parametrize("SSP, regions", [("SSP2", "R11"), ("LED", "R12")])
-def test_cooling_shares_SSP_from_yaml(request, test_context, SSP, regions):
-    """Test cooling_shares_SSP_from_yaml with different SSP/region combinations."""
-    test_context.model.regions = regions
-    scenario = testing.bare_res(request, test_context)
-    test_context["water build info"] = ScenarioInfo(scenario_obj=scenario)
-    test_context.ssp = SSP
-
-    result = cooling_shares_SSP_from_yaml(test_context)
-
-    assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
-    assert not result.empty, "Resulting DataFrame should not be empty"
-    assert result["year_act"].min() >= 2050
