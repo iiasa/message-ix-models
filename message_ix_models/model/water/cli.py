@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import click
+from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
@@ -68,8 +69,8 @@ def water_ini(context: "Context", regions, time):
     # create a mapping ISO code :
     # a region name, for other scripts
     # only needed for 1-country models
-    nodes = get_codes(f"node/{context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
+    n_codes = get_codes(f"node/{context.regions}")
+    nodes = list(map(str, n_codes[n_codes.index(Code(id="World"))].child))
     if context.type_reg == "country":
         map_ISO_c = {context.regions: nodes[0]}
         context.map_ISO_c = map_ISO_c
@@ -270,20 +271,29 @@ def cooling(
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
+    caseName = ""
     if clone is True:
         output_scenario_name = context.output_scenario + "_cooling"
         output_model_name = context.output_model
 
         # Clone and build
-        scen = context.get_scenario().clone(
+        base_scen = context.get_scenario()
+        assert base_scen is not None, "No scenario in context"
+        scen = base_scen.clone(
             model=output_model_name, scenario=output_scenario_name, keep_solution=False
         )
+        assert scen is not None, "Clone failed"
 
         print(scen.model)
         print(scen.scenario)
 
         # Exporting the built model (Scenario) to GAMS with an optional case name
         caseName = scen.model + "__" + scen.scenario + "__v" + str(scen.version)
+    else:
+        # Use scenario from parameter or context
+        if scen is None:
+            scen = context.get_scenario()
+        assert scen is not None, "No scenario provided and none in context"
 
     # Build
     build(context, scen)
