@@ -10,6 +10,7 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.workflow import Workflow
 from message_ix_models.project.ngfs import interpolate_c_price
+from message_ix_models.project.engage.workflow import step_1, PolicyConfig
 # TODO: think about if it makes sense to integrate the interpolate_c_price function into the scenario runner
 
 
@@ -249,6 +250,63 @@ def add_NPiREF(context, scenario):
 
     return scenario
 
+def step_0(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Prepare step 0 of the EN 3 steps."""
+
+    # a step to get a scenario ready to enter the EN 3 steps
+    # so far doing nothing
+    # no need to remove the bound_emission as it carries glasgow policies
+    # later maybe add net zero steel policies here
+
+    scenario.set_as_default()
+    return scenario
+
+def step_1_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply budget constraint (step_1 of the EN 3 steps) and solve the scenario.
+    
+    This function gets the scenario name from context, loads the budget from config,
+    validates it, applies the budget constraint using step_1, and then solves the scenario.
+    
+    Parameters
+    ----------
+    context : Context
+        Context object containing configuration and scenario info
+    scenario : Scenario
+        The scenario to apply budget and solve
+        
+    Returns
+    -------
+    Scenario
+        The solved scenario
+    """
+    # Get scenario name from context and extract base name (remove _EN1 suffix if present)
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    if scen.endswith("_EN1"):
+        scen = scen[:-4]  # Remove "_EN1" suffix to get base scenario name
+    
+    # Get budget from config
+    budget_value = _get_ngfs_config(context).get(scen, {}).get('budget')
+    
+    # Validate budget is a number
+    try:
+        float(budget_value)  # Validate it's numeric
+    except (ValueError, TypeError):
+        raise ValueError(
+            f"Budget for scenario '{scen}' must be a number, got: {budget_value!r}. "
+            f"Please specify a numeric budget value in Gt CO₂ for the period 2010-2100."
+        )
+    
+    # Budget value from config: pass as label (bdgt parameter), method="calc"
+    policy_config = PolicyConfig(label=str(budget_value), budget="calc")
+    
+    step_1(context, scenario, policy_config)
+    solve(context, scenario)
+    
+    return scenario
 
 # NGFS P6 scenarios:
 _scen_all = [
@@ -387,11 +445,10 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-
     wf.add_step(
         "o_2c base built",
         "glasgow_partial_2030 solved",
-        placeholder,
+        step_0,
         target=f"{model_name}/o_2c_base",
         clone=dict(keep_solution=False),
     )
@@ -399,7 +456,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "d_delfrag base built",
         "glasgow_partial_2030 solved",
-        placeholder,
+        step_0,
         target=f"{model_name}/d_delfrag_base",
         clone=dict(keep_solution=False),
     )
@@ -415,7 +472,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "d_delfrag_2035 base built",
         "glasgow_partial_2035 solved",
-        placeholder,
+        step_0,
         target=f"{model_name}/d_delfrag_2035_base",
         clone=dict(keep_solution=False),
     )
@@ -433,7 +490,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "o_1p5c base built",
         "glasgow_full_2030 solved",
-        placeholder,
+        step_0,
         target=f"{model_name}/o_1p5c_base",
         clone=dict(keep_solution=False),
     )
@@ -442,7 +499,7 @@ def generate(context: Context) -> Workflow:
         wf.add_step(
             f"{scen} EN1",
             f"{scen} base built",
-            placeholder,
+            step_1_and_solve,
             target=f"{model_name}/{scen}_EN1",
             clone=dict(keep_solution=False),
         )
