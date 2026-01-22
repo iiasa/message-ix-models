@@ -204,26 +204,33 @@ def add_NDC2030(context, scenario):
 
     return sr.scen["INDC2030i_weak"]
 
-def add_glasgow(context, scenario, level, start_scen, slice_yr):
+def add_glasgow(context, scenario, level, start_scen):
     """Add Glasgow policies to the scenario.
     """
     sr = make_scenario_runner(context)
    
-    # Set target scenario name
-    if start_scen == "baseline_DEFAULT":
-        target_scen = "glasgow" + "_" + level.lower() + '_' + str(slice_yr)
-    elif start_scen == "h_cpol":
-        target_scen = "d_strain" + "_" + str(slice_yr) + "_" + "glasgow" + "_" + level.lower()
-    else:
-        # Default to glasgow naming if start_scen is something else
-        target_scen = "glasgow" + "_" + level.lower() + '_' + str(slice_yr)
+    # Set slice_yr and target_scen based on start_scen
+    if start_scen == "h_cpol":
+        slice_yr = 2030
+        target_scen = f"d_strain_2030_glasgow_{level.lower()}"
+    else:  # baseline_DEFAULT or other
+        slice_yr = 2025
+        target_scen = f"glasgow_{level.lower()}_2030"
+
+    # Prepare add() arguments
+    add_kwargs = {
+        "mk_INDC": True,
+        "slice_year": slice_yr,
+        "run_reporting": False,
+        "solve_typ": "MESSAGE-MACRO",  # TODO: args go to config too?
+    }
+    if level.lower() == "full":
+        add_kwargs["copy_demands"] = "baseline_low_dem_scen"
+    
     sr.add(
         target_scen,
         start_scen,
-        mk_INDC=True,
-        slice_year=slice_yr,
-        run_reporting = False,
-        solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
+        **add_kwargs
     )    
     
     sr.run_all()
@@ -458,7 +465,6 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/d_strain_2030_glasgow_partial",
         start_scen = "h_cpol",
         level = "Partial",
-        slice_yr = 2030,
     )
 
     wf.add_step(
@@ -560,7 +566,6 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/glasgow_full_2030",
         start_scen = "baseline_DEFAULT",
         level = "Full",
-        slice_yr = 2030,
     )
 
     wf.add_step(
