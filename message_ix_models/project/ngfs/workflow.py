@@ -63,7 +63,11 @@ def report(context: Context, scenario: message_ix.Scenario
             run_config=run_config,
         )
 
-    scenario.check_out(timeseries_only=True)
+    try:
+        scenario.check_out(timeseries_only=True)
+    except ValueError:
+        log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
+    
     df = _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
@@ -204,7 +208,14 @@ def add_glasgow(context, scenario, level, start_scen, slice_yr):
     """
     sr = make_scenario_runner(context)
    
-    target_scen = "glasgow" + "_" + level.lower() + '_' +str(slice_yr)
+    # Set target scenario name
+    if start_scen == "baseline_DEFAULT":
+        target_scen = "glasgow" + "_" + level.lower() + '_' + str(slice_yr)
+    elif start_scen == "h_cpol":
+        target_scen = "d_strain" + "_" + str(slice_yr) + "_" + "glasgow" + "_" + level.lower()
+    else:
+        # Default to glasgow naming if start_scen is something else
+        target_scen = "glasgow" + "_" + level.lower() + '_' + str(slice_yr)
     sr.add(
         target_scen,
         start_scen,
@@ -421,7 +432,7 @@ def generate(context: Context) -> Workflow:
         "d_strain solved",
         "h_cpol solved",
         add_glasgow,
-        target=f"{model_name}/d_strain",
+        target=f"{model_name}/d_strain_2030_glasgow_partial",
         start_scen = "h_cpol",
         level = "Partial",
         slice_yr = 2030,
