@@ -158,17 +158,17 @@ def add_NPi2030(
         policy_year=2030, 
         target_kind="Target",
         run_reporting = False,
-        solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
+        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
     )
     
-    # sr.add(
-    #     "npi_low_dem_scen", 
-    #     "NPi2030", 
-    #     slice_year=2030, 
-    #     tax_emission=200,
-    #     run_reporting = False,
-    #     solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
-    # )
+    sr.add(
+        "npi_low_dem_scen", 
+        "NPi2030", 
+        slice_year=2025, 
+        tax_emission=200,
+        run_reporting = False,
+        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
+    )
 
     sr.run_all()
     
@@ -180,19 +180,20 @@ def add_NDC2030(context, scenario):
     sr = make_scenario_runner(context)  
 
     sr.add(
-        "INDC2030i",
+        "INDC2030i_weak",
         "baseline_DEFAULT",
         mk_INDC=True,
         slice_year=2025,
         policy_year=2030,
         target_kind="Target",
+        copy_demands="baseline_low_dem_scen", # replaced with npi_low_dem_scen after it is solved
         run_reporting = False,
-        solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
+        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
     )    
     
     # sr.add(
     #     "indci_low_dem_scen", 
-    #     "INDC2030i", 
+    #     "INDC2030i_weak", 
     #     slice_year=2030, 
     #     tax_emission=250,
     #     run_reporting = False,
@@ -201,7 +202,7 @@ def add_NDC2030(context, scenario):
 
     sr.run_all()
 
-    return sr.scen["INDC2030i"]
+    return sr.scen["INDC2030i_weak"]
 
 def add_glasgow(context, scenario, level, start_scen, slice_yr):
     """Add Glasgow policies to the scenario.
@@ -248,6 +249,28 @@ def add_NPiREF(context, scenario):
     model_config = _get_ngfs_config(context)
     prc_terminal = model_config['h_cpol']['prc_terminal']
     prc_start_scen = "NPi2030"
+    sc_ref = message_ix.Scenario(scenario.platform, scenario.model, prc_start_scen)
+
+    df_price = interpolate_c_price(sc_ref, price_2100=prc_terminal)
+
+    with scenario.transact("Interpolate C-price"):
+        scenario.add_par("tax_emission", df_price)
+        log.info(f"Added interpolated carbon prices to terminal year {prc_terminal} USD/tC")
+
+    solve(context, scenario)
+    scenario.set_as_default()
+
+    return scenario
+
+def add_NDC_forever(context, scenario):
+    """Add NDC forever.
+    """
+    # TODO:not using _post_target for now
+
+    # Use interpolate for carbon prices instead
+    model_config = _get_ngfs_config(context)
+    prc_terminal = model_config['h_ndc']['prc_terminal']
+    prc_start_scen = "INDC2030i_weak"
     sc_ref = message_ix.Scenario(scenario.platform, scenario.model, prc_start_scen)
 
     df_price = interpolate_c_price(sc_ref, price_2100=prc_terminal)
@@ -465,13 +488,13 @@ def generate(context: Context) -> Workflow:
         "NDC2030 solved",
         "base reported",
         add_NDC2030,
-        target=f"{model_name}/INDC2030i",
+        target=f"{model_name}/INDC2030i_weak",
     )
 
     wf.add_step(
         "h_ndc solved",
         "NDC2030 solved",
-        placeholder,
+        add_NDC_forever,
         target=f"{model_name}/h_ndc",
         clone=dict(keep_solution=False),
     )
