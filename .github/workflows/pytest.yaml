@@ -168,20 +168,26 @@ jobs:
       id: dependencies
       run : |
         from os import environ
-        from packaging.version import Version, parse
+        from packaging.version import InvalidVersion, Version as V
         from pathlib import Path
 
-        version_string = "${{ matrix.version.upstream }}"
-
-        if version_string != "main":
-            v, result = parse(version_string), []
+        try:
+            version, deps = V("${{ matrix.version.upstream }}"), ""
+        except InvalidVersion:
+            # version 'main' → force latest pandas
+            result = 'extra="pandas >= 3"'
+        else:
+            result = "extra=--help\nvalue="
             for condition, dependency in (
-                (v < Version("v3.9"), "pytest == 8.0.0"),  # Upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0 (#155)
-                (Version("v3.8") < v < Version("v3.11"), "ixmp4 < 0.11"),  # https://github.com/iiasa/message-ix-models/issues/366
+                # Upstream versions < 3.9.0 use hook arguments
+                # removed in pytest 8.1.0 (#155) and 9.0.0
+                (version < V("3.9"), "pytest < 8.1"),
+                # https://github.com/iiasa/message-ix-models/issues/366
+                (V("3.8") < version < V("3.11"), "ixmp4 < 0.11"),
             ):
-                result.extend([f'"{dependency}"'] if condition else [])
-
-            Path(environ["GITHUB_OUTPUT"]).write_text(f"value={' '.join(result)}\n")
+                result += f' "{dependency}"' if condition else ""
+ 
+        Path(environ["GITHUB_OUTPUT"]).write_text(result + "\n")
       shell: python
 
     - name: Install packages and dependencies
@@ -200,6 +206,7 @@ jobs:
           "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.version.upstream }}" \
           "message-ix-buildings @ git+https://github.com/iiasa/message-ix-buildings@main" \
           .[docs,tests]
+        uv pip install ${{ steps.dependencies.outputs.extra }}
 
     - name: Configure local data path
       run: |
