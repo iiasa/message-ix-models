@@ -889,7 +889,7 @@ def relabel2(qty: "TQuantity", new_dims: dict) -> "TQuantity":
     return result
 
 
-def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
+def uniform_in_dim(value: "TQuantity", dim: str = "y") -> "TQuantity":
     """Construct a uniform distribution from `value` along its :math:`y`-dimension.
 
     `value` must have a dimension `dim` with length 1 and a single value, :math:`k`. The
@@ -921,7 +921,7 @@ def uniform_in_dim(value: "AnyQuantity", dim: str = "y") -> "AnyQuantity":
     # - Group `points` pairwise: (d0, d1), (d1, d2)
     # - On each interval, compute the integral of _uniform() by quadrature.
     # - Convert to Quantity with y-dimension, labelled with interval upper bounds.
-    return genno.Quantity(
+    return type(value)(
         pd.Series(
             {b: integrate.quad(_uniform, a, b)[0] for a, b in pairwise(points)}
         ).rename_axis(dim),
@@ -950,7 +950,14 @@ def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
     # - Group by all dims other than `y`.
     # - Apply the function to each scalar value.
     dims = list(filter(lambda d: d != "y", age.dims))
-    return age.groupby(dims).apply(uniform_in_dim)
+
+    result = cast("TQuantity", age.groupby(dims).apply(uniform_in_dim))
+    # NB Necessary for pandas 3.0 but not 2.3.x: attrs of the return values of
+    #    uniform_in_dim() are not propagated when the groups are reassembled to a full
+    #    AttrSeries.
+    result.units = "dimensionless"
+
+    return result
 
 
 def scenario_codes() -> list[str]:
