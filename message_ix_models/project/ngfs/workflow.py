@@ -174,6 +174,27 @@ def add_NPi2030(
     
     return sr.scen["NPi2030"]
 
+def add_NDC2035(context, scenario):
+    """Add NDC policies to the scenario.
+    """
+    sr = make_scenario_runner(context)  
+
+    sr.add(
+        "INDC2035",
+        "INDC2030i_weak",
+        mk_INDC=True,
+        slice_year=2030,
+        policy_year=2035,
+        target_kind="Target",
+        copy_demands="baseline_low_dem_scen", # replaced with npi_low_dem_scen after it is solved
+        run_reporting = False,
+        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
+    )    
+
+    sr.run_all()
+
+    return sr.scen["INDC2035"]
+
 def add_NDC2030(context, scenario):
     """Add NDC policies to the scenario.
     """
@@ -274,10 +295,18 @@ def add_NDC_forever(context, scenario):
     """
     # TODO:not using _post_target for now
 
-    # Use interpolate for carbon prices instead
+    # Get scenario name from context or scenario object
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    log.info(f"add_NDC_forever: Using scenario name '{scen}' for config lookup")
+    
+    # Load prc_terminal and prc_start_scen from config
     model_config = _get_ngfs_config(context)
-    prc_terminal = model_config['h_ndc']['prc_terminal']
-    prc_start_scen = "INDC2030i_weak"
+    scen_config = model_config.get(scen, {})
+    
+    prc_terminal = scen_config.get('prc_terminal')
+    prc_start_scen = scen_config.get('prc_start_scen')
+    
+    log.info(f"add_NDC_forever: Using prc_terminal={prc_terminal}, prc_start_scen={prc_start_scen}")
     sc_ref = message_ix.Scenario(scenario.platform, scenario.model, prc_start_scen)
 
     df_price = interpolate_c_price(sc_ref, price_2100=prc_terminal)
@@ -508,15 +537,17 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "NDC2035 solved",
         "NDC2030 solved",
-        add_NDC2030,
-        target=f"{model_name}/INDC2035i",
+        add_NDC2035,
+        target=f"{model_name}/INDC2035",
+        clone=dict(keep_solution=False, shift_first_model_year=2035),
     )
 
     wf.add_step(
         "h_ndc_2035 solved",
         "NDC2035 solved",
-        add_NDC2030,
+        add_NDC_forever,
         target=f"{model_name}/h_ndc_2035",
+        clone=dict(keep_solution=False),
     )
 
     wf.add_step(
