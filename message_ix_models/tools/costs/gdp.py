@@ -1,5 +1,6 @@
 import logging
 from itertools import product
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -124,7 +125,9 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     return result
 
 
-def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
+def adjust_cost_ratios_with_gdp(
+    region_diff_df: "pd.DataFrame", config: Config
+) -> "pd.DataFrame":
     """Calculate adjusted region-differentiated cost ratios.
 
     This function takes in a data frame with region-differentiated cost ratios and
@@ -208,43 +211,52 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
         else:
             return df
 
+    columns = [
+        "scenario_version",
+        "scenario",
+        "region",
+        "message_technology",
+        "year",
+        "gdp_ratio_reg_to_reference",
+        "reg_cost_ratio_adj",
+    ]
+
     #  1. Select base-year GDP data for "gdp_ratio_reg_to_reference".
     #  2. Drop "year".
     #  3. Merge `df_region_diff` for "reg_cost_ratio".
-    #  4. Compute slope.
-    #  5. Compute intercept.
-    #  6. Drop "gdp_ratio_reg_to_reference"—because of (1–2), this is the base period
+    #  4. Compute slope and intercept.
+    #  5. Drop "gdp_ratio_reg_to_reference"—because of (1–2), this is the base period
     #     value only.
-    #  7. Merge `df_gdp` again to re-adds "year" and "gdp_ratio_reg_to_reference" with
+    #  6. Merge `df_gdp` again to re-add "year" and "gdp_ratio_reg_to_reference" with
     #     distinct values for each period.
-    #  8. Compute ref_cost_ratio_adj
-    #  9. Fill 1.0 where NaNs occur in (8), i.e. for the reference region.
-    # 10. Group by (sv, s, r, t) and apply _constrain_cost_ratio(), above, to each
+    #  7. Compute ref_cost_ratio_adj.
+    #  8. Fill 1.0 where NaNs occur in (7), i.e. for the reference region.
+    #  9. Group by (sv, s, r, t) and apply _constrain_cost_ratio(), above, to each
     #     group.
-    # 11. Select the desired columns.
+    # 10. Reset to an int index; select the desired columns.
     return (
-        df_gdp.query("year == @base_year")
-        .drop("year", axis=1)
-        .merge(region_diff_df, on=["region"])
-        .eval("slope = (reg_cost_ratio - 1) / (gdp_ratio_reg_to_reference - 1)")
-        .eval("intercept = 1 - slope")
-        .drop("gdp_ratio_reg_to_reference", axis=1)
-        .merge(df_gdp, on=["scenario_version", "scenario", "region"], how="right")
-        .eval("reg_cost_ratio_adj = slope * gdp_ratio_reg_to_reference + intercept")
-        .fillna({"reg_cost_ratio_adj": 1.0})
-        .groupby(
-            ["scenario_version", "scenario", "region", "message_technology"],
-            group_keys=False,
+        cast(
+            pd.DataFrame,
+            cast(
+                pd.DataFrame,
+                df_gdp.query("year == @base_year")
+                .drop("year", axis=1)
+                .merge(region_diff_df, on=["region"])
+                .eval("""
+                    slope = (reg_cost_ratio - 1) / (gdp_ratio_reg_to_reference - 1)
+                    intercept = 1 - slope
+                """),
+            )
+            .drop("gdp_ratio_reg_to_reference", axis=1)
+            .merge(df_gdp, on=columns[:3], how="right")
+            .eval(
+                "reg_cost_ratio_adj = slope * gdp_ratio_reg_to_reference + intercept"
+            ),
         )
-        .apply(_constrain_cost_ratio, base_year)[
-            [
-                "scenario_version",
-                "scenario",
-                "message_technology",
-                "region",
-                "year",
-                "gdp_ratio_reg_to_reference",
-                "reg_cost_ratio_adj",
-            ]
-        ]
+        .fillna({"reg_cost_ratio_adj": 1.0})
+        .groupby(columns[:4])
+        # include_groups=False is default in pandas 3.0, not in 2.x
+        # TODO Remove once pandas 3.x is the minimum supported version
+        .apply(_constrain_cost_ratio, base_year, include_groups=False)
+        .reset_index()[columns]
     )

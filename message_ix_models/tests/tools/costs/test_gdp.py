@@ -69,18 +69,15 @@ def test_adjust_cost_ratios_with_gdp(test_context, module: MODULE) -> None:
     # Get adjusted cost ratios based on GDP per capita
     result = adjust_cost_ratios_with_gdp(region_diff, config)
 
-    assert all(
-        [
-            "scenario_version",
-            "scenario",
-            "message_technology",
-            "region",
-            "year",
-            "gdp_ratio_reg_to_reference",
-            "reg_cost_ratio_adj",
-        ]
-        == result.columns
-    )
+    assert {
+        "scenario_version",
+        "scenario",
+        "message_technology",
+        "region",
+        "year",
+        "gdp_ratio_reg_to_reference",
+        "reg_cost_ratio_adj",
+    } == set(result.columns)
 
     # Retrieve list of node IDs
     nodes = get_codes(f"node/{test_context.model.regions}")
@@ -94,6 +91,6 @@ def test_adjust_cost_ratios_with_gdp(test_context, module: MODULE) -> None:
     assert result.year.max() >= 2100
 
     # Assert that all cost ratios for reference region R12_NAM are equal to 1
-    assert all(
-        result.query("region == @config.ref_region").reg_cost_ratio_adj.values == 1.0
-    )
+    assert (
+        result.query("region == @config.ref_region").reg_cost_ratio_adj == 1.0
+    ).all()
