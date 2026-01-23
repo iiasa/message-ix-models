@@ -40,16 +40,16 @@ vars:
     short: se_h2_gas_wo_ccs
 
   Liquids|Biomass|Ethanol|w/ CCS:
-    filter: { technology: [ eth_bio_ccs ], mode: M1, commodity: ethanol, level: secondary }
+    filter: { technology: [ eth_bio_ccs ], mode: M1, commodity: ethanol, level: primary }
     short: se_liq_eth_w_ccs
   Liquids|Biomass|Ethanol|w/o CCS:
-    filter: { technology: [ eth_bio ], mode: M1, commodity: ethanol, level: secondary }
+    filter: { technology: [ eth_bio ], mode: M1, commodity: ethanol, level: primary }
     short: se_liq_eth_wo_ccs
   Liquids|Biomass|FT|w/ CCS:
-    filter: { technology: [ liq_bio_ccs ], mode: M1, commodity: ethanol, level: secondary }
+    filter: { technology: [ liq_bio_ccs ], mode: M1, commodity: ethanol, level: primary }
     short: se_liq_bio_ft_ccs
   Liquids|Biomass|FT|w/o CCS:
-    filter: { technology: [ liq_bio ], mode: M1, commodity: ethanol, level: secondary }
+    filter: { technology: [ liq_bio ], mode: M1, commodity: ethanol, level: primary }
     short: se_liq_bio_ft_wo_ccs
   Liquids|Biomass|Methanol|w/ CCS:
     filter: { technology: [ meth_bio ], mode: fuel, commodity: methanol, level: secondary }

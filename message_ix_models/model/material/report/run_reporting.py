@@ -220,16 +220,14 @@ def split_fe_other(
             continue
         df_shrs = df_shrs.reset_index()
         df_shrs.rename(columns={"nl": "Region"}, inplace=True)
-        df_shrs = df_shrs.pivot(columns="ya", values=0, index="Region")
-        to_append = pyam.IamDataFrame(
-            df_shrs.assign(
-                scenario=scenario,
-                model=model,
-                unit="dimensionless",
-                variable=f"Share|{c}-methanol",
-            )
+        df_shrs = df_shrs.pivot(columns="ya", values=0, index="Region").fillna(0)
+        to_append = df_shrs.assign(
+            scenario=scenario,
+            model=model,
+            unit="dimensionless",
+            variable=f"Share|{c}-methanol",
         )
-        to_append = pyam.IamDataFrame(to_append.data.replace([np.inf, -np.inf], 0))
+        to_append = pyam.IamDataFrame(to_append.replace([np.inf, -np.inf], 0))
         py_df_all = pyam.concat([py_df_all, to_append])
         updated_rows = []
 
@@ -317,7 +315,7 @@ def run_prod_reporting(
     py_df.subtract(dry_cli, dry_cli_ccs, dry_cli_wo_ccs, fillna=0, append=True)
     share_ccs = "Production|Non-Metallic Minerals|Clinker|w/ CCS [Share]"
     share_non_ccs = "Production|Non-Metallic Minerals|Clinker|w/o CCS [Share]"
-    py_df.divide(dry_cli, dry_cli_wo_ccs, share_non_ccs, fillna=0, append=True)
+    py_df.divide(dry_cli_wo_ccs, dry_cli, share_non_ccs, fillna=0, append=True)
     py_df.subtract(1, share_non_ccs, share_ccs, append=True)
     return py_df
 

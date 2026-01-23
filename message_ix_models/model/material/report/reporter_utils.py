@@ -914,10 +914,16 @@ def gas_consumer(rep: "Reporter", name: str, tecs: list[str], ccs: bool = True) 
     -------
     Key that computes gas consumption by technology
     """
-    k = Key(f"{IN}:nl-t-ya-m-c:sel")[f"gas_consumer_{name}"]
+    k = Key(f"{IN}:nl-t-ya-m-c-l:sel")[f"gas_consumer_{name}"]
     k1 = Key(f"{IN}:nl-t-ya-m-c")[f"gas_consumer_{name}"]
-    rep.add(k, "select", f"{IN}:nl-t-ya-m-c", {"t": tecs, "c": ["gas"]})
-    in_gas = rep.add(k1, "assign_units", k, units="GWa")
+    rep.add(
+        k,
+        "select",
+        f"{IN}:nl-t-ya-m-c-l",
+        {"t": tecs, "c": ["gas"], "l": ["final", "secondary"]},
+    )
+    k0 = rep.add(k.drop("l"), "drop_vars", k, names="l")
+    in_gas = rep.add(k1, "assign_units", k0, units="GWa")
 
     # pre-calc to get gas consumption by tec
     # L3026
@@ -1322,24 +1328,7 @@ def add_eff(rep: "Reporter"):
 
 
 def fe_solar_integrated(rep) -> Key:
-    solar_integrated = [
-        "solar_i",
-        "solar_rc",
-        "solar_res_rt_hist_2025",
-        "solar_res_rt_hist_2020",
-        "solar_res_rt_hist_2015",
-        "solar_res_rt_hist_2010",
-        "solar_res_rt_hist_2005",
-        "solar_res_rt_hist_2000",
-        "solar_res_RT8",
-        "solar_res_RT7",
-        "solar_res_RT6",
-        "solar_res_RT5",
-        "solar_res_RT4",
-        "solar_res_RT3",
-        "solar_res_RT2",
-        "solar_res_RT1",
-    ]
+    solar_integrated = ["solar_i", "solar_rc"]
     k = Key(f"{OUT}:nl-t-ya-m-c-l")
     k1 = rep.add(k["solar_integrated"], "select", k, {"t": solar_integrated})
     return k1

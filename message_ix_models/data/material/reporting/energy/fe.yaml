@@ -1093,21 +1093,8 @@ vars:
     short:
       fe_pe_other_solar
   Residential and Commercial|Other:
-    filter: { technology: solar_rc, commodity: rc_therm, level: final, mode: M1 }
+    filter: { technology: solar_rc, commodity: rc_therm, level: useful, mode: M1 }
     short: fe_rc_solar
   Residential and Commercial|Electricity|Solar:
-    filter: { technology: [ solar_res_rt_hist_2025,
-                            solar_res_rt_hist_2020,
-                            solar_res_rt_hist_2015,
-                            solar_res_rt_hist_2010,
-                            solar_res_rt_hist_2005,
-                            solar_res_rt_hist_2000,
-                            solar_res_RT8,
-                            solar_res_RT7,
-                            solar_res_RT6,
-                            solar_res_RT5,
-                            solar_res_RT4,
-                            solar_res_RT3,
-                            solar_res_RT2,
-                            solar_res_RT1 ], commodity: electr, level: final_RT, mode: M1 }
+    filter: { technology: sp_el_RC_RT, commodity: electr, level: final_RT, mode: M1 }
     short: fe_rc_elec_pv

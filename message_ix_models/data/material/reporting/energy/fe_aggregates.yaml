@@ -94,7 +94,7 @@ level_2:
   Industry|Hydrogen:
     short: fe_pe_h2
     components:
-      [ fe_pe_cement_h2, fe_pe_aluminum_h2, fe_pe_steel_h2, fe_pe_other_h2 ]
+      [ fe_pe_cement_h2, fe_pe_aluminum_h2, fe_pe_steel_h2, fe_pe_other_h2, fe_meth_h2, fe_pe_hvc_h2 ]
 
 
   Industry|Non-Metallic Minerals|Cement:
@@ -371,7 +371,7 @@ level_1:
     short: fe_rc_bio
 
   Transportation|Liquids:
-    components: [ fe_trp_oil, fe_trp_eth_fc, fe_trp_eth_ic ]
+    components: [ fe_trp_loil,fe_trp_foil, fe_trp_eth_fc, fe_trp_eth_ic ]
     short: fe_trp_liq
   Transportation|Liquids|Oil:
     components: [ fe_trp_loil, fe_trp_foil ]
