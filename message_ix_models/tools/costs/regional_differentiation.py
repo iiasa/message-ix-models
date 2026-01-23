@@ -42,7 +42,7 @@ def get_weo_data() -> pd.DataFrame:
         - weo_technology: WEO technology name
         - weo_region: WEO region
         - year: year
-        - value: cost value
+        - value: cost value, with dtype :class:`float`.
     """
 
     # Dict of all of the technologies,
@@ -93,6 +93,7 @@ def get_weo_data() -> pd.DataFrame:
     # - Replace "n.a." with NaN
     # - Convert units from 2022 USD to 2005 USD
     dfs_cost = []
+    columns = ["cost_type", "weo_technology", "weo_region", "year", "units", "value"]
     for tech_key, cost_key in product(DICT_TECH_ROWS, DICT_COST_COLS):
         df = (
             pd.read_excel(
@@ -100,33 +101,20 @@ def get_weo_data() -> pd.DataFrame:
                 sheet_name=DICT_TECH_ROWS[tech_key][0],
                 header=None,
                 skiprows=DICT_TECH_ROWS[tech_key][1],
+                na_values=["n.a."],
                 nrows=9,
                 usecols=DICT_COST_COLS[cost_key],
             )
             .set_axis(["weo_region", "2022", "2030", "2050"], axis=1)
             .melt(id_vars=["weo_region"], var_name="year", value_name="value")
-            .assign(
-                weo_technology=tech_key,
-                cost_type=cost_key,
-                units="usd_per_kw",
-            )
-            .reindex(
-                [
-                    "cost_type",
-                    "weo_technology",
-                    "weo_region",
-                    "year",
-                    "units",
-                    "value",
-                ],
-                axis=1,
-            )
-            .replace({"value": "n.a."}, np.nan)
-            .assign(value=lambda x: x.value * conversion_factor)
+            .assign(weo_technology=tech_key, cost_type=cost_key, units="usd_per_kw")
+            .reindex(columns, axis=1)
+            .eval("value = value * @conversion_factor")
         )
 
         dfs_cost.append(df)
 
+    del conversion_factor
     all_cost_df = pd.concat(dfs_cost)
 
     # Substitute NaN values
@@ -519,12 +507,7 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
         )
         .assign(reg_cost_ratio=lambda x: x.weo_cost / x.weo_ref_region_cost)
         .reindex(
-            [
-                "weo_technology",
-                "region",
-                "weo_ref_region_cost",
-                "reg_cost_ratio",
-            ],
+            ["weo_technology", "region", "weo_ref_region_cost", "reg_cost_ratio"],
             axis=1,
         )
     )
@@ -673,6 +656,17 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     df_weo = get_weo_regional_differentiation(config)
     df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 
+    # Common list of column names for filt_*
+    columns = [
+        "message_technology",
+        "reg_diff_source",
+        "reg_diff_technology",
+        "region",
+        "base_year_reference_region_cost",
+        "reg_cost_ratio",
+        "fix_ratio",
+    ]
+
     # Get mapping of technologies
     # Then merge with output of get_weo_regional_differentiation
     # If the base_year_reference_region_cost is empty, then use the weo_ref_region_cost
@@ -691,18 +685,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
                 x.fix_ratio.isnull(), x.weo_fix_ratio, x.fix_ratio
             ),
         )
-        .reindex(
-            [
-                "message_technology",
-                "reg_diff_source",
-                "reg_diff_technology",
-                "region",
-                "base_year_reference_region_cost",
-                "reg_cost_ratio",
-                "fix_ratio",
-            ],
-            axis=1,
-        )
+        .reindex(columns, axis=1)
     )
 
     # Filter for reg_diff_source == "intratec"
@@ -726,23 +709,12 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
             ),
             fix_ratio=lambda x: np.where(x.fix_ratio.isnull(), 0, x.fix_ratio),
         )
-        .reindex(
-            [
-                "message_technology",
-                "reg_diff_source",
-                "reg_diff_technology",
-                "region",
-                "base_year_reference_region_cost",
-                "reg_cost_ratio",
-                "fix_ratio",
-            ],
-            axis=1,
-        )
+        .reindex(columns, axis=1)
     )
 
     # TODO Change from using intratec source as list of regions
     un_reg = pd.DataFrame(
-        {"region": filt_intratec.region.unique(), "reg_cost_ratio": 1, "key": "z"}
+        {"region": filt_intratec.region.unique(), "reg_cost_ratio": 1.0, "key": "z"}
     )
 
     # Filter for reg_diff_source == NaN
@@ -754,18 +726,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         .assign(key="z")
         .merge(un_reg, on="key", how="left")
         .assign(fix_ratio=lambda x: np.where(x.fix_ratio.isnull(), 0, x.fix_ratio))
-        .reindex(
-            [
-                "message_technology",
-                "reg_diff_source",
-                "reg_diff_technology",
-                "region",
-                "base_year_reference_region_cost",
-                "reg_cost_ratio",
-                "fix_ratio",
-            ],
-            axis=1,
-        )
+        .reindex(columns, axis=1)
     )
 
     all_tech = (
