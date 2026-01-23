@@ -225,19 +225,11 @@ def add_NDC2030(context, scenario):
 
     return sr.scen["INDC2030i_weak"]
 
-def add_glasgow(context, scenario, level, start_scen):
+def add_glasgow(context, scenario, level, start_scen, target_scen, slice_yr):
     """Add Glasgow policies to the scenario.
     """
     sr = make_scenario_runner(context)
    
-    # Set slice_yr and target_scen based on start_scen
-    if start_scen == "h_cpol":
-        slice_yr = 2030
-        target_scen = f"d_strain_2030_glasgow_{level.lower()}"
-    else:  # baseline_DEFAULT or other
-        slice_yr = 2025
-        target_scen = f"glasgow_{level.lower()}_2030"
-
     # Prepare add() arguments
     add_kwargs = {
         "mk_INDC": True,
@@ -492,6 +484,8 @@ def generate(context: Context) -> Workflow:
         "h_cpol solved",
         add_glasgow,
         target=f"{model_name}/d_strain_2030_glasgow_partial",
+        target_scen = "d_strain_2030_glasgow_partial",
+        slice_yr = 2030,
         start_scen = "h_cpol",
         level = "Partial",
     )
@@ -553,9 +547,12 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "glasgow_partial_2030 solved",
         "base reported",
-        placeholder,
+        add_glasgow,
         target=f"{model_name}/glasgow_partial_2030",
-        clone=dict(keep_solution=False),
+        target_scen = "glasgow_partial_2030",
+        slice_yr = 2025,
+        start_scen = "baseline_DEFAULT",
+        level = "Partial",
     )
 
     wf.add_step(
@@ -575,27 +572,13 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "glasgow_partial_2035 solved",
-        "base reported",
-        placeholder,
-        target=f"{model_name}/glasgow_partial_2035",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "d_delfrag_2035 base built",
-        "glasgow_partial_2035 solved",
-        step_0,
-        target=f"{model_name}/d_delfrag_2035_base",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
         "glasgow_full_2030 solved",
         "base reported",
         add_glasgow,
         target=f"{model_name}/glasgow_full_2030",
         start_scen = "baseline_DEFAULT",
+        target_scen = "glasgow_full_2030",
+        slice_yr = 2025,
         level = "Full",
     )
 
@@ -604,6 +587,26 @@ def generate(context: Context) -> Workflow:
         "glasgow_full_2030 solved",
         step_0,
         target=f"{model_name}/o_1p5c_base",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "glasgow_partial_2035 solved",
+        "h_cpol solved",
+        add_glasgow,
+        target=f"{model_name}/d_delfrag_2035_glasgow_partial",
+        target_scen = "d_delfrag_2035_glasgow_partial",
+        slice_yr = 2030,
+        start_scen = "h_cpol",
+        level = "Partial",
+        clone=dict(keep_solution=True, shift_first_model_year=2035),
+    )
+
+    wf.add_step(
+        "d_delfrag_2035 base built",
+        "glasgow_partial_2035 solved",
+        step_0,
+        target=f"{model_name}/d_delfrag_2035_base",
         clone=dict(keep_solution=False),
     )
 
