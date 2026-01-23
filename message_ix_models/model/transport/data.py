@@ -307,13 +307,17 @@ class LoadFactorLDV(MultiFile):
     def filename(self) -> str:
         assert self.options.config
         label = self.options.config.label
+
+        # Apply sequential replacements
         for pattern, repl in (
-            # For DIGSY…C, use the respective SSP
-            ("^DIGSY-.*-C$", str(self.options.config.ssp)),
-            ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED'
-            (r"\.", "_"),  # "SSP_2024.1" → "SSP_2024_1"
+            ("^M ", ""),  # No distinction for materials scenarios
+            ("^DIGSY-WORST-C", str(self.options.config.ssp)),  # Use the respective SSP
+            ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED
+            (r"^(SSP_\d+)\.(\d)", r"\1_\2"),  # "SSP_2024.1" → "SSP_2024_1"
+            (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),  # Remove trailing suffix (" foo")
         ):
             label = re.sub(pattern, repl, label)
+
         return label + ".csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
@@ -802,6 +806,13 @@ input_base = _input_dataflow(
     key="input:t-c-h:base",
     name="Base model input efficiency",
     units="GWa",
+)
+
+input_cap_new = _input_dataflow(
+    key="input_cap_new:scenario-n-t-y-c:transport+exo",
+    name="Material input associated with new transport vehicles",
+    required=False,
+    units="kg / vehicle",
 )
 
 input_ref_ldv = _input_dataflow(

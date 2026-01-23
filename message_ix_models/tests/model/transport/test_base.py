@@ -4,7 +4,7 @@ import genno
 import numpy as np
 import pandas as pd
 import pytest
-from genno import Computer, KeySeq
+from genno import Computer, Key
 from genno.operator import random_qty, relabel
 
 from message_ix_models.model.structure import get_codes
@@ -23,7 +23,7 @@ def test_smooth(recwarn) -> None:
     c.add("y0", y0)
 
     # Expected base key for input
-    k = KeySeq("ue:nl-ya-c-l-h-t")
+    k = Key("ue:nl-ya-c-l-h-t")
 
     # Prepare input data
     periods = list(

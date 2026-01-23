@@ -1,6 +1,11 @@
 import pytest
 
-from message_ix_models.model.transport.config import Config, get_cl_scenario
+from message_ix_models import Context
+from message_ix_models.model.transport.config import (
+    CL_SCENARIO,
+    Config,
+    iter_price_emission,
+)
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.project.transport_futures import SCENARIO as TF_SCENARIO
@@ -86,32 +91,61 @@ class TestConfig:
             c.set_futures_scenario("A---")
 
 
-def test_get_cl_scenario() -> None:
-    result = get_cl_scenario()
+class TestCL_SCENARIO:
+    def test_get(self, test_context: Context) -> None:
+        result = CL_SCENARIO.get(force=True)
 
-    # Code lists contains codes with the expected IDs
-    assert {
-        "DIGSY-BEST-C",
-        "DIGSY-BEST-S",
-        "DIGSY-WORST-C",
-        "DIGSY-WORST-S",
-        "EDITS-CA",
-        "EDITS-HA",
-        "LED-SSP1",
-        "LED-SSP2",
-        "SSP1 exo price",
-        "SSP1 tax",
-        "SSP1",
-        "SSP2 exo price",
-        "SSP2 tax",
-        "SSP2",
-        "SSP3 exo price",
-        "SSP3 tax",
-        "SSP3",
-        "SSP4 exo price",
-        "SSP4 tax",
-        "SSP4",
-        "SSP5 exo price",
-        "SSP5 tax",
-        "SSP5",
-    } == set(result.items.keys())
+        # Code list has the expected length
+        assert 296 == len(result)
+
+        # Code list contains codes with the expected IDs
+        assert {
+            "DIGSY-BEST-C",
+            "DIGSY-BEST-S",
+            "DIGSY-WORST-C",
+            "DIGSY-WORST-S",
+            "EDITS-CA",
+            "EDITS-HA",
+            "LED-SSP1",
+            "LED-SSP2",
+            "SSP1 tax",
+            "SSP1",
+            "SSP2 tax",
+            "SSP2",
+            "SSP3 tax",
+            "SSP3",
+            "SSP4 tax",
+            "SSP4",
+            "SSP5 tax",
+            "SSP5",
+        } <= set(result.items.keys())
+
+        # Codes for material-enabled scenarios are present
+        c = result["M SSP2"]
+
+        # Config created using these codes has the 'material' module enabled
+        cfg = Config.from_context(test_context, dict(code=c))
+        assert "material" in cfg.modules
+
+        # Codes with policies discovered in the data dir are present
+        c = result["M SSP2 exo price 2e17"]
+
+        assert "SSP_SSP2_v5.3.1/SSP2 - Low Emissions#2" in str(
+            c.get_annotation(id="policy").text
+        )
+
+
+@pytest.mark.parametrize(
+    "ssp_or_led, N_exp",
+    (
+        ("SSP1", 7),
+        ("SSP2", 22),
+        ("SSP3", 1),
+        ("SSP4", 5),
+        ("SSP5", 7),
+    ),
+)
+def test_iter_price_emission(ssp_or_led: str, N_exp: int, regions="R12") -> None:
+    # Currently only data available for R12
+    result = list(iter_price_emission(regions, ssp_or_led))
+    assert N_exp == len(result)

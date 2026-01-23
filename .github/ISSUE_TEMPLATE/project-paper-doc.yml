@@ -1,0 +1,120 @@
+name: Project or paper documentation
+description: Provide information about a project or paper for the MESSAGE team.
+title: "Document [project acronym or paper name]"
+labels: ["doc", "paper"]
+projects: ["MESSAGEix team"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        This form will help you record key information about a planned or ongoing project or paper using `message-ix-models`.
+        Please fill in as many of the fields and details as you can.
+        Don't worry if some details are not yet available or might change in the future:
+        an issue with partial/provisional info is much better than *no* issue and no info.
+        The prompts mainly serve as a reminder as to what people may want to know,
+        as also reflected in the [HOWTO Document research projects](https://docs.messageix.org/projects/models/en/latest/howto/doc-project.html).
+        For any placeholder text you do not use, please delete, comment out, or leave “**TBA**” (“to be added”).
+
+
+        At any time after creating the issue, you can:
+
+        - Update to add or change any of the details or links, as you have time :smiley:
+
+        - Open a PR that adds a documentation page containing all the info below (see the HOWTO).
+
+        - Close this issue by merging that PR.
+
+  - type: textarea
+    id: title
+    attributes:
+      label: Project acronym or paper title or topic
+      description: >
+        Use this same text to complete the issue title, above.
+        If a paper's exact title is not decided, use “quotes” and a short name that is used among the authors.
+        If a project's name is an acronym, also give the full text.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: One-line summary
+      description: Give a one-sentence summary of the topic or goals of the project or paper.
+    validations:
+      required: true
+
+  - type: textarea
+    id: project-info
+    attributes:
+      label: Project information
+      placeholder: |
+        - Website: https://example.com
+        - Duration: 20XX-01–20XX-12
+          - [Specific milestones]
+        - Funder: [name of agency or link]
+
+  - type: textarea
+    id: who
+    attributes:
+      label: People, roles, contacts
+      description: >
+        List people involved in the project, including yourself.
+        If they have GitHub accounts, use the @-syntax to tag them.
+        If possible, explain what role or contribution each person will have;
+        this allows others to contact the right person about specific aspects of the project.
+      placeholder: |
+        - Paper author(s): @example
+        - Project lead(s): @example
+        - Lead modeler(s): @example
+        - Technical advice: @example
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Model features used, changed, or added
+      description: >
+        Describe the focus of scenarios that will be represented,
+        and which specific pieces of `message-ix-models` **or** any other repository
+        will be used, created, or modified in order to create these scenarios.
+
+  - type: textarea
+    attributes:
+      label: Scenario identifiers
+      description: |
+        Identify (platform, model name, scenario name, and version(s)):
+        1. Any scenario(s) that will be used as the **base** or starting point for the work.
+        2. Any scenario(s) that will be **produced by** the work.
+
+        If there is a specific scheme or convention for these identifiers, describe the scheme.
+      placeholder: |
+        - Base scenario(s):
+          - `ixmp://ixmp-dev/{model name}/{scenario name}#version`
+          - … 
+        - Target/ouput scenario(s):
+          - `ixmp://ixmp-dev/{model name}/{scenario name}#version`
+          - … 
+
+  - type: textarea
+    attributes:
+      label: Code and data
+      description: >
+        Describe where the code and data used for the project (will) live.
+        For private resources (for instance, on SharePoint), provide direct links;
+        existing controls will restrict access to authorized colleagues.
+      placeholder: |
+        - iiasa/message-ix-models#999 —link(s) to PR(s) with associated branch(es).
+        - Name(s) of branch(es) in message-ix-models, forks.
+        - Other repositories, public or private.
+        - Location(s) where input data are stored or mirrored.
+
+  - type: textarea
+    attributes:
+      label: Other information and resources
+      description: >
+        Give links to any non-code information about the work.
+        This may include protocols, design documents, reference materials,
+        Slack or other locations where the project/paper is discussed, etc.
+        As with “Code and data”, above, use direct links and access control
+
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to fill out this documentation issue!

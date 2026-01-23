@@ -70,7 +70,9 @@ class PRICE_EMISSION(ExoDataSource):
         # Map e.g. "type_tec" → "type_tec", even if not in RENAME_DIMS
         dims = {d: d for d in self.key.dims} | RENAME_DIMS
 
-        return load_file(self.path, dims=dims)
+        # TODO Either read units from file or config; or validate that units are
+        #      consistent with these
+        return load_file(self.path, dims=dims, units="USD / t")
 
 
 def get_emission_factors(units: str | None = None) -> "AnyQuantity":

@@ -18,6 +18,7 @@ Submodules:
    pycountry
    scenarioinfo
    sdmx
+   zipfile
 
 Commonly used:
 

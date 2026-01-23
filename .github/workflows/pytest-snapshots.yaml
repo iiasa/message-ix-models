@@ -25,13 +25,13 @@ jobs:
 
     steps:
     - name: Cache test data
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: message-local-data
         key: ubuntu-latest
 
     - name: Check out message-ix-models
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         lfs: true
 

@@ -81,16 +81,25 @@ class CheckResult:
     overall passage or failure of the check suite.
     """
 
+    _passed: int
+    _total: int
+
     def __init__(self):
-        self._pass = True
+        self._passed = self._total = 0
 
     def __bool__(self) -> bool:
-        return self._pass
+        return self._passed == self._total
 
     def __call__(self, value: bool, message: str) -> None:
-        self._pass &= value
+        self._passed += 1 if value else 0
+        self._total += 1
         if message:
             log.log(logging.INFO if value else logging.ERROR, message)
+
+    def assert_all_passed(self) -> None:
+        """Raise :class:`AssertionError` if not all checks passed."""
+        log.info(f"{self._passed}/{self._total} checks passed")
+        assert bool(self)
 
 
 @dataclass
@@ -229,6 +238,31 @@ class HasUnits(Check):
             return False, f"Expected {e!s}"
         else:
             return True, f"Units are {self.units!r}"
+
+
+@dataclass
+class NoDuplicates(Check):
+    """No duplicate indices in parameter data."""
+
+    setting: None = None
+    types = (pd.DataFrame, dict)
+
+    rows: int = 7
+
+    def run(self, obj):
+        if isinstance(obj, dict):
+            return self.recurse_parameter_data(obj)
+
+        columns = list(filter(lambda c: c not in {"value", "unit"}, obj.columns))
+        duplicated = obj.duplicated(subset=columns)
+
+        if duplicated.any():
+            log.debug(obj[duplicated].to_string(max_rows=self.rows, min_rows=self.rows))
+            return (
+                False,
+                f"{duplicated.sum()} duplicated keys:",
+            )
+        return True, self._description
 
 
 @dataclass
