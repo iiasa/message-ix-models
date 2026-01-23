@@ -85,8 +85,12 @@ def replace_pre_base_year_cost(
     return (
         scen.par(par)
         .groupby(["technology", "node_loc"])
-        .apply(_replace_inner, par=par, base_year=config.base_year)
-        .reset_index(drop=2)
+        # include_groups=False is default in pandas 3.0, not in 2.x
+        # TODO Remove once pandas 3.x is the minimum supported version
+        .apply(
+            _replace_inner, par=par, base_year=config.base_year, include_groups=False
+        )
+        .reset_index()
         .sort_values(["year_vtg"] + (["year_act"] if par == "fix_cost" else []))
     )
 
@@ -121,7 +125,7 @@ def filter_fix_cost_by_lifetime(scen: "Scenario") -> "DataFrame":
     columns = ["node_loc", "technology", "year_vtg"]
     merged_df = fix_cost_df.merge(
         lifetime_df, on=columns, suffixes=("", "_lifetime"), how="left"
-    )
+    ).astype({"year_act": int, "year_vtg": int})
 
     # Identify combinations of node_loc, technology, and year_vtg that are missing
     # lifetime data
