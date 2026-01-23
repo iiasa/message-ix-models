@@ -25,9 +25,9 @@ from message_ix_models.tools.bilateralize.historical_calibration import (
 from message_ix_models.tools.bilateralize.utils import get_logger, load_config
 from message_ix_models.util import package_data_path, broadcast
 
+
 # %% Check technical lifetimes
-def cut_teclt(indf: pd.DataFrame, tec_lifetime: float
-) -> pd.DataFrame:
+def cut_teclt(indf: pd.DataFrame, tec_lifetime: float) -> pd.DataFrame:
     """
     Cut technical lifetimes to the specified lifetime
     Args:
@@ -39,6 +39,7 @@ def cut_teclt(indf: pd.DataFrame, tec_lifetime: float
     outdf = indf.copy()
     outdf = outdf[outdf["year_act"] - outdf["year_vtg"] <= tec_lifetime]
     return outdf
+
 
 # %% Full broadcast function
 def full_broadcast(
@@ -69,29 +70,36 @@ def full_broadcast(
         if "year_rel" in cols:
             if "broadcast" in set(data_dict[ty][i]["year_rel"]):
                 log.info(f"Parameter {i} in {tec} {ty} broadcasted for year_rel")
-                df['year_rel'] = None
-                df['year_act'] = None
-                df = df.pipe(broadcast, year_act = ya_list, year_rel = ya_list)
-        elif ("year_vtg" in cols and "year_act" in cols):
-            if "broadcast" in set(data_dict[ty][i]["year_vtg"]) and "broadcast" in set(data_dict[ty][i]["year_act"]):
+                df["year_rel"] = None
+                df["year_act"] = None
+                df = df.pipe(broadcast, year_act=ya_list, year_rel=ya_list)
+        elif "year_vtg" in cols and "year_act" in cols:
+            if "broadcast" in set(data_dict[ty][i]["year_vtg"]) and "broadcast" in set(
+                data_dict[ty][i]["year_act"]
+            ):
                 log.info(f"{i} in {tec} {ty} broadcasted for year_vtg+year_act")
-                df['year_vtg'] = None
-                df['year_act'] = None
-                df = df.pipe(broadcast, year_vtg = yv_list, year_act = ya_list)
-                df = cut_teclt(df, tec_lifetime = ltval)
-            elif ("broadcast" in set(data_dict[ty][i]["year_vtg"]) & ("broadcast" not in set(data_dict[ty][i]["year_act"]))):
+                df["year_vtg"] = None
+                df["year_act"] = None
+                df = df.pipe(broadcast, year_vtg=yv_list, year_act=ya_list)
+                df = cut_teclt(df, tec_lifetime=ltval)
+            elif "broadcast" in set(data_dict[ty][i]["year_vtg"]) & (
+                "broadcast" not in set(data_dict[ty][i]["year_act"])
+            ):
                 log.info(f"{i} in {tec} {ty} broadcasted for year_vtg")
-                df['year_vtg'] = None
-                df = df.pipe(broadcast, year_vtg = yv_list)
-                df = cut_teclt(df, tec_lifetime = ltval)
-            elif ("broadcast" in set(data_dict[ty][i]["year_act"]) & ("broadcast" not in set(data_dict[ty][i]["year_vtg"]))):
+                df["year_vtg"] = None
+                df = df.pipe(broadcast, year_vtg=yv_list)
+                df = cut_teclt(df, tec_lifetime=ltval)
+            elif "broadcast" in set(data_dict[ty][i]["year_act"]) & (
+                "broadcast" not in set(data_dict[ty][i]["year_vtg"])
+            ):
                 log.info(f"{i} in {tec} {ty} broadcasted for year_act")
-                df['year_act'] = None
-                df = broadcast(data_dict[ty][i], year_act = ya_list)
-                df = cut_teclt(df, tec_lifetime = ltval)
+                df["year_act"] = None
+                df = broadcast(data_dict[ty][i], year_act=ya_list)
+                df = cut_teclt(df, tec_lifetime=ltval)
         data_dict[ty][i] = df
 
     return data_dict
+
 
 # %% Build out bare sheets
 def build_parameter_sheets(
@@ -108,7 +116,9 @@ def build_parameter_sheets(
         outdict: Dictionary of parameter dataframes
     """
     # Load config
-    config, config_path, tec_config = load_config(project_name, config_name, load_tec_config=True)
+    config, config_path, tec_config = load_config(
+        project_name, config_name, load_tec_config=True
+    )
 
     covered_tec = config.get("covered_trade_technologies", {})
 

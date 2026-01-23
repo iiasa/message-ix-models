@@ -100,26 +100,26 @@ def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
     )
 
     covered_tec = config_base.get("covered_trade_technologies")
-    #for tec in covered_tec:
+    for tec in covered_tec:
         # Remove existing technologies related to trade
-        #remove_trade_tech(scen=scen, log=log, config_tec=config_tec, tec=tec)
+        remove_trade_tech(scen=scen, log=log, config_tec=config_tec, tec=tec)
 
         # Add to sets: technology, level, commodity, mode
-        #add_trade_sets(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
+        add_trade_sets(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
 
         # Add parameters
-        #add_trade_parameters(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
+        add_trade_parameters(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
 
         # Relation activity, upper, and lower
-        #update_relation_parameters(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
+        update_relation_parameters(scen=scen, log=log, trade_dict=bilat_dict, tec=tec)
 
         # Update bunker fuels
-        #update_bunker_fuels(scen=scen, tec=tec, log=log, config_tec=config_tec)
+        update_bunker_fuels(scen=scen, tec=tec, log=log, config_tec=config_tec)
 
     # Update additional parameters
-    #update_additional_parameters(scen=scen, extra_parameter_updates=None)
+    update_additional_parameters(scen=scen, extra_parameter_updates=None)
 
     # Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM (won't run in test)
-    #remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=False)
+    remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=False)
 
     assert True
