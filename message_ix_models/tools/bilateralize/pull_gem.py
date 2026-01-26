@@ -35,12 +35,12 @@ def gem_region(project_name: str | None = None, config_name: str | None = None):
     config, config_path = load_config(
         project_name=project_name, config_name=config_name
     )
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, "r", encoding="utf8") as f:
         config = yaml.safe_load(f)
     message_regions = config["scenario"]["regions"]
 
     full_path = package_data_path("node", message_regions + ".yaml")
-    with open(full_path, "r", encoding="utf-8") as f:
+    with open(full_path, "r") as f:
         message_regions = yaml.safe_load(f)
     message_regions_list = [
         r for r in message_regions.keys() if r not in ["World", "GLB"]
@@ -146,7 +146,7 @@ def import_gem(
     df["Capacity (GWa)"] = df["Capacity (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
 
     # Generate investment costs
-    df["InvCost (USD/km)"] = (df["CostUSD"]) / df["Capacity (GWa)"]
+    df["InvCost (USD/km)"] = (df["CostUSD"]) / df["LengthMergedKm"]
     # TODO: Add industry-specific deflators
 
     # Generate capacity
@@ -180,17 +180,13 @@ def import_gem(
     export_dir = package_data_path("bilateralize", trade_technology)
     gem_dir_out = os.path.join(os.path.dirname(export_dir), trade_technology, "GEM")
 
-    trade_dir = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "edit_files"
-    )
+    trade_dir = os.path.join(os.path.dirname(gem_dir_out), "edit_files")
     flow_dir = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "edit_files", "flow_technology"
+        os.path.dirname(gem_dir_out), "edit_files", "flow_technology"
     )
-    trade_dir_out = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "bare_files"
-    )
+    trade_dir_out = os.path.join(os.path.dirname(gem_dir_out), "bare_files")
     flow_dir_out = os.path.join(
-        os.path.dirname(gem_dir_out), trade_technology, "bare_files", "flow_technology"
+        os.path.dirname(gem_dir_out), "bare_files", "flow_technology"
     )
     if not os.path.isdir(gem_dir_out):
         os.makedirs(Path(gem_dir_out))
@@ -199,11 +195,11 @@ def import_gem(
 
     # Investment Costs
     inv_cost = (
-        df.groupby(["EXPORTER", "IMPORTER"])[["CostUSD", "Capacity (GWa)"]]
+        df.groupby(["EXPORTER", "IMPORTER"])[["CostUSD", "LengthMergedKm"]]
         .sum()
         .reset_index()
     )
-    inv_cost["InvCost (USD/km)"] = (inv_cost["CostUSD"]) / inv_cost["Capacity (GWa)"]
+    inv_cost["InvCost (USD/km)"] = (inv_cost["CostUSD"]) / inv_cost["LengthMergedKm"]
     inv_cost = inv_cost[["EXPORTER", "IMPORTER", "InvCost (USD/km)"]].drop_duplicates()
     inv_cost["node_loc"] = inv_cost["EXPORTER"]
     inv_cost["technology"] = (
@@ -214,7 +210,7 @@ def import_gem(
     inv_cost.to_csv(os.path.join(gem_dir_out, "inv_cost_GEM.csv"), index=False)
 
     basedf = pd.read_csv(os.path.join(flow_dir, "inv_cost.csv"))
-    basedf["value"] = 100
+    basedf["value"] = 10
     inv_cost = basedf.merge(
         inv_cost,
         left_on=["node_loc", "technology"],
