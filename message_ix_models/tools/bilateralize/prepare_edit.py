@@ -1110,6 +1110,7 @@ def export_edit_files(
                     shutil.copy2(base_file, dest_file)
                     log.info(f"Copied file from edit to bare: {reqpar}")
 
+
 # %% Main function to generate bare sheets
 def generate_edit_files(
     log,
@@ -1360,7 +1361,7 @@ def prepare_edit_files(
                 os.path.join(data_path, tec, "edit_files", "input.csv")
             )
             input_df = input_df[
-                ["node_loc", "technology", "year_act", "year_vtg"] # "mode", "time"
+                ["node_loc", "technology", "year_act", "year_vtg"]  # "mode", "time"
             ].drop_duplicates()
             add_df = input_df.merge(
                 add_df,
@@ -1390,8 +1391,9 @@ def prepare_edit_files(
 
             add_df = add_df[~add_df["technology"].str.contains("_imp")]
 
-            add_df = add_df[["node_loc", "technology", "year_act",
-                             "year_vtg", "value", "unit"]]
+            add_df = add_df[
+                ["node_loc", "technology", "year_act", "year_vtg", "value", "unit"]
+            ]
             add_df = add_df.drop_duplicates()
 
             add_df.to_csv(

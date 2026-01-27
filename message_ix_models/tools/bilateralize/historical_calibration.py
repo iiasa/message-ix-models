@@ -53,7 +53,7 @@ def setup_datapath(project_name: str | None = None, config_name: str | None = No
         iea_diag=iea_diagnostics_path,
         baci=baci_path,
         imo=imo_path,
-        cw = cw_path
+        cw=cw_path,
     )
 
     return data_paths
@@ -684,27 +684,37 @@ def build_historical_activity(
     web["IEA-WEB VALUE"] = np.where(
         web["FLOW"] == "EXPORTS", web["IEA-WEB VALUE"] * -1, web["IEA-WEB VALUE"]
     )
-    web = web[web['IEA-WEB COMMODITY'] == 'NATURAL_GAS']
+    web = web[web["IEA-WEB COMMODITY"] == "NATURAL_GAS"]
 
-    web_tot = web[web["FLOW"] == "EXPORTS"][['YEAR', 'ISO', 'IEA-WEB VALUE']]
+    web_tot = web[web["FLOW"] == "EXPORTS"][["YEAR", "ISO", "IEA-WEB VALUE"]]
     web_tot = web_tot.groupby(["YEAR", "ISO"])["IEA-WEB VALUE"].sum().reset_index()
-    web_tot = web_tot.rename(columns={"ISO": "EXPORTER",
-                                       "IEA-WEB VALUE": "WEB TOTAL"})
+    web_tot = web_tot.rename(columns={"ISO": "EXPORTER", "IEA-WEB VALUE": "WEB TOTAL"})
     ngdf_tot = ngdf.groupby(["YEAR", "EXPORTER"])["ENERGY (TJ)"].sum().reset_index()
-    ngdf_tot = ngdf_tot.rename(columns={"EXPORTER": "EXPORTER",
-                                        "ENERGY (TJ)": "NGDF TOTAL"})
-    ngdf_tot = ngdf_tot.merge(web_tot, left_on=["YEAR", "EXPORTER"],
-                              right_on=["YEAR", "EXPORTER"], how="outer")
+    ngdf_tot = ngdf_tot.rename(
+        columns={"EXPORTER": "EXPORTER", "ENERGY (TJ)": "NGDF TOTAL"}
+    )
+    ngdf_tot = ngdf_tot.merge(
+        web_tot,
+        left_on=["YEAR", "EXPORTER"],
+        right_on=["YEAR", "EXPORTER"],
+        how="outer",
+    )
 
     ngdf_tot["CALIBRATION FACTOR"] = ngdf_tot["WEB TOTAL"] / ngdf_tot["NGDF TOTAL"]
-    ngdf_tot["CALIBRATION FACTOR"] = np.where(ngdf_tot["CALIBRATION FACTOR"].isnull(),
-                                              1, ngdf_tot["CALIBRATION FACTOR"])
-    ngdf_tot["CALIBRATION FACTOR"] = np.where(ngdf_tot["CALIBRATION FACTOR"]<1,
-                                              1, ngdf_tot["CALIBRATION FACTOR"])
-    ngdf_tot = ngdf_tot[['YEAR', 'EXPORTER', 'CALIBRATION FACTOR']]
+    ngdf_tot["CALIBRATION FACTOR"] = np.where(
+        ngdf_tot["CALIBRATION FACTOR"].isnull(), 1, ngdf_tot["CALIBRATION FACTOR"]
+    )
+    ngdf_tot["CALIBRATION FACTOR"] = np.where(
+        ngdf_tot["CALIBRATION FACTOR"] < 1, 1, ngdf_tot["CALIBRATION FACTOR"]
+    )
+    ngdf_tot = ngdf_tot[["YEAR", "EXPORTER", "CALIBRATION FACTOR"]]
 
-    ngdf = ngdf.merge(ngdf_tot, left_on=["YEAR", "EXPORTER"],
-                      right_on=["YEAR", "EXPORTER"], how="left")
+    ngdf = ngdf.merge(
+        ngdf_tot,
+        left_on=["YEAR", "EXPORTER"],
+        right_on=["YEAR", "EXPORTER"],
+        how="left",
+    )
     ngdf["ENERGY (TJ)"] = ngdf["ENERGY (TJ)"] * ngdf["CALIBRATION FACTOR"]
     ngdf = ngdf.drop(columns=["CALIBRATION FACTOR"])
 
