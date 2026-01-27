@@ -2,7 +2,7 @@
 
 import re
 from collections.abc import MutableMapping
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import genno
 import pandas as pd
@@ -15,6 +15,7 @@ from message_ix_models.util.pycountry import iso_3166_alpha_3
 if TYPE_CHECKING:
     import pathlib
 
+    import pandas.api.typing
     from genno.types import AnyQuantity
 
 __all__ = [
@@ -25,7 +26,8 @@ __all__ = [
 ]
 
 
-def compare(
+# TODO Reduce complexity from 12 to <=11
+def compare(  # noqa: C901
     left: pd.DataFrame,
     right: pd.DataFrame,
     atol: float = 1e-3,
@@ -70,45 +72,51 @@ def compare(
             return
         result.append(message)
 
-    def checks(df: pd.DataFrame):
+    def checks(gb: "pandas.api.typing.DataFrameGroupBy") -> None:
         nonlocal matching
-        prefix = f"variable={df.variable.iloc[0]!r}:"
 
-        if df.value_left.isna().all():
-            record(f"{prefix} no left data")
-            return
-        elif df.value_right.isna().all():
-            record(f"{prefix} no right data")
-            return
+        for (variable,), df in gb:
+            prefix = f"variable={variable!r}:"
 
-        tmp = df.eval("value_diff = value_right - value_left").eval(
-            "value_rel = value_diff / value_left"
-        )
+            if df.value_left.isna().all():
+                record(f"{prefix} no left data")
+                continue
+            elif df.value_right.isna().all():
+                record(f"{prefix} no right data")
+                continue
 
-        na_left = tmp.isna()[["unit_left", "value_left"]]
-        if na_left.any(axis=None):
-            record(f"{prefix} {na_left.sum(axis=0).max()} missing left entries")
-            tmp = tmp[~na_left.any(axis=1)]
-        na_right = tmp.isna()[["unit_right", "value_right"]]
-        if na_right.any(axis=None):
-            record(f"{prefix} {na_right.sum(axis=0).max()} missing right entries")
-            tmp = tmp[~na_right.any(axis=1)]
+            tmp = cast(
+                pd.DataFrame,
+                df.eval("""
+                    value_diff = value_right - value_left
+                    value_rel = value_diff / value_left
+                """),
+            )
 
-        units_left = set(tmp.unit_left.unique())
-        units_right = set(tmp.unit_right.unique())
-        record(
-            condition=units_left != units_right,
-            message=f"{prefix} units mismatch: {units_left} != {units_right}",
-        )
+            na_left = tmp.isna()[["unit_left", "value_left"]]
+            if na_left.any(axis=None):
+                record(f"{prefix} {na_left.sum(axis=0).max()} missing left entries")
+                tmp = tmp[~na_left.any(axis=1)]
+            na_right = tmp.isna()[["unit_right", "value_right"]]
+            if na_right.any(axis=None):
+                record(f"{prefix} {na_right.sum(axis=0).max()} missing right entries")
+                tmp = tmp[~na_right.any(axis=1)]
 
-        N0 = len(df)
+            units_left = set(tmp.unit_left.unique())
+            units_right = set(tmp.unit_right.unique())
+            record(
+                condition=units_left != units_right,
+                message=f"{prefix} units mismatch: {units_left} != {units_right}",
+            )
 
-        mask1 = tmp.query("abs(value_diff) > @atol")
-        record(
-            condition=bool(len(mask1)),
-            message=f"{prefix} {len(mask1)} of {N0} values with |diff| > {atol}",
-        )
-        matching += N0 - len(mask1)
+            N0 = len(df)
+
+            mask1 = tmp.query("abs(value_diff) > @atol")
+            record(
+                condition=bool(len(mask1)),
+                message=f"{prefix} {len(mask1)} of {N0} values with |diff| > {atol}",
+            )
+            matching += N0 - len(mask1)
 
     for (model, scenario), group_0 in left.merge(
         right,
@@ -121,7 +129,7 @@ def compare(
         elif group_0.value_right.isna().all():
             record(f"No right data for model={model!r}, scenario={scenario!r}")
         else:
-            group_0.groupby(["variable"]).apply(checks)
+            group_0.groupby(["variable"]).pipe(checks)
 
     result.append(
         f"{matching} matching of {len(left)} left and {len(right)} right values"
