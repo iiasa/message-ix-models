@@ -7,6 +7,7 @@ import os
 from itertools import combinations
 
 import pandas as pd
+from scgraph.geographs.marnet import marnet_geograph
 
 from message_ix_models.util import package_data_path
 
@@ -60,36 +61,35 @@ def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Remove rows with missing coordinates
-    df_clean = df.dropna(subset=["Latitude", "Longitude"])
+    ports_clean = df.dropna(subset=["Latitude", "Longitude"])
 
-    if df_clean.empty:
+    if ports_clean.empty:
         raise ValueError("No valid coordinate data found in the file")
 
-    print(f"Loaded {len(df_clean)} ports with valid coordinates")
+    # Get all combinations of ports (without repetition)
+    port_combinations = list(combinations(ports_clean.index, 2))
+    print(f"Calculating distances for {len(port_combinations)} port pairs...")
 
     # Calculate distances between all port combinations
     distances = []
-
-    # Get all combinations of ports (without repetition)
-    port_combinations = list(combinations(df_clean.index, 2))
-
-    print(f"Calculating distances for {len(port_combinations)} port pairs...")
-
     for i, j in port_combinations:
-        port1 = df_clean.iloc[i]
-        port2 = df_clean.iloc[j]
+            port1 = ports_clean.iloc[i]
+            port2 = ports_clean.iloc[j]
 
-        distance = haversine_distance(
-            port1["Latitude"], port1["Longitude"], port2["Latitude"], port2["Longitude"]
-        )
+            distance = marnet_geograph.get_shortest_path(
+                origin_node = {"latitude": port1["Latitude"],
+                            "longitude": port1["Longitude"]},
+                destination_node = {"latitude": port2["Latitude"],
+                                    "longitude": port2["Longitude"]},
+            )
 
-        distances.append(
-            {
-                "Port1": port1["Port"],
-                "Port2": port2["Port"],
-                "Distance_km": round(distance, 2),
-            }
-        )
+            distances.append(
+                {
+                    "Port1": port1["Port"],
+                    "Port2": port2["Port"],
+                    "Distance_km": round(distance['length'], 2),
+                }
+            )
 
     # Create DataFrame with results
     outdf1 = pd.DataFrame(distances)
