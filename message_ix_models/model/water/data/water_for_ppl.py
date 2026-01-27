@@ -177,10 +177,20 @@ def apply_act_cap_multiplier(
     # filter with value > 0
     df = df[df["value"] > 0]
 
+    def _yv_int(obj: pd.DataFrame) -> pd.DataFrame:
+        """Ensure the "year_vtg" column has :class:`int` dtype.
+
+        This appears necessary with pandas 3.0.0 but not with 2.3.x.
+
+        .. todo:: Trace the origin of 'str' dtype for this column; adjust there instead;
+           remove this function.
+        """
+        return obj.astype({"year_vtg": int} if "year_vtg" in obj.columns else {})
+
     # If parameter is capacity-related, multiply by cap_fact
     # CAP,c * cf,c(=1) = CAP,p * share * addon_factor * cf,p
     if "capacity" in param_name and cap_fact_parent is not None:
-        df = df.merge(cap_fact_parent, how="left")
+        df = df.pipe(_yv_int).merge(cap_fact_parent.pipe(_yv_int), how="left")
         df["value"] *= df["cap_fact"] * 1.2  # flexibility
         df.drop(columns="cap_fact", inplace=True)
     # remove if there are Nan values, but write a log that inform on the parameter and
