@@ -257,11 +257,13 @@ def build_parameter_sheets(
     return outdict
 
 
-def calibrate_historical_shipping(config: dict,
-                                  trade_dict: dict,
-                                  covered_tec: list[str],
-                                  project_name: str|None,
-                                  config_name: str|None):
+def calibrate_historical_shipping(
+    config: dict,
+    trade_dict: dict,
+    covered_tec: list[str],
+    project_name: str | None,
+    config_name: str | None,
+):
     # Historical new capacity for maritime shipping
     shipping_fuel_dict = config["shipping_fuels"]
     # TODO: Add coal
@@ -300,12 +302,14 @@ def calibrate_historical_shipping(config: dict,
         hist_oil = pd.concat([hist_oil, hist_oil_f])
     hist_eth = hist_oil[hist_oil["technology"] != "oil_tanker_foil"]
 
-    nc_dict = {"crudeoil_shipped": hist_cr_loil,
-               "lh2_shipped": hist_lh2_loil,
-               "LNG_shipped": hist_lng,
-               "eth_shipped": hist_eth,
-               "foil_shipped": hist_oil,
-               "loil_shipped": hist_oil}
+    nc_dict = {
+        "crudeoil_shipped": hist_cr_loil,
+        "lh2_shipped": hist_lh2_loil,
+        "LNG_shipped": hist_lng,
+        "eth_shipped": hist_eth,
+        "foil_shipped": hist_oil,
+        "loil_shipped": hist_oil,
+    }
     for tec in nc_dict.keys():
         trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
 
@@ -324,6 +328,7 @@ def calibrate_historical_shipping(config: dict,
             trade_dict[tec]["trade"]["historical_new_capacity"] = tdf
 
     return trade_dict
+
 
 def bare_to_scenario(
     project_name: str | None = None,
@@ -359,7 +364,6 @@ def bare_to_scenario(
     )
 
     if p_drive_access:
-
         # Historical calibration for trade technology
         histdf = build_historical_activity(
             message_regions=message_regions,
@@ -367,7 +371,7 @@ def bare_to_scenario(
             config_name=config_name,
             reimport_BACI=False,
         )
-        histdf.to_csv('check.csv')
+        histdf.to_csv("check.csv")
         histdf = histdf[histdf["year_act"].isin([2000, 2005, 2010, 2015, 2020, 2023])]
         histdf["year_act"] = np.where(
             (histdf["year_act"] == 2023),
@@ -402,11 +406,13 @@ def bare_to_scenario(
             add_df = histnc[histnc["technology"].str.contains(hist_tec[tec])]
             trade_dict[tec]["trade"]["historical_new_capacity"] = add_df
 
-        trade_dict = calibrate_historical_shipping(config=config,
-                                                    trade_dict=trade_dict,
-                                                    covered_tec=covered_tec,
-                                                    project_name=project_name,
-                                                    config_name=config_name)
+        trade_dict = calibrate_historical_shipping(
+            config=config,
+            trade_dict=trade_dict,
+            covered_tec=covered_tec,
+            project_name=project_name,
+            config_name=config_name,
+        )
 
     # Ensure flow technologies are only added once
     covered_flow_tec: list[str] = []
