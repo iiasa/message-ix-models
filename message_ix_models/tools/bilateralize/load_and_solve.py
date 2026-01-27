@@ -34,9 +34,6 @@ def remove_trade_tech(scen: message_ix.Scenario, log, config_tec: dict, tec: str
         base_tec_name + "_exp",
         base_tec_name + "_imp",
     ]
-
-    base_tec = base_tec + config_tec[tec][tec + "_trade"]["base_trade_technology"]
-
     base_tec = base_tec + [
         i
         for i in scen.set("technology")
@@ -386,7 +383,7 @@ def load_and_solve(
     mp = ixmp.Platform()
 
     if scenario is None:
-        scenario = load_and_clone(
+        scen = load_and_clone(
             mp=mp,
             log=log,
             config_base=config_base,
