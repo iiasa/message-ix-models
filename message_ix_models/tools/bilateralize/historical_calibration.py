@@ -45,6 +45,7 @@ def setup_datapath(project_name: str | None = None, config_name: str | None = No
     iea_gas_path = os.path.join(iea_path, "NATGAS")
     baci_path = os.path.join(data_path, "UN Comtrade", "BACI")
     imo_path = os.path.join(data_path, "IMO")
+    cw_path = os.path.join(data_path, "crosswalks")
 
     data_paths = dict(
         iea_web=iea_web_path,
@@ -52,6 +53,7 @@ def setup_datapath(project_name: str | None = None, config_name: str | None = No
         iea_diag=iea_diagnostics_path,
         baci=baci_path,
         imo=imo_path,
+        cw = cw_path
     )
 
     return data_paths
@@ -72,7 +74,7 @@ def generate_cfdict(
         config_name: Name of config file
     """
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r", encoding="utf-8") as f:
+    with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 
@@ -153,7 +155,7 @@ def import_uncomtrade(
         config_name: Name of config file
     """
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
-    with open(dict_dir, "r", encoding="utf-8") as f:
+    with open(dict_dir, "r") as f:
         commodity_codes = yaml.safe_load(f)
 
     full_hs_list: list[str] = []
@@ -240,7 +242,7 @@ def convert_trade(
     ) as file_handler:
         conversion_factors = pickle.load(file_handler)
     with open(
-        os.path.join(data_paths["iea_web"], "CONV_addl.yaml"), "r", encoding="utf-8"
+        os.path.join(data_paths["iea_web"], "CONV_addl.yaml"), "r"
     ) as file_handler:
         conversion_addl = yaml.safe_load(file_handler)
     cf_codes = pd.read_csv(os.path.join(data_paths["iea_web"], "CONV_hs.csv"))
@@ -255,7 +257,7 @@ def convert_trade(
 
     # Add MESSAGE regions
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r", encoding="utf-8") as f:
+    with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 
@@ -391,11 +393,12 @@ def import_iea_gas(project_name: str | None = None, config_name: str | None = No
         ngd["PRODUCT"] == "PIPETJ", "gas_piped", ngd["MESSAGE COMMODITY"]
     )
 
-    cf_cw = pd.read_csv(os.path.join(data_paths["iea_web"], "CONV_country_codes.csv"))
+    cf_cw = pd.read_excel(os.path.join(data_paths["cw"], "country_crosswalk.xlsx"))
+    cf_cw = cf_cw[["message_country", "iea_country"]]
     for t in ["EXPORTER", "IMPORTER"]:
-        ngd = ngd.merge(cf_cw, left_on=t, right_on="IEA COUNTRY", how="left")
-        ngd[t] = ngd["ISO"]
-        ngd = ngd.drop(["ISO", "IEA COUNTRY"], axis=1)
+        ngd = ngd.merge(cf_cw, left_on=t, right_on="iea_country", how="left")
+        ngd[t] = ngd["message_country"]
+        ngd = ngd.drop(["iea_country", "message_country"], axis=1)
         ngd = ngd[~ngd[t].isnull()]
 
     ngd = ngd[["YEAR", "EXPORTER", "IMPORTER", "MESSAGE COMMODITY", "ENERGY (TJ)"]]
@@ -487,7 +490,7 @@ def check_iea_balances(
     indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
 
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
-    with open(dict_dir, "r", encoding="utf-8") as f:
+    with open(dict_dir, "r") as f:
         commodity_codes = yaml.safe_load(f)
 
     iea["COMMODITY"] = ""
@@ -565,7 +568,7 @@ def reformat_to_parameter(
         exports_only: If True, only include exports
     """
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r", encoding="utf-8") as f:
+    with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 
@@ -672,6 +675,38 @@ def build_historical_activity(
     bacidf["MESSAGE COMMODITY"] = bacidf["MESSAGE COMMODITY"] + "_shipped"
 
     ngdf = import_iea_gas(project_name=project_name, config_name=config_name)
+
+    # Calibrate gas to IEA WEB data
+    data_paths = setup_datapath(project_name=project_name, config_name=config_name)
+    web = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
+    web = web.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
+    web["IEA-WEB VALUE"] = np.where(
+        web["FLOW"] == "EXPORTS", web["IEA-WEB VALUE"] * -1, web["IEA-WEB VALUE"]
+    )
+    web = web[web['IEA-WEB COMMODITY'] == 'NATURAL_GAS']
+
+    web_tot = web[web["FLOW"] == "EXPORTS"][['YEAR', 'ISO', 'IEA-WEB VALUE']]
+    web_tot = web_tot.groupby(["YEAR", "ISO"])["IEA-WEB VALUE"].sum().reset_index()
+    web_tot = web_tot.rename(columns={"ISO": "EXPORTER",
+                                       "IEA-WEB VALUE": "WEB TOTAL"})
+    ngdf_tot = ngdf.groupby(["YEAR", "EXPORTER"])["ENERGY (TJ)"].sum().reset_index()
+    ngdf_tot = ngdf_tot.rename(columns={"EXPORTER": "EXPORTER",
+                                        "ENERGY (TJ)": "NGDF TOTAL"})
+    ngdf_tot = ngdf_tot.merge(web_tot, left_on=["YEAR", "EXPORTER"],
+                              right_on=["YEAR", "EXPORTER"], how="outer")
+
+    ngdf_tot["CALIBRATION FACTOR"] = ngdf_tot["WEB TOTAL"] / ngdf_tot["NGDF TOTAL"]
+    ngdf_tot["CALIBRATION FACTOR"] = np.where(ngdf_tot["CALIBRATION FACTOR"].isnull(),
+                                              1, ngdf_tot["CALIBRATION FACTOR"])
+    ngdf_tot["CALIBRATION FACTOR"] = np.where(ngdf_tot["CALIBRATION FACTOR"]<1,
+                                              1, ngdf_tot["CALIBRATION FACTOR"])
+    ngdf_tot = ngdf_tot[['YEAR', 'EXPORTER', 'CALIBRATION FACTOR']]
+
+    ngdf = ngdf.merge(ngdf_tot, left_on=["YEAR", "EXPORTER"],
+                      right_on=["YEAR", "EXPORTER"], how="left")
+    ngdf["ENERGY (TJ)"] = ngdf["ENERGY (TJ)"] * ngdf["CALIBRATION FACTOR"]
+    ngdf = ngdf.drop(columns=["CALIBRATION FACTOR"])
 
     tradedf = bacidf.merge(
         ngdf,
@@ -841,7 +876,7 @@ def build_hist_new_capacity_flow(
     """
     # Regions
     dict_dir = package_data_path("node", message_regions + ".yaml")
-    with open(dict_dir, "r", encoding="utf-8") as f:
+    with open(dict_dir, "r") as f:
         dict_message_regions = yaml.safe_load(f)
     region_list = [i for i in list(dict_message_regions.keys()) if i != "World"]
 

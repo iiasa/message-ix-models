@@ -290,7 +290,7 @@ def build_output(
 
 # %% Generate technical lifetime parameter (trade technology)
 def build_technical_lifetime(
-    tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
+    tec: str, network_setup: dict, parameter_outputs: dict, **kwargs
 ):
     """
     Generate technical lifetime parameter (trade technology)
@@ -299,7 +299,7 @@ def build_technical_lifetime(
         "technical_lifetime",
         network_df=network_setup[tec],
         col_values=dict(
-            value=config_dict["trade_technical_lifetime"][tec],
+            value=1,  # Make 1 year by default
             unit="y",
         ),
     )
@@ -933,7 +933,7 @@ def build_flow_technical_lifetime(
         "technical_lifetime",
         network_df=network_setup[tec],
         col_values=dict(
-            value=config_dict["flow_technical_lifetime"][tec],
+            value=20,  # Default is 20y
             unit="y",
         ),
         export_only=True,
@@ -1109,7 +1109,6 @@ def export_edit_files(
                     dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
                     shutil.copy2(base_file, dest_file)
                     log.info(f"Copied file from edit to bare: {reqpar}")
-
 
 # %% Main function to generate bare sheets
 def generate_edit_files(
@@ -1361,7 +1360,7 @@ def prepare_edit_files(
                 os.path.join(data_path, tec, "edit_files", "input.csv")
             )
             input_df = input_df[
-                ["node_loc", "technology", "year_act", "year_vtg"]  # "mode", "time"
+                ["node_loc", "technology", "year_act", "year_vtg"] # "mode", "time"
             ].drop_duplicates()
             add_df = input_df.merge(
                 add_df,
@@ -1391,9 +1390,8 @@ def prepare_edit_files(
 
             add_df = add_df[~add_df["technology"].str.contains("_imp")]
 
-            add_df = add_df[
-                ["node_loc", "technology", "year_act", "year_vtg", "value", "unit"]
-            ]
+            add_df = add_df[["node_loc", "technology", "year_act",
+                             "year_vtg", "value", "unit"]]
             add_df = add_df.drop_duplicates()
 
             add_df.to_csv(
