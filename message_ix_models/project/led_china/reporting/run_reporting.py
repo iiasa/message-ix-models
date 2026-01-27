@@ -69,8 +69,8 @@ def pyam_df_from_rep(
         # Adjust df to include exporters in iamc_name for trade variables
         dfn = df.index.to_frame(index = False)
         ndiff = dfn['nl'] != dfn['nd']
-        dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
-        dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
+        dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name']
+        dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nl'] + ">" +dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
         df.index = pd.MultiIndex.from_frame(dfn)
     else:
         df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
@@ -91,15 +91,17 @@ mp = ixmp.Platform()
 outdf = pd.DataFrame()
 
 #scen = 'SSP2_Baseline'
-for scen in ['SSP2_Baseline', 'SSP2_2C']:#, 'SSP2_Commitments',
+for scen in ['SSP2_Baseline',]: #'SSP2_2C', 'SSP2_Commitments',
              #'LED_Baseline', 'LED_2C', 'LED_Commitments']:
-    scenario = message_ix.Scenario(mp, model = 'china_security', scenario = scen)
+    scenario = message_ix.Scenario(mp, model = "china_security", scenario = scen)
     rep = Reporter.from_scenario(scenario)
-    base_df = rep.get("message::default").data 
-    supply_config = load_config('imports')
+    
+    # Gross Imports
+    supply_config = load_config('trade')
     df = pyam_df_from_rep(rep, supply_config.var, supply_config.mapping)
     df = df.reset_index()
     df = df.rename(columns = {0:'value'})
+    
     df['model'] = scenario.model
     df['scenario'] = scenario.scenario
     df['region'] = df['nl']
@@ -107,7 +109,12 @@ for scen in ['SSP2_Baseline', 'SSP2_2C']:#, 'SSP2_Commitments',
     df['year'] = df['ya']
     df['unit'] = 'GWa'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
-    outdf = pd.concat([outdf, base_df, df])
+
+
+    # Net imports
+
+
+    outdf = pd.concat([outdf, imdf, exdf])
 
 outdf.to_csv(package_data_path('led_china', 'reporting', 'reporting.csv'))
 
