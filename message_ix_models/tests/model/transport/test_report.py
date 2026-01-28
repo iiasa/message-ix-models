@@ -297,6 +297,7 @@ def test_simulated_iamc(
 
 
 @build.get_computer.minimum_version
+@MARK[11]
 @MARK[10]
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
