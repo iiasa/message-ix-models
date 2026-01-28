@@ -32,11 +32,14 @@ class CL_TRANSPORT_SCENARIO(StructureFactory["common.Codelist"]):
             is_final=True,
         )
 
-        for id_, market, material in (
+        for id_, market, fuel_economy in (
+            # 'Narrow' is one of the following 2
             ("_CC_C_D_D", "Compact car", "default"),
             ("_CC_C_I_D", "Compact car", "improvement"),
+            # 'Slow', 'Close', and 'SSP' are one of the following 2
             ("_CT_C_D_D", "Continuing trends", "default"),
             ("_CT_C_I_D", "Continuing trends", "improvement"),
+            # Sensitivity cases
             ("_ES_C_D_D", "Extreme SUVs", "default"),
             ("_ES_C_I_D", "Extreme SUVs", "improvement"),
             ("_NoS_C_D_D", "No SUVs", "default"),
@@ -45,7 +48,7 @@ class CL_TRANSPORT_SCENARIO(StructureFactory["common.Codelist"]):
             cl.append(
                 common.Code(
                     id=id_,
-                    name=f"{market}, {material}",
+                    name=f"{market}, {fuel_economy}",
                     description="regional=convergence, material=default",
                 )
             )
