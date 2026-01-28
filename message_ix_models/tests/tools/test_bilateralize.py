@@ -89,7 +89,8 @@ def test_bilat_scenario(request: pytest.FixtureRequest, test_context: Context):
     # Add unit
     mp = scen.platform
     mp.add_unit("Mt-km")
-
+    mp.add_unit("USD/Mt-km")
+    
     # Add global node
     with scen.transact("Add global node"):
         scen.add_set("node", "R12_GLB")

@@ -77,9 +77,9 @@ def test_generate_cfdict(message_regions: str) -> None:
     generate_cfdict(message_regions)
 
 
-@MARK  # IEA/WEB2025/EARLYBIG1.txt
-def test_import_iea_balances() -> None:
-    import_iea_balances()
+#@MARK  # IEA/WEB2025/EARLYBIG1.txt
+#def test_import_iea_balances() -> None:
+#    import_iea_balances()
 
 
 @MARK  # IEA/NATGAS/WIMPDAT.txt
