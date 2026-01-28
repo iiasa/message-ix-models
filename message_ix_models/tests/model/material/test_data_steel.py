@@ -8,7 +8,7 @@ from message_ix_models.model.material.data_steel import (
     gen_dri_act_bound,
     gen_dri_coal_model,
 )
-from message_ix_models.testing import GHA, MARK, bare_res
+from message_ix_models.testing import MARK, bare_res
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -19,14 +19,10 @@ if TYPE_CHECKING:
 #: In https://github.com/iiasa/message-ix-models/pull/447, 1 or more tests in this file
 #: *or* .material.test_build.test_build_bare_res were found to cause GitHub Actions jobs
 #: to stall, at least with message_ix/ixmp 3.12-dev, and possibly with v3.11.
-pytestmark = (
-    [
-        # pytest.mark.xfail(reason="Times out"),  # Used with pytest.mark.timeout
-        MARK["#447"],
-    ]
-    if GHA
-    else []
-)
+pytestmark = [
+    # pytest.mark.xfail(reason="Times out"),  # Used with pytest.mark.timeout
+    MARK[11],
+]
 
 
 @pytest.fixture
