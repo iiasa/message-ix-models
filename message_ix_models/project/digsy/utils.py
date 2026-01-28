@@ -1,14 +1,15 @@
-# if TYPE_CHECKING:
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
-import message_ix
 import pandas as pd
 import pint_pandas  # noqa: F401
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
 DIGSY_SCENS = Literal["BEST", "WORST", "baseline", "BESTEST", "WORSTEST"]
 
 
-def fe_to_ue(df: pd.DataFrame, scen: message_ix.Scenario) -> pd.DataFrame:
+def fe_to_ue(df: pd.DataFrame, scen: "Scenario") -> pd.DataFrame:
     inp = scen.par("input", filters={"technology": "sp_el_RC"})
     inp = (
         inp[["node_loc", "year_act", "value"]]
@@ -25,7 +26,7 @@ def fe_to_ue(df: pd.DataFrame, scen: message_ix.Scenario) -> pd.DataFrame:
     return df_new
 
 
-def adjust_act_calib(ict: pd.DataFrame, scen: message_ix.Scenario):
+def adjust_act_calib(ict: pd.DataFrame, scen: "Scenario"):
     for par in ["bound_activity_up", "bound_activity_lo"]:
         bound = scen.par(par, filters={"technology": "sp_el_RC"})
         ict_tot = (

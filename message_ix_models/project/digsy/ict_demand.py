@@ -1,6 +1,5 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-import message_ix
 import pandas as pd
 import pint_pandas  # noqa: F401
 from message_ix.util import make_df
@@ -21,6 +20,9 @@ from message_ix_models.util import (
     private_data_path,
     same_node,
 )
+
+if TYPE_CHECKING:
+    from message_ix import Scenario
 
 
 def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3) -> pd.DataFrame:
@@ -263,9 +265,7 @@ def add_ict_elec_tecs(info: "ScenarioInfo") -> ParameterData:
     return pars[0]
 
 
-def extrapolate_post_2050(
-    ict: pd.DataFrame, scenario: message_ix.Scenario
-) -> pd.DataFrame:
+def extrapolate_post_2050(ict: pd.DataFrame, scenario: "Scenario") -> pd.DataFrame:
     df = read_rc_elec("scenario", scenario)
     # keep demand share of ICT constant post 2050
     ict_2050 = ict[ict["year"] == ict["year"].max()]
@@ -289,7 +289,7 @@ def extrapolate_post_2050(
     return ict
 
 
-def adjust_rc_elec(scenario: message_ix.Scenario, ict: pd.DataFrame) -> pd.DataFrame:
+def adjust_rc_elec(scenario: "Scenario", ict: pd.DataFrame) -> pd.DataFrame:
     df = read_rc_elec("scenario", scenario)
     ict_tot = ict.groupby(["year", "node"]).sum(numeric_only=True)
     ict_tot_2020 = ict_tot.loc[2020]
@@ -302,7 +302,7 @@ def adjust_rc_elec(scenario: message_ix.Scenario, ict: pd.DataFrame) -> pd.DataF
 
 
 def read_rc_elec(
-    source: Literal["scenario", "file"], scenario: message_ix.Scenario
+    source: Literal["scenario", "file"], scenario: "Scenario"
 ) -> pd.DataFrame:
     if source == "scenario":
         rc_elec = scenario.par("demand", filters={"commodity": "rc_spec"})
