@@ -81,7 +81,7 @@ _ICN_KW = dict(
     name="input_cap_new", dims=DIMS, common=util.COMMON | dict(level="demand")
 )
 _OCR_KW = dict(
-    name="output_cap_ret", dims=DIMS, common=util.COMMON | dict(level="scrap")
+    name="output_cap_ret", dims=DIMS, common=util.COMMON | dict(level="end_of_life")
 )
 
 
