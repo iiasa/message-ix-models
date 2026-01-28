@@ -1,6 +1,10 @@
+import os
 from typing import TYPE_CHECKING
 
+import constants as c
+import pandas as pd
 import pyam
+import yaml
 from message_ix import Reporter
 
 from message_ix_models.model.material.report import reporter_utils
@@ -115,24 +119,9 @@ def run_eff(rep, model_name: str, scen_name: str):
     return df
 
 
-def query_total_co2(scen: "Scenario") -> pyam.IamDataFrame:
-    df = scen.timeseries(variable="Emissions|CO2")
-    reg_map = {
-        "China (R12)": "R12_CHN",
-        "Rest of Centrally planned Asia (R12)": "R12_RCPA",
-        "Former Soviet Union (R12)": "R12_FSU",
-        "Latin America (R12)": "R12_LAM",
-        "Middle East and Africa (R12)": "R12_MEA",
-        "South Asia (R12)": "R12_SAS",
-        "Pacific Asia (R12)": "R12_PAS",
-        "Western Europe (R12)": "R12_WEU",
-        "Eastern Europe (R12)": "R12_EEU",
-        "Pacific OECD (R12)": "R12_PAO",
-        "Subsaharan Africa (R12)": "R12_AFR",
-        "North America (R12)": "R12_NAM",
-        "GLB region (R12)": "World",
-    }
-    df["region"] = df["region"].map(reg_map)
+def query_from_scenario(scen: "Scenario") -> pyam.IamDataFrame:
+    df = scen.timeseries(variable=c.vars)
+    df["region"] = df["region"].map(c.reg_map)
     py_df = pyam.IamDataFrame(df)
     return py_df
 
@@ -147,12 +136,13 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
     dfs.append(run_other(rep, model_name, scen_name))
     dfs.append(run_co2(rep, model_name, scen_name))
     dfs.append(run_prod_reporting(rep, model_name, scen_name))
-    dfs.append(query_total_co2(scenario))
+    dfs.append(query_from_scenario(scenario))
     py_df = pyam.concat(dfs)
     py_df = calculate_clinker_ccs_energy(scenario, rep, py_df)
 
     py_df.aggregate_region(
-        [i for i in py_df.variable if ("Efficiency" not in i) & (i != "Emissions|CO2")], append=True
+        [i for i in py_df.variable if ("Efficiency" not in i) & (i != "Emissions|CO2")],
+        append=True,
     )
     py_df.filter(variable="Share*", keep=False, inplace=True)
     py_df.filter(
@@ -160,3 +150,97 @@ def run(rep, scenario: "Scenario", model_name: str, scen_name: str):
         inplace=True,
     )
     return py_df
+
+
+def query_magicc_data() -> None:
+    conn = pyam.iiasa.Connection("ece_internal")
+    prefix = "AR6 climate diagnostics|"
+    suffix = "|MAGICCv7.5.3|50.0th Percentile"
+    varis = [
+        "Raw Surface Temperature (GMST)",
+        "Effective Radiative Forcing|CH4",
+        "Effective Radiative Forcing|CO2",
+        "Effective Radiative Forcing|N2O",
+        "Atmospheric Concentrations|CH4",
+        "Atmospheric Concentrations|CO2",
+        "Atmospheric Concentrations|N2O",
+    ]
+    varis = [prefix + v + suffix for v in varis]
+    scenarios = [
+        "SSP1 - High Emissions",
+        "SSP1 - Low Emissions",
+        "SSP1 - Very Low Emissions",
+        "SSP2 - High Emissions",
+        "SSP2 - Low Emissions",
+        "SSP2 - Low Overshoot",
+        "SSP2 - Medium Emissions",
+        "SSP2 - Medium-Low Emissions",
+        "SSP2 - Very Low Emissions",
+        "SSP3 - High Emissions",
+        "SSP4 - Low Overshoot",
+        "SSP5 - High Emissions",
+        "SSP5 - Low Overshoot",
+    ]
+    test = conn.query(
+        model=["MESSAGEix-GLOBIOM-GAINS 2.1-M-R12"], scenario=scenarios, variable=varis
+    )
+    test.to_excel("magicc_output.xlsx")
+    return
+
+
+def merge_reports() -> None:
+    path = "/Users/florianmaczek/Downloads/legacy_output.xlsx"
+    df = pd.read_excel(path)
+    df["region"] = df["region"].map(c.reg_map)
+    df = (
+        df.pivot(
+            columns="year",
+            values="value",
+            index=["model", "scenario", "region", "variable", "unit"],
+        )
+        .reset_index()
+        .drop(columns=2110)
+    )
+    df.rename(
+        columns={i: i.capitalize() if isinstance(i, str) else i for i in df.columns},
+        inplace=True,
+    )
+    path = "magicc_output.xlsx"
+    df_magicc = pd.read_excel(path)
+    df_magicc.rename(
+        columns={i: int(i) if i.isdigit() else i for i in df_magicc.columns},
+        inplace=True,
+    )
+    path = os.getcwd() + "/output/"
+    with open("report_merge_config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    idx = [2, 3, 4]
+    for final_name, components in config.items():
+        dfs = []
+        for fname, years in components.items():
+            if isinstance(years, str) and years[-1] == "+":
+                years = list(range(int(years[:-1]), 2060, 5)) + list(
+                    range(2060, 2110, 10)
+                )
+            dfs.append(
+                pd.read_excel(path + fname + ".xlsx", index_col=idx)[
+                    [str(year) for year in years]
+                ]
+            )
+        df_merged = pd.concat(dfs, axis=1, ignore_index=False).reset_index()
+        df_merged.rename(
+            columns={i: int(i) if i.isdigit() else i for i in df_merged.columns},
+            inplace=True,
+        )
+        full_df = pd.concat(
+            [
+                df_merged,
+                df[df["Scenario"] == final_name][
+                    [i for i in df.columns if i in df_merged.columns]
+                ],
+                df_magicc[df_magicc["Scenario"] == final_name][
+                    [i for i in df_magicc.columns if i in df_merged.columns]
+                ],
+            ]
+        ).assign(Model=c.final_model_name, Scenario=final_name)
+        full_df.to_csv(f"{final_name}.csv", index=False)
