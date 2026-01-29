@@ -13,7 +13,7 @@ MARK = pytest.mark.xfail(
 
 
 def test_calibrate_historical_shipping(
-    project_name: str = None, config_name: str = None
+    project_name: str | None = None, config_name: str | None = None
 ) -> None:
     config, config_path, tec_config = load_config(
         project_name=project_name, config_name=config_name, load_tec_config=True
