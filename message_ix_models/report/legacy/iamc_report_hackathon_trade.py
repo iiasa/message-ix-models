@@ -98,7 +98,7 @@ def report(
     model_nm = model_out if model_out else scen.model
     scen_nm = scenario_out if scenario_out else scen.scenario
     run_history = ref_sol
-    path = private_data_path() / "report"
+    path = package_data_path('report', 'legacy')
 
     # ----------------------------
     # Read reporting configuration
@@ -124,8 +124,8 @@ def report(
                 config[i] = tmp_config[i]
                 
     # Config: Reset path
-    if "path" in config["report_config"]:
-        path = config["report_config"]["path"]
+    if "project_name" in config["report_config"]:
+        path = package_data_path(config["report_config"]["project_name"])
 
     # Config: urban/rural share
     # The standard file corresponds to data for R11-SSP2
