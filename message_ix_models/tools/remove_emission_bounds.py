@@ -12,23 +12,18 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
 
-def main(
-    scen: "Scenario",
-    remove_all: bool = False,
-    *,
-    parameters: Collection[str] = ("bound_emission", "tax_emission"),
-) -> None:
-    """Remove ``bound_emission`` and ``tax_emission`` data from `scen`.
+def main(scen: "Scenario", remove_all: bool = False, remove_cumulative_only: bool = False) -> None:
+    """Remove all ``tax_emission`` and ``bound_emission`` from a given scenario.
 
     Parameters
     ----------
     scen :
         Scenario for which the parameters should be removed.
-    remove_all :
-        If :any:`True`, remove all data in the parameters. If :any:`False` (default), do
-        not remove data where ``type_year`` is equal to or less than |y0|.
-    parameters :
-        Parameters from which to remove data.
+    remove_all : bool, optional
+        If True, remove all bounds. If False, only remove bounds with type_year > y0.
+    remove_cumulative_only : bool, optional
+        If True, only remove cumulative bounds (type_year == "cumulative").
+        If False, also remove yearly bounds according to remove_all parameter.
     """
 
     info = ScenarioInfo(scen)
@@ -43,7 +38,12 @@ def main(
             df_cum = df[df.type_year == "cumulative"]
             if not df_cum.empty:
                 scen.remove_par(par, df_cum)
-                df = df[df.type_year != "cumulative"]
+            
+            # If only removing cumulative, skip yearly bounds removal
+            if remove_cumulative_only:
+                continue
+                
+            df = df[df.type_year != "cumulative"]
 
             # Remove yearly bounds
             if not remove_all:
