@@ -11,7 +11,7 @@ MARK = pytest.mark.xfail(
     reason="Input data files not available for testing.",
 )
 
-
+@MARK #P:/ene.model/MESSAGE_trade/IMO/GISIS/Crude Tankers.csv
 def test_calibrate_historical_shipping(
     project_name: str | None = None, config_name: str | None = None
 ) -> None:
