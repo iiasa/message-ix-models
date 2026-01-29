@@ -56,6 +56,7 @@ Repository = "https://github.com/iiasa/message-ix-models"
 "Issue tracker" = "https://github.com/iiasa/message-ix-models/issues"
 
 [project.optional-dependencies]
+bilateralize = ["scgraph"]
 buildings = ["jaydebeapi"]
 docs = [
   # sphinx.ext.autosummary covers the test suite, so all test requirements
@@ -81,6 +82,7 @@ tests = [
   # On RTD, pip tries to build this version from .tar.gz, but
   # it contains packaging errors that cause the job to error.
   "gamsapi > 47.6.0",
+  "scgraph",
 ]
 transport = [
   "message-ix-models[iea-web,report]",
