@@ -1,13 +1,13 @@
 report_config:
     table_def: "message_ix_models.report.legacy.default_tables_trade"
-    aggr_def: "reporting.legacy.trade_aggregates.csv"
-    var_def: "reporting.legacy.trade_variable_definitions.csv"
+    aggr_def: "led_china_aggregates.csv"
+    var_def: "led_china_variable_definitions.csv"
     #"default_variable_definitions.csv"
-    unit_yaml: "reporting.legacy.trade_units.yaml"
-    urban_perc: "reporting.legacy.default_pop_urban_rural.csv"
+    unit_yaml: "led_china_units.yaml"
+    urban_perc: "default_pop_urban_rural.csv"
     kyoto_hist: False
     lu_hist: False
-    project_name: "led_china"	
+    project_name: "led_china"
 run_tables:
     Prc:
         root: Price

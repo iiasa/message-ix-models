@@ -125,7 +125,7 @@ def report(
                 
     # Config: Reset path
     if "project_name" in config["report_config"]:
-        path = package_data_path(config["report_config"]["project_name"])
+        path = package_data_path(config["report_config"]["project_name"], "reporting", "legacy")
 
     # Config: urban/rural share
     # The standard file corresponds to data for R11-SSP2
