@@ -4,15 +4,19 @@
 # mix-models ngfs run --from="base" "glasgow+" --dry-run
 
 import logging
+from pickle import TRUE
 
-import message_ix
+import message_ix # type: ignore
 
 from message_ix_models import Context
 from message_ix_models.workflow import Workflow
 from message_ix_models.project.ngfs import interpolate_c_price
 from message_ix_models.project.engage.workflow import step_1, step_2, step_3, PolicyConfig
+from message_ix_models.model.material.util import update_macro_calib_file
+from message_ix_models.model.material.data_util import add_macro_materials
 # TODO: think about if it makes sense to integrate the interpolate_c_price function into the scenario runner
 
+from genno import Key # type: ignore
 
 log = logging.getLogger(__name__)
 
@@ -124,7 +128,7 @@ def make_scenario_runner(context):
     return sr
 
 def solve(
-    context: Context, scenario: message_ix.Scenario, model="MESSAGE"
+    context: Context, scenario: message_ix.Scenario, model="MESSAGE-MACRO"
 ) -> message_ix.Scenario:
     """Plain solve."""
     message_ix.models.DEFAULT_CPLEX_OPTIONS = {
@@ -142,6 +146,29 @@ def solve(
     scenario.set_as_default()
 
     return scenario
+
+# TODO: merge add_NPi2030 and add_NPi2025 into one function, args to config
+def add_NPi2025(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Add NPi2025 to the scenario."""
+
+    sr = make_scenario_runner(context)
+    sr.add(
+        "NPi2025", 
+        "baseline_DEFAULT_2025",
+        # must start with this scenario name (hard-coded in the general scenario runner)
+        mk_INDC=True, 
+        slice_year=2020, 
+        policy_year=2025, 
+        target_kind="Target",
+        run_reporting = False,
+        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
+    )
+    
+    sr.run_all()
+    
+    return sr.scen["NPi2025"]
 
 def add_NPi2030(
     context: Context, scenario: message_ix.Scenario
@@ -161,14 +188,14 @@ def add_NPi2030(
         solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
     )
     
-    sr.add(
-        "npi_low_dem_scen", 
-        "NPi2030", 
-        slice_year=2025, 
-        tax_emission=200,
-        run_reporting = False,
-        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
-    )
+    # sr.add(
+    #     "npi_low_dem_scen", 
+    #     "NPi2030", 
+    #     slice_year=2025, 
+    #     tax_emission=150,
+    #     run_reporting = False,
+    #     solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
+    # )
 
     sr.run_all()
     
@@ -265,10 +292,17 @@ def add_NPiREF(context, scenario):
     # sr.run_all()
     # return sr.scen["NPiREF"]
 
-    # Use interpolate for carbon prices instead
+    # Get scenario name from scenario object (after clone, this is the target scenario name)
+    scen = scenario.scenario
+    
+    # Load prc_terminal and prc_start_scen from config
     model_config = _get_ngfs_config(context)
-    prc_terminal = model_config['h_cpol']['prc_terminal']
-    prc_start_scen = "NPi2030"
+    scen_config = model_config.get(scen, {})
+    
+    prc_terminal = scen_config.get('prc_terminal')
+    prc_start_scen = scen_config.get('prc_start_scen')
+      
+    log.info(f"add_NPiREF: Using prc_terminal={prc_terminal}, prc_start_scen={prc_start_scen} for scenario '{scen}'")
     sc_ref = message_ix.Scenario(scenario.platform, scenario.model, prc_start_scen)
 
     df_price = interpolate_c_price(sc_ref, price_2100=prc_terminal)
@@ -317,10 +351,52 @@ def step_0(
 ) -> message_ix.Scenario:
     """Prepare step 0 of the EN 3 steps."""
 
-    # a step to get a scenario ready to enter the EN 3 steps
-    # so far doing nothing
-    # no need to remove the bound_emission as it carries glasgow policies
-    # later maybe add net zero steel policies here
+    # A step to get a scenario ready to enter the EN 3 steps
+    # For now only adding the lower bound of global CO2 emissions to limit high penetration of negative emissions
+    from message_ix_models.tools import add_CO2_emission_constraint
+    from message_ix_models.util import identify_nodes
+
+    context.model.regions = identify_nodes(scenario)
+
+    # Get scenario name 
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    if scen.endswith("_base"):
+        scen = scen[:-5]  # Remove "_base" suffix to get base scenario name
+    
+    # Get global_co2_bnd from config
+    global_co2_bnd = _get_ngfs_config(context).get(scen, {}).get('global_co2_bnd')
+    
+    # If not found in config, default to 0.0
+    if global_co2_bnd is None:
+        constraint_value = 0.0
+        log.info(f"No global_co2_bnd found in config for scenario '{scen}', using default: 0.0")
+    else:
+        # If it is a string (like "500.0 / (44.0 / 12.0)"), evaluate it
+        if isinstance(global_co2_bnd, str):
+            try:
+                constraint_value = eval(global_co2_bnd)
+            except Exception as e:
+                raise ValueError(
+                    f"Could not evaluate global_co2_bnd expression '{global_co2_bnd}' "
+                    f"for scenario '{scen}': {e}"
+                )
+        else:
+            # If it is already a number, use it directly
+            constraint_value = float(global_co2_bnd)
+        
+        log.info(
+            f"Using global_co2_bnd={constraint_value:.2f} for scenario '{scen}' "
+            f"(from config: {global_co2_bnd})"
+        )
+
+
+    add_CO2_emission_constraint.main(
+        scenario, 
+        reg=f"{context.model.regions}_GLB",
+        relation_name="CO2_Emission_Global_Total", 
+        constraint_value=constraint_value, 
+        type_rel="lower"
+    )
 
     scenario.set_as_default()
     return scenario
@@ -340,18 +416,11 @@ def step_1_and_solve(
     
     # Get budget from config
     budget_value = _get_ngfs_config(context).get(scen, {}).get('budget')
-    
-    # Validate budget is a number
-    try:
-        float(budget_value)  # Validate it's numeric
-    except (ValueError, TypeError):
-        raise ValueError(
-            f"Budget for scenario '{scen}' must be a number, got: {budget_value!r}. "
-            f"Please specify a numeric budget value in Gt CO₂ for the period 2010-2100."
-        )
-    
-    # Budget value from config: pass as label (bdgt parameter), method="calc"
-    policy_config = PolicyConfig(label=str(budget_value), budget="calc")
+       
+    # Use "non-calc" mode:
+    # - `label` is ignored
+    # - `budget` is passed directly to add_budget() as the bound value
+    policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
     
     step_1(context, scenario, policy_config)
     solve(context, scenario)
@@ -379,7 +448,16 @@ def step_2_and_solve(
     policy_config = PolicyConfig()
     
     step_2(context, scenario, policy_config)
-    solve(context, scenario)
+    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
+        "advind": 0,
+        "lpmethod": 4,
+        "threads": 4,
+        "epopt": 1e-6,
+        "scaind": -1,
+        # "predual": 1,
+        "barcrossalg": 0,
+    }
+    scenario.solve(model="MESSAGE")
     
     return scenario
 
@@ -410,6 +488,26 @@ def step_3_and_solve(
     step_3(context, scenario, policy_config)
     solve(context, scenario)
     
+    return scenario
+
+def calibrate_macro(context, scenario):
+    """Runs macro calibration process on a scenario."""
+
+    log.info("Calibrating macro to scenario.")
+    # update cost_ref and price_ref with new solution
+    model_config = _get_ngfs_config(context)
+    update_macro_calib_file(
+        scenario, eval(model_config["macro_data_file"])
+    )
+
+    # After solving, add macro calibration
+    scenario = add_macro_materials(
+        scenario, eval(model_config["macro_data_file"])
+    )
+
+    scenario.solve(model="MESSAGE-MACRO")
+    scenario.set_as_default()
+
     return scenario
 
 # NGFS P6 scenarios:
@@ -451,11 +549,29 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
+        "base_2025",
+        None,
+        target="ixmp://ixmp-dev/SSP_SSP2_v6.4/baseline_DEFAULT_step_14",
+    )
+
+    wf.add_step(
         "base cloned",
         "base",
-        placeholder,
         target=f"{model_name}/baseline_DEFAULT",
         clone=dict(keep_solution=True),
+    )
+
+    wf.add_step(
+        "base_2025 cloned",
+        "base_2025",
+        target=f"{model_name}/baseline_DEFAULT_2025",
+        clone=dict(keep_solution=True, shift_first_model_year=2025),
+    )
+
+    wf.add_step(
+        "base_2025 reported",
+        "base_2025 cloned",
+        report,
     )
 
     wf.add_step(
@@ -485,22 +601,30 @@ def generate(context: Context) -> Workflow:
         add_glasgow,
         target=f"{model_name}/d_strain_2030_glasgow_partial",
         target_scen = "d_strain_2030_glasgow_partial",
-        slice_yr = 2030,
+        slice_yr = 2025,
         start_scen = "h_cpol",
         level = "Partial",
     )
 
-    wf.add_step(
+    wf.add_step( # Not working for now
+        "base_2025 macro solved",
+        "base_2025 reported",
+        calibrate_macro,
+        target=f"{model_name}/base_2025_macro",
+        clone=dict(keep_solution=True),
+    )
+
+    wf.add_step( # Not working for now
         "NPi2025 solved",
-        "base reported",
-        placeholder,
+        "base_2025 macro solved",
+        add_NPi2025,
         target=f"{model_name}/NPi2025",
     )
 
     wf.add_step(
         "h_cpol_2025 solved",
-        "NPi2025 solved",
-        placeholder,
+        "NPi2025 solved", 
+        add_NPiREF,
         target=f"{model_name}/h_cpol_2025",
         clone=dict(keep_solution=False),
     )
@@ -508,9 +632,12 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "d_strain_2025 solved",
         "h_cpol_2025 solved",
-        placeholder,
-        target=f"{model_name}/d_strain_2025",
-        clone=dict(keep_solution=False),
+        add_glasgow,
+        target=f"{model_name}/d_strain_2025_glasgow_partial",
+        target_scen = "d_strain_2025_glasgow_partial",
+        slice_yr = 2025,
+        start_scen = "h_cpol_2025",
+        level = "Partial",
     )
 
     wf.add_step(
@@ -518,6 +645,12 @@ def generate(context: Context) -> Workflow:
         "base reported",
         add_NDC2030,
         target=f"{model_name}/INDC2030i_weak",
+    )
+
+    wf.add_step(
+        "NDC2030 reported",
+        "NDC2030 solved",
+        report,
     )
 
     wf.add_step(
@@ -537,8 +670,14 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "h_ndc_2035 solved",
+        "NDC2035 reported",
         "NDC2035 solved",
+        report,
+    )
+
+    wf.add_step(
+        "h_ndc_2035 solved",
+        "NDC2035 reported",
         add_NDC_forever,
         target=f"{model_name}/h_ndc_2035",
         clone=dict(keep_solution=False),
@@ -556,18 +695,16 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
+        "glasgow_partial_2030 reported",
+        "glasgow_partial_2030 solved",
+        report,
+    )
+
+    wf.add_step(
         "o_2c base built",
         "glasgow_partial_2030 solved",
         step_0,
         target=f"{model_name}/o_2c_base",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "d_delfrag base built",
-        "glasgow_partial_2030 solved",
-        step_0,
-        target=f"{model_name}/d_delfrag_base",
         clone=dict(keep_solution=False),
     )
 
@@ -583,6 +720,12 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
+        "glasgow_full_2030 reported",
+        "glasgow_full_2030 solved",
+        report,
+    )
+
+    wf.add_step(
         "o_1p5c base built",
         "glasgow_full_2030 solved",
         step_0,
@@ -591,11 +734,11 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "glasgow_partial_2035 solved",
+        "d_delfrag_2030_2035 solved",
         "h_cpol solved",
         add_glasgow,
-        target=f"{model_name}/d_delfrag_2035_glasgow_partial",
-        target_scen = "d_delfrag_2035_glasgow_partial",
+        target=f"{model_name}/d_delfrag_2030_glasgow_partial",
+        target_scen = "d_delfrag_2030_glasgow_partial",
         slice_yr = 2030,
         start_scen = "h_cpol",
         level = "Partial",
@@ -603,8 +746,40 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
+        "d_delfrag_2030_2035 reported",
+        "d_delfrag_2030_2035 solved",
+        report,
+    )
+
+    wf.add_step(
+        "d_delfrag base built",
+        "d_delfrag_2030_2035 reported",
+        step_0,
+        target=f"{model_name}/d_delfrag_base",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "d_delfrag_2035_2040 solved",
+        "h_cpol solved",
+        add_glasgow,
+        target=f"{model_name}/d_delfrag_2035_glasgow_partial",
+        target_scen = "d_delfrag_2035_glasgow_partial",
+        slice_yr = 2035,
+        start_scen = "h_cpol",
+        level = "Partial",
+        clone=dict(keep_solution=True, shift_first_model_year=2040),
+    )
+
+    wf.add_step(
+        "d_delfrag_2035_2040 reported",
+        "d_delfrag_2035_2040 solved",
+        report,
+    )
+
+    wf.add_step(
         "d_delfrag_2035 base built",
-        "glasgow_partial_2035 solved",
+        "d_delfrag_2035_2040 reported",
         step_0,
         target=f"{model_name}/d_delfrag_2035_base",
         clone=dict(keep_solution=False),
@@ -641,5 +816,8 @@ def generate(context: Context) -> Workflow:
             f"{scen} solved",
             report,
         )
+
+    reported_keys = [Key(f"{scen} reported") for scen in _scen_all]
+    wf.add("prep all", *reported_keys, placeholder, "context")
 
     return wf
