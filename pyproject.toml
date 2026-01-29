@@ -110,6 +110,7 @@ omit = [
   # The single existing test is far from enough
   "message_ix_models/report/legacy/*",
   "message_ix_models/util/migrate.py",
+  "message_ix_models/tools/bilateralize/workflow.py", # This is a workflow example
 ]
 
 [tool.mypy]
