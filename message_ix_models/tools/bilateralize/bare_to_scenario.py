@@ -258,11 +258,11 @@ def build_parameter_sheets(
 
 
 def calibrate_historical_shipping(
-    config: dict | None,
-    trade_dict: dict | None,
-    covered_tec: list[str] | None,
-    project_name: str | None,
-    config_name: str | None,
+    config: dict,
+    trade_dict: dict,
+    covered_tec: list[str],
+    project_name: str | None = None,
+    config_name: str | None = None,
 ):
     # Historical new capacity for maritime shipping
     shipping_fuel_dict = config["shipping_fuels"]

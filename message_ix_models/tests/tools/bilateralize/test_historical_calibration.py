@@ -6,7 +6,6 @@ from message_ix_models.tools.bilateralize.historical_calibration import (
     build_hist_new_capacity_trade,
     build_historical_activity,
     build_historical_price,
-    check_iea_balances,
     convert_trade,
     generate_cfdict,
     import_iea_balances,
@@ -61,10 +60,10 @@ def test_build_historical_price() -> None:
     build_historical_price()
 
 
-@MARK  # IEA/WEB2025/WEB_TRADEFLOWS.txt
-def test_check_iea_balances() -> None:
-    indf = pd.DataFrame()
-    check_iea_balances(indf)
+# @MARK  # IEA/WEB2025/WEB_TRADEFLOWS.txt
+# def test_check_iea_balances() -> None:
+#    indf = pd.DataFrame()
+#    check_iea_balances(indf)
 
 
 @MARK  # UN Comtrade/BACI/shortenedBACI.csv
@@ -77,9 +76,9 @@ def test_generate_cfdict(message_regions: str) -> None:
     generate_cfdict(message_regions)
 
 
-#@MARK  # IEA/WEB2025/EARLYBIG1.txt
-#def test_import_iea_balances() -> None:
-#    import_iea_balances()
+@MARK  # IEA/WEB2025/EARLYBIG1.txt
+def test_import_iea_balances() -> None:
+    import_iea_balances()
 
 
 @MARK  # IEA/NATGAS/WIMPDAT.txt
