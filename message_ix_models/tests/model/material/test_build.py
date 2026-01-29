@@ -39,7 +39,7 @@ def test_make_spec(regions_arg, regions_exp, material):
 #: - https://github.com/iiasa/message-ix-models/pull/345
 MARKS = [
     # pytest.mark.xfail(reason="Times out"),  # Used with pytest.mark.timeout
-    MARK["#447"],
+    MARK[11],
 ]
 
 

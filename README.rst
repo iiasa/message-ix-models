@@ -10,7 +10,7 @@ See the `online documentation <https://docs.messageix.org/projects/models/>`_ fo
 License
 =======
 
-Copyright © 2020–2025 IIASA Energy, Climate, and Environment (ECE) program
+Copyright © 2020–2026 IIASA Energy, Climate, and Environment (ECE) program
 
 Licensed under the Apache License, version 2.0.
 

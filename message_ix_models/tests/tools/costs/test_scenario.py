@@ -30,6 +30,7 @@ def scenario(request: "pytest.FixtureRequest", test_context: "Context") -> "Scen
 
 def test_filter_fix_cost_by_lifetime(scenario: "Scenario") -> None:
     # Function runs without error
+    # TODO Expand by adding actual data to `scenario`
     filter_fix_cost_by_lifetime(scenario)
 
 
