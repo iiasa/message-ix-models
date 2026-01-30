@@ -19,11 +19,11 @@ level_4:
 
 level_3:
   Non-Energy Use|Chemicals|Liquids|Oil:
-    short: fe_fs_hvc_liq
+    short: fe_fs_chem_liq_oil
     components:
       [ fe_fs_hvc_liq_oil, fe_nh3_oil ]
   Non-Energy Use|Chemicals|Liquids|Biomass:
-    short: fe_fs_hvc_liq
+    short: fe_fs_chem_liq_bio
     components:
       [ fe_fs_hvc_liq_bio ]
 
