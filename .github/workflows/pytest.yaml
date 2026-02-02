@@ -4,9 +4,9 @@ on:
   # To debug the workflow, uncomment this entry AND comment pull_request_target
   # pull_request:
   #   branches: [ main ]
-  pull_request_target:
-    branches: [ main, "migrate**" ]
-    types: [ labeled, opened, reopened, synchronize ]
+  # pull_request_target:
+  #   branches: [ main, "migrate**" ]
+  #   types: [ labeled, opened, reopened, synchronize ]
   schedule:
   - cron: "0 5 * * *"  # = 06:00 CET = 07:00 CEST
 
