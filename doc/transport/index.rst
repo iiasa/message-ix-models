@@ -28,6 +28,9 @@ This documentation of MESSAGEix-Transport, its inputs, configuration, implementa
 
 - :doc:`input` (separate page)—line (1) in the diagram.
 - :ref:`transport-implementation` (below)—between lines (1) and (3) in the diagram.
+
+  - :doc:`ssp` (separate page)—SSP-specific inputs and data.
+
 - :doc:`output` (separate page)—between lines (3) and (4) in the diagram.
 
 .. toctree::
@@ -36,6 +39,7 @@ This documentation of MESSAGEix-Transport, its inputs, configuration, implementa
 
    input
    output
+   ssp
 
 Other topics covered on this page:
 
