@@ -31,25 +31,26 @@ prepare_edit_files(project_name = 'led_china',
 
 # Add constraints to the dictionary
 constraint_pars = ["initial_activity_lo", "initial_activity_up",
-                   "growth_activity_lo", "growth_activity_up"]
-for tec in config['constraint_values'].keys():
-    for par in constraint_pars:
-        df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
-        if par in ["initial_activity_lo", "initial_activity_up"]:
-            df["value"] = 2
-        if par in ["growth_activity_lo", "growth_activity_up"]:
-            constraint_value = config['constraint_values'][tec][par]
-            if isinstance(constraint_value, dict):
-                for region in constraint_value.keys():
-                    df.loc[df["node_loc"] == region, "value"] = constraint_value[region]
-            else:
-                df["value"] = constraint_value
-        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index=False)
+                   "growth_activity_lo", "growth_activity_up",
+                   "soft_activity_lo", "soft_activity_up"]
+#for tec in config['constraint_values'].keys():
+#    for par in constraint_pars:
+#        df = pd.read_csv(os.path.join(data_path, tec, "edit_files", par + ".csv"))
+#        if par in ["initial_activity_lo", "initial_activity_up"]:
+#            df["value"] = 2
+#        if par in ["growth_activity_lo", "growth_activity_up"]:
+#            constraint_value = config['constraint_values'][tec][par]
+#            if isinstance(constraint_value, dict):
+#                for region in constraint_value.keys():
+#                    df.loc[df["node_loc"] == region, "value"] = constraint_value[region]
+#            else:
+#                df["value"] = constraint_value
+#        df.to_csv(os.path.join(data_path, tec, "bare_files", par + ".csv"), index=False)
 
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'led_china', 
-                              config_name = 'config.yaml')
-
+                              config_name = 'config.yaml',
+                              p_drive_access = True)
 # Update base scenarios
 for model_scen in models_scenarios.keys():
     base_model = models_scenarios[model_scen]['model']
