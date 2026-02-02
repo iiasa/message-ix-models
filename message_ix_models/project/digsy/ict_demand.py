@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 import pint_pandas  # noqa: F401
+import pyam
 from message_ix.util import make_df
 
 from message_ix_models import ScenarioInfo
@@ -328,3 +329,43 @@ def gen_ict_demands(context, scenario, ict_scenario, ict_version) -> pd.DataFram
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
     adjust_act_calib(ict_demand_ue, scenario)
     return pd.concat([ict_demand, rc_demand_adjusted])
+
+
+def read_ict_r5(scenario, ssp):
+    scen_map = {
+        "Low": {
+            "Data centre": "Lower Bound DC (TWh)",
+            "Telecom": 0.78,
+        },
+        "Medium": {
+            "Data centre": "Mean DC (TWh)",
+            "Telecom": 0.78,
+        },
+        "High": {
+            "Data centre": "Upper Bound DC (TWh)",
+            "Telecom": 0.91,
+        },
+    }
+    path = private_data_path(
+        "projects", "digsy", "R12_Clean IAM version_Finalised.xlsx"
+    )
+    df = pd.read_excel(path, sheet_name="R5 DC", index_col=[2, 1, 0])
+    df_iea = df.loc["IEA (Base)"].loc[[2020, 2025]]["Central Estimate DC (TWh)"]
+    df_2030 = df.loc["IEA (Base)"].loc[[2030]][scen_map[scenario]["Data centre"]]
+    df_ssp = df.loc[ssp][scen_map[scenario]["Data centre"]]
+    df = (
+        pd.DataFrame(pd.concat([df_iea, df_2030, df_ssp]))
+        .rename(columns={0: "Value"})
+        .reset_index()
+    ).assign(Unit="GWa", scenario=f"{ssp} - {scenario} ICT", model="Input data")
+    df_dc = df.assign(Variable="Final Energy|Commercial|ICT|Data Centers")
+    df_tc = df_dc.assign(
+        Value=lambda x: x["Value"] * scen_map[scenario]["Telecom"],
+        Variable="Final Energy|Commercial|ICT|Infrastructure",
+    )
+    py_df = pyam.IamDataFrame(pd.concat([df_dc, df_tc])).convert_unit("GWa", "EJ")
+    return py_df
+
+
+if __name__ == "__main__":
+    read_ict_r5("High", "SSP2")
