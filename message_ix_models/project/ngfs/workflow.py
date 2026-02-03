@@ -482,6 +482,8 @@ def step_3_and_solve(
         step_3_type_emission = ["TCE_non-CO2"]
     elif isinstance(step_3_type_emission, str):
         step_3_type_emission = [step_3_type_emission]
+    elif isinstance(step_3_type_emission, list):
+        step_3_type_emission = step_3_type_emission
    
     policy_config = PolicyConfig(step_3_type_emission=step_3_type_emission)
     
