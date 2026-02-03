@@ -239,6 +239,11 @@ vars:
         {technology: [meth_ng, meth_ng_ccs], mode: feedstock, commodity: gas, level: feedstock}
     short:
         fe_fs_meth_gas
+  Non-Energy Use|Chemicals|Methanol|Gases|Biomass:
+    filter:
+      { technology: [ meth_ng, meth_ng_ccs ], mode: feedstock, commodity: biogas, level: feedstock }
+    short:
+      fe_fs_meth_gas_bio
 
   Non-Energy Use|Chemicals|Methanol|Hydrogen:
     filter:

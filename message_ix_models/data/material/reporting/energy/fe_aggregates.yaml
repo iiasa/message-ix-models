@@ -386,7 +386,7 @@ level_1:
   Non-Energy Use|Chemicals|Methanol:
     short: fe_fs_meth
     components:
-      [ fe_fs_meth_coal, fe_fs_meth_gas, fe_fs_meth_bio, fe_fs_meth_h2 ]
+      [ fe_fs_meth_coal, fe_fs_meth_gas, fe_fs_meth_gas_bio, fe_fs_meth_bio, fe_fs_meth_h2 ]
   Non-Energy Use|Chemicals|Ammonia|Solids:
     short: fe_fs_nh3_solids
     components:
@@ -410,7 +410,7 @@ level_1:
   Non-Energy Use|Chemicals|Methanol|Gases:
     short: fe_fs_meth_gases
     components:
-      [ fe_fs_meth_gas ]
+      [ fe_fs_meth_gas, fe_fs_meth_gas_bio ]
   Non-Energy Use|Chemicals|High-Value Chemicals|Liquids|Oil|Steam Cracking:
     short: fe_fs_hvc_sc_oil
     components:
