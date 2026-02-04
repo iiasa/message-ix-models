@@ -447,7 +447,7 @@ def assign_input_outpt(
     split: str,
     param_name: str,
     regions: pd.DataFrame,
-    val: Union[float, int],
+    val: float | int,
     t: str,
     rg: str,
     global_region: str,
