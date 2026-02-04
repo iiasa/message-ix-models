@@ -140,7 +140,7 @@ def exponential(x: float | list[float], b: float, m: float) -> float:
 
     Returns
     -------
-    Union[float, list[float]]
+    float | list[float]
         function value for given b, m and x
     """
     return b * m**x
@@ -335,7 +335,7 @@ def path_fallback(context_or_regions: Context | str, *parts) -> Path:
 
 
 def add_region_column(
-    df: pd.DataFrame, file_path: Union[str, Path], iso_column: str = "COUNTRY"
+    df: pd.DataFrame, file_path: str | Path, iso_column: str = "COUNTRY"
 ) -> pd.Series:
     """Convenience function to add R12 region column to dataframe."""
     yaml_data = read_yaml_file(file_path)
