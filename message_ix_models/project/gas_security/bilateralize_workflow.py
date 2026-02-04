@@ -58,13 +58,13 @@ for con in constraint_pars:
         print(f"......{tec}")
         df = pd.read_csv(os.path.join(package_data_path("gas_security", "scenario_updates", tec), con + ".csv"))
 
-        df['omit'] = 1
-        df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu', 'gas_piped_exp_weu', 
-                                                     'LNG_shipped_exp_eeu', 'gas_piped_exp_eeu'])) |\
-                              (df['node_loc'].isin(['R12_WEU', 'R12_EEU'])),
-                             0, df['omit'])
-        df = df[df['omit'] == 0]
-        df = df.drop(columns = ['omit'])
+        #df['omit'] = 1
+        #df['omit'] = np.where((df['technology'].isin(['LNG_shipped_exp_weu', 'gas_piped_exp_weu', 
+        #                                             'LNG_shipped_exp_eeu', 'gas_piped_exp_eeu'])) |\
+        #                      (df['node_loc'].isin(['R12_WEU', 'R12_EEU'])),
+        #                     0, df['omit'])
+        #df = df[df['omit'] == 0]
+        #df = df.drop(columns = ['omit'])
         
         df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
         
@@ -93,5 +93,5 @@ for model_scen in models_scenarios.keys():
                    start_model = base_model,
                    start_scen = base_scen,
                    target_model = 'gas_security',
-                   target_scen = model_scen,
-                   extra_parameter_updates = liquefaction_parameters)
+                   target_scen = model_scen,)
+                   #extra_parameter_updates = liquefaction_parameters)
