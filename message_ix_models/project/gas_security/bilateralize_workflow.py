@@ -52,7 +52,7 @@ for model_scen in models_scenarios.keys():
 
     print("Setting up scenario")
     load_and_solve(trade_dict = trade_dict,
-                   solve = True,
+                   solve = False,
                    project_name = 'gas_security', 
                    config_name = 'config.yaml', 
                    start_model = base_model,
@@ -60,3 +60,29 @@ for model_scen in models_scenarios.keys():
                    target_model = 'gas_security',
                    target_scen = model_scen,
                    extra_parameter_updates = liquefaction_parameters)
+
+    print("Updating extraction constraints")
+    mp = ixmp.Platform()
+    
+    base_scenario = message_ix.Scenario(mp, model='gas_security', scenario=model_scen)
+    out_scenario = base_scenario.clone('gas_security', model_scen)
+    out_scenario.set_as_default()
+
+    for g in ['growth_activity_up']:
+        updf = out_scenario.par(g)
+        updf = updf[(updf['technology'].str.contains('gas_extr_mpen'))]
+        updf = updf[updf['node_loc'].isin(['R12_WEU'])]
+    
+        remdf = updf.copy()
+        if g == 'growth_activity_up':
+            updf['value'] = 0.01
+        elif g == 'growth_activity_lo':
+            updf['value'] = -0.01
+            
+        with out_scenario.transact("update growth activity to gas_extr_mpen"):
+            out_scenario.remove_par(g, remdf)
+            out_scenario.add_par(g, updf)
+
+    print("Solve scenario")
+    out_scenario.solve()
+    mp.close_db()
