@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from message_ix_models.util.sdmx import StructureFactory
@@ -19,10 +20,15 @@ class CL_TRANSPORT_SCENARIO(StructureFactory["common.Codelist"]):
     def create(cls) -> "common.Codelist":
         from sdmx.model import common
 
+        from message_ix_models.model.transport.config import CL_SCENARIO
         from message_ix_models.util.sdmx import read
 
         # Other data structures
         IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
+
+        # Retrieve the code "M SSP2" from IIASA_ECE:CL_TRANSPORT_SCENARIO.
+        # The annotations on this code control .model.transport.build().
+        transport_ssp2 = CL_SCENARIO.get()["M SSP2"]
 
         cl: "common.Codelist" = common.Codelist(
             id=cls.urn.partition(":")[-1],
@@ -50,6 +56,7 @@ class CL_TRANSPORT_SCENARIO(StructureFactory["common.Codelist"]):
                     id=id_,
                     name=f"{market}, {fuel_economy}",
                     description="regional=convergence, material=default",
+                    annotations=deepcopy(transport_ssp2.annotations),
                 )
             )
 
