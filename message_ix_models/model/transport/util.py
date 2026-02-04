@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Hashable, Iterable, Sequence
-from hashlib import blake2s
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -69,11 +68,6 @@ def region_path_fallback(context_or_regions: Context | str, *parts) -> Path:
             return c
 
     raise FileNotFoundError(candidates)
-
-
-def short_hash(value: str, len: int = 3) -> str:
-    """Return a short (length `len`) hash of `value`."""
-    return blake2s(value.encode()).hexdigest()[:len]
 
 
 def sum_numeric(iterable: Iterable, /, start=0) -> "numbers.Real":

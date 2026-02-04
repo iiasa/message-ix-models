@@ -11,12 +11,11 @@ from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
 from message_ix_models.project.ssp import SSP_2024, ssp_field
 from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
-from message_ix_models.util import package_data_path
+from message_ix_models.util import package_data_path, short_hash
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.sdmx import AnnotationsMixIn, StructureFactory
 
 from .policy import ExogenousEmissionPrice, TaxEmission
-from .util import short_hash
 
 if TYPE_CHECKING:
     from sdmx.model import common

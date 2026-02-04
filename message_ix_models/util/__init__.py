@@ -3,6 +3,7 @@ from collections import ChainMap, defaultdict
 from collections.abc import Collection, Iterable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from functools import partial, singledispatch
+from hashlib import blake2s
 from itertools import count
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Protocol
@@ -779,6 +780,11 @@ def _(data: "MutableParameterData") -> "MutableParameterData":
     for key, df in data.items():
         data[key] = same_time(df)
     return data
+
+
+def short_hash(value: str, len: int = 3) -> str:
+    """Return a short (length `len`) hash of `value`."""
+    return blake2s(value.encode()).hexdigest()[:len]
 
 
 def show_versions() -> str:
