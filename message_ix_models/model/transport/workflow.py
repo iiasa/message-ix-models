@@ -2,10 +2,8 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING, Literal
 
-from genno import KeyExistsError
-
 from message_ix_models.model.workflow import Config as WorkflowConfig
-from message_ix_models.util import minimum_version, short_hash
+from message_ix_models.util import minimum_version
 
 if TYPE_CHECKING:
     from sdmx.model.common import Code
@@ -204,28 +202,20 @@ def maybe_use_temporary_platform(context: "Context") -> None:
 
 @minimum_version("message_ix 3.11")
 def generate(
-    context: "Context",
-    *,
-    report_key: str = "transport all",
-    dry_run: bool = False,
-    **options,
+    context: "Context", *, report_key: str = "transport all", **options
 ) -> "Workflow":
     """Generate the MESSAGEix-Transport :class:`.Workflow`."""
-    from message_ix.tools.migrate import initial_new_capacity_up_v311
 
-    from message_ix_models import Workflow
-    from message_ix_models.model.workflow import solve, step_0
-    from message_ix_models.report import report
+    from message_ix_models.model.workflow import from_codelist
 
-    from . import build
     from .config import CL_SCENARIO, Config
-    from .report import multi
 
     # Handle CLI options
     # TODO respect quiet
     options.pop("target_model_name", None)  # Stored on context.core.dest_scenario
     options.pop("target_scenario_name", None)  # Stored on context.core.dest_scenario
     base_scenario_method = options.pop("base_scenario")
+    del base_scenario_method
 
     maybe_use_temporary_platform(context)
 
@@ -234,90 +224,8 @@ def generate(
 
     # Set the default .report.Config key for ".* reported" steps
     context.report.key = report_key
-    context.report.register("model.transport")
 
-    # Create the workflow
-    wf = Workflow(context)
+    # Set options for solving
+    context.solve = SOLVE_CONFIG
 
-    # Collections of step names
-    debug, reported, targets = [], [], []
-
-    # Iterate over all scenarios in IIASA_ECE:CL_TRANSPORT_SCENARIO
-    for scenario_code in CL_SCENARIO.get():
-        # Make a copy of the base .transport.Config for this particular workflow branch
-        config = deepcopy(context.transport)
-
-        # Update the .transport.Config from the `scenario_code`
-        config.code = scenario_code
-
-        # Short label for workflow step names
-        label = config.code.id
-
-        # Identify the base scenario
-        base_url = base_scenario_url(context, config, base_scenario_method)
-        # log.debug(f"Base scenario for scenario={label_full!r}: {base_url}")
-        # log.debug(f"{config.policy = }")
-
-        # Name of the base step
-        base = f"base {short_hash(base_url)}"
-
-        try:
-            # Load the base model scenario
-            wf.add_step(base, None, target=base_url)
-        except KeyExistsError:
-            # Base scenario URL is identical to another (ssp, policy) combination; use
-            # the scenario returned by that step
-            pass
-
-        # Identify the target of the build step
-        target_url = config.get_target_url(context)
-        targets.append(target_url)
-
-        # Build MESSAGEix-Transport on the scenario
-        name = wf.add_step(
-            f"{label} built",
-            base,
-            build.main,
-            target=target_url,
-            clone=True,
-            config=config,
-        )
-
-        if config.policy:
-            # Prepare emissions accounting for carbon pricing
-            kw = dict(remove_emission_parameters=("bound_emission",))
-            name = wf.add_step(f"{label} step_0", name, step_0, **kw)
-
-        # Adjust initial_new_capacity_up values for message_ix#924
-        name = wf.add_step(
-            f"{label} incu adjusted",
-            name,
-            lambda _, s: initial_new_capacity_up_v311(s, safety_factor=1.05),
-        )
-
-        # 'Simulate' build and produce debug outputs
-        debug.append(f"{label} debug build")
-        wf.add_step(debug[-1], base, build.main, config=config, dry_run=True)
-
-        # Solve
-        wf.add_step(f"{label} solved", name, solve, config=SOLVE_CONFIG)
-
-        # Report
-        reported.append(f"{label} reported")
-        wf.add_step(reported[-1], f"{label} solved", report)
-
-    # NB the following use genno.Computer.add(), not .Workflow.add_step(). This is
-    #    because the operations are not WorkflowSteps that receive, modify, and return
-    #    Scenario objects—only ordinary Python functions.
-
-    # Compare debug outputs from multiple simulated builds
-    wf.add("debug build", build.debug_multi, "context", *debug)
-
-    # Report (including plot) using data from multiple, solved scenarios
-    wf.add("report multi", multi, "context", targets=targets)
-
-    # Report all the scenarios
-    wf.add("all reported", reported)
-    wf.default_key = "all reported"
-
-    return wf
+    return from_codelist(context, CL_SCENARIO)

@@ -1,6 +1,6 @@
 import pytest
 
-from message_ix_models.model.transport.workflow import generate
+from message_ix_models.model.transport.workflow import SOLVE_CONFIG, generate
 from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
 from message_ix_models.project.edits.structure import SCENARIO as EDITS
 
@@ -22,6 +22,13 @@ def test_generate(test_context, base_scenario) -> None:
     # Workflow is generated
     wf = generate(test_context, base_scenario=base_scenario)
 
+    # SOLVE_CONFIG is stored to be used for "… solve" steps
+    ctx = wf.graph["context"]
+    assert ctx.solve == SOLVE_CONFIG
+
+    # The default reporting key is set to "transport all"
+    assert "transport all" == ctx.report.key
+
     # Workflow contains some expected steps
     assert "EDITS-HA reported" in wf
     assert "LED-SSP1 reported" in wf
@@ -31,12 +38,9 @@ def test_generate(test_context, base_scenario) -> None:
     assert "SSP5 exo price 5cab reported" in wf
 
     # WorkflowStep objects store expected configuration for certain projects
-    assert (
-        DIGSY["BEST-C"]
-        is wf.graph["DIGSY-BEST-C built"][0].kwargs["config"].project["DIGSY"]
-    )
-    assert (
-        EDITS["HA"] is wf.graph["EDITS-HA built"][0].kwargs["config"].project["EDITS"]
-    )
+    step = wf.graph["DIGSY-BEST-C T built"][0]
+    assert DIGSY["BEST-C"] is step.kwargs["config"].project["DIGSY"]
+    step = wf.graph["EDITS-HA T built"][0]
+    assert EDITS["HA"] is step.kwargs["config"].project["EDITS"]
 
     # wf.run("LED-SSP1 reported")  # NB Only works with base_scenario="bare"
