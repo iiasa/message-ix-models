@@ -8,7 +8,7 @@ env:
 
   # Ref to clone in the workflow.
   # Default: use github.ref, e.g. 'main' for the schedule trigger.
-  ref: ""
+  ref: "main"
 
   # Starting point of the workflow.
   #
