@@ -6,6 +6,10 @@ env:
   target-ref: dev
   target-workflow: transport
 
+  # Ref to clone in the workflow.
+  # Default: use github.ref, e.g. 'main' for the schedule trigger.
+  ref: ""
+
   # Starting point of the workflow.
   #
   # Use this value to build from a certain scenario:
@@ -79,7 +83,7 @@ jobs:
     - name: Assemble JSON payload
       run: |
         echo '{
-          "ref": "${{ github.ref }}",
+          "ref": "${{ env.ref || github.ref }}",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}
