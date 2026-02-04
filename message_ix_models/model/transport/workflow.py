@@ -8,6 +8,8 @@ from message_ix_models.model.workflow import Config as WorkflowConfig
 from message_ix_models.util import minimum_version, short_hash
 
 if TYPE_CHECKING:
+    from sdmx.model.common import Code
+
     from message_ix_models.util.context import Context
     from message_ix_models.workflow import Workflow
 
@@ -37,6 +39,108 @@ SOLVE_CONFIG = WorkflowConfig(
         ),
     ),
 )
+
+
+def add_steps(wf: "Workflow", base: str, scenario_code: "Code") -> str:
+    """Add 0 or more MESSAGEix-Transport workflow steps to `wf`.
+
+    If `scenario_code` does not contain annotations necessary to configure
+    MESSAGEix-Transport, `base` is returned and no changes are made to `wf`.
+
+    Otherwise, the following steps are added:
+
+    1. :func:`.transport.build.main`. This step clones the Scenario from `base` to a
+       URL given by :meth:`.Config.get_target_url`.
+    2. If :attr:`.Config.policy` is truth-y (that is, contains any :class:`.Policy`
+       instances), call :func:`.model.workflow.step_0` and remove values for the
+       "bound_emission" parameter. Otherwise, no action.
+    3. :func:`message_ix.tools.migrate.initial_new_capacity_up_v311`.
+
+    The name of (3) is returned.
+
+    As well, the following additional steps are added:
+
+    - "[…] debug build". This is the same as (1), except giving :py:`dry_run=True`,
+      so the scenario is not modified; only debug output is generated. See
+      :func:`.transport.build.main`.
+    - "T debug multi": Collects all "[…] debug build" steps. Repeated calls to
+      :func:`.add_steps` extend the list.
+    - "T report multi": :func:`.transport.report.multi`, called on all the target URLs
+      for (1). Repeated calls to :func:`.add_steps` extend the list.
+    """
+    from message_ix.tools.migrate import initial_new_capacity_up_v311
+
+    from message_ix_models.model.workflow import step_0
+
+    from . import build
+    from .config import Config
+    from .report import callback, multi
+
+    # Retrieve the Context used for the Workflow
+    context: "Context" = wf.graph["context"]
+
+    try:
+        # Retrieve .transport.Config and make a copy for this particular workflow branch
+        config = deepcopy(context.transport)
+    except AttributeError:
+        # Not yet configured → use defaults
+        config = Config.from_context(context)
+
+    try:
+        # Update the .transport.Config from the `scenario_code`
+        config.code = scenario_code
+    except KeyError:
+        # `scenario_code` does not contain annotations for .model.transport; do nothing
+        return base
+
+    # Use transport reporting
+    if callback not in context.report.callback:
+        context.report.register(callback)
+
+    # Short label for workflow step names
+    label = f"{config.code.id} T"
+
+    # Identify the target of the build step
+    target_url = config.get_target_url(context)
+
+    # Build MESSAGEix-Transport on the scenario
+    name = wf.add_step(
+        f"{label} built", base, build.main, target=target_url, clone=True, config=config
+    )
+
+    if config.policy:
+        # Prepare emissions accounting for carbon pricing
+        kw = dict(remove_emission_parameters=("bound_emission",))
+        name = wf.add_step(f"{label} step_0", name, step_0, **kw)
+
+    # Adjust initial_new_capacity_up values for message_ix#924
+    name = wf.add_step(
+        f"{label} incu adjusted",
+        name,
+        lambda _, s: initial_new_capacity_up_v311(s, safety_factor=1.05),
+    )
+
+    # 'Simulate' build and produce debug outputs
+    debug = f"{label} debug build"
+    wf.add_step(debug, base, build.main, config=config, dry_run=True)
+
+    # Compare debug outputs from multiple simulated builds
+    if "T debug build" not in wf:
+        # NB Here we use genno.Computer.add(), not .Workflow.add_step(). This is because
+        #    because the operations are not WorkflowSteps that receive, modify, and
+        #    return Scenario objects—only ordinary Python functions.
+        wf.add("T debug build", build.debug_multi, "context")
+    # Append the step ID for the debug step
+    wf.graph["T debug build"] += (debug,)
+
+    # Report (including plot) using data from multiple, solved scenarios
+    if "T report multi" not in wf:
+        wf.add("T report multi", multi, "context", "T targets")
+        wf.add("T targets", [])
+    # Append this target URL to the list of target URLs
+    wf.graph["T targets"].append(target_url)
+
+    return name
 
 
 def base_scenario_url(
