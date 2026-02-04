@@ -138,8 +138,12 @@ def solve(
 ):
     """Common model solve step for ENGAGE, NAVIGATE, and other workflows.
 
-    The steps respond settings from an optional instance of :class:`Config` passed as a
-    keyword argument.
+    The steps respond to settings from a :class:`Config` instance. In order of
+    precedence:
+
+    1. The keyword argument `config`.
+    2. The "solve" key on `context`.
+    3. A default instance of :class:`Config`
 
     *Before* `scenario` is solved:
 
@@ -162,10 +166,15 @@ def solve(
        :obj:`True`.
     """
 
-    config = config or Config()
+    # Identify configuration
+    try:
+        config = config or context.solve
+    except AttributeError:
+        config = Config()
 
     # Set reserve margin values
     if config.reserve_margin:
+        # FIXME Use an analogous function in message-ix-models, with tests
         from message_data.scenario_generation.reserve_margin import res_marg
 
         res_marg.main(scenario)
@@ -179,6 +188,7 @@ def solve(
     if config.demand_scenario:
         # Retrieve DEMAND variable data from a different scenario and set as values
         # for the demand parameter
+        # FIXME Use an analogous function in message-ix-models, with tests
         from message_data.tools.utilities import transfer_demands
 
         source = Scenario(scenario.platform, **config.demand_scenario)
