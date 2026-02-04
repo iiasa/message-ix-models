@@ -98,41 +98,6 @@ def maybe_use_temporary_platform(context: "Context") -> None:
     log.info("No --platform/--url; using temporary, in-memory database")
 
 
-def scenario_url(context: "Context", label: str | None = None) -> str:
-    """Construct a target URL for a built MESSAGEix-Transport scenario.
-
-    If the :attr:`.dest` URL is set on `context` (for instance, provided via the
-    :program:`--dest` CLI option), this URL returned with `label` appended to the
-    scenario name.
-
-    If not, a form is used like:
-
-    - :py:`model = "MESSAGEix-GLOBIOM 1.1-T-{regions}"`. Any value of the "model" key
-      from :attr:`.core.Config.dest_scenario` is appended.
-    - :py:`scenario = "{label}"`. Any value of the "scenario" key from
-      :attr:`.core.Config.dest_scenario` is appended; if this is not set, then either
-      "policy" (if :attr:`.transport.Config.policy` is set) or "baseline".
-    """
-    # Construct a URL template for MESSAGEix-Transport scenarios
-    if context.core.dest:
-        # Value from --dest CLI option
-        # TODO Check that this works if a version # is specified
-        return f"{context.dest} {label or ''}".strip()
-    else:
-        # Values from --model-extra, --scenario-extra CLI options
-        m_extra = context.core.dest_scenario.get("model", "")
-        s_extra = context.core.dest_scenario.get("scenario") or (
-            "policy" if context.transport.policy else "baseline"
-        )
-
-        return "/".join(
-            (
-                f"MESSAGEix-GLOBIOM 1.1-T-{context.model.regions} {m_extra}".rstrip(),
-                f"{label or ''} {s_extra}".strip(),
-            )
-        )
-
-
 @minimum_version("message_ix 3.11")
 def generate(
     context: "Context",
@@ -181,8 +146,8 @@ def generate(
         # Update the .transport.Config from the `scenario_code`
         config.code = scenario_code
 
-        # Short and long labels for workflow step names and scenario names
-        label, label_full = config.code.id, config.label
+        # Short label for workflow step names
+        label = config.code.id
 
         # Identify the base scenario
         base_url = base_scenario_url(context, config, base_scenario_method)
@@ -201,7 +166,7 @@ def generate(
             pass
 
         # Identify the target of the build step
-        target_url = scenario_url(context, label_full)
+        target_url = config.get_target_url(context)
         targets.append(target_url)
 
         # Build MESSAGEix-Transport on the scenario
