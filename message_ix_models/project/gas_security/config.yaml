@@ -113,8 +113,8 @@ constrained_tec:
   - LNG_shipped
     
 # SENSITIVITY SCENARIOS
-sensitivities:
-  FSU_EUR:
+restriction:
+  FSU:
     exporters:
       - R12_FSU
     importers:
@@ -125,19 +125,3 @@ sensitivities:
       - gas_piped_exp_weu
       - LNG_shipped_exp_eeu
       - LNG_shipped_exp_weu
-      
-  FSU_EUR_NAM_PAO:
-    exporters:
-      - R12_FSU
-    importers:
-      - R12_WEU
-      - R12_EEU
-      - R12_PAO
-      - R12_NAM
-    technologies:
-      - gas_piped_exp_eeu
-      - gas_piped_exp_weu
-      - LNG_shipped_exp_eeu
-      - LNG_shipped_exp_weu
-      - LNG_shipped_exp_nam
-      - LNG_shipped_exp_pao

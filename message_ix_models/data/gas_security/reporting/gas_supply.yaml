@@ -1,0 +1,118 @@
+# collection of industry specific Final Energy non-energy reporting variables
+# grouped by sector and fuel
+# each variable specifies a list of filter for genno.operator.select()
+
+var:
+  out
+
+iamc_prefix:
+  Gas Supply|
+
+unit: GWa
+
+vars:
+# Piped gas imports
+  Gas Supply|Imports|Piped Gas|:
+    filter:
+      { technology: [gas_piped_exp], mode: M1, commodity: gas, level: [piped] }
+    short:
+      gas_piped_exp
+
+# Shipped LNG imports
+  Gas Supply|Imports|Shipped LNG|:
+    filter:
+      { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: [shipped] }
+    short:
+      LNG_shipped_exp
+
+# Piped gas imports
+  Gas Supply|Imports|Piped Gas (Base)|:
+    filter:
+      { technology: [gas_imp], mode: M1, commodity: gas, level: secondary }
+    short:
+      gas_imp
+
+# Shipped LNG imports
+  Gas Supply|Imports|Shipped LNG (Base)|:
+    filter:
+      { technology: LNG_imp, mode: M1, commodity: LNG, level: secondary }
+    short:
+      LNG_imp
+
+# Coal gasification
+  Gas Supply|Domestic|Coal Gasification:
+    filter:
+      { technology: [coal_gas], mode: M1, commodity: gas, level: secondary }
+    short:
+      coal_gas_dom
+
+# Aggregate gas extraction
+  Gas Supply|Domestic|Gas Extraction:
+    filter:
+      { technology: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5, gas_extr_6, gas_extr_7], mode: M1, commodity: gas, level: primary }
+    short:
+      extr_gas_dom
+
+# Aggregate gas extraction
+#  Gas Supply|Domestic|Gas Extraction|Category 1:
+#    filter:
+#      { technology: [gas_extr_1], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+#  Gas Supply|Domestic|Gas Extraction|Category 2:
+#    filter:
+#      { technology: [gas_extr_2], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+#  Gas Supply|Domestic|Gas Extraction|Category 3:
+#    filter:
+#      { technology: [gas_extr_3], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+#  Gas Supply|Domestic|Gas Extraction|Category 4:
+#    filter:
+#      { technology: [gas_extr_4], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+#  Gas Supply|Domestic|Gas Extraction|Category 5:
+#    filter:
+#      { technology: [gas_extr_5], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+#  Gas Supply|Domestic|Gas Extraction|Category 6:
+#    filter:
+#      { technology: [gas_extr_6], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+#  Gas Supply|Domestic|Gas Extraction|Category 7:
+#    filter:
+#      { technology: [gas_extr_7], mode: M1, commodity: gas, level: primary }
+#    short:
+#      extr_gas_dom
+
+# Aggregate gas extraction
+  Gas Supply|Domestic|Gas Extraction (Aggregate):
+    filter:
+      { technology: [gas_extr_agg], mode: M1, commodity: gas, level: [primary] }
+    short:
+      extr_gas_dom
+
+# Synthetic gas production from biomass
+  Gas Supply|Domestic|Synthetic Gas from Biomass:
+    filter:
+      { technology: [gas_bio], mode: M1, commodity: gas, level: secondary }
+    short:
+      gas_bio_dom
+
+# Hydrogen injection into natural gas system
+  Gas Supply|Domestic|Hydrogen Injection:
+    filter:
+      { technology: [h2_mix], mode: M1, commodity: gas, level: secondary }
+    short:
+      h2_mix_dom

@@ -2,29 +2,16 @@
 """
 Liquefaction calibration
 """
-# Import packages
-import os
-import sys
-import pandas as pd
-import logging
-import yaml
-import message_ix
-import ixmp
-import itertools
-import numpy as np
-import pickle
-
-from pathlib import Path
-from message_ix_models.util import package_data_path
-from message_ix_models.tools.iea import web
-from message_ix_models.tools.bilateralize import bilateralize
+from message_ix_models.tools.bilateralize.prepare_edit import *
+from message_ix_models.tools.bilateralize.bare_to_scenario import *
+from message_ix_models.tools.bilateralize.load_and_solve import *
 
 def update_liquefaction_input(message_regions: str = "R12", 
                               project_name: str = None,
                               config_name: str = None):
     
     # Pull in configuration
-    config, config_path = bilateralize.load_config(project_name = project_name, 
+    config, config_path = load_config(project_name = project_name, 
                                                    config_name = config_name)
     
     # Pull in regionalization
