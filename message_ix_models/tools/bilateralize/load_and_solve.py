@@ -268,6 +268,7 @@ def solve_or_save(
     solve: bool = False,
     to_gdx: bool = False,
     gdx_location: str | None = None,
+    gams_args: list | None = None,
 ):
     """
     Solve or save scenario.
@@ -283,7 +284,10 @@ def solve_or_save(
 
     if solve:
         solver = "MESSAGE"
-        scen.solve(solver, solve_options=dict(lpmethod=4))
+        if gams_args == None:
+            scen.solve(solver, solve_options=dict(lpmethod=4))
+        else:
+            scen.solve(solver, solve_options=dict(lpmethod=4), gams_args=gams_args)
 
         print("Unlock run ID of the scenario")
         # runid = scen.run_id()
@@ -348,6 +352,7 @@ def load_and_solve(
     extra_parameter_updates: dict | None = None,
     gdx_location: str | None = None,
     MESSAGEix_GLOBIOM: bool = True,
+    gams_args: list | None = None,
 ):
     """
     Clone and update scenario.
@@ -430,4 +435,5 @@ def load_and_solve(
         solve=solve,
         to_gdx=to_gdx,
         gdx_location=gdx_location,
+        gams_args=gams_args,
     )
