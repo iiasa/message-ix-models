@@ -44,7 +44,7 @@ class CommShareConfig:
     type_tec_share_name: str
     all_tecs: List[str]
     share_tecs: List[str]
-    nodes: Union[str, List[str]]
+    nodes: str | List[str]
     dims_all: dict[str, List[str]] = field(default_factory=dict[str, List[str]])
     dims_share: dict[str, List[str]] = field(default_factory=dict[str, List[str]])
 

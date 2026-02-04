@@ -1196,22 +1196,20 @@ def gen_2020_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":
 def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
     """Calibrate 2020 furnace activity for aluminum refining by fuel."""
     fname = "MetallurgicalAluminaRefiningFuelConsumption_1985-2023.csv"
+    # country mapping from "Areas" field at:
+    # https://international-aluminium.org/statistics/metallurgical-alumina-refining-fuel-consumption
     iai_ref_map = {
         "Africa & Asia (ex China)": [
-            "Azerbaijan",
-            "Azerbaijan",
             "Azerbaijan",
             "Guinea",
             "India",
             "Iran",
-            "Kazakhstan",
             "Kazakhstan",
             "Turkey",
         ],
         "North America": [
             "Canada",
             "United States of America",
-            "US Virgin Islands",
             "US Virgin Islands",
         ],
         "South America": [
@@ -1230,20 +1228,15 @@ def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
             "Germany",
             "Greece",
             "Hungary",
-            "Hungary",
-            "Hungary",
             "Ireland",
             "Italy",
             "Montenegro",
             "Romania",
             "Russian Federation",
-            "Russian Federation",
-            "Serbia and Montenegro",
             "Serbia and Montenegro",
             "Slovakia",
             "Slovenia",
             "Spain",
-            "Ukraine",
             "Ukraine",
             "United Kingdom",
         ],
@@ -1685,6 +1678,7 @@ def remove_old_cf4_alu_relation(scen: "Scenario") -> None:
 
 
 if __name__ == "__main__":
+    calibrate_2020_furnaces({})
     import ixmp
     import message_ix
 
