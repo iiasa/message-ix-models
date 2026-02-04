@@ -392,6 +392,50 @@ class Config(ConfigHelper):
         if all(map(lambda s: s.value > 0, [s1, s2])):
             raise ValueError(f"Scenario settings {s1} and {s2} are not compatible")
 
+    def get_target_url(self, context: "Context") -> str:
+        """Construct a target URL for a built MESSAGEix-Transport scenario.
+
+        If the :attr:`.dest` URL is set on `context` (for instance, provided via the
+        :program:`--dest` CLI option), this URL returned with `label` appended to the
+        scenario name.
+
+        If not, a form is used like:
+
+        - :py:`model = "MESSAGEix-GLOBIOM 1.1-T-{regions}"`. Any value of the "model"
+          key from :attr:`.core.Config.dest_scenario` is appended.
+        - :py:`scenario = "{label}"`. Any value of the "scenario" key from
+          :attr:`.core.Config.dest_scenario` is appended; if this is not set, then
+          either "policy" (if :attr:`.transport.Config.policy` is set) or "baseline".
+        """
+        if context.core.dest:
+            raise NotImplementedError
+            # Value from --dest CLI option
+            # TODO Check that this works if a version # is specified
+            return f"{context.dest} {self.label or ''}".strip()
+        else:
+            # Model name
+            model_name = (
+                "MESSAGEix-GLOBIOM 1.1-"
+                + ("MT" if "material" in self.modules else "T")
+                + f"-{context.model.regions} "
+                # Append value from --model-extra CLI option
+                + context.core.dest_scenario.get("model", "")
+            ).rstrip()
+
+            # Scenario name
+            scenario_name = (
+                f"{self.label or ''} "
+                # Append value from --scenario-extra CLI option
+                + (
+                    context.core.dest_scenario.get("scenario")
+                    or ("" if self.policy else "baseline")
+                )
+            ).rstrip()
+            # Strip leading "M ", which is reflected in `model_name`
+            scenario_name = re.sub("^M ", "", scenario_name)
+
+            return f"{model_name}/{scenario_name}"
+
     def set_futures_scenario(self, value: str | None) -> None:
         """Update :attr:`project` from a string indicating a Transport Futures scenario.
 

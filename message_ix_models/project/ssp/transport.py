@@ -363,7 +363,6 @@ def get_computer(
     """
     from message_ix_models.model import Config as ModelConfig
     from message_ix_models.model.transport import Config as TransportConfig
-    from message_ix_models.model.transport import workflow
 
     # Create a Computer instance
     c = genno.Computer()
@@ -394,9 +393,8 @@ def get_computer(
     # - Retrieve a 'label' used to construct a target scenario URL.
     cfg = TransportConfig.from_context(context)
     cfg.code = sc
-    label_full = cfg.label
     # Construct the target scenario URL
-    url = workflow.scenario_url(context, label_full)
+    url = cfg.get_target_url(context)
     # Optionally apply a regex substitution
     URL_SUB = {
         "LED-SSP1": ("$", "#162"),  # Point to a specific version
