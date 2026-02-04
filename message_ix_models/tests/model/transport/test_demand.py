@@ -252,7 +252,7 @@ def test_cli(tmp_path, mix_models_cli, test_context, nodes, target):
     """Transport CLI can be used to generate build-phase debug outputs."""
     # NB test_context is necessary so that the temporary, in-memory platform established
     #    by .transport.workflow.generate() does not carry to other tests
-    cmd = ["transport", "run", f"--nodes={nodes}", f"{target} debug build", "--go"]
+    cmd = ["transport", "run", f"--nodes={nodes}", f"{target} T debug build", "--go"]
     result = mix_models_cli.assert_exit_0(cmd)
 
     # Identify the path containing the outputs
