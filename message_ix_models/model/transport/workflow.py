@@ -143,6 +143,7 @@ def generate(
     dry_run: bool = False,
     **options,
 ) -> "Workflow":
+    """Generate the MESSAGEix-Transport :class:`.Workflow`."""
     from message_ix.tools.migrate import initial_new_capacity_up_v311
 
     from message_ix_models import Workflow
