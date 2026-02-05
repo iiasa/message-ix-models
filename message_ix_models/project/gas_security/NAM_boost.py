@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Add friction sensitivities
+Add NAM boost scenarios
 """
 # Import packages
 from typing import Any
@@ -25,11 +25,19 @@ def run_nam_boost(base_scenario_name: str,
                   out_scenario_name: str,
                   bound_level: int,
                   bound_technologies: list = ['LNG_shipped_exp_weu', 'LNG_shipped_exp_eeu',
-                                            'crudeoil_shipped_exp_weu', 'crudeoil_shipped_exp_eeu'],
-                  bound_commodities: list = ['LNG', 'crudeoil'],
+                                              'coal_shipped_exp_weu', 'coal_shipped_exp_eeu',
+                                              'biomass_shipped_exp_weu', 'biomass_shipped_exp_eeu',
+                                              'eth_shipped_exp_weu', 'eth_shipped_exp_eeu',
+                                              'foil_shipped_exp_weu', 'foil_shipped_exp_eeu',
+                                              'loil_shipped_exp_weu', 'loil_shipped_exp_eeu',
+                                              'crudeoil_shipped_exp_weu', 'crudeoil_shipped_exp_eeu',
+                                              'meth_shipped_exp_weu', 'meth_shipped_exp_eeu',
+                                              'lh2_shipped_exp_weu', 'lh2_shipped_exp_eeu'],
+                  bound_commodities: list = ['LNG', 'crudeoil', 'coal', 'biomass',
+                                             'ethanol', 'fueloil', 'lightoil', 'methanol', 'lh2'],
                   bound_year: str = 2030,
-                  bound_exporters: list = ['NAM'],
-                  bound_importers: list = ['EEU', 'WEU'],
+                  bound_exporters: list = ['R12_NAM'],
+                  bound_importers: list = ['R12_EEU', 'R12_WEU'],
                   solve_scenario: bool = True):
     
     # Import scenario and models
@@ -40,12 +48,12 @@ def run_nam_boost(base_scenario_name: str,
     out_scenario = base_scenario.clone(model = 'gas_security', scenario = out_scenario_name, keep_solution = False)
 
     # Aggregate imports for bounds
-    outputdf = out_scenario.par('output')
+    outputdf = base_scenario.par('output')
     outputdf = outputdf[outputdf['technology'].isin(bound_technologies)]
     outputdf = outputdf[outputdf['node_loc'].isin(bound_exporters)]
     outputdf['node_dest'] = "R12_GLB"
     outputdf['commodity'] = "tracked_imports"
-    outputdf['level'] = "tracked_imports"
+    outputdf['level'] = "imports_input"
     outputdf['unit'] = "GWa"
 
     inputdf = message_ix.make_df(
@@ -54,10 +62,10 @@ def run_nam_boost(base_scenario_name: str,
                 node_loc = "R12_GLB",
                 technology = "import_tracking",
                 commodity = "tracked_imports",
-                level = "imports",
+                level = "imports_input",
                 unit = "GWa",
-                year_vtg = list(range(2030, 2060, 5)),
-                year_act = list(range(2030, 2060, 5)),
+                year_vtg = outputdf['year_vtg'].unique(),
+                year_act = outputdf['year_act'].unique(),
                 mode = "M1",
                 time = "year", time_origin = "year",
                 value = 1)
@@ -68,15 +76,20 @@ def run_nam_boost(base_scenario_name: str,
                     node_loc = "R12_GLB",
                     technology = "import_tracking",
                     commodity = "tracked_imports",
-                    level = "imports",
+                    level = "imports_output",
                     unit = "GWa",
-                    year_vtg = list(range(2030, 2060, 5)),
-                    year_act = list(range(2030, 2060, 5)),
+                    year_vtg = outputdf['year_vtg'].unique(),
+                    year_act = outputdf['year_act'].unique(),
                     mode = "M1",
                     time = "year", time_dest = "year",
                     value = 1)
 
     outputdf = pd.concat([outputdf, outputdf2])
+
+    with out_scenario.transact("Add sets"):
+        out_scenario.add_set('commodity', 'tracked_imports')
+        out_scenario.add_set('level', ['imports_input', 'imports_output'])
+        out_scenario.add_set('technology', 'import_tracking')
 
     with out_scenario.transact("Aggregate tracked imports"):
         out_scenario.add_par('output', outputdf)
@@ -88,7 +101,7 @@ def run_nam_boost(base_scenario_name: str,
                 node_loc = "R12_GLB",
                 technology = "import_tracking",
                 value = bound_level,
-                year_act = list(outputdf['year_act'].unique()),
+                year_act = bound_year,
                 mode = 'M1',
                 time = 'year',
                 unit = 'GWa')
@@ -97,11 +110,11 @@ def run_nam_boost(base_scenario_name: str,
         out_scenario.add_par('bound_activity_lo', bounddf)
                 
     if solve_scenario == True:
-        target_scenario.solve(quiet = False)
+        out_scenario.solve(quiet = False)
 
     mp.close_db()
 
 # Run scenarios
-run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAM250',
+run_nam_boost(base_scenario_name = 'SSP2',
+              out_scenario_name = 'SSP2_NAM250',
               bound_level = 250)
