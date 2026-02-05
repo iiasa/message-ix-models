@@ -29,15 +29,14 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP2",
-      "SSP2 exo price c59e",
-      "SSP2 tax"
+     "SSP2",
+     "DIGSY-BEST-C"
     ]
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  pull_request:
-    branches: [ main ]
+  # pull_request:
+  #  branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
