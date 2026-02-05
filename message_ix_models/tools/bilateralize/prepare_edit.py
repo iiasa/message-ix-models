@@ -634,6 +634,9 @@ def build_flow_input(
             )
         if "shipped" in tec:
             df_input_base["value"] = 1e-6  # Default is 1e-6 GWa
+        elif "piped" in tec:
+            df_input_base['value'] = 0.0015
+            
         df_input = pd.concat([df_input, df_input_base])
 
         # For shipped trade, set up bunker fuels
