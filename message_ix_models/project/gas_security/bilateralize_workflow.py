@@ -84,8 +84,8 @@ for model_scen in models_scenarios.keys():
                    start_model = base_model,
                    start_scen = base_scen,
                    target_model = 'gas_security',
-                   target_scen = model_scen,)
-                   #extra_parameter_updates = liquefaction_parameters)
+                   target_scen = model_scen,
+                   extra_parameter_updates = liquefaction_parameters)
 
     print("Updating extraction constraints")
     mp = ixmp.Platform()
