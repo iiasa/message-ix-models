@@ -116,5 +116,22 @@ def run_nam_boost(base_scenario_name: str,
 
 # Run scenarios
 run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'SSP2_NAM250',
+              out_scenario_name = 'NAM250',
               bound_level = 250)
+run_nam_boost(base_scenario_name = 'SSP2',
+              out_scenario_name = 'NAM500',
+              bound_level = 500)
+
+run_nam_boost(base_scenario_name = 'FSU2040',
+              out_scenario_name = 'FSU2040_NAM250',
+              bound_level = 250)
+run_nam_boost(base_scenario_name = 'FSU2040',
+              out_scenario_name = 'FSU2040_NAM500',
+              bound_level = 500)
+
+run_nam_boost(base_scenario_name = 'FSU2100',
+              out_scenario_name = 'FSU2100_NAM250',
+              bound_level = 250)
+run_nam_boost(base_scenario_name = 'FSU2100',
+              out_scenario_name = 'FSU2100_NAM500',
+              bound_level = 500)

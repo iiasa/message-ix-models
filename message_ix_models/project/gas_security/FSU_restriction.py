@@ -95,5 +95,5 @@ def run_friction_scenario(base_scenario_name: str,
     mp.close_db()
     
 # Run scenarios
-run_friction_scenario('SSP2', 'FSU', 2110)
+run_friction_scenario('SSP2', 'FSU', 2100)
 run_friction_scenario('SSP2', 'FSU', 2040)
