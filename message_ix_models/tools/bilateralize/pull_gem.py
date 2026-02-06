@@ -210,7 +210,7 @@ def import_gem(
     inv_cost.to_csv(os.path.join(gem_dir_out, "inv_cost_GEM.csv"), index=False)
 
     basedf = pd.read_csv(os.path.join(flow_dir, "inv_cost.csv"))
-    basedf["value"] = 5
+    basedf["value"] = 10
     
     inv_cost["value_update"] = np.where(
         inv_cost["value_update"] > 2,
