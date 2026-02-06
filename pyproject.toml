@@ -39,6 +39,7 @@ dependencies = [
   "genno >= 1.25",
   "iam_units >= 2023.9.11",
   "message_ix >= 3.8",
+  "pandas < 3",
   "pooch",
   "pyam-iamc >= 0.6",
   "pyarrow",
