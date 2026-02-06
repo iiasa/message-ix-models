@@ -867,6 +867,8 @@ def build_flow_Vcosts(
         )
     if "shipped" in tec:
         df_vcost_base["value"] = 0.002  # Default is 0.002 USD/Mt-km
+    if "piped" in tec:
+        df_vcost_base["value"] = 0.05 # Default is 3.5% of capital cost, which is ~$2M/km
 
     vcost_out = pd.concat([parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base])
     parameter_outputs[tec]["flow"]["var_cost"] = vcost_out
@@ -1104,14 +1106,22 @@ def export_edit_files(
                 os.path.join("flow_technology", "var_cost.csv"),
                 os.path.join("flow_technology", "inv_cost.csv"),
             ]
-            for reqpar in required_parameters:
-                if not os.path.isfile(
-                    os.path.join(data_path, tec, "bare_files", reqpar)
-                ):
-                    base_file = os.path.join(data_path, tec, "edit_files", reqpar)
-                    dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
-                    shutil.copy2(base_file, dest_file)
-                    log.info(f"Copied file from edit to bare: {reqpar}")
+        ## Transfer cost parameters for flow technologies using pipelines from edit to bare
+        elif "piped" in tec:
+            required_parameters = [
+                os.path.join("flow_technology", "var_cost.csv")
+            ]
+        else:
+            required_parameters = []
+            
+        for reqpar in required_parameters:
+            if not os.path.isfile(
+                os.path.join(data_path, tec, "bare_files", reqpar)
+            ):
+                base_file = os.path.join(data_path, tec, "edit_files", reqpar)
+                dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
+                shutil.copy2(base_file, dest_file)
+                log.info(f"Copied file from edit to bare: {reqpar}")
 
 
 # %% Main function to generate bare sheets

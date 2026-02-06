@@ -210,7 +210,7 @@ def import_gem(
     inv_cost.to_csv(os.path.join(gem_dir_out, "inv_cost_GEM.csv"), index=False)
 
     basedf = pd.read_csv(os.path.join(flow_dir, "inv_cost.csv"))
-    basedf["value"] = 10
+    basedf["value"] = 2
     inv_cost = basedf.merge(
         inv_cost,
         left_on=["node_loc", "technology"],
@@ -218,9 +218,9 @@ def import_gem(
         how="left",
     )
     inv_cost["value"] = np.where(
-        inv_cost["value_update"] > 0,
+        inv_cost["value_update"] > 2,
         round(inv_cost["value_update"], 0),
-        inv_cost["value"],
+        2,
     )
     inv_cost["year_vtg"] = "broadcast"
     inv_cost["unit"] = "USD/km"
