@@ -1,0 +1,37 @@
+var:
+  out
+
+iamc_prefix:
+  Fuel Oil Supply|
+
+unit: GWa
+
+vars:
+# Piped fuel oil imports
+  Fuel Oil Supply|Imports|Piped Fuel Oil|:
+    filter:
+      { technology: [foil_piped_exp], mode: M1, commodity: fueloil, level: [piped] }
+    short:
+      fueloil_piped_exp
+
+# Shipped fuel oil imports
+  Fuel Oil Supply|Imports|Shipped Fuel Oil|:
+    filter:
+      { technology: [foil_shipped_exp], mode: M1, commodity: fueloil, level: [shipped] }
+    short:
+      fueloil_shipped_exp
+
+# Shipped fuel oil imports
+  Fuel Oil Supply|Imports|Shipped Fuel Oil (Base)|:
+    filter:
+      { technology: foil_imp, mode: M1, commodity: fueloil, level: secondary }
+    short:
+      foil_imp
+
+# Aggregate crude oil extraction
+  Fuel Oil Supply|Domestic|Fuel Oil Production:
+    filter:
+      { technology: [agg_ref], mode: M1, commodity: fueloil, level: secondary }
+    short:
+      prod_foil_dom
+

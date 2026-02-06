@@ -1,0 +1,37 @@
+var:
+  out
+
+iamc_prefix:
+  Light Oil Supply|
+
+unit: GWa
+
+vars:
+# Piped light oil imports
+  Light Oil Supply|Imports|Piped Light Oil|:
+    filter:
+      { technology: [loil_piped_exp], mode: M1, commodity: lightoil, level: [piped] }
+    short:
+      lightoil_piped_exp
+
+# Shipped light oil imports
+  Light Oil Supply|Imports|Shipped Light Oil|:
+    filter:
+      { technology: [loil_shipped_exp], mode: M1, commodity: lightoil, level: [shipped] }
+    short:
+      lightoil_shipped_exp
+
+# Shipped fuel oil imports
+  Light Oil Supply|Imports|Shipped Light Oil (Base)|:
+    filter:
+      { technology: loil_imp, mode: M1, commodity: lightoil, level: secondary }
+    short:
+      loil_imp
+
+# Aggregate crude oil extraction
+  Light Oil Supply|Domestic|Light Oil Production:
+    filter:
+      { technology: [syn_liq_ccs, agg_ref, ], mode: M1, commodity: lightoil, level: secondary }
+    short:
+      prod_loil_dom
+

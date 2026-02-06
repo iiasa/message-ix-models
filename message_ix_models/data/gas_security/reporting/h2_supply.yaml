@@ -1,0 +1,23 @@
+var:
+  out
+
+iamc_prefix:
+  Hydrogen Supply|
+
+unit: GWa
+
+vars:
+# Shipped hydrogen imports
+  Hydrogen Supply|Imports|Shipped Liquid Hydrogen|:
+    filter:
+      { technology: [lh2_shipped_exp], mode: M1, commodity: hydrogen, level: [shipped] }
+    short:
+      lh2_shipped_exp
+
+# Aggregate hydrogen production
+  Hydrogen Supply|Domestic|Hydrogen Production:
+    filter:
+      { technology: [h2_bio, h2_bio_ccs, h2_coal, h2_coal_ccs, h2_elec, h2_smr, h2_smr_ccs], mode: M1, commodity: hydrogen, level: secondary}
+    short:
+      prod_h2_dom
+

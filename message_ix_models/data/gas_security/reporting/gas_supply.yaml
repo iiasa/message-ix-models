@@ -1,7 +1,3 @@
-# collection of industry specific Final Energy non-energy reporting variables
-# grouped by sector and fuel
-# each variable specifies a list of filter for genno.operator.select()
-
 var:
   out
 
@@ -50,56 +46,6 @@ vars:
   Gas Supply|Domestic|Gas Extraction:
     filter:
       { technology: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5, gas_extr_6, gas_extr_7], mode: M1, commodity: gas, level: primary }
-    short:
-      extr_gas_dom
-
-# Aggregate gas extraction
-#  Gas Supply|Domestic|Gas Extraction|Category 1:
-#    filter:
-#      { technology: [gas_extr_1], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-#  Gas Supply|Domestic|Gas Extraction|Category 2:
-#    filter:
-#      { technology: [gas_extr_2], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-#  Gas Supply|Domestic|Gas Extraction|Category 3:
-#    filter:
-#      { technology: [gas_extr_3], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-#  Gas Supply|Domestic|Gas Extraction|Category 4:
-#    filter:
-#      { technology: [gas_extr_4], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-#  Gas Supply|Domestic|Gas Extraction|Category 5:
-#    filter:
-#      { technology: [gas_extr_5], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-#  Gas Supply|Domestic|Gas Extraction|Category 6:
-#    filter:
-#      { technology: [gas_extr_6], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-#  Gas Supply|Domestic|Gas Extraction|Category 7:
-#    filter:
-#      { technology: [gas_extr_7], mode: M1, commodity: gas, level: primary }
-#    short:
-#      extr_gas_dom
-
-# Aggregate gas extraction
-  Gas Supply|Domestic|Gas Extraction (Aggregate):
-    filter:
-      { technology: [gas_extr_agg], mode: M1, commodity: gas, level: [primary] }
     short:
       extr_gas_dom
 

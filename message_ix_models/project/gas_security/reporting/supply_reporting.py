@@ -91,8 +91,8 @@ def pyam_df_from_rep(
     return df_out
 
 # Full reporting output for gas supply
-def gas_supply_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd.DataFrame:
-    supply_config = load_config('gas_supply')
+def fuel_supply_reporting(rep: Reporter, scenario: message_ix.Scenario, config_name: str) -> pd.DataFrame:
+    supply_config = load_config(config_name)
     full_df = pd.DataFrame()
     for var in ['out']:
         rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
@@ -111,32 +111,12 @@ def gas_supply_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd.Dat
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
     df = df.drop_duplicates()
 
-    # Add HHI
-    df_tot_com = df.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
-    df_tot_com = df_tot_com.rename(columns = {'value': 'total_com'})
-    df_hhi = df.merge(df_tot_com, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left').reset_index()
-    df_hhi['HHI'] = (df_hhi['value'] / df_hhi['total_com'])**2
-    df_hhi = df_hhi.groupby(['model', 'scenario', 'region', 'unit', 'year'])['HHI'].sum().reset_index()
-
-    # Add share
-    df_tot = df.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
-    df_tot = df_tot.rename(columns = {'value': 'total'})
-    df = df.merge(df_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
-    df['share'] = df['value'] / df['total']
-    df.drop(columns = ['total'], inplace = True)
-    
-    df = df.merge(df_hhi, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
-    
-    # Add labels
-    df['supply_type'] = np.where(df['variable'].str.contains('Domestic'), 'Domestic', 'Imports')
-    df['fuel_type'] = np.where(df['variable'].str.contains('LNG'), 'LNG', 'Piped Gas')
-
     return df 
 
 # Call reporter
 mp = ixmp.Platform()
 
-gas_supply_out = pd.DataFrame()
+fuel_supply_out = pd.DataFrame()
 for mod, scen in [('gas_security', 'SSP2'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
@@ -145,43 +125,28 @@ for mod, scen in [('gas_security', 'SSP2'),
     rep = Reporter.from_scenario(scenario)
     
     # Collect all gas supply reporting
-    gas_supply_df = gas_supply_reporting(rep, scenario)
-    gas_supply_out = pd.concat([gas_supply_out, gas_supply_df])
+    for fuel in ['biomass', 'coal', 'crude', 'ethanol', 'fueloil', 'gas', 'h2', 'lightoil', 'methanol']:
+        fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
+        fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply_df])
 
-gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Domestic|', 'Domestic|')
-gas_supply_out['variable'] = gas_supply_out['variable'].str.replace('Gas Supply|Imports|', '')
+fuel_supply_out_tot = fuel_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
+fuel_supply_out_tot = fuel_supply_out_tot.rename(columns = {'value': 'total'})
+fuel_supply_out = fuel_supply_out.merge(fuel_supply_out_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
 
-gas_supply_out['exporter'] = ''
-gas_supply_out['exporter'] = np.where(gas_supply_out['variable'].str.contains('Piped Gas'),
-                                      gas_supply_out['variable'].str.replace('Piped Gas|', ''),
-                                      gas_supply_out['exporter'])
-gas_supply_out['exporter'] = np.where(gas_supply_out['variable'].str.contains('Shipped LNG'),
-                                      gas_supply_out['variable'].str.replace('Shipped LNG|', ''),
-                                      gas_supply_out['exporter'])
+fuel_exports = fuel_supply_out.copy()
+fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
+fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
+fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
+fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type']
+fuel_exports = fuel_exports.rename(columns = {'exporter': 'region'})
+fuel_exports['exporter'] = ''
+fuel_exports['supply_type'] = 'Exports'
+fuel_exports['value'] *= -1 # Set to negative
 
-gas_supply_out_tot = gas_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
-gas_supply_out_tot = gas_supply_out_tot.rename(columns = {'value': 'total'})
-gas_supply_out = gas_supply_out.merge(gas_supply_out_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
+fuel_supply_out = fuel_supply_out[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
+fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
+fuel_supply_out = pd.concat([fuel_supply_out, fuel_exports])
 
-gas_exports = gas_supply_out.copy()
-gas_exports = gas_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
-gas_exports = gas_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
-gas_exports = gas_exports[gas_exports['supply_type'] == 'Imports']
-gas_exports['variable'] = 'Exports|' + gas_exports['fuel_type']
-gas_exports = gas_exports.rename(columns = {'exporter': 'region'})
-gas_exports['exporter'] = ''
-gas_exports['supply_type'] = 'Exports'
-gas_exports['value'] *= -1 # Set to negative
-
-gas_supply_out = gas_supply_out[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
-gas_exports = gas_exports[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
-gas_supply_out = pd.concat([gas_supply_out, gas_exports])
-
-gas_supply_out['legend'] = gas_supply_out['exporter'] + ' (' + gas_supply_out['fuel_type'] + ')'
-gas_supply_out['legend'] = np.where(gas_supply_out['variable'].str.contains('Domestic'),
-                                    "Domestic (" + gas_supply_out['variable'].str.replace('Domestic|', '') + ")",
-                                    gas_supply_out['legend'])
-
-gas_supply_out.to_csv(package_data_path('gas_security', 'reporting', 'reporting.csv'))
+fuel_supply_out.to_csv(package_data_path('gas_security', 'reporting', 'fuel_supply_out.csv'))
 
 mp.close_db()
