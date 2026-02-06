@@ -48,8 +48,8 @@ def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
     )
     comm_map = pd.read_csv(path.joinpath("lca_commodity_mapping.csv"), index_col=0)
 
-    data = pd.read_excel(
-        path.joinpath("NTNU_LCA_coefficients.xlsx"), sheet_name="environmentalImpacts"
+    data = pd.read_csv(path.joinpath("NTNU_LCA_coefficients.csv"), comment="#").rename(
+        columns=lambda c: int(c) if isinstance(c, str) and c.isdigit() else c
     )
     data = overwrite_hydro_intensities(data)
     data = (
