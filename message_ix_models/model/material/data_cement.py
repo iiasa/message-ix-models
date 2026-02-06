@@ -276,6 +276,7 @@ def gen_clinker_ratios(s_info: "ScenarioInfo") -> "ParameterData":
 
 
 def gen_relation_data(scenario: "Scenario", s_info: "ScenarioInfo") -> "ParameterData":
+    """Generate relation_activity parameter data for cement model."""
     data_cem_rel = read_rel(scenario, "cement", None, "relations_R12.csv").pipe(
         broadcast, Region=nodes_ex_world(s_info.N)
     )

@@ -30,7 +30,7 @@ def gen_data_power_sector(
 
 
 def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
-    # read LCA data from ADVANCE LCA tool
+    """Read and process material intensity data for power sector technologies."""
     path = package_data_path("material", "power_sector")
     # read technology, region and commodity mappings
     tec_map = (
@@ -64,6 +64,7 @@ def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
 
     # filter relevant scenario, technology variant (residue for biomass,
     # mix for others) and remove operation phase (and remove duplicates)
+    # TODO: move hardcoded scenario filter to build config
     data = data.loc["THEMIS", "Baseline"].loc[
         :,
         "Environmental impacts",
@@ -95,7 +96,20 @@ def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
     return data
 
 
-def gen_cap_par_data(data_lca: pd.DataFrame, scen, s_info) -> "ParameterData":
+def gen_cap_par_data(
+    data_lca: pd.DataFrame, scen: "Scenario", s_info: ScenarioInfo
+) -> "ParameterData":
+    """Generate capacity-related parameter data for material flows.
+
+    Parameters
+    ----------
+    data_lca :
+        DataFrame with material intensity data.
+    scen :
+        MESSAGEix Scenario object.
+    s_info:
+        ScenarioInfo object for `scen`.
+    """
     hist_cap = scen.par(
         "historical_new_capacity",
         filters={"technology": data_lca["technology"].unique()},
@@ -143,7 +157,7 @@ def gen_cap_par_data(data_lca: pd.DataFrame, scen, s_info) -> "ParameterData":
 
 
 def overwrite_hydro_intensities(data_lca: pd.DataFrame) -> pd.DataFrame:
-    # For hydropower material intensity use "medium" from Kalt et al., 2021.
+    """Overwrite hydropower material intensities with values from Kalt et al., 2021."""
     # Unit: t/MW
     idx = (
         (data_lca["technology"] == "Hydro")
@@ -157,6 +171,7 @@ def overwrite_hydro_intensities(data_lca: pd.DataFrame) -> pd.DataFrame:
 
 
 def maybe_init_pars(scenario: "Scenario") -> None:
+    """Initialize IO capacity parameters if they do not exist."""
     if not scenario.has_par("input_cap_new"):
         scenario.init_par(
             "input_cap_new",

@@ -319,6 +319,11 @@ def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> "ParameterData":
 
 
 def reset_t_d_calibration(scenario: "Scenario") -> None:
+    """Reset transmission activity calibration of a scenario.
+
+    Remove bounds on activity of technologies with t_d suffix in 2020 from given
+    scenario.
+    """
     for bound in ["up", "lo"]:
         par = f"bound_activity_{bound}"
         df = scenario.par(par, filters={"year_act": 2020})
@@ -378,6 +383,13 @@ def read_elec_i_ini_act() -> "ParameterData":
 
 
 def gen_data_other(scenario) -> "ParameterData":
+    """Generate data and prepare scenario for "other industry" build.
+
+    - Reset transmission activity calibration to avoid infeasibilities
+    - Generate demand data for "other industry"
+    - Generate historical activity calibration data for industry technologies
+    - Generate constraint parameter data for specific technologies
+    """
     context = read_config()
     reset_t_d_calibration(scenario)
     par_data = {}

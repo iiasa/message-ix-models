@@ -1642,6 +1642,7 @@ def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
 
 
 def remove_scrap_in_firstyear(pars: dict) -> None:
+    """Remove scrap input and output parameter data for 2020."""
     inp = pars["input"]
     inp = inp[
         ~(
