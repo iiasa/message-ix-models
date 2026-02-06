@@ -7,13 +7,6 @@ iamc_prefix:
 unit: GWa
 
 vars:
-# Piped ethanol imports
-  Ethanol Supply|Imports|Piped Ethanol|:
-    filter:
-      { technology: [eth_piped_exp], mode: M1, commodity: ethanol, level: [piped] }
-    short:
-      ethanol_piped_exp
-
 # Shipped ethanol imports
   Ethanol Supply|Imports|Shipped Ethanol|:
     filter:

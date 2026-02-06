@@ -2,7 +2,7 @@ var:
   out
 
 iamc_prefix:
-  Crude Supply|
+  Coal Supply|
 
 unit: GWa
 
@@ -24,7 +24,7 @@ vars:
 # Aggregate coal extraction
   Coal Supply|Domestic|Coal Extraction:
     filter:
-      { technology: [coal_extr, lignite_extr], mode: M1, commodity: crudeoil, level: primary }
+      { technology: [coal_extr_mpen, lignite_extr], mode: M1, commodity: coal, level: primary }
     short:
-      extr_crudeoil_dom
+      extr_coal_dom
 
