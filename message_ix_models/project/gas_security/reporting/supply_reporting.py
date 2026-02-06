@@ -41,20 +41,16 @@ def pyam_df_from_rep(
         for col in mapping_df.index.names
     }
     base_tec_list = filters_dict['t']
-    base_tec_exp = [v for v in base_tec_list if v.endswith('_exp')]
-    base_tec_dom = [v for v in base_tec_list if v not in base_tec_exp]
-
     new_tec_list = [v for v in scenario.set('technology')
-                        if any(v.startswith(prefix) for prefix in base_tec_exp) or (v in base_tec_dom)]
-    new_tec_exp = [v for v in new_tec_list if "_exp_" in v]
+                        if any(v.startswith(prefix) for prefix in base_tec_list)]
     filters_dict['t'] = new_tec_list
     
     for bt in base_tec_list:
-        base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates() #gas_piped_exp
-        for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i) or (bt in base_tec_dom and bt == i)]:
+        base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt] #gas_piped_exp
+        for nt in [i for i in new_tec_list if bt in i]:
             add_index = [(*item[:-1], nt) for item in base_index]
             add_index = pd.MultiIndex.from_tuples(add_index, names = mapping_df.index.names)
-            new_rows = mapping_df.loc[base_index].copy().drop_duplicates()
+            new_rows = mapping_df.loc[base_index].copy()
             new_rows.index = add_index
             mapping_df = pd.concat([mapping_df, new_rows])
         if bt not in new_tec_list:
@@ -122,6 +118,14 @@ mp = ixmp.Platform()
 
 fuel_supply_out = pd.DataFrame()
 for mod, scen in [('gas_security', 'SSP2'),
+                  ('gas_security', 'FSU2040'),
+                  ('gas_security', 'FSU2100'),
+                  #('gas_security', 'NAM250'),
+                  #('gas_security', 'NAM500'),
+                  #('gas_security', 'FSU2040_NAM250'),
+                  #('gas_security', 'FSU2040_NAM500'),
+                  #('gas_security', 'FSU2100_NAM250'),
+                  #('gas_security', 'FSU2100_NAM500'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
@@ -130,11 +134,8 @@ for mod, scen in [('gas_security', 'SSP2'),
     
     # Collect all gas supply reporting
     for fuel in ['biomass', 'coal', 'crude', 'ethanol', 'fueloil', 'gas', 'h2', 'lightoil', 'methanol']:
-        print(f"COMPILING {fuel} supply")
-        print(f"--------------------------------")
-        fuel_supply_df = fuel_supply_reporting(rep = rep, scenario = scenario, config_name = fuel+'_supply')
+        fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
         fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply_df])
-        print(f"--------------------------------")
 
 fuel_supply_out_tot = fuel_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
 fuel_supply_out_tot = fuel_supply_out_tot.rename(columns = {'value': 'total'})
