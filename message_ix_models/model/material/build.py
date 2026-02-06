@@ -79,7 +79,7 @@ def build(
     modify_existing_constraints: bool = True,
     iea_data_path: str | None = None,
 ) -> message_ix.Scenario:
-    """Set up materials accounting on `scenario`."""
+    """Build Materials model on `scenario`."""
     node_suffix = context.model.regions
 
     if node_suffix != "R12":
@@ -106,6 +106,7 @@ def build(
 
 
 def make_spec(regions: str, materials: str or None = SPEC_LIST) -> Spec:
+    """Return the structural :class:`Spec` for MESSAGEix-Materials."""
     sets: dict[str, Any] = dict()
     materials = ["common"] if not materials else materials
     # Overrides specific to regional versions
