@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Mapping
 from typing import Any
 
 import message_ix
@@ -11,18 +10,13 @@ from message_ix_models.model.material.data_ammonia import gen_all_NH3_fert
 from message_ix_models.model.material.data_cement import gen_data_cement
 from message_ix_models.model.material.data_generic import gen_data_generic
 from message_ix_models.model.material.data_methanol import gen_data_methanol
-from message_ix_models.model.material.data_other_industry import (
-    gen_data_other,
-)
+from message_ix_models.model.material.data_other_industry import gen_data_other
 from message_ix_models.model.material.data_petro import gen_data_petro_chemicals
+from message_ix_models.model.material.data_power_sector import gen_data_power_sector
 from message_ix_models.model.material.data_steel import gen_data_steel
-from message_ix_models.model.material.data_util import (
-    add_water_par_data,
-)
+from message_ix_models.model.material.data_util import add_water_par_data
 from message_ix_models.model.material.share_constraints import CommShareConfig
-from message_ix_models.model.material.util import (
-    path_fallback,
-)
+from message_ix_models.model.material.util import path_fallback
 from message_ix_models.model.structure import generate_set_elements, get_region_codes
 from message_ix_models.util import (
     add_par_data,
@@ -42,7 +36,7 @@ DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_cement,
     gen_data_petro_chemicals,
-    # gen_data_power_sector,
+    gen_data_power_sector,
 ]
 
 # add as needed/implemented
@@ -78,6 +72,7 @@ def build(
     old_calib: bool,
     modify_existing_constraints: bool = True,
     iea_data_path: str | None = None,
+    power_sector: bool = False,
 ) -> message_ix.Scenario:
     """Build Materials model on `scenario`."""
     node_suffix = context.model.regions
@@ -100,6 +95,9 @@ def build(
         CommShareConfig.from_files(scenario, "coal_residual_industry").add_to_scenario(
             scenario
         )
+    # exclude power sector data if not requested
+    if not power_sector:
+        DATA_FUNCTIONS.pop()
     apply_spec(scenario, spec, add_data, fast=True)
     add_water_par_data(scenario)
     return scenario

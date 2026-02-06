@@ -50,10 +50,18 @@ def cli(ssp):
     "--update_costs",
     default=False,
 )
+@click.option("--power_sector", default=False)
 @common_params("nodes")
 @click.pass_obj
 def build_scen(
-    context, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
+    context,
+    iea_data_path,
+    tag,
+    mode,
+    scenario_name,
+    old_calib,
+    update_costs,
+    power_sector,
 ):
     """Build a scenario.
 
@@ -101,7 +109,11 @@ def build_scen(
                 keep_solution=False,
             )
             scenario = build(
-                context, scenario, old_calib=old_calib, iea_data_path=iea_data_path
+                context,
+                scenario,
+                old_calib=old_calib,
+                iea_data_path=iea_data_path,
+                power_sector=power_sector,
             )
         else:
             scenario = build(
@@ -112,6 +124,7 @@ def build_scen(
                 ),
                 old_calib=old_calib,
                 iea_data_path=iea_data_path,
+                power_sector=power_sector,
             )
         # Set the latest version as default
         scenario.set_as_default()
