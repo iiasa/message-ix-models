@@ -31,7 +31,7 @@ vars:
 # Aggregate ethanol production
   Methanol Supply|Domestic|Methanol Production:
     filter:
-      { technology: [meth_coal, meth_coal_ccs, meth_ng, meth_ng_ccs, meth_bio, meth_bio_ccs, meth_h2], mode: M1, commodity: methanol, level: primary }
+      { technology: [meth_coal, meth_coal_ccs, meth_ng, meth_ng_ccs, meth_bio, meth_bio_ccs, meth_h2], mode: [fuel], commodity: methanol, level: primary }
     short:
       prod_meth_dom
 

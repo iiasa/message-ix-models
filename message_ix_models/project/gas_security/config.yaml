@@ -111,13 +111,13 @@ define_parameters:
 constrained_tec:
   - biomass_shipped
   - coal_shipped
-  - crudeoil_piped
+#  - crudeoil_piped
 #  - crudeoil_shipped
-  - eth_shipped
-  - foil_shipped
+#  - eth_shipped
+#  - foil_shipped
   - gas_piped
   - LNG_shipped
-  - loil_shipped
+#  - loil_shipped
     
 # SENSITIVITY SCENARIOS
 restriction:

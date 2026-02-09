@@ -31,7 +31,7 @@ vars:
 # Aggregate crude oil extraction
   Fuel Oil Supply|Domestic|Fuel Oil Production:
     filter:
-      { technology: [agg_ref], mode: M1, commodity: fueloil, level: secondary }
+      { technology: [agg_ref], mode: [heavy_foil, atm_residue, vacuum_residue, atm_gasoil], commodity: fueloil, level: secondary }
     short:
       prod_foil_dom
 

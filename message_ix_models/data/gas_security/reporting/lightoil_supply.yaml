@@ -31,7 +31,7 @@ vars:
 # Aggregate crude oil extraction
   Light Oil Supply|Domestic|Light Oil Production:
     filter:
-      { technology: [syn_liq_ccs, agg_ref, ], mode: M1, commodity: lightoil, level: secondary }
+      { technology: [syn_liq_ccs, agg_ref, ], mode: [kerosene, diesel, light_foil, refinery_gas, gasoline, refinery_gas_int, M1], commodity: lightoil, level: secondary }
     short:
       prod_loil_dom
 
