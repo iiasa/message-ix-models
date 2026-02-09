@@ -194,8 +194,9 @@ def import_gem(
     df.to_csv(os.path.join(gem_dir_out, "GEM.csv"))
 
     # Investment Costs
+    inv_cost = df[(df['CostUSD'] > 0) & (df['LengthMergedKm'] > 0)]
     inv_cost = (
-        df.groupby(["EXPORTER", "IMPORTER"])[["CostUSD", "LengthMergedKm"]]
+        inv_cost.groupby(["EXPORTER", "IMPORTER"])[["CostUSD", "LengthMergedKm"]]
         .sum()
         .reset_index()
     )
