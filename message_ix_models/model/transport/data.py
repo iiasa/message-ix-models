@@ -913,7 +913,7 @@ stock_cap = _input_dataflow(
     path="stock-cap",
     name="Vehicle stock per capita",
     description="",
-    units="vehicle/capita",
+    units="vehicle/person",
 )
 
 t_share_ldv = _input_dataflow(
