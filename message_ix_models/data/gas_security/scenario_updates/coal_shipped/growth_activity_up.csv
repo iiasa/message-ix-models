@@ -131,15 +131,3 @@ R12_WEU,coal_shipped_exp_nam,broadcast,year,0.05,GWa
 R12_WEU,coal_shipped_exp_pao,broadcast,year,0.05,GWa
 R12_WEU,coal_shipped_exp_pas,broadcast,year,0.05,GWa
 R12_WEU,coal_shipped_exp_sas,broadcast,year,0.05,GWa
-R12_RCPA,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_CHN,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_EEU,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_FSU,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_LAM,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_MEA,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_NAM,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_PAO,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_PAS,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_SAS,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_WEU,coal_shipped_imp,broadcast,year,0.05,GWa
-R12_AFR,coal_shipped_imp,broadcast,year,0.05,GWa

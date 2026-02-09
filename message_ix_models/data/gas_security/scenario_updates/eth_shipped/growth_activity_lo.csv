@@ -131,15 +131,3 @@ R12_WEU,eth_shipped_exp_nam,broadcast,year,-0.05,GWa
 R12_WEU,eth_shipped_exp_pao,broadcast,year,-0.05,GWa
 R12_WEU,eth_shipped_exp_pas,broadcast,year,-0.05,GWa
 R12_WEU,eth_shipped_exp_sas,broadcast,year,-0.05,GWa
-R12_RCPA,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_CHN,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_EEU,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_FSU,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_LAM,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_MEA,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_NAM,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_PAO,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_PAS,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_SAS,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_WEU,eth_shipped_imp,broadcast,year,-0.05,GWa
-R12_AFR,eth_shipped_imp,broadcast,year,-0.05,GWa

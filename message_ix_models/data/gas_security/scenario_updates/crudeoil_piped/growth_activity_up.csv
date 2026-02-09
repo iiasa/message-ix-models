@@ -28,14 +28,3 @@ R12_EEU,crudeoil_piped_exp_weu,broadcast,year,0.05,GWa
 R12_CHN,crudeoil_piped_exp_fsu,broadcast,year,0.05,GWa
 R12_AFR,crudeoil_piped_exp_mea,broadcast,year,0.05,GWa
 R12_AFR,crudeoil_piped_exp_weu,broadcast,year,0.05,GWa
-R12_AFR,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_EEU,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_FSU,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_MEA,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_PAS,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_RCPA,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_CHN,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_LAM,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_SAS,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_WEU,crudeoil_piped_imp,broadcast,year,0.05,GWa
-R12_NAM,crudeoil_piped_imp,broadcast,year,0.05,GWa

@@ -131,15 +131,3 @@ R12_WEU,crudeoil_shipped_exp_nam,broadcast,year,0.1,GWa
 R12_WEU,crudeoil_shipped_exp_pao,broadcast,year,0.1,GWa
 R12_WEU,crudeoil_shipped_exp_pas,broadcast,year,0.1,GWa
 R12_WEU,crudeoil_shipped_exp_sas,broadcast,year,0.1,GWa
-R12_RCPA,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_CHN,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_EEU,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_FSU,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_LAM,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_MEA,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_NAM,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_PAO,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_PAS,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_SAS,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_WEU,crudeoil_shipped_imp,broadcast,year,0.1,GWa
-R12_AFR,crudeoil_shipped_imp,broadcast,year,0.1,GWa
