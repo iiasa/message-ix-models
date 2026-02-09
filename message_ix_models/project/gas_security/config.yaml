@@ -113,11 +113,11 @@ constrained_tec:
   - coal_shipped
 #  - crudeoil_piped
 #  - crudeoil_shipped
-#  - eth_shipped
-#  - foil_shipped
+  - eth_shipped
+  - foil_shipped
   - gas_piped
   - LNG_shipped
-#  - loil_shipped
+  - loil_shipped
     
 # SENSITIVITY SCENARIOS
 restriction:
