@@ -41,13 +41,16 @@ def pyam_df_from_rep(
         for col in mapping_df.index.names
     }
     base_tec_list = filters_dict['t']
+    base_tec_exp = [v for v in base_tec_list if v.endswith('_exp')]
+    base_tec_dom = [v for v in base_tec_list if v not in base_tec_exp]
+    
     new_tec_list = [v for v in scenario.set('technology')
                         if any(v.startswith(prefix) for prefix in base_tec_list)]
     filters_dict['t'] = new_tec_list
     
     for bt in base_tec_list:
-        base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt] #gas_piped_exp
-        for nt in [i for i in new_tec_list if bt in i]:
+        base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates() #gas_piped_exp
+        for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i) or (bt in base_tec_dom and bt == i)]:
             add_index = [(*item[:-1], nt) for item in base_index]
             add_index = pd.MultiIndex.from_tuples(add_index, names = mapping_df.index.names)
             new_rows = mapping_df.loc[base_index].copy()
@@ -120,10 +123,10 @@ fuel_supply_out = pd.DataFrame()
 for mod, scen in [('gas_security', 'SSP2'),
                   ('gas_security', 'FSU2040'),
                   ('gas_security', 'FSU2100'),
-                  #('gas_security', 'NAM250'),
-                  #('gas_security', 'NAM500'),
-                  #('gas_security', 'FSU2040_NAM250'),
-                  #('gas_security', 'FSU2040_NAM500'),
+                  ('gas_security', 'NAM250'),
+                  ('gas_security', 'NAM500'),
+                  ('gas_security', 'FSU2040_NAM250'),
+                  ('gas_security', 'FSU2040_NAM500'),
                   #('gas_security', 'FSU2100_NAM250'),
                   #('gas_security', 'FSU2100_NAM500'),
                   ]:
@@ -137,23 +140,25 @@ for mod, scen in [('gas_security', 'SSP2'),
         fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
         fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply_df])
 
-fuel_supply_out_tot = fuel_supply_out.groupby(['model', 'scenario', 'region', 'unit', 'year'])['value'].sum().reset_index()
-fuel_supply_out_tot = fuel_supply_out_tot.rename(columns = {'value': 'total'})
-fuel_supply_out = fuel_supply_out.merge(fuel_supply_out_tot, on = ['model', 'scenario', 'region', 'unit', 'year'], how = 'left')
+    fuel_supply_out['fuel_type'] = fuel_supply_out['variable'].str.split('|').str[0]
+    fuel_supply_out['fuel_type'] = fuel_supply_out['fuel_type'].str.replace(' Supply', '')
 
-fuel_exports = fuel_supply_out.copy()
-fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
-fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
-fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
-fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type']
-fuel_exports = fuel_exports.rename(columns = {'exporter': 'region'})
-fuel_exports['exporter'] = ''
-fuel_exports['supply_type'] = 'Exports'
-fuel_exports['value'] *= -1 # Set to negative
+    fuel_supply_out['supply_type'] = fuel_supply_out['variable'].str.split('|').str[1]
+    fuel_supply_out['exporter'] = np.where(fuel_supply_out['supply_type'] == 'Imports',
+                                            fuel_supply_out['variable'].str.split('|').str[-1], '')
+    fuel_exports = fuel_supply_out.copy()
+    fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
+    fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
+    fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
+    fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type']
+    fuel_exports = fuel_exports.rename(columns = {'exporter': 'region'})
+    fuel_exports['exporter'] = ''
+    fuel_exports['supply_type'] = 'Exports'
+    fuel_exports['value'] *= -1 # Set to negative
 
-fuel_supply_out = fuel_supply_out[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
-fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'region', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']]
-fuel_supply_out = pd.concat([fuel_supply_out, fuel_exports])
+    fuel_supply_out = fuel_supply_out[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']].drop_duplicates()
+    fuel_exports = fuel_exports[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']].drop_duplicates()
+    fuel_supply_out = pd.concat([fuel_supply_out, fuel_exports])
 
 fuel_supply_out.to_csv(package_data_path('gas_security', 'reporting', 'fuel_supply_out.csv'))
 
