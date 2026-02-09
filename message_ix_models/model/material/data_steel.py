@@ -217,7 +217,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         parname,
         mode="M1",
         type_addon="dri_gas_ccs_steel_addon",
-        value=1,
+        value=1.0,
         unit="-",
         **common,
     ).pipe(broadcast, node=nodes, technology=dri_gas_tec)
@@ -225,7 +225,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
 
     dri_tec = ["dri_steel"]
     df = make_df(
-        parname, mode="M1", type_addon="dri_steel_addon", value=1, unit="-", **common
+        parname, mode="M1", type_addon="dri_steel_addon", value=1.0, unit="-", **common
     ).pipe(broadcast, node=nodes, technology=dri_tec)
     results[parname].append(df)
 

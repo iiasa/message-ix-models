@@ -273,7 +273,7 @@ def read_sector_data(
 
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
-
+    data_df["value"] = data_df["value"].astype(float)
     return data_df
 
 
@@ -784,7 +784,10 @@ def drop_redundant_rows(scen: "Scenario", results: "MutableParameterData"):
         df = (
             df.set_index([node_col_name, "technology", "year_vtg"])
             .join(lt_data, rsuffix="_lifetime")
-            .fillna(0)
+            .assign(
+                value=lambda x: x["value"].fillna(0),
+                value_lifetime=lambda x: x["value_lifetime"].fillna(0),
+            )
             .reset_index()
         )
         results[par] = (

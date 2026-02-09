@@ -65,7 +65,8 @@ def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
     # filter relevant scenario, technology variant (residue for biomass,
     # mix for others) and remove operation phase (and remove duplicates)
     # TODO: move hardcoded scenario filter to build config
-    data = data.loc["THEMIS", "Baseline"].loc[
+    data = data.loc["THEMIS"].loc["Baseline"]
+    data = data.loc[
         :,
         "Environmental impacts",
         :,
