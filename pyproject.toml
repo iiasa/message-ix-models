@@ -83,6 +83,7 @@ tests = [
   "gamsapi > 47.6.0",
 ]
 transport = [
+  "genno[graphviz]",
   "message-ix-models[iea-web,report]",
   "requests-cache",
   "transport-energy",
