@@ -35,7 +35,7 @@ prepare_edit_files(project_name = 'gas_security',
 
 # Add scenario updates for project
 print("Add scenario updates for project")
-for tec in config['covered_trade_technologies']:
+for tec in config['constrained_tec']:
     print(f"...{tec}")
     if os.path.exists(package_data_path("gas_security", "scenario_updates", tec)):
         for file in os.listdir(package_data_path("gas_security", "scenario_updates", tec)):
@@ -45,19 +45,19 @@ for tec in config['covered_trade_technologies']:
                 shutil.copy2(base_file, dest_file)
                 print(f"Copied file from scenario_updates to bare: {file}")
                 
-# Add constraints to the dictionary
-print("Add constraints to the dictionary")
-constraint_pars = ["initial_activity_lo", "initial_activity_up",
-                   "growth_activity_lo", "growth_activity_up",
-                   "soft_activity_up", "soft_activity_lo"]
-constraint_tec = config['constrained_tec']
+## Add constraints to the dictionary
+#print("Add constraints to the dictionary")
+#constraint_pars = ["initial_activity_lo", "initial_activity_up",
+#                   "growth_activity_lo", "growth_activity_up",
+#                   "soft_activity_up", "soft_activity_lo"]
+#constraint_tec = config['constrained_tec']
 
-for con in constraint_pars:
-    print(f"...{con}")
-    for tec in constraint_tec:
-        print(f"......{tec}")
-        df = pd.read_csv(os.path.join(package_data_path("gas_security", "scenario_updates", tec), con + ".csv"))
-        df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
+#for con in constraint_pars:
+#    print(f"...{con}")
+#    for tec in constraint_tec:
+#        print(f"......{tec}")
+#        df = pd.read_csv(os.path.join(package_data_path("gas_security", "scenario_updates", tec), con + ".csv"))
+#        df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
         
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'gas_security', 
