@@ -206,7 +206,9 @@ for name in submodules:
     try:
         __import__(name)
     except ImportError as e:
-        print(e)
+        print(f"{name} not available: {e}")
+        continue
+
     cmd = getattr(sys.modules[name], "cli")
 
     # Avoid replacing message-ix-models CLI with message_data CLI
