@@ -45,20 +45,6 @@ for tec in config['constrained_tec']:
                 shutil.copy2(base_file, dest_file)
                 print(f"Copied file from scenario_updates to bare: {file}")
                 
-## Add constraints to the dictionary
-#print("Add constraints to the dictionary")
-#constraint_pars = ["initial_activity_lo", "initial_activity_up",
-#                   "growth_activity_lo", "growth_activity_up",
-#                   "soft_activity_up", "soft_activity_lo"]
-#constraint_tec = config['constrained_tec']
-
-#for con in constraint_pars:
-#    print(f"...{con}")
-#    for tec in constraint_tec:
-#        print(f"......{tec}")
-#        df = pd.read_csv(os.path.join(package_data_path("gas_security", "scenario_updates", tec), con + ".csv"))
-#        df.to_csv(os.path.join(data_path, tec, "bare_files", con + ".csv"), index = False)
-        
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'gas_security', 
                               config_name = 'config.yaml',
@@ -108,6 +94,21 @@ for model_scen in models_scenarios.keys():
             out_scenario.remove_par(g, remdf)
             out_scenario.add_par(g, updf)
 
+#    print("Update crude resource remaining")
+#    resdf =  out_scenario.par("resource_remaining", filters = {"commodity": ["crude_1", "crude_2", "crude_3", "crude_4",
+#                                                                             "crude_5", "crude_6", "crude_7"]})
+#    remdf = resdf.copy()
+#    resdf['value'] = 0.05
+#    with out_scenario.transact("update resource remaining for crude in EEU, LAM, PAO"):
+#        out_scenario.remove_par("resource_remaining", remdf)
+#        out_scenario.add_par("resource_remaining", resdf)
+
+    print("Remove oil_imp_c relation activity [TEST]")
+    for p in ["relation_activity", "relation_upper", "relation_lower"]:
+        remdf = out_scenario.par(p, filters = {"relation": "oil_imp_c"})
+        with out_scenario.transact(f"remove relation {p}"):
+            out_scenario.remove_par(p, remdf)
+            
     print("Solve scenario")
     out_scenario.solve()
     mp.close_db()
