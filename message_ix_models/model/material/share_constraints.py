@@ -88,7 +88,7 @@ class CommShareConfig:
         return merged
 
     def get_map_share_set_total(self, scen: "Scenario") -> pd.DataFrame:
-        """Generate ``map_shares_commodity_total`` from config and scenario structure."""
+        """Generate ``map_shares_commodity_total`` from config and model structure."""
         return (
             make_df(
                 "map_shares_commodity_total",
@@ -101,7 +101,7 @@ class CommShareConfig:
         )
 
     def get_map_share_set_share(self, scen) -> pd.DataFrame:
-        """Generate ``map_shares_commodity_share`` from config and scenario structure."""
+        """Generate ``map_shares_commodity_share`` from config and model structure."""
         return (
             make_df(
                 "map_shares_commodity_share",
