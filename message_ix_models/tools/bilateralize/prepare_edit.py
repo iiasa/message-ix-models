@@ -866,7 +866,7 @@ def build_flow_Vcosts(
             **common_years,
         )
     if "shipped" in tec:
-        df_vcost_base["value"] = 0.002  # Default is 0.002 USD/Mt-km
+        df_vcost_base["value"] = 0.00002  # Default is 0.00002 MUSD/Mt-km
     if "piped" in tec:
         df_vcost_base["value"] = 0.05 # Default is 3.5% of capital cost, which is ~$2M/km
 
