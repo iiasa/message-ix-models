@@ -40,7 +40,7 @@ from message_ix_models.util import (
 if TYPE_CHECKING:
     from message_ix import Scenario
 
-    from message_ix_models.types import ParameterData
+    from message_ix_models.types import MutableParameterData, ParameterData
 
 
 def read_data_aluminum(
@@ -891,7 +891,7 @@ def gen_hist_new_cap(s_info: ScenarioInfo) -> "ParameterData":
     }
 
 
-def compute_differences(df: pd.DataFrame, ref_col: str) -> pd.DataFrame:
+def compute_differences(df: pd.DataFrame, ref_col: str | int) -> pd.DataFrame:
     """Compute positive differences between columns and a reference column.
 
     Parameters
@@ -1126,6 +1126,7 @@ def gen_alumina_trade_tecs(s_info: ScenarioInfo) -> "ParameterData":
         src=("alumina", "secondary_material", "Mt"),
         dest=("alumina", "export", "Mt"),
         efficiency=1.0,
+        on="input",
         technology="export_alumina",
         node_dest=global_region,
         node_origin=nodes,
@@ -1135,6 +1136,7 @@ def gen_alumina_trade_tecs(s_info: ScenarioInfo) -> "ParameterData":
         src=("alumina", "import", "Mt"),
         dest=("alumina", "secondary_material", "Mt"),
         efficiency=1.0,
+        on="input",
         technology="import_alumina",
         node_origin=global_region,
         node_dest=nodes,
@@ -1152,13 +1154,14 @@ def gen_alumina_trade_tecs(s_info: ScenarioInfo) -> "ParameterData":
         src=("alumina", "export", "Mt"),
         dest=("alumina", "import", "Mt"),
         efficiency=1.0,
+        on="input",
         technology="trade_alumina",
         node_dest=global_region,
         node_origin=global_region,
         **common,
     )
 
-    trade_dict = {}
+    trade_dict: "MutableParameterData" = {}
     merge_data(trade_dict, imp_dict, trd_dict, exp_dict)
     trade_dict = {
         k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
@@ -1253,8 +1256,8 @@ def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
         "Oil": "furnace_foil_aluminum",
         "Electricity": "furnace_elec_aluminum",
     }
-    iai_ref_map = {k: v[0] for k, v in invert_dictionary(iai_ref_map).items()}
-    df_iai_cmap = pd.Series(iai_ref_map).to_frame().reset_index()
+    iai_ref_map_inv = {k: v[0] for k, v in invert_dictionary(iai_ref_map).items()}
+    df_iai_cmap = pd.Series(iai_ref_map_inv).to_frame().reset_index()
 
     df_iai_cmap["ISO"] = df_iai_cmap["index"].apply(
         lambda x: pycountry.iso_3166_alpha_3(x)
@@ -1361,10 +1364,12 @@ def gen_refining_input(s_info: ScenarioInfo) -> "ParameterData":
         "South America": ["R12_LAM"],
         "China": ["R12_CHN"],
     }
-    iai_int_r12_map = {k: v[0] for k, v in invert_dictionary(iai_int_r12_map).items()}
+    iai_int_r12_map_inv = {
+        k: v[0] for k, v in invert_dictionary(iai_int_r12_map).items()
+    }
 
     df_act = (
-        pd.Series(iai_int_r12_map)
+        pd.Series(iai_int_r12_map_inv)
         .to_frame()
         .reset_index()
         .set_index(0)
@@ -1437,7 +1442,7 @@ def gen_trade_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":
                 + [i for i in range(2060, 2115, 10)],
             )
         )
-    pars = {}
+    pars: "MutableParameterData" = {}
     merge_data(pars, par_dict1, par_dict2)
     return pars
 
@@ -1676,13 +1681,3 @@ def remove_old_cf4_alu_relation(scen: "Scenario") -> None:
     )
     # with scen.transact("CF4 relations corrected."):
     scen.remove_par("relation_activity", CF4_trp_emissions)
-
-
-if __name__ == "__main__":
-    calibrate_2020_furnaces({})
-    import ixmp
-    import message_ix
-
-    mp = ixmp.Platform("local3")
-    scen = message_ix.Scenario(mp, "SSP_SSP2_v6.2", "baseline_wo_GLOBIOM_ts")
-    gen_data_aluminum(scen)

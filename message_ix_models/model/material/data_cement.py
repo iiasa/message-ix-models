@@ -280,6 +280,6 @@ def gen_relation_data(scenario: "Scenario", s_info: "ScenarioInfo") -> "Paramete
     data_cem_rel = read_rel(scenario, "cement", None, "relations_R12.csv").pipe(
         broadcast, Region=nodes_ex_world(s_info.N)
     )
-    pars = {"relation_activity": []}
-    gen_data_steel_rel(data_cem_rel, pars, nodes_ex_world(s_info.N), s_info.Y)
+    pars: dict[str, list] = {"relation_activity": []}
+    gen_data_steel_rel(data_cem_rel, pars, set(nodes_ex_world(s_info.N)), s_info.Y)
     return {par_name: pd.concat(dfs) for par_name, dfs in pars.items()}
