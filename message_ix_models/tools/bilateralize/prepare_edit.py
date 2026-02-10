@@ -814,7 +814,7 @@ def build_flow_FIcosts(
         df_cost = df_cost.drop_duplicates()
 
         if "shipped" in tec:
-            df_cost["value"] = 0.04  # Default is 0.04 USD/GWa
+            df_cost["value"] = 0.001 # Default is 0.001MUSD/Mtkm
 
         cost_out = pd.concat([parameter_outputs[tec]["flow"][cost_par], df_cost])
         parameter_outputs[tec]["flow"][cost_par] = cost_out
