@@ -42,10 +42,13 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
-        df_x = pd.read_csv(PATH)
-        
-        # Filter to only include valid basins
-        df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
+        df_x_full = pd.read_csv(PATH)
+
+        # Get positional indices of valid basins from the unfiltered list
+        valid_mask = df_x_full["BCU_name"].isin(context.valid_basins)
+        valid_indices = df_x_full[valid_mask].index
+        df_x = df_x_full[valid_mask].reset_index(drop=True)
+
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
@@ -57,7 +60,8 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
 
-        # Reading data, the data is spatially and temporally aggregated from GHMs
+        # Filter df_sw to matching positional rows, then reset both indices
+        df_sw = df_sw.iloc[valid_indices].reset_index(drop=True)
         df_sw["BCU_name"] = df_x["BCU_name"]
         df_sw["MSGREG"] = (
             context.map_ISO_c[context.regions]
@@ -97,12 +101,15 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
-        df_x = pd.read_csv(PATH)
-        
-        # Filter to only include valid basins
-        df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
+        df_x_full = pd.read_csv(PATH)
 
-        # Reading data, the data is spatially and temporally aggregated from GHMs
+        # Get positional indices of valid basins from the unfiltered list
+        valid_mask = df_x_full["BCU_name"].isin(context.valid_basins)
+        valid_indices = df_x_full[valid_mask].index
+        df_x = df_x_full[valid_mask].reset_index(drop=True)
+
+        # Filter df_sw to matching positional rows, then reset both indices
+        df_sw = df_sw.iloc[valid_indices].reset_index(drop=True)
         df_sw["BCU_name"] = df_x["BCU_name"]
 
         df_sw["MSGREG"] = (
@@ -172,10 +179,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     PATH = package_data_path("water", "delineation", FILE)
 
     df_node = pd.read_csv(PATH)
-    
+
     # Apply basin filter to reduce number of basins per region
     df_node = filter_basins_by_region(df_node, context)
-    
+
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
