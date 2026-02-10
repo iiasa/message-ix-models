@@ -291,10 +291,10 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     PATH = package_data_path("water", "delineation", FILE2)
 
     df_node = pd.read_csv(PATH)
-    
+
     # Filter to only valid basins (already filtered in map_basin)
     df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
-    
+
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -811,10 +811,10 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     PATH = package_data_path("water", "delineation", FILE2)
 
     df_node = pd.read_csv(PATH)
-    
+
     # Filter to only valid basins (already filtered in map_basin)
     df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
-    
+
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -823,11 +823,11 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         if context.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
-    
-    # Filter historical and projected data to only include basins that exist after filtering
+
+    # Filter to basins that exist after filtering
     df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
     df_proj = df_proj[df_proj["BCU_name"].isin(context.valid_basins)]
-    
+
     # output dataframe linking to desal tech types
     out_df = (
         make_df(
