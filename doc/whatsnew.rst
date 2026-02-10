@@ -7,6 +7,10 @@ Next release
 - :mod:`message_ix_models` supports and is tested against `Pandas 3.0.0 <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v3.0.0.html>`_,
   released 2026-01-21 (:pull:`470`).
 
+- Add reduced basin filtering for water module with ``--reduced-basin`` and
+  demand/supply stress-based selection via ``--basin-selection stress``
+  (:issue:`414`).
+
 - Fix water module parameter bugs and refactor cooling (:pull:`405`):
   infrastructure M1/Mf mode fixes, regional average shares for cooling allocation,
   water supply level hierarchy corrections, and test suite improvements.
