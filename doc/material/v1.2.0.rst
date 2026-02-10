@@ -1,9 +1,7 @@
-Version 1.2.0 (Month X, 2025)
+Version 1.2.0 (September 15, 2025)
 *****************************
 
-Preview of the upcoming MESSAGEix-Materials release.
-
-This upcoming release of MESSAGEix-Materials introduces significant enhancements to the current model.
+This release of MESSAGEix-Materials introduces significant enhancements to the current model.
 It features improved calibration and updated parameterization, drawing on the latest statistics and findings from recent literature.
 Most of these updates reflect developments made during the ScenarioMIP project.
 
