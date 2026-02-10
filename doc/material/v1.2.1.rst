@@ -1,0 +1,64 @@
+Version 1.2.1 (February X, 2025)
+*****************************
+
+This release of MESSAGEix-Materials refactors the model building code of MESSAGEix-Materials and updates some parameter sets.
+It does **not** alter the model structure of MESSAGEix-Materials.
+
+Summary of changes:
+===================
+
+- Remove deprecated functions and CLI commands
+- Add type hints and docstrings to all functions
+- Drop :mod:`.model.material.util` `pycountry` functions in favour of :mod:`.model.util.pycountry`
+- Reduce set of parameters with `year_act` & `year_vtg` dimension by entries where: :math:`y^A - y^V > technical\_lifetime`
+- Add separate input files for emission factors and relations
+- Convert `.xlsx` input files to `.csv`
+- Move all "other industry" parametrisation functions to :mod:`.model.material.data_other_industry`
+- Refactor :mod:`.model.material.share_constraints`
+
+
+CLI changes
+===========
+
+- The `--power-sector` option added to `material-ix build` command, to allow building the model with or without the power sector materials module.
+
+Deprecations
+============
+
+Removed:
+
+- :py:`.excel_to_csv`
+- :py:`.get_all_input_data_dirs`
+- :py:`.get_pycountry_iso`
+- :py:`get_r12_reg`
+- :py:`get_spec`
+- :py:`gen_mock_demand_steel`
+- :py:`gen_mock_demand_petro`
+
+Renamed:
+
+- :py:`.add_R12_column` renamed to :func:`.add_region_column`.
+
+
+New features
+============
+
+- The following xlsx files have been replaced by multiple csv files for each sheet to facilitate version control and readability:
+
+  - :file:`generic_furnace_boiler_techno_economic.xlsx`
+  - :file:`LCA_commodity_mapping.xlsx`
+  - :file:`LCA_region_mapping.xlsx`
+  - :file:`MESSAGE_global_model_technologies.xlsx`
+  - :file:`NTNU_LCA_coefficients.xlsx`
+
+- New general function :func:`.drop_redundant_rows` to reduce set of parameters with `year_act` & `year_vtg` dimension by entries where: :math:`y^A - y^V > technical\_lifetime`.
+- New dataclass :class:`.CommShareConfig`: for better structure of :mod:`.model.material.share_constraints`
+
+
+Bug Fixes
+---------
+
+- Fix conflicting constraints for cement furnaces in 2025
+
+Compatibility
+-------------
