@@ -103,7 +103,7 @@ for model_scen in models_scenarios.keys():
 #        out_scenario.remove_par("resource_remaining", remdf)
 #        out_scenario.add_par("resource_remaining", resdf)
 
-    print("Remove oil_imp_c relation activity [TEST]")
+    print("Remove oil_imp_c relation activity")
     for p in ["relation_activity", "relation_upper", "relation_lower"]:
         remdf = out_scenario.par(p, filters = {"relation": "oil_imp_c"})
         with out_scenario.transact(f"remove relation {p}"):
