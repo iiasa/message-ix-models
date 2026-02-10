@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Hashable, List, Literal
+from typing import TYPE_CHECKING, List, Literal
 
 import message_ix
 import pandas as pd
@@ -72,7 +72,7 @@ class CommShareConfig:
 
     def dims_from_tecs(
         self, scen: "Scenario", tec_type: Literal["all", "share"]
-    ) -> dict[Hashable, list[Any]]:
+    ) -> dict[str, List[str]]:
         """Initialize ``dims_all`` or ``dims_share`` from model structure."""
         tec_map = {"all": self.all_tecs, "share": self.share_tecs}
         dims = (
@@ -82,7 +82,7 @@ class CommShareConfig:
             .drop_duplicates()
             .to_dict("records")
         )
-        merged = {
+        merged: dict[str, List[str]] = {
             k: [d[k] for d in dims if k in d] for k in {k for d in dims for k in d}
         }
         return merged
@@ -249,10 +249,6 @@ def add_foil_shr_constraint() -> None:
         add_comm_share(
             sc_clone,
             f"{sec}_foil",
-            f"cat_{sec}_total",
-            f"cat_{sec}_foil",
-            all_ind_tecs[sec],
-            foil_ind_tecs_ht[sec],
             df_furn_cement,
             years=sc_clone.yv_ya()["year_act"].drop_duplicates()[1:],
         )
