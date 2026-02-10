@@ -415,6 +415,7 @@ def _expand_historical_params(
     cap_fact_combined = pd.concat([cap_fact_pre, cap_fact_post])
     rename_cols = {"value": "cap_fact", "technology": "utype"}
     cap_fact_combined.rename(columns=rename_cols, inplace=True)
+    cap_fact_combined["year_vtg"] = cap_fact_combined["year_vtg"].astype(int)
 
     # Compute regional average shares by cooling type (not per-parent-tech)
     # This prevents nuclear's high saline share from inflating saline allocation
@@ -467,6 +468,10 @@ def _expand_historical_params(
         # Apply capacity factor for capacity params
         expanded["utype"] = expanded["technology"].str.split("__").str[0]
         if "capacity" in param_name:
+            # Ensure consistent int dtype; pandas >=3.12 rejects int/str merge keys
+            for col in ("year_vtg", "year_act"):
+                if col in expanded.columns:
+                    expanded[col] = expanded[col].astype(int)
             expanded = expanded.merge(cap_fact_combined, how="left")
             expanded = expanded[expanded["cap_fact"].notna()]
             expanded["value"] *= expanded["cap_fact"] * cap_flex
