@@ -138,6 +138,12 @@ _REL = ["low", "med", "high"]
     type=int,
     help="Number of basins per region to keep when reduced-basin is enabled",
 )
+@click.option(
+    "--basin-selection",
+    type=click.Choice(["first_k", "stress"]),
+    default="first_k",
+    help="Basin selection: first_k (CSV order) or stress (demand/supply span)",
+)
 @common_params("regions")
 @scenario_param("--ssp")
 def nexus_cli(
@@ -150,6 +156,7 @@ def nexus_cli(
     reduced_basin=False,
     filter_list=None,
     num_basins=None,
+    basin_selection="first_k",
 ):
     """
     Add basin structure connected to the energy sector and
@@ -161,6 +168,7 @@ def nexus_cli(
         context.filter_list = list(filter_list)
     if num_basins is not None:
         context.num_basins = num_basins
+    context.basin_selection = basin_selection
 
     nexus(context, regions, rcps, sdgs, rels, macro)
 

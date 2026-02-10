@@ -12,7 +12,7 @@ from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import load_package_data
+from message_ix_models.util import load_package_data, package_data_path
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def read_config(context: Context | None = None):
 
 def filter_basins_by_region(
     df_basins: pd.DataFrame,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     n_per_region: int = 3,
 ) -> pd.DataFrame:
     """Filter basins based on context configuration.
@@ -103,7 +103,7 @@ def filter_basins_by_region(
         context = Context.get_instance(-1)
 
     # Check if reduced basin filtering is enabled
-    reduced_basin = getattr(context, 'reduced_basin', False)
+    reduced_basin = getattr(context, "reduced_basin", False)
 
     if not reduced_basin:
         # No filtering, return original dataframe
@@ -111,23 +111,23 @@ def filter_basins_by_region(
         return df_basins
 
     # Basin filtering is enabled
-    filter_list = getattr(context, 'filter_list', None)
-    num_basins = getattr(context, 'num_basins', None)
+    filter_list = getattr(context, "filter_list", None)
+    num_basins = getattr(context, "num_basins", None)
 
     if filter_list:
         # Filter to specific basin list
-        filtered = df_basins[df_basins['BCU_name'].isin(filter_list)]
+        filtered = df_basins[df_basins["BCU_name"].isin(filter_list)]
 
         # Check if we have at least 1 basin per R12 region
-        all_regions = set(df_basins['REGION'].unique())
-        filtered_regions = set(filtered['REGION'].unique())
+        all_regions = set(df_basins["REGION"].unique())
+        filtered_regions = set(filtered["REGION"].unique())
         missing_regions = all_regions - filtered_regions
 
         if missing_regions:
             log.info(f"Adding one basin per missing region: {missing_regions}")
             # Add one basin from each missing region
             for region in missing_regions:
-                region_basins = df_basins[df_basins['REGION'] == region]
+                region_basins = df_basins[df_basins["REGION"] == region]
                 # Add the first basin from this region
                 filtered = pd.concat(
                     [filtered, region_basins.head(1)], ignore_index=True
@@ -140,24 +140,181 @@ def filter_basins_by_region(
 
         return filtered.reset_index(drop=True)
 
-    elif num_basins is not None:
-        # Use specified number of basins per region
+    # Check for stress-based selection mode
+    basin_selection = getattr(context, "basin_selection", "first_k")
+
+    if basin_selection == "stress":
+        n = num_basins if num_basins is not None else n_per_region
+        ssp = getattr(context, "ssp", "SSP2")
+        stress_df = compute_basin_demand_ratio(context.regions, ssp=ssp)
+        selected = _select_by_stress(stress_df, n_per_region=n)
+
+        filtered = df_basins[df_basins["BCU_name"].isin(selected)].reset_index(
+            drop=True
+        )
+        log.info(
+            f"Stress-based selection: {len(df_basins)} -> {len(filtered)} basins "
+            f"(n_per_region={n})"
+        )
+        return filtered
+
+    if num_basins is not None:
         n_per_region = num_basins
-    # else: use function default n_per_region
 
     # Group by region and take first n rows from each group
-    if 'REGION' not in df_basins.columns:
+    if "REGION" not in df_basins.columns:
         log.info("REGION column not found, cannot filter by region")
         return df_basins
 
-    filtered = df_basins.groupby('REGION', group_keys=False).apply(
-        lambda x: x.head(n_per_region)
-    ).reset_index(drop=True)
+    filtered = (
+        df_basins.groupby("REGION", group_keys=False)
+        .apply(lambda x: x.head(n_per_region))
+        .reset_index(drop=True)
+    )
 
-    log.info(f"Filtered basins from {len(df_basins)} to {len(filtered)} "
-            f"(keeping first {n_per_region} per region)")
+    log.info(
+        f"Filtered basins from {len(df_basins)} to {len(filtered)} "
+        f"(keeping first {n_per_region} per region)"
+    )
 
     return filtered
+
+
+def compute_basin_demand_ratio(
+    regions: str = "R12",
+    ssp: str = "SSP2",
+    demand_year: int = 2050,
+) -> pd.DataFrame:
+    """Compute basin-level demand/supply ratio from pre-build CSV data.
+
+    Demand = urban + rural + manufacturing withdrawals (MCM/year).
+    Supply = (surface water + groundwater recharge) mean across years (km3 -> MCM).
+
+    Parameters
+    ----------
+    regions : str
+        Region codelist (e.g. "R12").
+    ssp : str
+        SSP scenario for demand file naming.
+    demand_year : int
+        Year to use for demand values (later years show higher stress).
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: BCU_name, REGION, supply_mcm, demand_mcm, demand_ratio.
+    """
+    ssp_label = ssp.lower().replace("ssp", "ssp")  # SSP2 -> ssp2
+
+    basins = pd.read_csv(
+        package_data_path(
+            "water", "delineation", f"basins_by_region_simpl_{regions}.csv"
+        )
+    )
+
+    # Supply: surface + groundwater, mean across year columns, km3 -> MCM
+    qtot = pd.read_csv(
+        package_data_path(
+            "water", "availability", f"qtot_5y_no_climate_low_{regions}.csv"
+        )
+    ).drop(columns=["Unnamed: 0"], errors="ignore")
+    qr = pd.read_csv(
+        package_data_path(
+            "water", "availability", f"qr_5y_no_climate_low_{regions}.csv"
+        )
+    ).drop(columns=["Unnamed: 0"], errors="ignore")
+    supply_mcm = (qtot.mean(axis=1) + qr.mean(axis=1)) * KM3_TO_MCM
+
+    # Demand: urban + rural + manufacturing withdrawals at demand_year
+    demand_path = package_data_path("water", "demands", "harmonized", regions)
+    demand_files = [
+        f"{ssp_label}_regional_urban_withdrawal2_baseline.csv",
+        f"{ssp_label}_regional_rural_withdrawal_baseline.csv",
+        f"{ssp_label}_regional_manufacturing_withdrawal_baseline.csv",
+    ]
+
+    total_demand = pd.Series(0.0, index=basins["BCU_name"].astype(str))
+    for fname in demand_files:
+        df = pd.read_csv(demand_path / fname)
+        row = df[df.iloc[:, 0] == demand_year]
+        if row.empty:
+            log.warning(f"Year {demand_year} not found in {fname}")
+            continue
+        vals = row.iloc[0, 1:].astype(float)
+        # Align by basin name
+        for bcu in total_demand.index:
+            if bcu in vals.index:
+                total_demand[bcu] += vals[bcu]
+
+    result = pd.DataFrame(
+        {
+            "BCU_name": basins["BCU_name"],
+            "REGION": basins["REGION"],
+            "supply_mcm": supply_mcm.values,
+        }
+    )
+    result["demand_mcm"] = result["BCU_name"].astype(str).map(total_demand).fillna(0.0)
+    safe_supply = result["supply_mcm"].replace(0, float("inf"))
+    result["demand_ratio"] = result["demand_mcm"] / safe_supply
+
+    return result
+
+
+def _diversity_select(group_sorted: pd.DataFrame, n_per_region: int) -> set[str]:
+    """Select basins spanning a range via evenly spaced quantile positions.
+
+    Parameters
+    ----------
+    group_sorted : pd.DataFrame
+        Single-region subset, pre-sorted by the target metric.
+    n_per_region : int
+        Target number of basins.
+
+    Returns
+    -------
+    set[str]
+        Selected BCU_name values.
+    """
+    n = len(group_sorted)
+    if n <= n_per_region:
+        return set(group_sorted["BCU_name"])
+    if n_per_region == 1:
+        return {group_sorted.iloc[n // 2]["BCU_name"]}
+    if n_per_region == 2:
+        return {
+            group_sorted.iloc[0]["BCU_name"],
+            group_sorted.iloc[-1]["BCU_name"],
+        }
+    positions = [i / (n_per_region - 1) for i in range(n_per_region)]
+    indices = {int(round(p * (n - 1))) for p in positions}
+    return {group_sorted.iloc[i]["BCU_name"] for i in indices}
+
+
+def _select_by_stress(
+    stress_df: pd.DataFrame,
+    n_per_region: int = 3,
+) -> set[str]:
+    """Select basins spanning the demand/supply ratio range per region.
+
+    Ensures the reduced model includes basins across the stress spectrum:
+    low-stress (demand << supply) through high-stress (demand ~ supply).
+
+    Parameters
+    ----------
+    stress_df : pd.DataFrame
+        Output of compute_basin_demand_ratio().
+    n_per_region : int
+        Target number of basins per region.
+    """
+    selected: set[str] = set()
+
+    for region, group in stress_df.groupby("REGION"):
+        group_sorted = group.sort_values("demand_ratio").reset_index(drop=True)
+        basins = _diversity_select(group_sorted, n_per_region)
+        selected.update(basins)
+        log.info(f"{region}: {len(basins)} basins selected")
+
+    return selected
 
 
 @lru_cache()
