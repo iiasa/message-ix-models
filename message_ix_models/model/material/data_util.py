@@ -771,6 +771,8 @@ def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
 
 def drop_redundant_rows(scen: "Scenario", results: "MutableParameterData"):
     r"""Drop duplicate row and those where :math:`y^A - y^V > technical\_lifetime`."""
+    for k, v in results.items():
+        results[k] = v.drop_duplicates()
     lt_pars = [
         x
         for x in scen.par_list()
@@ -786,7 +788,10 @@ def drop_redundant_rows(scen: "Scenario", results: "MutableParameterData"):
         node_col_name = "node_loc" if "node_loc" in df.columns else "node"
         df = (
             df.set_index([node_col_name, "technology", "year_vtg"])
-            .join(lt_data, rsuffix="_lifetime")
+            .join(
+                lt_data.rename_axis(index={"node_loc": node_col_name}),
+                rsuffix="_lifetime",
+            )
             .assign(
                 value=lambda x: x["value"].fillna(0),
                 value_lifetime=lambda x: x["value_lifetime"].fillna(0),
