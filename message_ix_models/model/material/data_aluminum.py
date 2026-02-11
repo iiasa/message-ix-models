@@ -989,6 +989,8 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
 
     # add R12 column
     df_prim["R12"] = add_region_column(df_prim, ("node", "R12.yaml"), "ISO")
+    # drop countries that don't exist anymore and can't be mapped to current regions
+    df_prim = df_prim[~df_prim["ISO"].isin(["SUN", "CSK", "DDR"])]
     return df_prim
 
 
