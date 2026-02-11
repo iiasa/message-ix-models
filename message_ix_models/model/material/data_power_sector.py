@@ -1,3 +1,10 @@
+"""
+Power sector material data generation utilities.
+
+Provides functions to read material intensities and generate parameter data
+for power-sector-related technologies and their use of materials.
+"""
+
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -6,8 +13,12 @@ import pint
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.util import read_yaml_file
-from message_ix_models.util import package_data_path, same_node
+from message_ix_models.util import (
+    load_package_data,
+    package_data_path,
+    same_node,
+    nodes_ex_world,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -43,9 +54,7 @@ def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
         .apply(list)
         .to_dict()
     )
-    reg_map = read_yaml_file(
-        package_data_path("material", "power_sector", "themis_region_map.yaml")
-    )
+    reg_map = load_package_data("material", "power_sector", "themis_region_map.yaml")
     comm_map = pd.read_csv(path.joinpath("lca_commodity_mapping.csv"), index_col=0)
 
     data = pd.read_csv(path.joinpath("NTNU_LCA_coefficients.csv"), comment="#").rename(

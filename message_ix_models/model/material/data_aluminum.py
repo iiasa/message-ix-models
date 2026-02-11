@@ -837,9 +837,7 @@ def gen_hist_new_cap(s_info: ScenarioInfo) -> "ParameterData":
         }
     )
     df_cap["ISO"] = df_cap.Country.apply(lambda c: pycountry.iso_3166_alpha_3(c))
-    df_cap["R12"] = add_region_column(
-        df_cap, file_path=package_data_path("node", "R12.yaml"), iso_column="ISO"
-    )
+    df_cap["R12"] = add_region_column(df_cap, ("node", "R12.yaml"), iso_column="ISO")
 
     # generate historical_new_capacity for soderberg
     df_cap_ss = df_cap[
@@ -990,12 +988,7 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
     df_prim.reset_index(inplace=True)
 
     # add R12 column
-    df_prim["R12"] = add_region_column(
-        df_prim.rename(columns={"ISO": "COUNTRY"}),
-        package_data_path("node", "R12.yaml"),
-    )
-    df_prim.rename(columns={"COUNTRY": "ISO"}, inplace=True)
-
+    df_prim["R12"] = add_region_column(df_prim, ("node", "R12.yaml"), "ISO")
     return df_prim
 
 
@@ -1292,7 +1285,7 @@ def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
     tec_map_df.columns = ["Variable", "technology"]
 
     test = test.reset_index()
-    test["R12"] = add_region_column(test, package_data_path("node", "R12.yaml"), "ISO")
+    test["R12"] = add_region_column(test, ("node", "R12.yaml"), "ISO")
     test_r12 = test.groupby(["Variable", "R12"]).sum(numeric_only=True)
     test_r12 = (
         test_r12.loc[["Coal", "Gas", "Oil"]]
