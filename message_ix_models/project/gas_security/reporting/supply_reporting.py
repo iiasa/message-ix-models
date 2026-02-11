@@ -121,14 +121,14 @@ mp = ixmp.Platform()
 
 fuel_supply_out = pd.DataFrame()
 for mod, scen in [('gas_security', 'SSP2'),
-                  #('gas_security', 'FSU2040'),
-                  #('gas_security', 'FSU2100'),
-                  #('gas_security', 'NAM250'),
-                  #('gas_security', 'NAM500'),
-                  #('gas_security', 'FSU2040_NAM250'),
-                  #('gas_security', 'FSU2040_NAM500'),
-                  #('gas_security', 'FSU2100_NAM250'),
-                  #('gas_security', 'FSU2100_NAM500'),
+                  ('gas_security', 'FSU2040'),
+                  ('gas_security', 'FSU2100'),
+                  ('gas_security', 'NAM250'),
+                  ('gas_security', 'NAM500'),
+                  ('gas_security', 'FSU2040_NAM250'),
+                  ('gas_security', 'FSU2040_NAM500'),
+                  ('gas_security', 'FSU2100_NAM250'),
+                  ('gas_security', 'FSU2100_NAM500'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
