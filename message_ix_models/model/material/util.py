@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Iterable, Literal
 
 import message_ix
 import openpyxl as pxl
 import pandas as pd
-import yaml
 from scipy.optimize import curve_fit
 
 from message_ix_models import Context, ScenarioInfo
@@ -67,27 +66,6 @@ def prepare_xlsx_for_explorer(filepath: str) -> None:
     df = df[~df["Region"].isna()]
     df["Region"] = df["Region"].map(add_R12)
     df.to_excel(filepath, index=False)
-
-
-def read_yaml_file(file_path: str | Path) -> dict | None:
-    """Tries to read yaml file into a dict
-
-    Parameters
-    ----------
-    file_path : str
-        file path to yaml file
-
-    Returns
-    -------
-    dict
-    """
-    with open(file_path, encoding="utf8") as file:
-        try:
-            data = yaml.safe_load(file)
-            return data
-        except yaml.YAMLError as e:
-            print(f"Error while parsing YAML file: {e}")
-            return None
 
 
 def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str]]:
@@ -335,11 +313,12 @@ def path_fallback(context_or_regions: Context | str, *parts) -> Path:
 
 
 def add_region_column(
-    df: pd.DataFrame, file_path: str | Path, iso_column: str = "COUNTRY"
+    df: pd.DataFrame, parts: Iterable[str], iso_column: str = "COUNTRY"
 ) -> pd.Series:
     """Convenience function to add R12 region column to dataframe."""
-    yaml_data = read_yaml_file(file_path)
-    yaml_data.pop("World")
+    yaml_data = load_package_data(*parts)
+    if "World" in yaml_data:
+        yaml_data.pop("World")
 
     r12_map = {k: v["child"] for k, v in yaml_data.items()}
     r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}

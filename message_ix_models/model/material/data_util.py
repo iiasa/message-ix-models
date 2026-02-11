@@ -1,3 +1,11 @@
+"""
+Utilities for reading and preparing material-related data files and projections.
+
+This module contains helper functions to load, transform and broadcast tables used
+by the MESSAGEix-Materials build (e.g., reading TIMER Excel tables, mapping IEA
+flows, generating emission factors and projections).
+"""
+
 from collections.abc import Mapping
 from functools import lru_cache
 from typing import TYPE_CHECKING, Literal
@@ -9,14 +17,12 @@ from genno import Computer
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.util import (
-    read_yaml_file,
-)
 from message_ix_models.model.structure import get_region_codes
 from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.util import (
     broadcast,
+    load_package_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -578,11 +584,10 @@ def gen_plastics_emission_factors(
 
     tec_species_map = {"methanol": "meth_ind_fs", "HVCs": "production_HVC"}
 
-    carbon_pars = read_yaml_file(
-        package_data_path(
-            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
-        )
+    carbon_pars = load_package_data(
+        "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
     )
+
     # TODO: move EOL parameters to a different file to disassociate from methanol model
     end_of_life_pars = pd.read_excel(
         package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
@@ -657,11 +662,10 @@ def gen_chemicals_co2_ind_factors(
         "HVCs": "production_HVC",
     }
 
-    carbon_pars = read_yaml_file(
-        package_data_path(
-            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
-        )
+    carbon_pars = load_package_data(
+        "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
     )
+
     # TODO: move EOL parameters to a different file to disassociate from methanol model
     end_of_life_pars = pd.read_excel(
         package_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
@@ -734,11 +738,10 @@ def gen_ethanol_to_ethylene_emi_factor(info: ScenarioInfo) -> "ParameterData":
      *NOTE: Values are positive since they are added to bottom-up CO2 accounting.*
     """
 
-    carbon_pars = read_yaml_file(
-        package_data_path(
-            "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
-        )
+    carbon_pars = load_package_data(
+        "material", "petrochemicals", "chemicals_carbon_parameters.yaml"
     )
+
     embodied_carbon_plastics = {
         k: (v["carbon mass"] / v["molar mass"]) * v["plastics use"]
         for k, v in carbon_pars["ethanol"].items()
