@@ -1,14 +1,16 @@
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
 from message_ix import make_df
+from packaging.version import Version as V
 
 from message_ix_models.model.material.share_constraints import (
     CommShareConfig,
     gen_com_share_df,
 )
-from message_ix_models.testing import bare_res
+from message_ix_models.testing import GHA, bare_res
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -53,6 +55,10 @@ def test_gen_com_share_df() -> None:
     assert (make_df("share_commodity_up").columns == df.columns).all()
 
 
+@pytest.mark.skipif(
+    GHA and (V(version("message_ix")) < V("3.9")),
+    reason="Fails on GHA with message_ix < v3.9",
+)
 def test_gen_comm_map(scenario) -> None:
     cfg = CommShareConfig.from_files(scenario, "coal_residual_industry")
     cfg.nodes = ["R12_AFR"]
