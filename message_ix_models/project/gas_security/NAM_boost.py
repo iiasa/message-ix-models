@@ -32,7 +32,8 @@ def run_nam_boost(base_scenario_name: str,
                                               'loil_shipped_exp_weu', 'loil_shipped_exp_eeu',
                                               'crudeoil_shipped_exp_weu', 'crudeoil_shipped_exp_eeu',
                                               'meth_shipped_exp_weu', 'meth_shipped_exp_eeu',
-                                              'lh2_shipped_exp_weu', 'lh2_shipped_exp_eeu'],
+                                              #'lh2_shipped_exp_weu', 'lh2_shipped_exp_eeu',
+                                             ],
                   bound_commodities: list = ['LNG', 'crudeoil', 'coal', 'biomass',
                                              'ethanol', 'fueloil', 'lightoil', 'methanol', 'lh2'],
                   bound_year: str = 2030,
@@ -108,7 +109,29 @@ def run_nam_boost(base_scenario_name: str,
     
     with out_scenario.transact('Add activity bound'):
         out_scenario.add_par('bound_activity_lo', bounddf)
-                
+
+    # Remove activity constraints on targeted technologies
+    with out_scenario.transact("Remove activity constraints on target tec"):
+         for par in ["growth_activity_up", "initial_activity_up"]:
+             basepar = out_scenario.par(par, filters = {"technology": bound_technologies,
+                                                        "node_loc": bound_exporters,
+                                                        "year_act": bound_year})
+             if len(basepar) != 0:
+                 print(f"...{par}")
+                 out_scenario.remove_par(par, basepar)
+                 
+    # Adjust low constraints (allow steeper decline) for targeted technologies
+    with out_scenario.transact("Adjust lo activity constraints on target tec"):
+         for par in ["growth_activity_lo"]:
+             basepar = out_scenario.par(par, filters = {"technology": bound_technologies}) # all exporters targeted
+             adjpar = basepar.copy()
+             adjpar['value'] *= 2 # double slack
+             
+             if len(basepar) != 0:
+                 print(f"...{par}")
+                 out_scenario.remove_par(par, basepar)
+                 out_scenario.add_par(par, adjpar)
+                 
     if solve_scenario == True:
         out_scenario.solve(quiet = False)
 
@@ -116,22 +139,22 @@ def run_nam_boost(base_scenario_name: str,
 
 # Run scenarios
 run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'NAM250',
-              bound_level = 250)
-run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'NAM500',
-              bound_level = 500)
+              out_scenario_name = 'NAM2500',
+              bound_level = 2500)
+#run_nam_boost(base_scenario_name = 'SSP2',
+#              out_scenario_name = 'NAM5000',
+#              bound_level = 5000)
 
-run_nam_boost(base_scenario_name = 'FSU2040',
-              out_scenario_name = 'FSU2040_NAM250',
-              bound_level = 250)
-run_nam_boost(base_scenario_name = 'FSU2040',
-              out_scenario_name = 'FSU2040_NAM500',
-              bound_level = 500)
+#run_nam_boost(base_scenario_name = 'FSU2040',
+#              out_scenario_name = 'FSU2040_NAM2500',
+#              bound_level = 2500)
+#run_nam_boost(base_scenario_name = 'FSU2040',
+#              out_scenario_name = 'FSU2040_NAM5000',
+#              bound_level = 5000)
 
-run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAM250',
-              bound_level = 250)
-run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAM500',
-              bound_level = 500)
+#run_nam_boost(base_scenario_name = 'FSU2100',
+#              out_scenario_name = 'FSU2100_NAM2500',
+#              bound_level = 2500)
+#run_nam_boost(base_scenario_name = 'FSU2100',
+#              out_scenario_name = 'FSU2100_NAM5000',
+#              bound_level = 5000)
