@@ -69,9 +69,6 @@ def add_data(scenario: message_ix.Scenario, dry_run: bool = False) -> None:
 def build(
     context: Context,
     scenario: message_ix.Scenario,
-    old_calib: bool,
-    modify_existing_constraints: bool = True,
-    iea_data_path: str | None = None,
     power_sector: bool = False,
 ) -> message_ix.Scenario:
     """Build Materials model on `scenario`."""

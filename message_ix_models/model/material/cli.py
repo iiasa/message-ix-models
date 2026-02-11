@@ -5,7 +5,6 @@ invoke the commands defined in this module.
 """
 
 import logging
-import os
 
 import click
 import message_ix
@@ -35,17 +34,11 @@ def cli(ssp):
 
 
 @cli.command("build")
-@click.option(
-    "--iea_data_path",
-    default="P:ene.model\\IEA_database\\Florian\\",
-    help="File path for external data input",
-)
 @click.option("--tag", default="", help="Suffix to the scenario name")
 @click.option(
     "--mode", default="by_url", type=click.Choice(["by_url", "cbudget", "by_copy"])
 )
 @click.option("--scenario_name", default="NoPolicy_3105_macro")
-@click.option("--old_calib", default=False)
 @click.option(
     "--update_costs",
     default=False,
@@ -55,11 +48,9 @@ def cli(ssp):
 @click.pass_obj
 def build_scen(
     context,
-    iea_data_path,
     tag,
     mode,
     scenario_name,
-    old_calib,
     update_costs,
     power_sector,
 ):
@@ -70,13 +61,6 @@ def build_scen(
     memory, i.e. ``jvmargs=["-Xmx16G"]``.
     """
 
-    if not os.path.isfile(iea_data_path + "REV2022_allISO_IEA.parquet") & ~old_calib:
-        log.warning(
-            "The proprietary data file: 'REV2022_allISO_IEA.parquet' based on IEA"
-            "Extended Energy Balances required for the build with --old_calib=False"
-            " cannot be found in the given location. Aborting build..."
-        )
-        return
     import message_ix
 
     mp = context.get_platform()
@@ -111,8 +95,6 @@ def build_scen(
             scenario = build(
                 context,
                 scenario,
-                old_calib=old_calib,
-                iea_data_path=iea_data_path,
                 power_sector=power_sector,
             )
         else:
@@ -122,8 +104,6 @@ def build_scen(
                     model="MESSAGEix-Materials",
                     scenario=output_scenario_name + "_" + tag,
                 ),
-                old_calib=old_calib,
-                iea_data_path=iea_data_path,
                 power_sector=power_sector,
             )
         # Set the latest version as default
