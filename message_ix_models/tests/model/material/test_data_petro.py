@@ -26,13 +26,12 @@ def scenario(request: "FixtureRequest", test_context: "Context") -> "Scenario":
 
 #: Expected parameters and number of values.
 EXP_LEN = {
-    "input": 84784,
-    "output": 108976,
-    "emission_factor": 29568,
+    "input": 49766,
+    "output": 72842,
     "inv_cost": 2904,
-    "fix_cost": 12096,
-    "var_cost": 12208,
-    "capacity_factor": 13440,
+    "fix_cost": 11172,
+    "var_cost": 12110,
+    "capacity_factor": 12036,
     "technical_lifetime": 2904,
     "growth_activity_lo": 336,
     "growth_activity_up": 333,
@@ -43,7 +42,7 @@ EXP_LEN = {
     "initial_activity_up": 169,
     "bound_activity_lo": 24,
     "bound_activity_up": 38,
-    "relation_activity": 1176,
+    "relation_activity": 3864,
 }
 
 
