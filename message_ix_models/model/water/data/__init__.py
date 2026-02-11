@@ -1,7 +1,12 @@
 """Generate input data."""
 
+from __future__ import annotations
+
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING
+
+import pandas as pd
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data
@@ -17,7 +22,10 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-DATA_FUNCTIONS = [
+#: Type alias for data generation functions
+DataFunc = Callable[["Context"], dict[str, pd.DataFrame]]
+
+DATA_FUNCTIONS: list[DataFunc] = [
     add_water_supply,
     cool_tech,  # Water & parasitic_electricity requirements for cooling technologies
     non_cooling_tec,
@@ -30,7 +38,7 @@ DATA_FUNCTIONS = [
     add_irr_structure,
 ]
 
-DATA_FUNCTIONS_COUNTRY = [
+DATA_FUNCTIONS_COUNTRY: list[DataFunc] = [
     add_water_supply,
     cool_tech,  # Water & parasitic_electricity requirements for cooling technologies
     non_cooling_tec,
@@ -50,7 +58,7 @@ def add_data(scenario, context: "Context", dry_run=False):
     info = ScenarioInfo(scenario)
     context["water build info"] = info
 
-    data_funcs = (
+    data_funcs: list[DataFunc] = (
         [add_water_supply, cool_tech, non_cooling_tec]
         if context.nexus_set == "cooling"
         else DATA_FUNCTIONS

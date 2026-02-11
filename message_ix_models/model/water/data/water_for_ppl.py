@@ -10,7 +10,7 @@ from message_ix import make_df
 
 from message_ix_models import Context
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
-from message_ix_models.model.water.utils import m3_GJ_TO_MCM_GWa
+from message_ix_models.model.water.utils import get_vintage_and_active_years
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
@@ -20,383 +20,42 @@ from message_ix_models.util import (
 
 if TYPE_CHECKING:
     from message_ix import Scenario
+
 log = logging.getLogger(__name__)
 
-
-def missing_tech(x: pd.Series) -> pd.Series:
-    """Assign values to missing data.
-    It goes through the input data frame and extract the technologies which
-    don't have input values and then assign manual  values to those technologies
-    along with assigning them an arbitrary level i.e dummy supply
-    """
-    data_dic = {
-        "geo_hpl": 1 / 0.850,
-        "geo_ppl": 1 / 0.385,
-        "gas_hpl": 1 / 0.3,
-        "foil_hpl": 1 / 0.25,
-        "nuc_hc": 1 / 0.326,
-        "nuc_lc": 1 / 0.326,
-        "solar_th_ppl": 1 / 0.385,
-        "csp_sm1_res": 1 / 0.385,
-        "csp_sm3_res": 1 / 0.385,
-    }
-
-    if pd.notna(x["technology"]):
-        # Find a matching key in `data_dic` using substring matching
-        matched_key = next((key for key in data_dic if key in x["technology"]), None)
-
-        if matched_key:
-            value = data_dic[matched_key]
-            if x["value"] < 1:
-                value = max(x["value"], value)
-            # for backwards compatibility
-            return (
-                pd.Series({"value": value, "level": "dummy_supply"})
-                if x["level"] == "cooling"
-                else pd.Series({"value": value, "level": x["level"]})
-            )
-
-    # Return the original values if no match is found
-    return pd.Series({"value": x["value"], "level": x["level"]})
+# Load configuration
+_CONFIG_PATH = package_data_path("water", "ppl_cooling_config.yaml")
+with open(_CONFIG_PATH) as f:
+    CONFIG = yaml.safe_load(f)
 
 
-def cooling_fr(x: pd.Series) -> float:
-    """Calculate cooling fraction
-
-    Returns
-    -------
-    The calculated cooling fraction after for two categories;
-    1. Technologies that produce heat as an output
-        cooling_fraction(h_cool) = input value(hi) - 1
-    Simply subtract 1 from the heating value since the rest of the part is already
-    accounted in the heating value
-    2. Rest of technologies
-        h_cool  =  hi -Hi* h_fg - 1,
-        where:
-            h_fg (flue gasses losses) = 0.1 (10% assumed losses)
-    """
-    try:
-        if "hpl" in x["parent_tech"]:
-            return x["value"] - 1
-        else:
-            return x["value"] - (x["value"] * 0.1) - 1
-    except KeyError:
-        return x["value"] - (x["value"] * 0.1) - 1
-
-
-def shares(
-    x: pd.Series,
-    context: "Context",
-    search_cols_cooling_fraction: list,
-    hold_df: pd.DataFrame,
-    search_cols: list,
-) -> pd.Series:
-    """Process share and cooling fraction.
-
-    Returns
-    -------
-    Product of value of shares of cooling technology types of regions with
-    corresponding cooling fraction
-    """
-    for col in search_cols_cooling_fraction:
-        col2 = context.map_ISO_c[col] if context.type_reg == "country" else col
-
-        # Filter the cooling fraction
-        cooling_fraction = hold_df[
-            (hold_df["node_loc"] == col2)
-            & (hold_df["technology_name"] == x["technology"])
-        ]["cooling_fraction"]
-
-        # Log unmatched rows
-        if cooling_fraction.empty:
-            log.info(
-                f"No cooling_fraction found for node_loc: {col2}, "
-                f"technology: {x['technology']}"
-            )
-            cooling_fraction = pd.Series([0])
-
-        # Ensure the Series is not empty before accessing its first element
-        # # Default to 0 if cooling_fraction is empty
-        x[col] = (
-            x[col] * cooling_fraction.iloc[0]
-            if not cooling_fraction.empty
-            else x[col] * 0
-        )
-
-    # Construct the output
-    results = []
-    for i in x:
-        if isinstance(i, str):
-            results.append(i)
-        else:
-            results.append(float(i) if not isinstance(i, pd.Series) else i.iloc[0])
-
-    return pd.Series(results, index=search_cols)
-
-
-def apply_act_cap_multiplier(
-    df: pd.DataFrame,
-    hold_cost: pd.DataFrame,
-    cap_fact_parent: pd.DataFrame | None = None,
-    param_name: str = "",
-) -> pd.DataFrame:
-    """
-    Generalized function to apply hold_cost factors and optionally divide by cap factor.
-    hold cost contain the share per cooling technologies and their activity factors
-    compared to parent technologies.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        The input dataframe in long format, containing 'node_loc', 'technology', and
-        'value'.
-    hold_cost : pd.DataFrame
-        DataFrame with 'utype', region-specific multipliers (wide format), and
-        'technology'.
-    cap_fact_parent : pd.DataFrame, optional
-        DataFrame with capacity factors, used only if 'capacity' is in param_name.
-    param_name : str, optional
-        The name of the parameter being processed.
-
-    Returns
-    -------
-    pd.DataFrame
-        The modified dataframe.
-    """
-
-    # Melt hold_cost to long format
-    hold_cost_long = hold_cost.melt(
-        id_vars=["utype", "technology"], var_name="node_loc", value_name="multiplier"
-    )
-
-    # Merge and apply hold_cost multipliers: share * addon_factor
-    # ACT,c = ACT,p * share * addon_factor
-    df = df.merge(hold_cost_long, how="left")
-    df["value"] *= df["multiplier"]
-
-    # filter with value > 0
-    df = df[df["value"] > 0]
-
-    def _yv_int(obj: pd.DataFrame) -> pd.DataFrame:
-        """Ensure the "year_vtg" column has :class:`int` dtype.
-
-        This appears necessary with pandas 3.0.0 but not with 2.3.x.
-
-        .. todo:: Trace the origin of 'str' dtype for this column; adjust there instead;
-           remove this function.
-        """
-        return obj.astype({"year_vtg": int} if "year_vtg" in obj.columns else {})
-
-    # If parameter is capacity-related, multiply by cap_fact
-    # CAP,c * cf,c(=1) = CAP,p * share * addon_factor * cf,p
-    if "capacity" in param_name and cap_fact_parent is not None:
-        df = df.pipe(_yv_int).merge(cap_fact_parent.pipe(_yv_int), how="left")
-        df["value"] *= df["cap_fact"] * 1.2  # flexibility
-        df.drop(columns="cap_fact", inplace=True)
-    # remove if there are Nan values, but write a log that inform on the parameter and
-    # the head of the data
-    # Identify missing or invalid values
-    missing_values = (
-        df["value"].isna()
-        | (df["value"] == "")
-        | (df["value"].astype(str).str.strip() == "")
-    )
-
-    if missing_values.any():
-        print("diobo")
-        log.warning(
-            f"Missing or empty values found in {param_name}.head(1):\n"
-            f"{df[missing_values].head(1)}"
-        )
-        df = df[~missing_values]  # Remove rows with missing/empty values
-
-    df.drop(columns=["utype", "multiplier"], inplace=True)
-
-    return df
-
-
-def cooling_shares_SSP_from_yaml(
-    context: "Context",  # Aligning with the style of the functions provided
-) -> pd.DataFrame:
-    """
-    Populate a DataFrame for 'share_commodity_up' from a YAML configuration file.
-
-    Parameters
-    ----------
-    context : Context
-        Context object containing SSP information (e.g., context.SSP)
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame populated with values from the YAML configuration file.
-    """
-    # Load the YAML file
-    FILE = "ssp.yaml"
-    yaml_file_path = package_data_path("water", FILE)
-    try:
-        with open(yaml_file_path, "r") as file:
-            yaml_data = yaml.safe_load(file)
-    except FileNotFoundError:
-        log.warning(f"YAML file '{FILE}' not found. Please, check your data.")
-
-    # Read the SSP from the context
-    ssp = context.ssp
-
-    # Navigate to the scenarios section in the YAML file
-    macro_regions_data = yaml_data.get("macro-regions", {})
-    scenarios = yaml_data.get("scenarios", {})
-
-    # Validate that the SSP exists in the YAML data
-    if ssp not in scenarios:
-        log.warning(
-            f"SSP '{ssp}' not found in the 'scenarios' section of the YAML file."
-        )
-        return pd.DataFrame()
-
-    # Extract data for the specified SSP
-    ssp_data = scenarios[ssp]["cooling_tech"]
-
-    # Initialize an empty list to hold DataFrames
-    df_region = pd.DataFrame()
-    info = context["water build info"]
-    year_constraint = [year for year in info.Y if year >= 2050]
-
-    # Loop through all regions and shares
-    for macro_region, region_data in ssp_data.items():
-        share_data = region_data.get("share_commodity_up", {})
-        reg_shares = macro_regions_data[macro_region]
-        # filter reg shares that are also in info.N
-        reg_shares = [
-            node
-            for node in info.N
-            if any(node.endswith(reg_share) for reg_share in reg_shares)
-        ]
-        for share, value in share_data.items():
-            # Create a DataFrame for the current region and share
-            df_region = pd.concat(
-                [
-                    df_region,
-                    make_df(
-                        "share_commodity_up",
-                        shares=[share],
-                        time=["year"],
-                        value=[value],
-                        unit=["-"],
-                    ).pipe(broadcast, year_act=year_constraint, node_share=reg_shares),
-                ]
-            )
-
-    return df_region
-
-
-def _compose_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
-    """Create the capacity_factor base on data in `inp` and `context.
-
-    Parameters
-    ----------
-    inp : pd.DataFrame
-        The DataFrame representing the "input" parameter.
-    context : .Context
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame representing the "capacity_factor" parameter.
-    """
-    cap_fact = make_matched_dfs(inp, capacity_factor=1)
-    # Climate Impacts on freshwater cooling capacity
-    # Taken from
-    # https://www.sciencedirect.com/science/article/pii/S0959378016301236?via%3Dihub#sec0080
-    if context.RCP == "no_climate":
-        df = cap_fact["capacity_factor"]
-    else:
-        df = cap_fact["capacity_factor"]
-        # reading ppl cooling impact dataframe
-        file_path = package_data_path(
-            "water",
-            "ppl_cooling_tech",
-            f"power_plant_cooling_impact_MESSAGE_{context.regions}_{context.RCP}.csv",
-        )
-        df_impact = pd.read_csv(file_path)
-
-        for n in df_impact["node"]:
-            conditions = [
-                df["technology"].str.contains("fresh")
-                & (df["year_act"] >= 2025)
-                & (df["year_act"] < 2050)
-                & (df["node_loc"] == n),
-                df["technology"].str.contains("fresh")
-                & (df["year_act"] >= 2050)
-                & (df["year_act"] < 2070)
-                & (df["node_loc"] == n),
-                df["technology"].str.contains("fresh")
-                & (df["year_act"] >= 2070)
-                & (df["node_loc"] == n),
-            ]
-
-            choices = [
-                df_impact[(df_impact["node"] == n)]["2025s"],
-                df_impact[(df_impact["node"] == n)]["2050s"],
-                df_impact[(df_impact["node"] == n)]["2070s"],
-            ]
-
-            df["value"] = np.select(conditions, choices, default=df["value"])
-
-    return df
-
-
-# water & electricity for cooling technologies
-def cool_tech(
+def _load_scenario_and_cooling_data(
     context: "Context", scenario: "Scenario | None" = None
-) -> dict[str, pd.DataFrame]:
-    """Process cooling technology data for a scenario instance.
-    The input values of parent technologies are read in from a scenario instance and
-    then cooling fractions are calculated by using the data from
-    ``tech_water_performance_ssp_msg.csv``.
-    It adds cooling technologies as addons to the parent technologies. The
-    nomenclature for cooling technology is <parenttechnologyname>__<coolingtype>.
-    E.g: `coal_ppl__ot_fresh`
-
-    Parameters
-    ----------
-    context : .Context
-    scenario : .Scenario, optional
-        Scenario to use. If not provided, uses context.get_scenario().
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list, "Scenario", pd.DataFrame]:
+    """Load cooling tech specs and parent technology data from scenario.
 
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-        Values are data frames ready for :meth:`~.Scenario.add_par`.
-        Years in the data include the model horizon indicated by
-        ``context["water build info"]``, plus the additional year 2010.
+    cooling_df : DataFrame with cooling technology specifications
+    ref_input : DataFrame with parent technology input/output parameters
+    df_node : DataFrame with basin delineation
+    node_region : List of unique region nodes
+    scen : Scenario object
+    cost_share_df : DataFrame with cost and share data
     """
-    #: Name of the input file.
-    # The input file mentions water withdrawals and emission heating fractions for
-    # cooling technologies alongwith parent technologies:
-    FILE = "tech_water_performance_ssp_msg.csv"
-    # Investment costs & regional shares of hist. activities of cooling
-    # technologies
-    FILE1 = (
-        "cooltech_cost_and_shares_"
-        + (f"ssp_msg_{context.regions}" if context.type_reg == "global" else "country")
-        + ".csv"
+    # File paths
+    tech_perf_path = package_data_path(
+        "water", "ppl_cooling_tech", "tech_water_performance_ssp_msg.csv"
+    )
+    suffix = "ssp_msg_" + context.regions if context.type_reg == "global" else "country"
+    cost_share_file = f"cooltech_cost_and_shares_{suffix}.csv"
+    cost_share_path = package_data_path("water", "ppl_cooling_tech", cost_share_file)
+    basin_path = package_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
 
-    # define an empty dictionary
-    results = {}
-
-    # Reference to the water configuration
-    info = context["water build info"]
-    sub_time = context.time
-
-    # reading basin_delineation
-    FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = package_data_path("water", "delineation", FILE2)
-
-    df_node = pd.read_csv(PATH)
-    # Assigning proper nomenclature
+    # Load basin delineation
+    df_node = pd.read_csv(basin_path)
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = (
@@ -404,119 +63,104 @@ def cool_tech(
         if context.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
-
     node_region = df_node["region"].unique()
-    # reading ppl cooling tech dataframe
-    path = package_data_path("water", "ppl_cooling_tech", FILE)
-    df = pd.read_csv(path)
-    cooling_df = df.loc[df["technology_group"] == "cooling"].copy()
-    # Separate a column for parent technologies of respective cooling
-    # techs
-    cooling_df["parent_tech"] = (
-        cooling_df["technology_name"]
-        .apply(lambda x: pd.Series(str(x).split("__")))
-        .drop(columns=1)
-    )
 
+    # Load cooling technology specs
+    cooling_df = pd.read_csv(tech_perf_path)
+    cooling_df = cooling_df[cooling_df["technology_group"] == "cooling"].copy()
+    cooling_df["parent_tech"] = cooling_df["technology_name"].str.split("__").str[0]
+
+    # Get scenario and parent tech parameters
     scen = scenario or context.get_scenario()
-
-    # Extracting input database from scenario for parent technologies
     ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
-    # list of tec in cooling_df["parent_tech"] that are not in ref_input
-    missing_tec = cooling_df["parent_tech"][
-        ~cooling_df["parent_tech"].isin(ref_input["technology"])
-    ]
-    # some techs only have output, like csp
-    ref_output = scen.par("output", {"technology": missing_tec})
-    # set columns names of ref_output to be the same as ref_input
-    ref_output.columns = ref_input.columns
-    # merge ref_input and ref_output
-    ref_input = pd.concat([ref_input, ref_output])
 
-    ref_input[["value", "level"]] = ref_input.apply(missing_tech, axis=1)
+    # Handle technologies with only output (e.g., CSP)
+    in_ref = cooling_df["parent_tech"].isin(ref_input["technology"])
+    missing = cooling_df["parent_tech"][~in_ref]
+    if not missing.empty:
+        ref_output = scen.par("output", {"technology": missing})
+        if not ref_output.empty:
+            # Map output columns to input column semantics
+            ref_output = ref_output.rename(
+                columns={"node_dest": "node_origin", "time_dest": "time_origin"}
+            )
+            ref_input = pd.concat([ref_input, ref_output], ignore_index=True)
 
-    # Combines the input df of parent_tech with water withdrawal data
-    input_cool = (
-        cooling_df.set_index("parent_tech")
-        .combine_first(ref_input.set_index("technology"))
-        .reset_index()
+    # Load cost/share data for later use
+    cost_share_df = pd.read_csv(cost_share_path)
+
+    return cooling_df, ref_input, df_node, list(node_region), scen, cost_share_df
+
+
+def _fill_missing_tech_values(ref_input: pd.DataFrame) -> pd.DataFrame:
+    """Fill missing technology efficiency values from config."""
+    efficiencies = CONFIG["missing_tech_efficiencies"]
+
+    def apply_fill(row):
+        if pd.isna(row["technology"]):
+            return row["value"], row["level"]
+
+        for tech_key, eff_value in efficiencies.items():
+            if tech_key in row["technology"]:
+                value = eff_value if row["value"] >= 1 else max(row["value"], eff_value)
+                level = "dummy_supply" if row["level"] == "cooling" else row["level"]
+                return value, level
+
+        return row["value"], row["level"]
+
+    ref_input[["value", "level"]] = ref_input.apply(
+        lambda r: pd.Series(apply_fill(r)), axis=1
+    )
+    return ref_input
+
+
+def _compute_cooling_rates(input_cool: pd.DataFrame) -> pd.DataFrame:
+    """Compute water withdrawal, return, and consumption rates."""
+    flue_loss = CONFIG["flue_gas_loss_fraction"]
+    m3_to_mcm = CONFIG["m3_gj_to_mcm_gwa"]
+
+    # Cooling fraction: heat to be rejected
+    input_cool["cooling_fraction"] = input_cool.apply(
+        lambda r: r["value"] - 1
+        if "hpl" in str(r.get("parent_tech", ""))
+        else r["value"] * (1 - flue_loss) - 1,
+        axis=1,
     )
 
-    # Drops NA values from the value column
-    input_cool = input_cool.dropna(subset=["value"])
-
-    # Convert year values into integers to be compatibel for model
-    input_cool.year_vtg = input_cool.year_vtg.astype(int)
-    input_cool.year_act = input_cool.year_act.astype(int)
-    # Drops extra technologies from the data. backwards compatibility
-    input_cool = input_cool[
-        (input_cool["level"] != "water_supply") & (input_cool["level"] != "cooling")
-    ]
-    # heat plants need no cooling
-    input_cool = input_cool[
-        ~input_cool["technology_name"].str.contains("hpl", na=False)
-    ]
-    # Swap node_loc if node_loc equals "{context.regions}_GLB"
-    input_cool.loc[input_cool["node_loc"] == f"{context.regions}_GLB", "node_loc"] = (
-        input_cool["node_origin"]
-    )
-    # Swap node_origin if node_origin equals "{context.regions}_GLB"
-    input_cool.loc[
-        input_cool["node_origin"] == f"{context.regions}_GLB", "node_origin"
-    ] = input_cool["node_loc"]
-
-    input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
-
-    # Converting water withdrawal units from m^3/GJ to MCM/GWa
-    # this refers to activity per cooling requirement (heat)
+    # Water withdrawal rate (MCM/GWa)
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
-        * m3_GJ_TO_MCM_GWa
+        * m3_to_mcm
         / input_cool["cooling_fraction"]
     )
-    # set to 1e-6 if value_cool is negative
-    input_cool["value_cool"] = np.where(
-        input_cool["value_cool"] < 0, 1e-6, input_cool["value_cool"]
-    )
-    input_cool["return_rate"] = 1 - (
-        input_cool["water_consumption_mid_m3_per_output"]
-        / input_cool["water_withdrawal_mid_m3_per_output"]
-    )
-    # consumption to be saved in emissions rates for reporting purposes
-    input_cool["consumption_rate"] = (
-        input_cool["water_consumption_mid_m3_per_output"]
-        / input_cool["water_withdrawal_mid_m3_per_output"]
-    )
+    val_cool = input_cool["value_cool"]
+    input_cool["value_cool"] = np.where(val_cool < 0, 1e-6, val_cool)
 
-    input_cool["value_return"] = input_cool["return_rate"] * input_cool["value_cool"]
+    # Return and consumption rates
+    withdrawal = input_cool["water_withdrawal_mid_m3_per_output"]
+    consumption = input_cool["water_consumption_mid_m3_per_output"]
+    input_cool["return_rate"] = 1 - consumption / withdrawal
+    input_cool["consumption_rate"] = consumption / withdrawal
+    val_cool = input_cool["value_cool"]
+    input_cool["value_return"] = input_cool["return_rate"] * val_cool
+    input_cool["value_consumption"] = input_cool["consumption_rate"] * val_cool
 
-    # only for reporting purposes
-    input_cool["value_consumption"] = (
-        input_cool["consumption_rate"] * input_cool["value_cool"]
-    )
+    return input_cool
 
-    # Filter out technologies that requires parasitic electricity
-    electr = input_cool[input_cool["parasitic_electricity_demand_fraction"] > 0.0]
 
-    # Make a new column 'value_cool' for calculating values against technologies
+def _make_input_params(input_cool: pd.DataFrame, context: "Context") -> pd.DataFrame:
+    """Generate input parameter DataFrame."""
+    commodity = "surfacewater" if context.nexus_set == "nexus" else "freshwater"
+
+    # Electricity input for parasitic demand
+    electr = input_cool[input_cool["parasitic_electricity_demand_fraction"] > 0].copy()
     electr["value_cool"] = (
         electr["parasitic_electricity_demand_fraction"] / electr["cooling_fraction"]
     )
-    # set to 1e-6 if value_cool is negative
-    electr["value_cool"] = np.where(
-        electr["value_cool"] < 0, 1e-6, electr["value_cool"]
-    )
-    # Filters out technologies requiring saline water supply
-    saline_df = input_cool[
-        input_cool["technology_name"].str.endswith("ot_saline", na=False)
-    ]
+    val_cool = electr["value_cool"]
+    electr["value_cool"] = np.where(val_cool < 0, 1e-6, val_cool)
 
-    # input_cool_minus_saline_elec_df
-    con1 = input_cool["technology_name"].str.endswith("ot_saline", na=False)
-    con2 = input_cool["technology_name"].str.endswith("air", na=False)
-    icmse_df = input_cool[(~con1) & (~con2)]
-    # electricity inputs
-    inp = make_df(
+    inp_elec = make_df(
         "input",
         node_loc=electr["node_loc"],
         technology=electr["technology_name"],
@@ -531,75 +175,53 @@ def cool_tech(
         value=electr["value_cool"],
         unit="GWa",
     )
-    # once through and closed loop freshwater
-    inp = pd.concat(
-        [
-            inp,
-            make_df(
-                "input",
-                node_loc=icmse_df["node_loc"],
-                technology=icmse_df["technology_name"],
-                year_vtg=icmse_df["year_vtg"],
-                year_act=icmse_df["year_act"],
-                mode=icmse_df["mode"],
-                node_origin=icmse_df["node_origin"],
-                commodity="freshwater",
-                level="water_supply",
-                time="year",
-                time_origin="year",
-                value=icmse_df["value_cool"],
-                unit="MCM/GWa",
-            ),
-        ]
-    )
-    # saline cooling technologies
-    inp = pd.concat(
-        [
-            inp,
-            make_df(
-                "input",
-                node_loc=saline_df["node_loc"],
-                technology=saline_df["technology_name"],
-                year_vtg=saline_df["year_vtg"],
-                year_act=saline_df["year_act"],
-                mode=saline_df["mode"],
-                node_origin=saline_df["node_origin"],
-                commodity="saline_ppl",
-                level="saline_supply",
-                time="year",
-                time_origin="year",
-                value=saline_df["value_cool"],
-                unit="MCM/GWa",
-            ),
-        ]
-    )
 
-    # Drops NA values from the value column
-    inp = inp.dropna(subset=["value"])
-
-    # append the input data to results
-    results["input"] = inp
-
-    # add water consumption as emission factor, also for saline tecs
-    emiss_df = input_cool[(~con2)]
-    emi = make_df(
-        "emission_factor",
-        node_loc=emiss_df["node_loc"],
-        technology=emiss_df["technology_name"],
-        year_vtg=emiss_df["year_vtg"],
-        year_act=emiss_df["year_act"],
-        mode=emiss_df["mode"],
-        emission="fresh_return",
-        value=emiss_df["value_return"],
+    # Freshwater input (exclude saline and air)
+    fresh = input_cool[
+        ~input_cool["technology_name"].str.endswith(("ot_saline", "air"), na=False)
+    ]
+    inp_fresh = make_df(
+        "input",
+        node_loc=fresh["node_loc"],
+        technology=fresh["technology_name"],
+        year_vtg=fresh["year_vtg"],
+        year_act=fresh["year_act"],
+        mode=fresh["mode"],
+        node_origin=fresh["node_origin"],
+        commodity=commodity,
+        level="water_supply",
+        time="year",
+        time_origin="year",
+        value=fresh["value_cool"],
         unit="MCM/GWa",
     )
 
-    results["emission_factor"] = emi
+    # Saline water input
+    is_saline = input_cool["technology_name"].str.endswith("ot_saline", na=False)
+    saline = input_cool[is_saline]
+    inp_saline = make_df(
+        "input",
+        node_loc=saline["node_loc"],
+        technology=saline["technology_name"],
+        year_vtg=saline["year_vtg"],
+        year_act=saline["year_act"],
+        mode=saline["mode"],
+        node_origin=saline["node_origin"],
+        commodity="saline_ppl",
+        level="saline_supply",
+        time="year",
+        time_origin="year",
+        value=saline["value_cool"],
+        unit="MCM/GWa",
+    )
 
-    # add output for share contraints to introduce SSP assumptions
-    # also in the nexus case, the share contraints are at the macro-regions
+    return pd.concat([inp_elec, inp_fresh, inp_saline]).dropna(subset=["value"])
 
-    out = make_df(
+
+def _make_output_params(input_cool: pd.DataFrame) -> pd.DataFrame:
+    """Generate output parameter DataFrame."""
+    # Share commodity output
+    out_share = make_df(
         "output",
         node_loc=input_cool["node_loc"],
         technology=input_cool["technology_name"],
@@ -615,463 +237,580 @@ def cool_tech(
         unit="-",
     )
 
-    # add water return flows for cooling tecs
-    # Use share of basin availability to distribute the return flow from
-    df_sw = map_basin_region_wat(context)
-    df_sw.drop(columns={"mode", "date", "MSGREG"}, inplace=True)
-    df_sw.rename(
-        columns={"region": "node_dest", "time": "time_dest", "year": "year_act"},
-        inplace=True,
-    )
-    df_sw["time_dest"] = df_sw["time_dest"].astype(str)
-    if context.nexus_set == "nexus":
-        for nn in icmse_df.node_loc.unique():
-            # input cooling fresh basin
-            icfb_df = icmse_df[icmse_df["node_loc"] == nn]
-            bs = list(df_node[df_node["region"] == nn]["node"])
-
-            out_t = (
-                make_df(
-                    "output",
-                    node_loc=icfb_df["node_loc"],
-                    technology=icfb_df["technology_name"],
-                    year_vtg=icfb_df["year_vtg"],
-                    year_act=icfb_df["year_act"],
-                    mode=icfb_df["mode"],
-                    # node_origin=icmse_df["node_origin"],
-                    commodity="surfacewater_basin",
-                    level="water_avail_basin",
-                    time="year",
-                    value=icfb_df["value_return"],
-                    unit="MCM/GWa",
-                )
-                .pipe(broadcast, node_dest=bs, time_dest=pd.Series(sub_time))
-                .merge(df_sw, how="left")
-            )
-            # multiply by basin water availability share
-            out_t["value"] = out_t["value"] * out_t["share"]
-            out_t.drop(columns={"share"}, inplace=True)
-            out = pd.concat([out, out_t])
-
-        out = out.dropna(subset=["value"])
-        out.reset_index(drop=True, inplace=True)
-    # in any case save out into results
-    results["output"] = out
-
-    # costs and historical parameters
-    path1 = package_data_path("water", "ppl_cooling_tech", FILE1)
-    cost = pd.read_csv(path1)
-    # Combine technology name to get full cooling tech names
-    cost["technology"] = cost["utype"] + "__" + cost["cooling"]
-    cost["share"] = cost["utype"] + "_" + cost["cooling"]
-
-    # add contraint with relation, based on shares
-    # Keep only "utype", "technology", and columns starting with "mix_"
-    share_filtered = cost.loc[
-        :,
-        ["utype", "share"] + [col for col in cost.columns if col.startswith("mix_")],
+    # Water return output (freshwater only, not air)
+    fresh = input_cool[
+        ~input_cool["technology_name"].str.endswith(("ot_saline", "air"), na=False)
     ]
-
-    # Melt to long format
-    share_long = share_filtered.melt(
-        id_vars=["utype", "share"], var_name="node_share", value_name="value"
-    )
-    # filter with uypt in cooling_df["parent_tech"]
-    share_long = share_long[
-        share_long["utype"].isin(input_cool["parent_tech"].unique())
-    ].reset_index(drop=True)
-
-    # Remove "mix_" prefix from region names
-    share_long["node_share"] = share_long["node_share"].str.replace(
-        "mix_", "", regex=False
-    )
-    # Replace 0 values with 0.0001
-    share_long["value"] = share_long["value"] * 1.05  # give some flexibility
-    share_long["value"] = share_long["value"].replace(0, 0.0001)
-
-    share_long["shares"] = "share_calib_" + share_long["share"]
-    share_long.drop(columns={"utype", "share"}, inplace=True)
-    # restore cost as it was for future use
-    cost.drop(columns="share", inplace=True)
-    share_long["time"] = "year"
-    share_long["unit"] = "-"
-    # FIXME : Temporarily commenting out share calib constraints.
-    # Causes 4X size explosion. Likely problematic.
-    # share_calib = share_long.copy()
-    # # Expand for years [2020, 2025]
-    # share_calib = share_calib.loc[share_calib.index.repeat(2)].reset_index(drop=True)
-    # years_calib = [2020, 2025]
-    # share_calib["year_act"] = years_calib * (len(share_calib) // 2)
-    # # take year in info.N but not years_calib
-    # years_fut = [year for year in info.Y if year not in years_calib]
-    # share_fut = share_long.copy()
-    # share_fut = share_fut.loc[share_fut.index.repeat(len(years_fut))].reset_index(
-    #     drop=True
-    # )
-    # share_fut["year_act"] = years_fut * (len(share_fut) // len(years_fut))
-    # # filter only shares that contain "ot_saline"
-    # share_fut = share_fut[share_fut["shares"].str.contains("ot_saline")]
-    # # if value < 0.4 set to 0.4, not so allow too much saline where there is no
-    # share_fut["value"] = np.where(share_fut["value"] < 0.45, 0.45, share_fut["value"])
-    # # keep only after 2050
-    # share_fut = share_fut[share_fut["year_act"] >= 2050]
-    # # append share_calib and (share_fut only to add constraints on ot_saline)
-    # results["share_commodity_up"] = pd.concat([share_calib])
-
-    # Filtering out 2015 data to use for historical values
-    input_cool_2015 = input_cool[
-        (input_cool["year_act"] == 2015) & (input_cool["year_vtg"] == 2015)
-    ]
-    # set of parent_tech and node_loc for input_cool
-    input_cool_set = set(zip(input_cool["parent_tech"], input_cool["node_loc"]))
-    year_list = [2020, 2010, 2030, 2050, 2000, 2080, 1990]
-
-    for year in year_list:
-        log.debug(f"cool_tech() for year '{year}'")
-        # Identify missing combinations in the current aggregate
-        input_cool_2015_set = set(
-            # FIXME : This should have been a one off script for debugging.
-            zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
-        )
-        missing_combinations = input_cool_set - input_cool_2015_set
-
-        if not missing_combinations:
-            break  # Stop if no missing combinations remain
-
-        # Extract missing rows from input_cool with the current year
-        missing_rows = input_cool[
-            (input_cool["year_act"] == year)
-            & (input_cool["year_vtg"] == year)
-            & input_cool.apply(
-                lambda row: (row["parent_tech"], row["node_loc"])
-                in missing_combinations,
-                axis=1,
-            )
-        ]
-
-        if not missing_rows.empty:
-            # Modify year columns to 2015
-            missing_rows = missing_rows.copy()
-            missing_rows["year_act"] = 2015
-            missing_rows["year_vtg"] = 2015
-
-            # Append to the aggregated dataset
-            input_cool_2015 = pd.concat(
-                [input_cool_2015, missing_rows], ignore_index=True
-            )
-
-    # Final check if there are still missing combinations
-    input_cool_2015_set = set(
-        # FIXME : This should have been a one off script for debugging.
-        zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
-    )
-    still_missing = input_cool_set - input_cool_2015_set
-
-    if still_missing:
-        log.warning(
-            f"Warning: Some combinations are still missing even after trying all "
-            f"years: {still_missing}"
-        )
-
-    # Filter out columns that contain 'mix' in column name
-    # Rename column names to match with the previous df
-    cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
-    search_cols = [
-        col
-        for col in cost.columns
-        if context.regions in col or col in ["technology", "utype"]
-    ]
-    hold_df = input_cool_2015[
-        ["node_loc", "technology_name", "cooling_fraction"]
-    ].drop_duplicates()
-    search_cols_cooling_fraction = [
-        col for col in search_cols if col not in ["technology", "utype"]
-    ]
-    # multiplication factor with cooling factor and shares
-    hold_cost = cost[search_cols].apply(
-        shares,
-        axis=1,
-        context=context,
-        search_cols_cooling_fraction=search_cols_cooling_fraction,
-        hold_df=hold_df,
-        search_cols=search_cols,
-    )
-
-    # hist cap to be divided by cap_factor of the parent tec
-    cap_fact_parent = scen.par(
-        "capacity_factor", {"technology": cooling_df["parent_tech"]}
-    )
-    # cap_fact_parent = cap_fact_parent[
-    #     (cap_fact_parent["node_loc"] == "R12_NAM")
-    #     & (cap_fact_parent["technology"] == "coal_ppl_u") # nuc_lc
-    # ]
-    # keep node_loc, technology , year_vtg and value
-    cap_fact_parent1 = cap_fact_parent[
-        ["node_loc", "technology", "year_vtg", "value"]
-    ].drop_duplicates()
-    cap_fact_parent1 = cap_fact_parent1[
-        cap_fact_parent1["year_vtg"] < scen.firstmodelyear
-    ]
-    # group by "node_loc", "technology", "year_vtg" and get the minimum value
-    cap_fact_parent1 = cap_fact_parent1.groupby(
-        ["node_loc", "technology", "year_vtg"], as_index=False
-    ).min()
-    # filter for values that have year_act < sc.firstmodelyear
-
-    # in some cases the capacity parameters are used with year_all
-    # (e.g. initial_new_capacity_up). need year_Act for this
-    cap_fact_parent2 = cap_fact_parent[
-        ["node_loc", "technology", "year_act", "value"]
-    ].drop_duplicates()
-    cap_fact_parent2 = cap_fact_parent2[
-        cap_fact_parent2["year_act"] >= scen.firstmodelyear
-    ]
-    # group by "node_loc", "technology", "year_vtg" and get the minimum value
-    cap_fact_parent2 = cap_fact_parent2.groupby(
-        ["node_loc", "technology", "year_act"], as_index=False
-    ).min()
-    cap_fact_parent2.rename(columns={"year_act": "year_vtg"}, inplace=True)
-
-    cap_fact_parent = pd.concat([cap_fact_parent1, cap_fact_parent2])
-
-    # rename value to cap_fact
-    cap_fact_parent.rename(
-        columns={"value": "cap_fact", "technology": "utype"}, inplace=True
-    )
-
-    # Manually removing extra technologies not required
-    # TODO make it automatic to not include the names manually
-    techs_to_remove = [
-        "mw_ppl__ot_fresh",
-        "mw_ppl__ot_saline",
-        "mw_ppl__cl_fresh",
-        "mw_ppl__air",
-        "nuc_fbr__ot_fresh",
-        "nuc_fbr__ot_saline",
-        "nuc_fbr__cl_fresh",
-        "nuc_fbr__air",
-        "nuc_htemp__ot_fresh",
-        "nuc_htemp__ot_saline",
-        "nuc_htemp__cl_fresh",
-        "nuc_htemp__air",
-    ]
-
-    from message_ix_models.tools.costs.config import MODULE, Config
-    from message_ix_models.tools.costs.projections import create_cost_projections
-
-    # Set config for cost projections
-    # Using GDP method for cost projections
-    cfg = Config(
-        module=MODULE.cooling, scenario=context.ssp, method="gdp", node=context.regions
-    )
-
-    # Get projected investment and fixed o&m costs
-    cost_proj = create_cost_projections(cfg)
-
-    # Get only the investment costs for cooling technologies
-    inv_cost = cost_proj["inv_cost"][
-        ["year_vtg", "node_loc", "technology", "value", "unit"]
-    ]
-
-    # Remove technologies that are not required
-    inv_cost = inv_cost[~inv_cost["technology"].isin(techs_to_remove)]
-
-    # Only keep cooling module technologies by filtering for technologies with "__"
-    inv_cost = inv_cost[inv_cost["technology"].str.contains("__")]
-
-    # Add the investment costs to the results
-    results["inv_cost"] = inv_cost
-
-    # Addon conversion
-    adon_df = input_cool.copy()
-    # Add 'cooling_' before name of parent technologies that are type_addon
-    # nomenclature
-    adon_df["tech"] = "cooling__" + adon_df["parent_tech"].astype(str)
-    # technology : 'parent technology' and type_addon is type of addons such
-    # as 'cooling__bio_hpl'
-    addon_df = make_df(
-        "addon_conversion",
-        node=adon_df["node_loc"],
-        technology=adon_df["parent_tech"],
-        year_vtg=adon_df["year_vtg"],
-        year_act=adon_df["year_act"],
-        mode=adon_df["mode"],
+    out_return = make_df(
+        "output",
+        node_loc=fresh["node_loc"],
+        technology=fresh["technology_name"],
+        year_vtg=fresh["year_vtg"],
+        year_act=fresh["year_act"],
+        mode=fresh["mode"],
+        node_dest=fresh["node_origin"],
+        commodity="water_return",
+        level="water_supply",
         time="year",
-        type_addon=adon_df["tech"],
-        value=adon_df["cooling_fraction"],
-        unit="-",  # from electricity to thermal
+        time_dest="year",
+        value=fresh["value_return"],
+        unit="MCM/GWa",
     )
 
-    results["addon_conversion"] = addon_df
+    return pd.concat([out_share, out_return])
 
-    # Addon_lo will remain 1 for all cooling techs so it allows 100% activity of
-    # parent technologies
-    addon_lo = make_matched_dfs(addon_df, addon_lo=1)
-    results["addon_lo"] = addon_lo["addon_lo"]
 
-    # technical lifetime
+def _make_emission_factor(input_cool: pd.DataFrame) -> pd.DataFrame:
+    """Generate emission_factor for water return tracking."""
+    # Exclude air cooling
+    df = input_cool[~input_cool["technology_name"].str.endswith("air", na=False)]
+    return make_df(
+        "emission_factor",
+        node_loc=df["node_loc"],
+        technology=df["technology_name"],
+        year_vtg=df["year_vtg"],
+        year_act=df["year_act"],
+        mode=df["mode"],
+        emission="fresh_return",
+        value=df["value_return"],
+        unit="MCM/GWa",
+    )
+
+
+def _make_addon_params(input_cool: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Generate addon_conversion and addon_lo parameters."""
+    addon = (
+        make_df(
+            "addon_conversion",
+            node=input_cool["node_loc"],
+            technology=input_cool["parent_tech"],
+            year_vtg=input_cool["year_vtg"],
+            year_act=input_cool["year_act"],
+            mode=input_cool["mode"],
+            time="year",
+            type_addon="cooling__" + input_cool["parent_tech"].astype(str),
+            value=input_cool["cooling_fraction"],
+            unit="-",
+        )
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
+    addon_lo = make_matched_dfs(addon, addon_lo=1)["addon_lo"]
+    return addon, addon_lo
+
+
+def _make_technical_lifetime(
+    inp: pd.DataFrame, node_region: list, info
+) -> pd.DataFrame:
+    """Generate technical_lifetime parameter."""
+    min_year = CONFIG["min_vintage_year"]
+    lifetime = CONFIG["technical_lifetime_years"]
+
     year = info.yv_ya.year_vtg.drop_duplicates()
-    year = year[year >= 1990]
+    year = year[year >= min_year]
 
-    tl = (
+    return (
         make_df(
             "technical_lifetime",
             technology=inp["technology"].drop_duplicates(),
-            value=30,
+            value=lifetime,
             unit="year",
         )
         .pipe(broadcast, year_vtg=year, node_loc=node_region)
         .pipe(same_node)
     )
 
-    results["technical_lifetime"] = tl
 
-    results["capacity_factor"] = _compose_capacity_factor(inp=inp, context=context)
+def _make_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
+    """Generate capacity_factor parameter with optional climate impacts."""
+    cap_fact = make_matched_dfs(inp, capacity_factor=1)["capacity_factor"]
+    cap_fact["unit"] = "-"  # capacity_factor is dimensionless
+    cap_fact = cap_fact.drop_duplicates().reset_index(drop=True)
 
-    # Extract inand expand some paramenters from parent technologies
-    # Define parameter names to be extracted
-    param_names = [
-        "historical_activity",
-        "historical_new_capacity",
-        "initial_activity_up",
-        "initial_activity_lo",
-        "initial_new_capacity_up",
-        "soft_activity_up",
-        "soft_activity_lo",
-        "soft_new_capacity_up",
-        "level_cost_activity_soft_up",
-        "level_cost_activity_soft_lo",
-        "growth_activity_lo",
-        "growth_activity_up",
-        "growth_new_capacity_up",
+    if context.RCP == "no_climate":
+        return cap_fact
+
+    # Apply climate impacts on freshwater cooling
+    impact_path = package_data_path(
+        "water",
+        "ppl_cooling_tech",
+        f"power_plant_cooling_impact_MESSAGE_{context.regions}_{context.RCP}.csv",
+    )
+    df_impact = pd.read_csv(impact_path)
+
+    for node in df_impact["node"]:
+        is_fresh = cap_fact["technology"].str.contains("fresh")
+        node_match = cap_fact["node_loc"] == node
+
+        yr = cap_fact["year_act"]
+        conditions = [
+            is_fresh & (yr >= 2025) & (yr < 2050) & node_match,
+            is_fresh & (yr >= 2050) & (yr < 2070) & node_match,
+            is_fresh & (yr >= 2070) & node_match,
+        ]
+        choices = [
+            df_impact[df_impact["node"] == node]["2025s"].values[0],
+            df_impact[df_impact["node"] == node]["2050s"].values[0],
+            df_impact[df_impact["node"] == node]["2070s"].values[0],
+        ]
+        cap_fact["value"] = np.select(conditions, choices, default=cap_fact["value"])
+
+    return cap_fact
+
+
+def _make_investment_cost(context: "Context") -> pd.DataFrame:
+    """Generate inv_cost from cost projection tool."""
+    from message_ix_models.tools.costs.config import MODULE, Config
+    from message_ix_models.tools.costs.projections import create_cost_projections
+
+    excluded = CONFIG["excluded_cooling_techs"]
+    techs_to_remove = [
+        f"{t}{suffix}" for t in excluded for suffix in CONFIG["cooling_suffixes"]
     ]
 
-    multip_list = [
-        "historical_activity",
-        "historical_new_capacity",
-        "initial_activity_up",
-        "initial_activity_lo",
-        "initial_new_capacity_up",
-    ]
+    cfg = Config(
+        module=MODULE.cooling,
+        scenario=context.ssp,
+        method="gdp",
+        node=context.regions,
+    )
+    cost_proj = create_cost_projections(cfg)
+    cols = ["year_vtg", "node_loc", "technology", "value", "unit"]
+    inv_cost = cost_proj["inv_cost"][cols]
+    inv_cost = inv_cost[~inv_cost["technology"].isin(techs_to_remove)]
+    inv_cost = inv_cost[inv_cost["technology"].str.contains("__")]
 
-    # Extract parameters dynamically
-    list_params = [
-        (scen.par(p, {"technology": cooling_df["parent_tech"]}), p) for p in param_names
-    ]
+    return inv_cost
 
-    # Expand parameters for cooling technologies
-    suffixes = ["__ot_fresh", "__cl_fresh", "__air", "__ot_saline"]
 
-    for df, param_name in list_params:
-        df_param = pd.DataFrame()
-        for suffix in suffixes:
-            df_add = df.copy()
-            df_add["technology"] = df_add["technology"] + suffix
-            df_param = pd.concat([df_param, df_add])
+def _expand_historical_params(
+    scen: "Scenario",
+    cooling_df: pd.DataFrame,
+    cost_share_df: pd.DataFrame,
+    input_cool_2015: pd.DataFrame,
+    context: "Context",
+) -> dict:
+    """Expand historical_activity and historical_new_capacity to cooling variants.
 
-        df_param_share = (
-            apply_act_cap_multiplier(df_param, hold_cost, cap_fact_parent, param_name)
-            if param_name in multip_list
-            else df_param
+    Allocates parent technology activity to cooling variants using regional average
+    shares across all cooling types, rather than per-parent-technology shares.
+    """
+    results = {}
+    suffixes = CONFIG["cooling_suffixes"]
+    cap_flex = CONFIG["capacity_flexibility_factor"]
+
+    # Get parent capacity factors
+    cap_fact_parent = scen.par(
+        "capacity_factor", {"technology": cooling_df["parent_tech"]}
+    )
+    cap_fact_pre = cap_fact_parent[cap_fact_parent["year_vtg"] < scen.firstmodelyear]
+    grp_cols = ["node_loc", "technology", "year_vtg"]
+    cap_fact_pre = cap_fact_pre.groupby(grp_cols, as_index=False)["value"].min()
+
+    cap_fact_post = cap_fact_parent[cap_fact_parent["year_act"] >= scen.firstmodelyear]
+    grp_cols_post = ["node_loc", "technology", "year_act"]
+    cap_fact_post = cap_fact_post.groupby(grp_cols_post, as_index=False)["value"].min()
+    cap_fact_post.rename(columns={"year_act": "year_vtg"}, inplace=True)
+
+    cap_fact_combined = pd.concat([cap_fact_pre, cap_fact_post])
+    rename_cols = {"value": "cap_fact", "technology": "utype"}
+    cap_fact_combined.rename(columns=rename_cols, inplace=True)
+    cap_fact_combined["year_vtg"] = cap_fact_combined["year_vtg"].astype(int)
+
+    # Compute regional average shares by cooling type (not per-parent-tech)
+    # This prevents nuclear's high saline share from inflating saline allocation
+    mix_cols = [c for c in cost_share_df.columns if c.startswith("mix_")]
+    share_cols = [c.replace("mix_", "") for c in mix_cols]
+
+    regional_avg_shares = cost_share_df.groupby("cooling")[mix_cols].mean()
+    regional_avg_shares.columns = share_cols
+
+    # Build share lookup: cooling_type -> region -> share
+    regional_shares_long = regional_avg_shares.reset_index().melt(
+        id_vars=["cooling"], var_name="node_loc", value_name="share"
+    )
+
+    # Get average cooling fraction per cooling type per region
+    hold_cols = ["node_loc", "technology_name", "cooling_fraction"]
+    hold_df = input_cool_2015[hold_cols].copy()
+    hold_df["cooling"] = hold_df["technology_name"].str.split("__").str[1]
+    grp = hold_df.groupby(["node_loc", "cooling"])["cooling_fraction"]
+    avg_cf = grp.mean().reset_index()
+
+    for param_name in ["historical_activity", "historical_new_capacity"]:
+        parent_data = scen.par(param_name, {"technology": cooling_df["parent_tech"]})
+        if parent_data.empty:
+            continue
+
+        # Expand to cooling variants
+        expanded = pd.concat(
+            [
+                parent_data.assign(technology=parent_data["technology"] + suffix)
+                for suffix in suffixes
+            ]
+        )
+        expanded["cooling"] = expanded["technology"].str.split("__").str[1]
+
+        # Merge regional average share
+        expanded = expanded.merge(
+            regional_shares_long, on=["cooling", "node_loc"], how="left"
         )
 
-        results[param_name] = pd.concat(
-            [results.get(param_name, pd.DataFrame()), df_param_share], ignore_index=True
-        )
+        # Merge average cooling fraction
+        expanded = expanded.merge(avg_cf, on=["cooling", "node_loc"], how="left")
 
-    # add share constraints for cooling technologies based on SSP assumptions
-    df_share = cooling_shares_SSP_from_yaml(context)
+        # Apply multiplier: share × cooling_fraction (zero if missing cf)
+        cf = expanded["cooling_fraction"].fillna(0)
+        expanded["multiplier"] = expanded["share"] * cf
+        expanded["value"] *= expanded["multiplier"]
+        expanded = expanded[expanded["value"] > 0]
 
-    if not df_share.empty:
-        # pd concat to the existing results["share_commodity_up"]
-        results["share_commodity_up"] = pd.concat([df_share], ignore_index=True)
+        # Apply capacity factor for capacity params
+        expanded["utype"] = expanded["technology"].str.split("__").str[0]
+        if "capacity" in param_name:
+            # Ensure consistent int dtype; pandas >=3.12 rejects int/str merge keys
+            for col in ("year_vtg", "year_act"):
+                if col in expanded.columns:
+                    expanded[col] = expanded[col].astype(int)
+            expanded = expanded.merge(cap_fact_combined, how="left")
+            expanded = expanded[expanded["cap_fact"].notna()]
+            expanded["value"] *= expanded["cap_fact"] * cap_flex
+            expanded.drop(columns=["cap_fact"], inplace=True, errors="ignore")
+
+        drop_cols = ["utype", "multiplier", "cooling", "share", "cooling_fraction"]
+        expanded.drop(columns=drop_cols, inplace=True, errors="ignore")
+        results[param_name] = expanded
 
     return results
 
 
-# Water use & electricity for non-cooling technologies
-def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
-    """Process data for water usage of power plants (non-cooling technology related).
-    Water withdrawal values for power plants are read in from
-    ``tech_water_performance_ssp_msg.csv``
+def _make_ssp_share_constraints(context: "Context") -> pd.DataFrame:
+    """Generate share_commodity_up from SSP YAML config."""
+    yaml_path = package_data_path("water", "ssp.yaml")
+    try:
+        with open(yaml_path) as f:
+            yaml_data = yaml.safe_load(f)
+    except FileNotFoundError:
+        log.warning(f"SSP YAML file not found at {yaml_path}")
+        return pd.DataFrame()
+
+    ssp = context.ssp
+    scenarios = yaml_data.get("scenarios", {})
+    if ssp not in scenarios:
+        log.warning(f"SSP '{ssp}' not found in SSP YAML")
+        return pd.DataFrame()
+
+    macro_regions = yaml_data.get("macro-regions", {})
+    ssp_data = scenarios[ssp]["cooling_tech"]
+    info = context["water build info"]
+    start_year = CONFIG["share_constraint_start_year"]
+    year_constraint = [y for y in info.Y if y >= start_year]
+
+    results = []
+    for macro_region, region_data in ssp_data.items():
+        shares = region_data.get("share_commodity_up", {})
+        macro_suffixes = macro_regions.get(macro_region, [])
+        reg_nodes = [n for n in info.N if any(n.endswith(r) for r in macro_suffixes)]
+
+        for share_name, value in shares.items():
+            df = make_df(
+                "share_commodity_up",
+                shares=[share_name],
+                time=["year"],
+                value=[value],
+                unit=["-"],
+            ).pipe(broadcast, year_act=year_constraint, node_share=reg_nodes)
+            results.append(df)
+
+    return pd.concat(results) if results else pd.DataFrame()
+
+
+def _add_saline_bounds(results: dict, info) -> None:
+    """Add bound_activity_up for saline water extraction."""
+    if "historical_activity" not in results:
+        return
+
+    hist_act = results["historical_activity"]
+    is_saline = hist_act["technology"].str.endswith("__ot_saline", na=False)
+    saline_hist = hist_act[is_saline]
+    if saline_hist.empty:
+        return
+
+    last_year = saline_hist["year_act"].max()
+    last_yr_hist = saline_hist[saline_hist["year_act"] == last_year]
+    regional = last_yr_hist.groupby("node_loc")["value"].sum()
+
+    default_bound = CONFIG["default_saline_bound"]
+    bounds = []
+    for region, val in regional.items():
+        bound_val = max(val, default_bound) if val > 0 else default_bound
+        bounds.append({"node_loc": region, "value": bound_val})
+
+    if bounds:
+        bound_df = make_df(
+            "bound_activity_up",
+            technology="extract_salinewater_cool",
+            node_loc=[b["node_loc"] for b in bounds],
+            mode="M1",
+            time="year",
+            value=[b["value"] for b in bounds],
+            unit="MCM",
+        ).pipe(broadcast, year_act=info.Y)
+
+        results["bound_activity_up"] = pd.concat(
+            [results.get("bound_activity_up", pd.DataFrame()), bound_df],
+            ignore_index=True,
+        )
+
+
+def _add_nexus_params(
+    results: dict, context: "Context", node_region: list, info
+) -> None:
+    """Add basin-region distribution for nexus mode."""
+    if context.nexus_set != "nexus":
+        return
+
+    df_sw = map_basin_region_wat(context)
+    df_sw.drop(columns=["mode", "date", "MSGREG"], inplace=True, errors="ignore")
+    rename_map = {
+        "region": "node_dest",
+        "node": "node_dest",
+        "time": "time_dest",
+        "year": "year_act",
+    }
+    df_sw.rename(columns=rename_map, inplace=True)
+    df_sw["time_dest"] = df_sw["time_dest"].astype(str)
+
+    year_comb = get_vintage_and_active_years(
+        info, technical_lifetime=1, same_year_only=True
+    )
+
+    # Input: regional water_return
+    reg_input = make_df(
+        "input",
+        technology="reg_to_basin",
+        node_loc=node_region,
+        commodity="water_return",
+        level="water_supply",
+        time="year",
+        time_origin="year",
+        node_origin=node_region,
+        value=1,
+        unit="MCM/GWa",
+        mode="M1",
+    ).pipe(broadcast, year_comb)
+
+    # Output: distribute to basins by share
+    outputs = []
+    for region in node_region:
+        region_code = region.split("_")[-1]
+        basins = df_sw[df_sw["node_dest"].str.contains(region_code, na=False)]
+        if basins.empty:
+            continue
+
+        out = (
+            make_df(
+                "output",
+                technology="reg_to_basin",
+                node_loc=region,
+                commodity="surfacewater_basin",
+                level="water_avail_basin",
+                time="year",
+                time_dest="year",
+                value=1,
+                unit="MCM/GWa",
+                mode="M1",
+            )
+            .pipe(broadcast, year_comb)
+            .pipe(broadcast, node_dest=basins["node_dest"].unique())
+        )
+        basin_shares = basins.drop_duplicates("node_dest")[["node_dest", "share"]]
+        out = out.merge(basin_shares, on="node_dest", how="left")
+        out["value"] *= out["share"]
+        outputs.append(out.drop(columns=["share"]).dropna(subset=["value"]))
+
+    if outputs:
+        results["input"] = pd.concat([results["input"], reg_input])
+        results["output"] = pd.concat([results["output"], pd.concat(outputs)])
+
+
+def cool_tech(
+    context: "Context", scenario: "Scenario | None" = None
+) -> dict[str, pd.DataFrame]:
+    """Process cooling technology data for a scenario instance.
 
     Parameters
     ----------
     context : .Context
     scenario : .Scenario, optional
-        Scenario to use. If not provided, uses context.get_scenario().
 
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-        Values are data frames ready for :meth:`~.Scenario.add_par`.
-        Years in the data include the model horizon indicated by
-        ``context["transport build info"]``, plus the additional year 2010.
+    dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names. Values are DataFrames for add_par().
     """
-    results = {}
+    info = context["water build info"]
 
-    FILE = "tech_water_performance_ssp_msg.csv"
-    path = package_data_path("water", "ppl_cooling_tech", FILE)
-    df = pd.read_csv(path)
-    cooling_df = df.copy()
-    cooling_df = cooling_df.loc[cooling_df["technology_group"] == "cooling"]
-    # Separate a column for parent technologies of respective cooling
-    # techs
-    cooling_df["parent_tech"] = (
-        cooling_df["technology_name"]
-        .apply(lambda x: pd.Series(str(x).split("__")))
-        .drop(columns=1)
+    # Load data
+    (cooling_df, ref_input, df_node, node_region, scen, cost_share_df) = (
+        _load_scenario_and_cooling_data(context, scenario)
     )
-    non_cool_df = df[
-        (df["technology_group"] != "cooling")
-        & (df["water_supply_type"] == "freshwater_supply")
+
+    # Fill missing efficiency values
+    ref_input = _fill_missing_tech_values(ref_input)
+
+    # Merge cooling specs with parent tech data
+    input_cool = (
+        cooling_df.set_index("parent_tech")
+        .combine_first(ref_input.set_index("technology"))
+        .reset_index()
+    )
+    input_cool = input_cool.dropna(subset=["value"])
+    input_cool["year_vtg"] = input_cool["year_vtg"].astype(int)
+    input_cool["year_act"] = input_cool["year_act"].astype(int)
+
+    # Filter valid year combinations
+    year_comb = get_vintage_and_active_years(
+        info, technical_lifetime=30, same_year_only=False
+    )
+    valid_years = set(zip(year_comb["year_vtg"], year_comb["year_act"]))
+
+    def is_valid_year(r):
+        return (int(r["year_vtg"]), int(r["year_act"])) in valid_years
+
+    input_cool = input_cool[input_cool.apply(is_valid_year, axis=1)]
+
+    # Filter levels and technologies
+    excluded_levels = ["water_supply", "cooling"]
+    input_cool = input_cool[~input_cool["level"].isin(excluded_levels)]
+    is_hpl = input_cool["technology_name"].str.contains("hpl", na=False)
+    input_cool = input_cool[~is_hpl]
+
+    # Handle global region swapping
+    glb = f"{context.regions}_GLB"
+    is_glb_loc = input_cool["node_loc"] == glb
+    is_glb_origin = input_cool["node_origin"] == glb
+    input_cool.loc[is_glb_loc, "node_loc"] = input_cool["node_origin"]
+    input_cool.loc[is_glb_origin, "node_origin"] = input_cool["node_loc"]
+
+    # Compute cooling rates
+    input_cool = _compute_cooling_rates(input_cool)
+
+    # Backfill 2015 data for historical params
+    input_cool_2015 = input_cool[
+        (input_cool["year_act"] == 2015) & (input_cool["year_vtg"] == 2015)
+    ].copy()
+    existing = set(zip(input_cool["parent_tech"], input_cool["node_loc"]))
+    have_2015 = set(zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"]))
+    missing = existing - have_2015
+
+    def is_missing(r):
+        return (r["parent_tech"], r["node_loc"]) in missing
+
+    for year in [2020, 2010, 2030, 2050, 2000, 2080, 1990]:
+        if not missing:
+            break
+        yr_match = (input_cool["year_act"] == year) & (input_cool["year_vtg"] == year)
+        fill = input_cool[yr_match & input_cool.apply(is_missing, axis=1)].copy()
+        if not fill.empty:
+            fill[["year_act", "year_vtg"]] = 2015
+            input_cool_2015 = pd.concat([input_cool_2015, fill])
+            have_2015 = set(
+                zip(input_cool_2015["parent_tech"], input_cool_2015["node_loc"])
+            )
+            missing = existing - have_2015
+
+    if missing:
+        log.warning(f"Missing 2015 data for: {missing}")
+
+    # Build parameters
+    inp = _make_input_params(input_cool, context)
+    results = {
+        "input": inp,
+        "output": _make_output_params(input_cool),
+        "emission_factor": _make_emission_factor(input_cool),
+        "technical_lifetime": _make_technical_lifetime(inp, node_region, info),
+        "capacity_factor": _make_capacity_factor(inp, context),
+        "inv_cost": _make_investment_cost(context),
+    }
+
+    addon, addon_lo = _make_addon_params(input_cool)
+    results["addon_conversion"] = addon
+    results["addon_lo"] = addon_lo
+
+    # Nexus basin distribution
+    _add_nexus_params(results, context, node_region, info)
+
+    # Historical parameters
+    hist_params = _expand_historical_params(
+        scen, cooling_df, cost_share_df, input_cool_2015, context
+    )
+    results.update(hist_params)
+
+    # SSP share constraints
+    share_constraints = _make_ssp_share_constraints(context)
+    if not share_constraints.empty:
+        results["share_commodity_up"] = share_constraints
+
+    # Saline extraction bounds
+    _add_saline_bounds(results, info)
+
+    return results
+
+
+def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame]:
+    """Process water usage for non-cooling power plant technologies.
+
+    Parameters
+    ----------
+    context : .Context
+    scenario : .Scenario, optional
+
+    Returns
+    -------
+    dict of (str -> pandas.DataFrame)
+    """
+    path = package_data_path(
+        "water", "ppl_cooling_tech", "tech_water_performance_ssp_msg.csv"
+    )
+    df = pd.read_csv(path)
+
+    is_non_cool = df["technology_group"] != "cooling"
+    is_fresh = df["water_supply_type"] == "freshwater_supply"
+    non_cool = df[is_non_cool & is_fresh].copy()
+    non_cool.rename(columns={"technology_name": "technology"}, inplace=True)
+
+    scen = scenario or context.get_scenario()
+    all_tech = scen.par("technical_lifetime")["technology"].unique()
+    non_cool = non_cool[non_cool["technology"].isin(all_tech)]
+
+    withdrawal = non_cool["water_withdrawal_mid_m3_per_output"]
+    non_cool["value"] = withdrawal * CONFIG["m3_gj_to_mcm_gwa"]
+
+    output_data = scen.par("output", {"technology": non_cool["technology"].unique()})
+    output_data = output_data[
+        (output_data["node_loc"] != f"{context.regions}_GLB")
+        & (output_data["node_dest"] != f"{context.regions}_GLB")
     ]
 
-    scen = scenario if scenario is not None else context.get_scenario()
-    tec_lt = scen.par("technical_lifetime")
-    all_tech = list(tec_lt["technology"].unique())
-    # all_tech = list(scen.set("technology"))
-    tech_non_cool_csv = list(non_cool_df["technology_name"])
-    techs_to_remove = [tec for tec in tech_non_cool_csv if tec not in all_tech]
+    merged = output_data.merge(non_cool, on="technology", how="right").dropna()
 
-    non_cool_df = non_cool_df[~non_cool_df["technology_name"].isin(techs_to_remove)]
-    non_cool_df = non_cool_df.rename(columns={"technology_name": "technology"})
+    commodity = "surfacewater" if context.nexus_set == "nexus" else "freshwater"
 
-    non_cool_df["value"] = (
-        non_cool_df["water_withdrawal_mid_m3_per_output"] * m3_GJ_TO_MCM_GWa
-    )  # Conversion factor
-
-    non_cool_tech = list(non_cool_df["technology"].unique())
-
-    n_cool_df = scen.par("output", {"technology": non_cool_tech})
-    n_cool_df = n_cool_df[
-        (n_cool_df["node_loc"] != f"{context.regions}_GLB")
-        & (n_cool_df["node_dest"] != f"{context.regions}_GLB")
-    ]
-    n_cool_df_merge = pd.merge(n_cool_df, non_cool_df, on="technology", how="right")
-    n_cool_df_merge.dropna(inplace=True)
-
-    # Input dataframe for non cooling technologies
-    # only water withdrawals are being taken
-    # Only freshwater supply is assumed for simplicity
-    inp_n_cool = make_df(
+    inp = make_df(
         "input",
-        technology=n_cool_df_merge["technology"],
-        value=n_cool_df_merge["value_y"],
+        technology=merged["technology"],
+        value=merged["value_y"],
         unit="MCM/GWa",
         level="water_supply",
-        commodity="freshwater",
+        commodity=commodity,
         time_origin="year",
         mode="M1",
         time="year",
-        year_vtg=n_cool_df_merge["year_vtg"].astype(int),
-        year_act=n_cool_df_merge["year_act"].astype(int),
-        node_loc=n_cool_df_merge["node_loc"],
-        node_origin=n_cool_df_merge["node_dest"],
+        year_vtg=merged["year_vtg"].astype(int),
+        year_act=merged["year_act"].astype(int),
+        node_loc=merged["node_loc"],
+        node_origin=merged["node_dest"],
     )
 
-    # append the input data to results
-    results["input"] = inp_n_cool
-
-    return results
+    return {"input": inp}

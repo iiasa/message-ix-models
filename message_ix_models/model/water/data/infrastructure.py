@@ -4,6 +4,7 @@ treatment in urban & rural"""
 from collections import defaultdict
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from message_ix import make_df
 
@@ -25,6 +26,93 @@ from message_ix_models.util import (
 )
 
 
+def is_dummy_technology(df_row) -> bool:
+    """Check if a technology is a dummy (has zero investment, fix, and var costs).
+
+    Parameters
+    ----------
+    df_row : pandas.Series
+        Row from the infrastructure CSV containing cost data
+
+    Returns
+    -------
+    bool
+        True if technology has zero costs (is dummy), False otherwise
+    """
+    return (
+        df_row.get("investment_mid", 0) == 0.0
+        and df_row.get("fix_cost_mid", 0) == 0.0
+        and df_row.get("var_cost_mid", 0) == 0.0
+    )
+
+
+def _make_dist_output(
+    df_out_dist: pd.DataFrame,
+    scenario_info: ScenarioInfo,
+    df_node: pd.DataFrame,
+    sub_time: pd.Series,
+    sdg: str,
+) -> pd.DataFrame:
+    """Create output DataFrame for distribution technologies."""
+    out_frames = []
+    for _, dist_rows in df_out_dist.iterrows():
+        use_same_year_dist = is_dummy_technology(dist_rows)
+        yv_ya = get_vintage_and_active_years(
+            scenario_info,
+            dist_rows["technical_lifetime_mid"],
+            same_year_only=use_same_year_dist,
+        )
+
+        if sdg != "baseline":
+            # SDG scenario: only Mf mode
+            out_frames.append(
+                make_df(
+                    "output",
+                    technology=dist_rows["tec"],
+                    value=dist_rows["out_value_mid"],
+                    unit="MCM",
+                    level=dist_rows["outlvl"],
+                    commodity=dist_rows["outcmd"],
+                    mode="Mf",
+                )
+                .pipe(broadcast, yv_ya, node_loc=df_node["node"], time=sub_time)
+                .pipe(same_node)
+                .pipe(same_time)
+            )
+        else:
+            # Baseline: both M1 and Mf modes
+            out_frames.append(
+                make_df(
+                    "output",
+                    technology=dist_rows["tec"],
+                    value=dist_rows["out_value_high"],
+                    unit="MCM",
+                    level=dist_rows["outlvl"],
+                    commodity=dist_rows["outcmd"],
+                    mode="M1",
+                )
+                .pipe(broadcast, yv_ya, node_loc=df_node["node"], time=sub_time)
+                .pipe(same_node)
+                .pipe(same_time)
+            )
+            out_frames.append(
+                make_df(
+                    "output",
+                    technology=dist_rows["tec"],
+                    value=dist_rows["out_value_mid"],
+                    unit="MCM",
+                    level=dist_rows["outlvl"],
+                    commodity=dist_rows["outcmd"],
+                    mode="Mf",
+                )
+                .pipe(broadcast, yv_ya, node_loc=df_node["node"], time=sub_time)
+                .pipe(same_node)
+                .pipe(same_time)
+            )
+
+    return pd.concat(out_frames) if out_frames else pd.DataFrame()
+
+
 def start_creating_input_dataframe(
     sdg: str,
     df_node: pd.DataFrame,
@@ -37,6 +125,9 @@ def start_creating_input_dataframe(
     inp_df = pd.DataFrame([])
     # Input Dataframe for non elec commodities
     for index, rows in df_non_elec.iterrows():
+        # Check if this is a dummy technology
+        use_same_year = is_dummy_technology(rows)
+
         inp_df = pd.concat(
             [
                 inp_df,
@@ -44,7 +135,7 @@ def start_creating_input_dataframe(
                     make_df(
                         "input",
                         technology=rows["tec"],
-                        value=rows["value_mid"],
+                        value=rows["value_high"],
                         unit="MCM",
                         # MCM as all non elec technology have water as input
                         level=rows["inlvl"],
@@ -55,7 +146,9 @@ def start_creating_input_dataframe(
                     .pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         time=sub_time,
                     )
@@ -66,34 +159,9 @@ def start_creating_input_dataframe(
         )
     if sdg != "baseline":
         for index, rows in df_dist.iterrows():
-            return pd.concat(
-                [
-                    inp_df,
-                    (
-                        make_df(
-                            "input",
-                            technology=rows["tec"],
-                            value=rows["value_high"],
-                            unit="MCM",
-                            level=rows["inlvl"],
-                            commodity=rows["incmd"],
-                            mode="Mf",
-                        )
-                        .pipe(
-                            broadcast,
-                            get_vintage_and_active_years(
-                                scenario_info, rows["technical_lifetime_mid"]
-                            ),
-                            node_loc=df_node["node"],
-                            time=sub_time,
-                        )
-                        .pipe(same_node)
-                        .pipe(same_time)
-                    ),
-                ]
-            )
-    else:
-        for index, rows in df_dist.iterrows():
+            # Check if this is a dummy technology
+            use_same_year = is_dummy_technology(rows)
+
             inp_df = pd.concat(
                 [
                     inp_df,
@@ -105,12 +173,77 @@ def start_creating_input_dataframe(
                             unit="MCM",
                             level=rows["inlvl"],
                             commodity=rows["incmd"],
+                            mode="Mf",
+                        )
+                        .pipe(
+                            broadcast,
+                            get_vintage_and_active_years(
+                                scenario_info,
+                                rows["technical_lifetime_mid"],
+                                same_year_only=use_same_year,
+                            ),
+                            node_loc=df_node["node"],
+                            time=sub_time,
+                        )
+                        .pipe(same_node)
+                        .pipe(same_time)
+                    ),
+                ]
+            )
+    else:
+        for index, rows in df_dist.iterrows():
+            # Check if this is a dummy technology
+            use_same_year = is_dummy_technology(rows)
+
+            # Add M1 mode input
+            inp_df = pd.concat(
+                [
+                    inp_df,
+                    (
+                        make_df(
+                            "input",
+                            technology=rows["tec"],
+                            value=rows["value_high"],
+                            unit="MCM",
+                            level=rows["inlvl"],
+                            commodity=rows["incmd"],
                             mode="M1",
                         )
                         .pipe(
                             broadcast,
                             get_vintage_and_active_years(
-                                scenario_info, rows["technical_lifetime_mid"]
+                                scenario_info,
+                                rows["technical_lifetime_mid"],
+                                same_year_only=use_same_year,
+                            ),
+                            node_loc=df_node["node"],
+                            time=sub_time,
+                        )
+                        .pipe(same_node)
+                        .pipe(same_time)
+                    ),
+                ]
+            )
+            # Add Mf mode input for baseline to match Mf output mode
+            inp_df = pd.concat(
+                [
+                    inp_df,
+                    (
+                        make_df(
+                            "input",
+                            technology=rows["tec"],
+                            value=rows["value_mid"],
+                            unit="MCM",
+                            level=rows["inlvl"],
+                            commodity=rows["incmd"],
+                            mode="Mf",
+                        )
+                        .pipe(
+                            broadcast,
+                            get_vintage_and_active_years(
+                                scenario_info,
+                                rows["technical_lifetime_mid"],
+                                same_year_only=use_same_year,
                             ),
                             node_loc=df_node["node"],
                             time=sub_time,
@@ -121,32 +254,7 @@ def start_creating_input_dataframe(
                 ]
             )
 
-    return pd.concat(
-        [
-            inp_df,
-            (
-                make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="MCM",
-                    level=rows["inlvl"],
-                    commodity=rows["incmd"],
-                    mode="Mf",
-                )
-                .pipe(
-                    broadcast,
-                    get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
-                    ),
-                    node_loc=df_node["node"],
-                    time=sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time)
-            ),
-        ]
-    )
+    return inp_df
 
 
 def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
@@ -238,6 +346,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     out_df = pd.DataFrame([])
     for index, rows in df_out.iterrows():
+        # Check if this is a dummy technology
+        use_same_year = is_dummy_technology(rows)
+
         out_df = pd.concat(
             [
                 out_df,
@@ -254,7 +365,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     .pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -265,80 +378,11 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-    if context.SDG != "baseline":
-        out_df = pd.concat(
-            [
-                out_df,
-                make_df(
-                    "output",
-                    technology=df_out_dist["tec"],
-                    value=df_out_dist["out_value_mid"],
-                    unit="MCM",
-                    level=df_out_dist["outlvl"],
-                    commodity=df_out_dist["outcmd"],
-                    mode="Mf",
-                )
-                .pipe(
-                    broadcast,
-                    get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
-                    ),
-                    node_loc=df_node["node"],
-                    time=sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time),
-            ]
-        )
-    else:
-        out_df = pd.concat(
-            [
-                out_df,
-                make_df(
-                    "output",
-                    technology=df_out_dist["tec"],
-                    value=df_out_dist["out_value_mid"],
-                    unit="MCM",
-                    level=df_out_dist["outlvl"],
-                    commodity=df_out_dist["outcmd"],
-                    mode="M1",
-                )
-                .pipe(
-                    broadcast,
-                    get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
-                    ),
-                    node_loc=df_node["node"],
-                    time=sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time),
-            ]
-        )
-        out_df = pd.concat(
-            [
-                out_df,
-                make_df(
-                    "output",
-                    technology=df_out_dist["tec"],
-                    value=df_out_dist["out_value_mid"],
-                    unit="MCM",
-                    level=df_out_dist["outlvl"],
-                    commodity=df_out_dist["outcmd"],
-                    mode="Mf",
-                )
-                .pipe(
-                    broadcast,
-                    get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
-                    ),
-                    node_loc=df_node["node"],
-                    time=sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time),
-            ]
-        )
+    # Process distribution outputs using helper function
+    dist_out = _make_dist_output(
+        df_out_dist, scenario_info, df_node, sub_time, context.SDG
+    )
+    out_df = pd.concat([out_df, dist_out]) if not dist_out.empty else out_df
 
     results["output"] = out_df
 
@@ -347,6 +391,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     cap_df = pd.DataFrame([])
     # Adding capacity factor dataframe
     for index, rows in df_cap.iterrows():
+        # Check if this is a dummy technology
+        use_same_year = is_dummy_technology(rows)
+
         cap_df = pd.concat(
             [
                 cap_df,
@@ -359,7 +406,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 .pipe(
                     broadcast,
                     get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
+                        scenario_info,
+                        rows["technical_lifetime_mid"],
+                        same_year_only=use_same_year,
                     ),
                     node_loc=df_node["node"],
                     time=sub_time,
@@ -410,6 +459,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     var_cost = pd.DataFrame([])
 
     for index, rows in df_inv.iterrows():
+        # Check if this is a dummy technology
+        use_same_year = is_dummy_technology(rows)
+
         fix_cost = pd.concat(
             [
                 fix_cost,
@@ -421,7 +473,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                 ).pipe(
                     broadcast,
                     get_vintage_and_active_years(
-                        scenario_info, rows["technical_lifetime_mid"]
+                        scenario_info,
+                        rows["technical_lifetime_mid"],
+                        same_year_only=use_same_year,
                     ),
                     node_loc=df_node["node"],
                 ),
@@ -440,6 +494,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     if context.SDG != "baseline":
         for index, rows in df_var.iterrows():
+            # Check if this is a dummy technology
+            use_same_year = is_dummy_technology(rows)
+
             # Variable cost
             var_cost = pd.concat(
                 [
@@ -453,7 +510,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     ).pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -463,6 +522,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
         # Variable cost for distribution technologies
         for index, rows in df_var_dist.iterrows():
+            # Check if this is a dummy technology
+            use_same_year = is_dummy_technology(rows)
+
             var_cost = pd.concat(
                 [
                     var_cost,
@@ -475,7 +537,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     ).pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -486,6 +550,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     else:
         # Variable cost
         for index, rows in df_var.iterrows():
+            # Check if this is a dummy technology
+            use_same_year = is_dummy_technology(rows)
+
             var_cost = pd.concat(
                 [
                     var_cost,
@@ -498,7 +565,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     ).pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -507,6 +576,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
             )
 
         for index, rows in df_var_dist.iterrows():
+            # Check if this is a dummy technology
+            use_same_year = is_dummy_technology(rows)
+
             var_cost = pd.concat(
                 [
                     var_cost,
@@ -519,7 +591,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     ).pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -539,7 +613,9 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
                     ).pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["technical_lifetime_mid"]
+                            scenario_info,
+                            rows["technical_lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=sub_time,
@@ -571,11 +647,14 @@ def prepare_input_dataframe(
     # which is the only explanation as to how the model solved.
     for _, rows in df_elec.iterrows():
         if rows["tec"] in techs:
+            # Check if this is a dummy technology (for distribution techs)
+            use_same_year = is_dummy_technology(rows)
+
             if context.SDG != "baseline":
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
+                    value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -589,6 +668,7 @@ def prepare_input_dataframe(
                         scenario_info,
                         # 1 because elec commodities don't have technical lifetime
                         1,
+                        same_year_only=use_same_year,
                     ),
                     time=sub_time,
                 )
@@ -598,7 +678,7 @@ def prepare_input_dataframe(
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
-                    value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
+                    value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -612,6 +692,7 @@ def prepare_input_dataframe(
                         scenario_info,
                         # 1 because elec commodities don't have technical lifetime
                         1,
+                        same_year_only=use_same_year,
                     ),
                     time=sub_time,
                 )
@@ -622,7 +703,7 @@ def prepare_input_dataframe(
                         make_df(
                             "input",
                             technology=rows["tec"],
-                            value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
+                            value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
                             unit="GWa/MCM",
                             level="final",
                             commodity="electr",
@@ -633,7 +714,9 @@ def prepare_input_dataframe(
                         ).pipe(
                             broadcast,
                             # 1 because elec commodities don't have technical lifetime
-                            get_vintage_and_active_years(scenario_info, 1),
+                            get_vintage_and_active_years(
+                                scenario_info, 1, same_year_only=use_same_year
+                            ),
                             time=sub_time,
                         ),
                     ]
@@ -641,10 +724,13 @@ def prepare_input_dataframe(
 
                 result_dc["input"].append(inp)
         else:
+            # Check if this is a dummy technology (for non-distribution techs)
+            use_same_year = is_dummy_technology(rows)
+
             inp = make_df(
                 "input",
                 technology=rows["tec"],
-                value=rows["value_mid"] * kWh_m3_TO_GWa_MCM,
+                value=rows["value_high"] * kWh_m3_TO_GWa_MCM,
                 unit="GWa/MCM",
                 level="final",
                 commodity="electr",
@@ -654,7 +740,9 @@ def prepare_input_dataframe(
                 node_origin=df_node["region"],
             ).pipe(
                 broadcast,
-                get_vintage_and_active_years(scenario_info, 1),
+                get_vintage_and_active_years(
+                    scenario_info, 1, same_year_only=use_same_year
+                ),
                 time=sub_time,
             )
 
@@ -782,7 +870,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         unit="MCM/year",
     )
     # Making negative values zero
-    bound_up["value"].clip(lower=0, inplace=True)
+    bound_up["value"] = bound_up["value"].clip(lower=0)
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] >= firstyear]
 
@@ -800,6 +888,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     fix_cost = pd.DataFrame([])
     var_cost = pd.DataFrame([])
     for index, rows in df_desal.iterrows():
+        # Check if this is a dummy technology (desalination techs have real costs)
+        use_same_year = is_dummy_technology(rows)
+
         # Fixed costs
         # Prepare dataframe for fix_cost
         fix_cost = pd.concat(
@@ -812,13 +903,15 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     unit="USD/MCM",
                 ).pipe(
                     broadcast,
-                    get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
+                    get_vintage_and_active_years(
+                        scenario_info,
+                        rows["lifetime_mid"],
+                        same_year_only=use_same_year,
+                    ),
                     node_loc=df_node["node"],
                 ),
             ]
         )
-
-        results["fix_cost"] = fix_cost
 
         # Variable cost
         var_cost = pd.concat(
@@ -832,7 +925,11 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     mode="M1",
                 ).pipe(
                     broadcast,
-                    get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
+                    get_vintage_and_active_years(
+                        scenario_info,
+                        rows["lifetime_mid"],
+                        same_year_only=use_same_year,
+                    ),
                     node_loc=df_node["node"],
                     time=pd.Series(sub_time),
                 ),
@@ -851,6 +948,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat, node_loc=df_node["node"])
     # )
 
+    results["fix_cost"] = fix_cost
     results["var_cost"] = var_cost
 
     tl = pd.concat(
@@ -879,6 +977,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     result_dc = defaultdict(list)
 
     for index, rows in df_desal.iterrows():
+        # Check if this is a dummy technology (desalination techs have real costs)
+        use_same_year = is_dummy_technology(rows)
+
         inp = make_df(
             "input",
             technology=rows["tec"],
@@ -892,7 +993,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             node_origin=df_node["region"],
         ).pipe(
             broadcast,
-            get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
+            get_vintage_and_active_years(
+                scenario_info, rows["lifetime_mid"], same_year_only=use_same_year
+            ),
             time=pd.Series(sub_time),
         )
 
@@ -908,6 +1011,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     result_dc = defaultdict(list)
 
     for index, rows in df_heat.iterrows():
+        # Check if this is a dummy technology (desalination techs have real costs)
+        use_same_year = is_dummy_technology(rows)
+
         inp = make_df(
             "input",
             technology=rows["tec"],
@@ -921,7 +1027,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
             node_origin=df_node["region"],
         ).pipe(
             broadcast,
-            get_vintage_and_active_years(scenario_info, rows["lifetime_mid"]),
+            get_vintage_and_active_years(
+                scenario_info, rows["lifetime_mid"], same_year_only=use_same_year
+            ),
             time=pd.Series(sub_time),
         )
 
@@ -933,6 +1041,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
     # Adding input dataframe
     for index, rows in df_desal.iterrows():
+        # Check if this is a dummy technology (desalination techs have real costs)
+        use_same_year = is_dummy_technology(rows)
+
         inp_df = pd.concat(
             [
                 inp_df,
@@ -949,7 +1060,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     .pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["lifetime_mid"]
+                            scenario_info,
+                            rows["lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=pd.Series(sub_time),
@@ -980,7 +1093,9 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
                     .pipe(
                         broadcast,
                         get_vintage_and_active_years(
-                            scenario_info, rows["lifetime_mid"]
+                            scenario_info,
+                            rows["lifetime_mid"],
+                            same_year_only=use_same_year,
                         ),
                         node_loc=df_node["node"],
                         time=pd.Series(sub_time),
@@ -994,7 +1109,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         results["output"] = out_df
 
     # putting a lower bound on desalination tecs based on hist capacities
-    df_bound = df_hist[df_hist["year"] == firstyear]
+    df_bound = df_hist[df_hist["year"] == 2025]  # firstyear dataabsent
     bound_lo = make_df(
         "bound_activity_lo",
         node_loc="B" + df_bound["BCU_name"],
@@ -1013,8 +1128,37 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # 5 years and model needs per year
     bound_lo["value"] = bound_lo["value"] / 5
 
+    # Clip activity bounds to not exceed capacity bounds
+    bound_lo = bound_lo.merge(
+        bound_up[["node_loc", "year_act", "value"]],
+        on=["node_loc", "year_act"],
+        how="left",
+        suffixes=("", "_cap"),
+    )
+    bound_lo["value"] = np.minimum(
+        bound_lo["value"], bound_lo["value_cap"].fillna(np.inf)
+    )
+    bound_lo = bound_lo.drop("value_cap", axis=1)
+
     results["bound_activity_lo"] = bound_lo
 
+    # # Add soft constraints for desalination bound_activity_lo
+    # # Parameters for soft constraints
+    # relaxation_factor = 10  # Effectively allow complete relaxation at penalty
+    # penalty_multiplier = 1.0  # 100% of levelized cost as penalty for violations
+    #
+    # # Create soft_activity_lo parameter using the same bound_lo data
+    # soft_lo = bound_lo.copy()
+    # soft_lo["value"] = relaxation_factor
+    # soft_lo["unit"] = "-"
+    # results["soft_activity_lo"] = soft_lo
+    #
+    # # Create penalty cost parameter
+    # penalty_lo = bound_lo.copy()
+    # penalty_lo["value"] = penalty_multiplier
+    # penalty_lo["unit"] = "-"
+    # results["level_cost_activity_soft_lo"] = penalty_lo
+    #
     # Remove duplicates from all DataFrames in results
     for key, df in results.items():
         results[key] = df.dropna().drop_duplicates().reset_index(drop=True)
