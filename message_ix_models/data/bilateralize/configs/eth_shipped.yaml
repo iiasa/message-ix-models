@@ -1,0 +1,54 @@
+#########################
+# Ethanol shipped trade #
+#########################
+eth_shipped_trade:
+  base_trade_technology:
+    - eth_bal
+    - eth_bunker
+  trade_technology:
+    eth_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    ethanol
+  trade_commodity_suffix:
+  trade_units:
+    GWa
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_tanker_loil
+    - oil_tanker_eth
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    oil_tanker_loil:
+      - lightoil
+    oil_tanker_eth:
+      - ethanol
+  flow_material_input:
+  flow_commodity_output:
+    oil_tanker_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - eth_bio
+    - eth_bio_ccs
+    - liq_bio
+    - liq_bio_ccs
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    oil_tanker_loil:
+      loil_tobunker
+    oil_tanker_eth:
+      eth_tobunker

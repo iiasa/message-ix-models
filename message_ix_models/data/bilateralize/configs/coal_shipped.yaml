@@ -1,0 +1,47 @@
+######################
+# Coal shipped trade #
+######################
+coal_shipped_trade: # Name of covered trade technology (e.g., oil)
+  base_trade_technology:
+    - coal_bal
+    - coal_trd
+  trade_technology:
+    coal_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    coal
+  trade_commodity_suffix:
+  trade_units:
+    GWa
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    secondary
+  flow_technologies:
+    - energy_bulk_carrier_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    energy_bulk_carrier_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    energy_bulk_carrier_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - coal_extr
+    - lignite_extr
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    energy_bulk_carrier_loil:
+      loil_tobunker

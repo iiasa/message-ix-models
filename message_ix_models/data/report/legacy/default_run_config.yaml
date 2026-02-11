@@ -1,12 +1,132 @@
 report_config:
     table_def: "message_ix_models.report.legacy.default_tables"
-    aggr_def: "default_aggregates.csv"
-    var_def: "default_variable_definitions.csv"
-    unit_yaml: "default_units.yaml"
+    aggr_def: "materials_dac_aggregates.csv"
+    var_def: "materials_dac_variable_definitions.csv"
+    #"default_variable_definitions.csv"
+    unit_yaml: "materials_dac_units.yaml"
     urban_perc: "default_pop_urban_rural.csv"
-    kyoto_hist: "default_kyoto_hist.csv"
-    lu_hist: "default_lu_co2_hist.csv"  
+    kyoto_hist: False
+    lu_hist: False
 run_tables:
+    Prc:
+        root: Price
+        active: True
+        function: retr_price
+        args: {"units_CPrc_co2": "US$2010/tCO2",
+               "units_CPrc_co2_outp": "US$2010/t CO2", # Name of units in output file
+               "units_energy": "US$2010/GJ",
+               "units_energy_outp": "US$2010/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": 0.03171,
+               "units_agri": "Index (2020 = 1)"}
+    Forest_demand:
+      root: Forest Demand
+      active: True
+      function: retr_forest_dem
+      args: {"units_for_vol": "million m3",
+             "units_for_vol_yr": "million m3/yr",}
+    Forest_produciton:
+      root: Forest Production
+      active: True
+      function: retr_forest_prd
+      args: {"units_for_vol": "million m3",
+             "units_for_vol_yr": "million m3/yr",
+             "units_for_dm_yr": "million t DM/yr",}
+    Enrgy_Trd:
+        root: Trade
+        active: True
+        function: retr_trade
+        args: {"units_energy": "EJ/yr",
+               "units_CPrc_co2": "US$2010/tCO2",
+               "units_emi_val": "billion US$2010/yr",
+               "units_emi_vol": "Mt CO2-equiv/yr",
+               "units_agri_vol": "million t DM/yr",
+               "units_for_vol": "million m3/yr",
+    }
+    Tec_Invst:
+        root: Investment|Energy Supply
+        active: True
+        function: retr_supply_inv
+        args: {"units_energy": "billion US$2010/yr",
+               "units_emi": "Mt CO2/yr",
+               "units_ene_mdl": "GWa"}
+    Wtr_cons:
+        root: Water Consumption
+        active: False
+        function: retr_water_use
+        args: {"units": "km3/yr",
+               "method": "consumption"}
+    Wtr_wthd:
+        root: Water Withdrawal
+        active: True
+        function: retr_water_use
+        args: {"units": "km3/yr",
+               "method": "withdrawal"}
+    GDP:
+        root: GDP
+        active: True
+        function: retr_macro
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Cst:
+        root: Cost
+        active: True
+        function: retr_cost
+        condition: scen.var("COST_NODAL_NET").empty
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Glob_fdbk:
+        root: GLOBIOM Feedback
+        active: True
+        function: retr_globiom_feedback
+        args: {
+            "units_emi_CH4": "Mt CH4/yr",
+            "units_emi_CO2": "Mt CO2/yr",
+            "units_emi_N2O": "kt N2O/yr",
+            "units_ene": "EJ/yr",
+            "units_ene_prc": "US$2005/GJ",
+            "units_CPrc_co2": "US$2005/tCO2",
+            "units_CPrc_co2_outp": "US$2005/t CO2",
+            "units_gdp": "billion US$2005/yr",
+            "conv_usd": 1.10774,}
+            
+    GLOBIOM_GAINS:
+      root: Activity for GAINS
+      active: True
+      function: retr_GAINS
+
+    Emi_Crb_rem:
+        root: Carbon Removal
+        active: True
+        function: retr_carbon_removal
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene": "EJ/yr"
+        }
+
+    Emi_Crb_Cap:
+        root: Carbon Capture
+        active: True
+        function: retr_CO2_Capture
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene": "EJ/yr"}
+
+    Food_availability:
+        root: Food Availability
+        active: True
+        function: retr_food_availability
+        args: {"units": "kcal/cap/day"}
+
+    Food_intake:
+        root: Food Intake
+        active: True
+        function: retr_food_intake
+        args: {"units": "kcal/cap/day"}
+
+    Harvested_area:
+        root: Harvested Area
+        active: True
+        function: retr_harvested_area
+        args: {"units": "million ha/yr"}
     Res_extr:
         root: Resource|Extraction
         active: True
@@ -29,7 +149,7 @@ run_tables:
         args: {"units": "EJ/yr"}
     Enrgy_PE_sub:
         root: Primary Energy (substitution method)
-        active: True
+        active: False
         function: retr_pe
         args: {"units": "EJ/yr",
                "method": "substitution"}
@@ -186,7 +306,8 @@ run_tables:
         root: Food Waste
         active: True
         function: retr_food_waste
-        args: {"units": "million t DM/yr"}
+        args: {"units_DM": "million t DM/yr",
+               "units_cap": "kcal/cap/day"}
     LU_Fd_dem:
         root: Food Demand
         active: True
@@ -212,7 +333,8 @@ run_tables:
         root: Yield
         active: True
         function: retr_yield
-        args: {"units": "t DM/ha/yr"}
+        args: {"units": "t DM/ha/yr",
+               "units_timber": "m3/ha"}
     Tec_cap:
         root: Capacity
         active: True
@@ -265,17 +387,6 @@ run_tables:
         active: True
         function: retr_pop
         args: {"units": "million"}
-    Prc:
-        root: Price
-        active: True
-        function: retr_price
-        args: {"units_CPrc_co2": "US$2010/tCO2",
-               "units_CPrc_co2_outp": "US$2010/t CO2", # Name of units in output file
-               "units_energy": "US$2010/GJ",
-               "units_energy_outp": "US$2010/GJ",
-               "units_CPrc_c": "US$2010/tC",
-               "conv_CPrc_co2_to_c": 0.03171,
-               "units_agri": "Index (2005 = 1)"}
     Enrgy_UE_inp:
         root: Useful Energy
         active: True
@@ -286,56 +397,14 @@ run_tables:
         active: True
         function: retr_demands_output
         args: {"units": "EJ/yr"}
-    Enrgy_Trd:
-        root: Trade
+    Emi_GROSSCO2:
+        root: Gross Emissions|CO2
         active: True
-        function: retr_trade
-        args: {"units_energy": "EJ/yr",
-               "units_CPrc_co2": "US$2010/tCO2",
-               "units_emi_val": "billion US$2010/yr",
-               "units_emi_vol": "Mt CO2-equiv/yr"}
-    Tec_Invst:
-        root: Investment|Energy Supply
+        function: retr_GROSSCO2emi
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene_mdl": "GWa"}  
+    Emi_GROSS_REM_CO2:
+        root: Gross Removals
         active: True
-        function: retr_supply_inv
-        args: {"units_energy": "billion US$2010/yr",
-               "units_emi": "Mt CO2/yr",
-               "units_ene_mdl": "GWa"}
-    Wtr_cons:
-        root: Water Consumption
-        active: True
-        function: retr_water_use
-        args: {"units": "km3/yr",
-               "method": "consumption"}
-    Wtr_wthd:
-        root: Water Withdrawal
-        active: True
-        function: retr_water_use
-        args: {"units": "km3/yr",
-               "method": "withdrawal"}
-    GDP:
-        root: GDP
-        active: True
-        function: retr_macro
-        args: {"units": "billion US$2010/yr",
-               "conv_usd": 1.10774}
-    Cst:
-        root: Cost
-        active: True
-        function: retr_cost
-        condition: scen.var("COST_NODAL_NET").empty
-        args: {"units": "billion US$2010/yr",
-               "conv_usd": 1.10774}
-    Glob_fdbk:
-        root: GLOBIOM Feedback
-        active: True
-        function: retr_globiom_feedback
-        args: {
-            "units_emi_CH4": "Mt CH4/yr",
-            "units_emi_CO2": "Mt CO2/yr",
-            "units_emi_N2O": "kt N2O/yr",
-            "units_ene": "EJ/yr",
-            "units_ene_prc": "US$2005/GJ",
-            "units_CPrc_co2": "US$2005/tCO2",
-            "units_CPrc_co2_outp": "US$2005/t CO2",
-            "units_gdp": "billion US$2005/yr",}
+        function: retr_CO2_Gross_Removals
+        args: {"units": "Mt CO2/yr"}  
