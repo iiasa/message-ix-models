@@ -25,13 +25,13 @@ def run_nam_boost(base_scenario_name: str,
                   out_scenario_name: str,
                   bound_level: int,
                   bound_technologies: list = ['LNG_shipped_exp_weu', 'LNG_shipped_exp_eeu',
-                                              'coal_shipped_exp_weu', 'coal_shipped_exp_eeu',
-                                              'biomass_shipped_exp_weu', 'biomass_shipped_exp_eeu',
-                                              'eth_shipped_exp_weu', 'eth_shipped_exp_eeu',
+                                              #'coal_shipped_exp_weu', 'coal_shipped_exp_eeu',
+                                              #'biomass_shipped_exp_weu', 'biomass_shipped_exp_eeu',
+                                              #'eth_shipped_exp_weu', 'eth_shipped_exp_eeu',
                                               'foil_shipped_exp_weu', 'foil_shipped_exp_eeu',
                                               'loil_shipped_exp_weu', 'loil_shipped_exp_eeu',
                                               'crudeoil_shipped_exp_weu', 'crudeoil_shipped_exp_eeu',
-                                              'meth_shipped_exp_weu', 'meth_shipped_exp_eeu',
+                                              #'meth_shipped_exp_weu', 'meth_shipped_exp_eeu',
                                               #'lh2_shipped_exp_weu', 'lh2_shipped_exp_eeu',
                                              ],
                   bound_commodities: list = ['LNG', 'crudeoil', 'coal', 'biomass',
@@ -150,22 +150,22 @@ def run_nam_boost(base_scenario_name: str,
 
 # Run scenarios
 run_nam_boost(base_scenario_name = 'SSP2',
+              out_scenario_name = 'NAM500',
+              bound_level = 500)
+run_nam_boost(base_scenario_name = 'SSP2',
               out_scenario_name = 'NAM1000',
               bound_level = 1000)
-run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'NAM2500',
-              bound_level = 2500)
 
+run_nam_boost(base_scenario_name = 'FSU2040',
+              out_scenario_name = 'FSU2040_NAM500',
+              bound_level = 500)
 run_nam_boost(base_scenario_name = 'FSU2040',
               out_scenario_name = 'FSU2040_NAM1000',
               bound_level = 1000)
-run_nam_boost(base_scenario_name = 'FSU2040',
-              out_scenario_name = 'FSU2040_NAM2500',
-              bound_level = 2500)
 
+run_nam_boost(base_scenario_name = 'FSU2100',
+              out_scenario_name = 'FSU2100_NAM500',
+              bound_level = 500)
 run_nam_boost(base_scenario_name = 'FSU2100',
               out_scenario_name = 'FSU2100_NAM1000',
               bound_level = 1000)
-run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAM2500',
-              bound_level = 2500)
