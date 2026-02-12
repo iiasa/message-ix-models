@@ -1,12 +1,14 @@
-.. currentmodule:: mesage_ix_models.tools.bilateralize
+.. currentmodule:: message_ix_models.tools.bilateralize
+
 Bilateralize (:mod:`.tools.bilateralize`)
-#########################################
+*****************************************
 
 .. contents::
   :local:
   
 Overview
 ========
+
 This documentation will outline how to bilateralize trade flows in MESSAGEix.
 
 By default, trade flows are based on a “global pool” approach, wherein all 
@@ -29,7 +31,8 @@ in MESSAGEix. It is located in the ``message-ix-models/tools/bilateralize`` dire
 The tool follows the following steps, which are also available in ``tool/bilateralize/workflow.py``:
 
 Step 1 | Edit (``tools/bilateralize/prepare_edit.py``)
-=============
+======================================================
+
 The first step is to generate empty (or default valued) parameters that are required for 
 bilateralization, specified by commodity. This step requires updates to a configuration file 
 (``config.yaml``) that should be housed in a project directory 
@@ -46,31 +49,33 @@ The tools may stop if the user specifies in their config that they want to speci
 will appear in ``message-ix-models/data/bilateralize/[your_trade_commodity]/speciy_network_[your_trade_commodity].csv``.
 
 Additional functions used here include:
-  - ``message_ix_models.tools.bilateralize.calculate_distance()``: 
+
+- ``message_ix_models.tools.bilateralize.calculate_distance()``: 
   Calculates the great-circle distance between regions (TODO: update this to use explicit maritime routes)
-  - ``message_ix_models.tools.bilateralize.historical_calibration.build_historical_price()``: 
+- ``message_ix_models.tools.bilateralize.historical_calibration.build_historical_price()``: 
   Builds historical price dataframes
-  - ``message_ix_models.tools.bilateralize.mariteam_calibration.calibrate_mariteam()``: 
+- ``message_ix_models.tools.bilateralize.mariteam_calibration.calibrate_mariteam()``: 
   Calibrates maritime shipping (flow technologies) using MariTEAM output.
-  - ``message_ix_models.tools.bilateralize.pull_gem.import_gem()``: 
+- ``message_ix_models.tools.bilateralize.pull_gem.import_gem()``: 
   Imports pre-downloaded raw data from the Global Energy Monitor which is used to calibrate 
   the flow technology piped oil and gas
 
-**This step is not necessary for the following commodities 
-(they are already defined in ``scenario_parameters.pkl`` in 
-``message-ix-models/data/bilateralize/configs/``):**
+  **This step is not necessary for the following commodities 
+  (they are already defined in ``scenario_parameters.pkl`` in 
+  ``message-ix-models/data/bilateralize/configs/``):**
+  
   - Biomass (``biomass_shipped``)
 
   - Coal (``coal_shipped``)
 
   - Crude Oil (``crude_shipped`` and ``crude_piped``): Note that the global pool version of 
-  MESSAGEix names this ``oil_exp`` and ``oil_imp`` 
-  and combines shipped and piped trade.
+    MESSAGEix names this ``oil_exp`` and ``oil_imp`` 
+    and combines shipped and piped trade.
 
   - Ethanol (``eth_shipped``)
 
   - Fuel Oil (``foil_shipped`` and ``foil_piped``): Note that this uses the same oil pipeline 
-  infrastructure as crude oil and light oil.
+    infrastructure as crude oil and light oil.
 
   - Light Oil (``loil_shipped`` and ``loil_piped``): See note above on pipelines
 
@@ -80,7 +85,8 @@ Additional functions used here include:
   - Piped gas (``gas_piped``)
 
 Step 2 | Bare (``tools/bilateralize/bare_to_scenario``)
-==============
+=======================================================
+
 The second step is to review, edit, and transfer the files 
 in ``message-ix-models/data/bilateralize/[your_trade_commodity]/edit_files/``.
 
@@ -93,13 +99,15 @@ By default, the following parameters are transfered automatically with default v
 can be built (even if that scenario doesn't make a ton of sense).
 
 - For **trade technologies** (i.e., whether or not/how much a commodity is traded):
+
    - ``capacity_factor``
    - ``input``
    - ``output``
    - ``technical_lifetime``
 
 - For **flow technologies** (i.e., how a commodity is transported when traded, 
-such as via pipelines or maritime shipping)
+  such as via pipelines or maritime shipping)
+
    - ``capacity_factor``
    - ``input``
    - ``output``
@@ -124,7 +132,8 @@ Builds new capacity dataframes for historical activity of trade technologies (e.
 Builds historical activity dataframes
 
 Step 3 | Build (``tools/bilateralize/load_and_solve.py``)
-===============
+=========================================================
+
 This step builds a scenario. 
 
 The user should use the function 
@@ -152,3 +161,17 @@ To add a new commodity:
 Data
 ====
 All raw data required for a MESSAGEix-GLOBIOM update are currently stored in ``P:/ene_model/MESSAGE_trade``.
+
+Code reference
+==============
+
+The entire module and its contents are documented recursively:
+
+.. currentmodule:: message_ix_models.tools
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   bilateralize
