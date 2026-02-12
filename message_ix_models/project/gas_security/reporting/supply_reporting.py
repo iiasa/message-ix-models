@@ -123,12 +123,12 @@ fuel_supply_out = pd.DataFrame()
 for mod, scen in [('gas_security', 'SSP2'),
                   ('gas_security', 'FSU2040'),
                   ('gas_security', 'FSU2100'),
+                  ('gas_security', 'NAM1000'),
                   ('gas_security', 'NAM2500'),
-                  #('gas_security', 'NAM5000'),
-                  #('gas_security', 'FSU2040_NAM2500'),
-                  #('gas_security', 'FSU2040_NAM5000'),
-                  #('gas_security', 'FSU2100_NAM2500'),
-                  #('gas_security', 'FSU2100_NAM5000'),
+                  ('gas_security', 'FSU2040_NAM1000'),
+                  ('gas_security', 'FSU2040_NAM2500'),
+                  ('gas_security', 'FSU2100_NAM1000'),
+                  ('gas_security', 'FSU2100_NAM2500'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
