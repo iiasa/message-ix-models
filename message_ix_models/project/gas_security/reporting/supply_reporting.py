@@ -156,8 +156,8 @@ for mod, scen in [('gas_security', 'SSP2'),
     fuel_exports['supply_type'] = 'Exports'
     fuel_exports['value'] *= -1 # Set to negative
 
-    fuel_supply_out = fuel_supply_out[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']].drop_duplicates()
-    fuel_exports = fuel_exports[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'year']].drop_duplicates()
+    fuel_supply_out = fuel_supply_out[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
+    fuel_exports = fuel_exports[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
     fuel_supply_out = pd.concat([fuel_supply_out, fuel_exports])
 
 fuel_supply_out.to_csv(package_data_path('gas_security', 'reporting', 'fuel_supply_out.csv'))
