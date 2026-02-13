@@ -10,6 +10,6 @@ class TestCL_TRANSPORT_SCENARIO:
         assert 8 == len(result)
 
         # An expected item is in the code list
-        item = result["_CC_C_D_D"]
+        item = result["CC-C-D-D"]
         # Description contains scenario information
         assert "regional=convergence, material=default" == str(item.description)

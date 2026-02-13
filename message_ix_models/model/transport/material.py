@@ -50,7 +50,25 @@ COMMODITY_INFO = {
     # "zinc": "",  # Missing
 }
 
-# FIXME Do not hard code this
+DIMS = dict(
+    commodity="c",
+    node_loc="n",
+    node_dest="n",
+    node_origin="n",
+    year_vtg="y",
+    technology="t",
+)
+
+#: Portion of the ``input_cap_new`` that is available as ``output_cap_ret`` at the end
+#: of lifetime of a technology. Dimensionless.
+#:
+#: .. todo:: Retrieve from a file.
+OUTPUT_SHARE = 0.8
+
+#: Mapping from values appearing in :data:`.input_cap_new` to MESSAGEix-Transport
+#: technology IDs.
+#:
+#: .. todo:: Read this from a configuration file instead of hard-coding.
 TECHNOLOGY = {
     "BEV": {"ELC_100"},
     "ICE": {
@@ -66,22 +84,13 @@ TECHNOLOGY = {
     "PHEV": {"PHEV_ptrp"},
 }
 
-DIMS = dict(
-    commodity="c",
-    node_loc="n",
-    node_dest="n",
-    node_origin="n",
-    year_vtg="y",
-    technology="t",
-)
-
 # Keyword arguments for as_message_df() for different parameters
 _DEMAND_KW = dict(name="demand", dims=DIMS, common=dict())
 _ICN_KW = dict(
     name="input_cap_new", dims=DIMS, common=util.COMMON | dict(level="demand")
 )
 _OCR_KW = dict(
-    name="output_cap_ret", dims=DIMS, common=util.COMMON | dict(level="scrap")
+    name="output_cap_ret", dims=DIMS, common=util.COMMON | dict(level="end_of_life")
 )
 
 
@@ -122,9 +131,14 @@ def prepare_computer(c: "Computer") -> None:
     # Convert units: (material commodities [Mt]) / (transport CAP/CAP_NEW [Mvehicle])
     c.add(k.exo[2], "convert_units", k.exo[1], units="Mt / Mvehicle")
 
-    # Convert data to MESSAGE-format data frames
+    # Convert to MESSAGE-format data frame
     collect("input_cap_new", "as_message_df", k.exo[2], **_ICN_KW)
-    collect("output_cap_ret", "as_message_df", k.exo[2], **_OCR_KW)
+
+    # Reduce share available for recycling
+    c.add(k.exo[3], "mul", k.exo[2], OUTPUT_SHARE)
+
+    # Convert to MESSAGE-format data frame
+    collect("output_cap_ret", "as_message_df", k.exo[3], **_OCR_KW)
 
     # Multiply base-period LDV sales by material intensity
     tmp = single_key(c.add("demand::MT+0", "mul", k.exo[2], k.sales, sums=True))
