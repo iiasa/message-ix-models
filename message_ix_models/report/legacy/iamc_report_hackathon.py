@@ -6,9 +6,13 @@ import yaml
 from yaml.loader import SafeLoader
 from message_ix_models import Context
 from message_ix_models.util import package_data_path
-from message_ix_models.util.compat.message_data.get_historical_years import main as get_historical_years
+from message_ix_models.util.compat.message_data.get_historical_years import (
+    main as get_historical_years,
+)
 from message_ix_models.util.compat.message_data.get_nodes import get_nodes
-from message_ix_models.util.compat.message_data.get_optimization_years import main as get_optimization_years
+from message_ix_models.util.compat.message_data.get_optimization_years import (
+    main as get_optimization_years,
+)
 from message_ix_models.util.compat.message_data.utilities import retrieve_region_mapping
 
 from . import postprocess
