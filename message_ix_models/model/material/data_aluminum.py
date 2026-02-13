@@ -746,7 +746,7 @@ def gen_data_alu_trade(scenario: "Scenario") -> dict[str, pd.DataFrame]:
         df_hist_cap["historical_new_capacity"] = df_hist_cap["value_difference"] / 5
 
         df_hist_cap = df_hist_cap.drop(
-            columns=["mode", "time", "value", "value_difference"], axis=1
+            columns=["mode", "time", "value", "value_difference"]
         )
         df_hist_cap.rename(
             columns={"historical_new_capacity": "value", "year_act": "year_vtg"},
