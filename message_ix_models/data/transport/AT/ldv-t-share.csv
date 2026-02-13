@@ -1,0 +1,19 @@
+# Share of LDV technologies in base year (=2020)
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,    technology, value
+Austria, ELC_100,    0.007
+Austria, HFC_ptrp,   0.001
+Austria, IAHe_ptrp,  0.001
+Austria, IAHm_ptrp,  0.001
+Austria, ICAe_ffv,   0.001
+Austria, ICAm_ptrp,  0.001
+Austria, ICE_conv,   0.963
+Austria, ICE_nga,    0.001
+Austria, ICH_chyb,   0.015
+Austria, IGH_ghyb,   0.001
+Austria, PHEV_ptrp,  0.008

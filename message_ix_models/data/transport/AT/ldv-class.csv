@@ -1,0 +1,12 @@
+# Vehicle class split
+#
+# - Empty values are zero.
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,    vehicle_class, value
+Austria, Compact,       0.98
+Austria, Minivan,       0.02

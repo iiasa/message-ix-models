@@ -1,0 +1,13 @@
+# Mode shares in the model base year; default set
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,     technology, value
+Austria,  2W,         0.02
+Austria,  AIR,        0.09
+Austria,  BUS,        0.07
+Austria,  LDV,        0.71
+Austria,  RAIL,       0.11

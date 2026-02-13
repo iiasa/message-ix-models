@@ -1,0 +1,20 @@
+# Mean age of LDVs as of the model base period
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Unit: years
+#
+node,     technology, year, value
+Austria,  ELC_100,    2020, 2.5
+Austria,  HFC_ptrp,   2020, 11
+Austria,  IAHe_ptrp,  2020, 11
+Austria,  IAHm_ptrp,  2020, 11
+Austria,  ICAe_ffv,   2020, 11
+Austria,  ICAm_ptrp,  2020, 11
+Austria,  ICE_conv,   2020, 11.2
+Austria,  ICE_L_ptrp, 2020, 15
+Austria,  ICE_nga,    2020, 11
+Austria,  ICH_chyb,   2020, 11
+Austria,  IGH_ghyb,   2020, 11
+Austria,  PHEV_ptrp,  2020, 3

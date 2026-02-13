@@ -1,0 +1,9 @@
+# Passenger distance travelled per capita
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: km / year
+#
+node,     value
+Austria,  15000
