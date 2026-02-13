@@ -8,13 +8,15 @@ from typing import TYPE_CHECKING, Any
 
 from message_ix import Scenario
 
-from message_ix_models.util import identify_nodes
+from message_ix_models import Workflow
+from message_ix_models.util import identify_nodes, short_hash
 from message_ix_models.util.config import ConfigHelper
 
 if TYPE_CHECKING:
     from typing import TypedDict
 
-    from message_ix_models import Context
+    from message_ix_models import Context, Workflow
+    from message_ix_models.util.sdmx import StructureFactory
 
     class CommonArgs(TypedDict):
         relation_name: str
@@ -62,6 +64,71 @@ class Config(ConfigHelper):
     )
 
 
+def from_codelist(context: "Context", cl: type["StructureFactory"]) -> "Workflow":
+    """Generate a workflow using a code list.
+
+    - IDs of codes in `cl` are used to label steps.
+    - The following are invoked automatically:
+
+      - :func:`.model.transport.workflow.add_steps`
+
+    .. todo:: Add and also invoke functions like:
+
+       - :py:`model.buildings.workflow.add_steps`
+       - :py:`model.material.workflow.add_steps`
+
+       …in a standard or configurable order.
+
+    See also
+    --------
+    .project.circeular.workflow.generate
+    .model.transport.workflow.generate
+    """
+    from genno import KeyExistsError
+
+    from message_ix_models.model.transport import workflow as transport
+    from message_ix_models.report import report
+
+    # Create the workflow
+    wf = Workflow(context)
+
+    # Collection of step names
+    reported = []
+
+    # Iterate over all scenarios in IIASA_ECE:CL_CIRCEULAR_TRANSPORT_SCENARIO
+    for scenario_code in cl.get(force=True):
+        # Identify the URL of the base scenario
+        base_url = scenario_code.eval_annotation(id="base-scenario-URL")
+
+        # Short label for subsequent steps
+        label = scenario_code.id
+
+        # Name of the base step
+        name = f"base {short_hash(base_url)}"
+        try:
+            # Load the base model scenario
+            wf.add_step(name, None, target=base_url)
+        except KeyExistsError:
+            # Base scenario URL is identical to another (ssp, policy) combination; use
+            # the scenario returned by that step
+            pass
+
+        name = transport.add_steps(wf, name, scenario_code)
+
+        # Solve
+        wf.add_step(f"{label} solved", name, solve)
+
+        # Report
+        reported.append(f"{label} reported")
+        wf.add_step(reported[-1], f"{label} solved", report)
+
+    # Report all the scenarios
+    wf.add("all reported", reported)
+    wf.default_key = "all reported"
+
+    return wf
+
+
 def solve(
     context: "Context",
     scenario: Scenario,
@@ -71,8 +138,12 @@ def solve(
 ):
     """Common model solve step for ENGAGE, NAVIGATE, and other workflows.
 
-    The steps respond settings from an optional instance of :class:`Config` passed as a
-    keyword argument.
+    The steps respond to settings from a :class:`Config` instance. In order of
+    precedence:
+
+    1. The keyword argument `config`.
+    2. The "solve" key on `context`.
+    3. A default instance of :class:`Config`
 
     *Before* `scenario` is solved:
 
@@ -95,10 +166,15 @@ def solve(
        :obj:`True`.
     """
 
-    config = config or Config()
+    # Identify configuration
+    try:
+        config = config or context.solve
+    except AttributeError:
+        config = Config()
 
     # Set reserve margin values
     if config.reserve_margin:
+        # FIXME Use an analogous function in message-ix-models, with tests
         from message_data.scenario_generation.reserve_margin import res_marg
 
         res_marg.main(scenario)
@@ -112,6 +188,7 @@ def solve(
     if config.demand_scenario:
         # Retrieve DEMAND variable data from a different scenario and set as values
         # for the demand parameter
+        # FIXME Use an analogous function in message-ix-models, with tests
         from message_data.tools.utilities import transfer_demands
 
         source = Scenario(scenario.platform, **config.demand_scenario)

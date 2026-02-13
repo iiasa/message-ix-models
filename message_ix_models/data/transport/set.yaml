@@ -255,6 +255,9 @@ unit:
     # tax_emission
     USD / t: USD per tonne carbon-equivalent; same as "USD/tC"
 
+    # Transport—Materials integration
+    Mt / Mv: megatonne of material per 10⁶ vehicles
+
 # MA3T sets
 census_division:
   add:
