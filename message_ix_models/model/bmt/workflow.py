@@ -68,6 +68,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     """Report the scenario (transport, materials, legacy that contains buildings."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
 
+
     from message_ix_models.model.material.report.run_reporting import (
         run as _materials_report,
     )
@@ -115,13 +116,46 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     except ValueError:
         log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
 
-    _materials_report(scenario, region="R12_GLB", upload_ts=True)
+    df = _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
     # 3. Legacy reporting
     _legacy_report(scenario)
 
+    del df
+
     return scenario
+
+
+def build_T(
+    context: Context, scenario: message_ix.Scenario, **kwargs
+) -> message_ix.Scenario:
+    """Build MESSAGEix-Transport with material module enabled.
+
+    This wrapper function modifies the context to include the "material" module
+    in the transport config, then calls the main transport build function.
+    """
+    from message_ix_models.model.transport.config import Config
+
+    # Ensure transport config exists in context
+    if "transport" not in context:
+        # Create transport config from context if it doesn't exist
+        context.transport = Config.from_context(context)
+
+    if context.transport._code is None:
+        # Get SSP from context if available, default to "SSP2"
+        ssp = getattr(context, "ssp", "SSP2")
+        # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in
+        # CL_TRANSPORT_SCENARIO)
+        if not ssp.startswith("SSP"):
+            ssp = f"SSP{ssp}"
+        context.transport.code = ssp
+
+    # Add "material" module to the transport config
+    context.transport.use_modules("material")
+
+    # Call the main transport build function with modified context
+    return transport_build(context, scenario, **kwargs)
 
 
 def prep_for_macro(
