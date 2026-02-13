@@ -1,0 +1,57 @@
+##############################
+# Pipeline light oil exports #
+##############################
+loil_piped_trade:
+  base_trade_technology:
+    loil_bal
+  trade_technology:
+    loil_piped
+  trade_tech_suffix:
+  trade_tech_number:
+    1
+  trade_commodity:
+    lightoil
+  trade_commodity_suffix:
+  trade_units:
+    GWa
+  trade_form:
+    piped
+  export_level:
+    secondary
+  trade_level:
+    piped
+  import_level:
+    secondary
+  flow_technologies:
+    - oil_pipe
+  flow_tech_suffix:
+  flow_fuel_input:
+    oil_pipe:
+      - lightoil
+  flow_material_input:
+    oil_pipe:
+      - steel
+  flow_commodity_output:
+    oil_pipeline_capacity
+  flow_constraint:
+    bilateral
+  flow_units:
+    km
+  supply_technologies:
+    - loil_imp
+    - syn_liq
+    - syn_liq_ccs
+    - agg_ref_MODE_kerosene
+    - agg_ref_MODE_diesel
+    - agg_ref_MODE_light_foil
+    - agg_ref_MODE_refinery_gas
+    - agg_ref_MODE_gasoline
+    - agg_ref_MODE_refinery_gas_int
+  specify_network:
+    True
+  tracked_emissions:
+  bunker_technology: # not applicable for pipelines
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20

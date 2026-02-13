@@ -56,6 +56,7 @@ Repository = "https://github.com/iiasa/message-ix-models"
 "Issue tracker" = "https://github.com/iiasa/message-ix-models/issues"
 
 [project.optional-dependencies]
+bilateralize = ["scgraph"]
 buildings = ["jaydebeapi"]
 docs = [
   # sphinx.ext.autosummary covers the test suite, so all test requirements
@@ -73,7 +74,7 @@ migrate = [
 report = ["plotnine", "xlsxwriter"]
 tests = [
   "message-ix[tests]",
-  "message_ix_models[buildings,material,report,transport]",
+  "message_ix_models[bilateralize,buildings,material,report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
@@ -108,6 +109,7 @@ omit = [
   # The single existing test is far from enough
   "message_ix_models/report/legacy/*",
   "message_ix_models/util/migrate.py",
+  "message_ix_models/tools/bilateralize/workflow.py", # This is a workflow example
 ]
 
 [tool.mypy]
