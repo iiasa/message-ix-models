@@ -116,6 +116,9 @@ def build_T(
 
 def generate(context: Context) -> Workflow:
     """Create the BMT-run workflow."""
+    from message_ix_models.model.transport import workflow as transport
+    from message_ix_models.model.transport.config import CL_SCENARIO
+
     wf = Workflow(context)
     context.ssp = "SSP2"
     context.model.regions = "R12"
@@ -157,13 +160,28 @@ def generate(context: Context) -> Workflow:
         report,
     )
 
-    wf.add_step(
-        "BMT built",
-        "BM reported",
-        build_T,
-        target=f"{model_name}/baseline_BMT",
-        clone=dict(keep_solution=False),
-    )
+    # Retrieve a 'Code' object with 'Annotations' that identify a particular
+    # MESSAGEix-Transport configuration. For reference:
+    # - .model.transport.config.CL_SCENARIO
+    # - .model.transport.config.ScenarioCodeAnnotations
+    # - .model.transport.config.Config.code
+    scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
+
+    # Add step(s) on top of "BM reported" that build MESSAGEix-Transport. For reference:
+    # - .model.transport.workflow.add_steps
+    # - .model.workflow.from_codelist, which makes a similar call
+    #
+    # `name` is the name of the final step
+    name = transport.add_steps(wf, "BM reported", scenario_code)
+
+    # Clone to the URL desired for this workflow, at a step named "BMT built".
+    # Giving action=None means nothing is run on the scenario.
+    url = f"{model_name}/baseline_BMT"
+    wf.add_step("BMT built", name, action=None, target=url, clone=True)
+
+    # NB .model.transport.workflow.generate sets context.solve including
+    #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
+    #    MESSAGEix-Transport.
 
     wf.add_step(
         "BMT solved",
