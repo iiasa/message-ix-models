@@ -1,0 +1,9 @@
+relation,technology,mode,value,comment
+CO2_Emission,soderberg_aluminum,M1,0.4773,"https://iea-etsap.org/E-TechDS/PDF/I10_AlProduction_ER_March2012_Final%20GSOK.pdf"
+CO2_Emission,prebake_aluminum,M1,0.445,"coming from consumption of anodes,IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org"
+CF4_Emission,prebake_aluminum,M1,0.195,"IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org"
+CF4_Emission,soderberg_aluminum,M1,0.275,"IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org"
+CF4_alm_red,prebake_aluminum,M1,195,
+CF4_alm_red,soderberg_aluminum,M1,275,
+SO2_Emission,prebake_aluminum,M1,2.19,"IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org"
+SO2_Emission,soderberg_aluminum,M1,2.25,"IEA ETSAP - Technology Brief I10 – March 2012 - www.etsap.org"

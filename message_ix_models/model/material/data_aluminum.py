@@ -14,11 +14,15 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.material.data_util import read_rel, read_timeseries
+from message_ix_models.model.material.data_util import (
+    drop_redundant_rows,
+    gen_emi_rel_data,
+    read_rel,
+    read_timeseries,
+)
 from message_ix_models.model.material.demand import derive_demand
 from message_ix_models.model.material.util import (
-    add_R12_column,
-    get_pycountry_iso,
+    add_region_column,
     get_ssp_from_context,
     invert_dictionary,
     read_config,
@@ -29,13 +33,14 @@ from message_ix_models.util import (
     merge_data,
     nodes_ex_world,
     package_data_path,
+    pycountry,
     same_node,
 )
 
 if TYPE_CHECKING:
     from message_ix import Scenario
 
-    from message_ix_models.types import ParameterData
+    from message_ix_models.types import MutableParameterData, ParameterData
 
 
 def read_data_aluminum(
@@ -406,7 +411,7 @@ def gen_data_alu_const(
     """
     results = defaultdict(list)
     for t in config["technology"]["add"]:
-        t = t.id
+        t = getattr(t, "id", t)
         params = data.loc[(data["technology"] == t), "parameter"].unique()
         # Obtain the active and vintage years
         if not len(params):
@@ -524,9 +529,12 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
 
+    remove_old_cf4_alu_relation(scenario)
+
     const_dict = gen_data_alu_const(
         data_aluminum, config, global_region, modelyears, yv_ya, nodes
     )
+    remove_scrap_in_firstyear(const_dict)
 
     demand_dict = gen_demand(scenario, ssp)
 
@@ -544,6 +552,7 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     scrap_cost = get_scrap_prep_cost(s_info, ssp)
     max_recyc = gen_max_recycling_rel(s_info, ssp)
     scrap_heat = gen_scrap_prep_heat(s_info, ssp)
+    emi_factors = gen_emi_rel_data(s_info, "aluminum")
     results_aluminum: dict[str, pd.DataFrame] = {}
     merge_data(
         results_aluminum,
@@ -559,17 +568,13 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
         scrap_cost,
         max_recyc,
         scrap_heat,
+        emi_factors,
     )
-    reduced_pdict = {}
-    for k, v in results_aluminum.items():
-        if set(["year_act", "year_vtg"]).issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 60]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-
-    return reduced_pdict
+    drop_redundant_rows(scenario, results_aluminum)
+    return results_aluminum
 
 
-def gen_demand(scenario, ssp):
+def gen_demand(scenario: "Scenario", ssp: str) -> "ParameterData":
     """Generate aluminum demand parameter data.
 
     Parameters
@@ -793,7 +798,7 @@ def gen_data_alu_trade(scenario: "Scenario") -> dict[str, pd.DataFrame]:
     return {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
 
-def gen_hist_new_cap(s_info):
+def gen_hist_new_cap(s_info: ScenarioInfo) -> "ParameterData":
     """Generate historical new capacity data for aluminum smelters.
 
     Parameters
@@ -817,28 +822,22 @@ def gen_hist_new_cap(s_info):
     df_cap.Technology = df_cap.Technology.fillna("unknown")
     df_cap = df_cap[~df_cap[1995].isna()]
     df_cap.Country = df_cap["Country"].ffill()
-    df_cap["ISO"] = df_cap.Country.apply(
-        lambda c: get_pycountry_iso(
-            c,
-            {
-                "Surinam": "SUR",
-                "Trinidad": "TTO",
-                "Quatar": "QAT",
-                "Turkey": "TUR",
-                "UAE": "ARE",
-                "Gernamy": "DEU",
-                "Azerbaydzhan": "AZE",
-                "Russia": "RUS",
-                "Tadzhikistan": "TJK",
-                "UK": "GBR",
-                "Total": "World",
-                "Bosnia": "BIH",
-            },
-        )
+
+    pycountry.COUNTRY_NAME.update(
+        {
+            "Gernamy": "Germany",  # common misspelling
+            "UAE": "United Arab Emirates",
+            "UK": "United Kingdom",
+            "Azerbaydzhan": "Azerbaijan",  # common misspelling
+            "Trinidad": "Trinidad and Tobago",
+            "Surinam": "Suriname",
+            "Quatar": "Qatar",
+            "Bosnia": "Bosnia and Herzegovina",
+            "Tadzhikistan": "Tajikistan",  # common misspelling
+        }
     )
-    df_cap = add_R12_column(
-        df_cap, file_path=package_data_path("node", "R12.yaml"), iso_column="ISO"
-    )
+    df_cap["ISO"] = df_cap.Country.apply(lambda c: pycountry.iso_3166_alpha_3(c))
+    df_cap["R12"] = add_region_column(df_cap, ("node", "R12.yaml"), iso_column="ISO")
 
     # generate historical_new_capacity for soderberg
     df_cap_ss = df_cap[
@@ -890,7 +889,7 @@ def gen_hist_new_cap(s_info):
     }
 
 
-def compute_differences(df, ref_col):
+def compute_differences(df: pd.DataFrame, ref_col: str | int) -> pd.DataFrame:
     """Compute positive differences between columns and a reference column.
 
     Parameters
@@ -957,17 +956,24 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
             [df_prim.columns.tolist()[0]] + df_prim.columns[3::2].tolist()
         ]
         df_prim.columns = ["Country"] + [int(i) for i in year_cols]
-        df_prim["ISO"] = df_prim["Country"].apply(
-            lambda x: get_pycountry_iso(
-                x,
-                {
-                    "Turkey": "TUR",
-                    "Russia": "RUS",
-                    "Bosnia & Herzegovina": "BIH",
-                    "Ireland, Republic of": "IRL",
-                },
-            )
+        df_prim = df_prim[~df_prim[df_prim.columns[1:]].isna().all(axis=1)]
+        pycountry.COUNTRY_NAME.update(
+            {
+                "Bosnia & Herzegovina": "Bosnia and Herzegovina",
+                "Ireland, Republic of": "Ireland",
+                "Czechoslovakia": "Czechoslovakia, Czechoslovak Socialist Republic",
+                "German Democratic Rep": "German Democratic Republic",
+                "German Federal Republic": "Germany",
+                "Korea (Rep. of)": "Korea, Republic of",
+                "Korea, Dem. P.R. of": "Korea, Democratic People's Republic of",
+                "Soviet Union": "USSR, Union of Soviet Socialist Republics",
+                "Yugoslavia": "Yugoslavia, (Socialist) Federal Republic of",
+            }
         )
+        df_prim["ISO"] = df_prim["Country"].apply(
+            lambda x: pycountry.iso_3166_alpha_3(x)
+        )
+        assert df_prim["ISO"].notna().all()
         df_prim.drop("Country", axis=1, inplace=True)
         for year in [i for i in df_prim.columns if isinstance(i, int)]:
             df_prim[year] = pd.to_numeric(df_prim[year], errors="coerce")
@@ -982,16 +988,13 @@ def load_bgs_data(commodity: Literal["aluminum", "alumina"]):
     df_prim.reset_index(inplace=True)
 
     # add R12 column
-    df_prim = add_R12_column(
-        df_prim.rename(columns={"ISO": "COUNTRY"}),
-        package_data_path("node", "R12.yaml"),
-    )
-    df_prim.rename(columns={"COUNTRY": "ISO"}, inplace=True)
-
+    df_prim["R12"] = add_region_column(df_prim, ("node", "R12.yaml"), "ISO")
+    # drop countries that don't exist anymore and can't be mapped to current regions
+    df_prim = df_prim[~df_prim["ISO"].isin(["SUN", "CSK", "DDR"])]
     return df_prim
 
 
-def gen_smelting_hist_act():
+def gen_smelting_hist_act() -> "ParameterData":
     """Generate historical activity and bounds for aluminum smelting technologies.
 
     Returns
@@ -1055,7 +1058,7 @@ def gen_smelting_hist_act():
     return par_dict
 
 
-def gen_refining_hist_act():
+def gen_refining_hist_act() -> "ParameterData":
     """Generate historical activity and 2020 bounds for alumina refining technologies.
 
     Returns
@@ -1090,7 +1093,7 @@ def gen_refining_hist_act():
     return par_dict
 
 
-def gen_alumina_trade_tecs(s_info):
+def gen_alumina_trade_tecs(s_info: ScenarioInfo) -> "ParameterData":
     """Generate trade technology parameter data for alumina.
 
     Parameters
@@ -1118,6 +1121,7 @@ def gen_alumina_trade_tecs(s_info):
         src=("alumina", "secondary_material", "Mt"),
         dest=("alumina", "export", "Mt"),
         efficiency=1.0,
+        on="input",
         technology="export_alumina",
         node_dest=global_region,
         node_origin=nodes,
@@ -1127,6 +1131,7 @@ def gen_alumina_trade_tecs(s_info):
         src=("alumina", "import", "Mt"),
         dest=("alumina", "secondary_material", "Mt"),
         efficiency=1.0,
+        on="input",
         technology="import_alumina",
         node_origin=global_region,
         node_dest=nodes,
@@ -1144,13 +1149,14 @@ def gen_alumina_trade_tecs(s_info):
         src=("alumina", "export", "Mt"),
         dest=("alumina", "import", "Mt"),
         efficiency=1.0,
+        on="input",
         technology="trade_alumina",
         node_dest=global_region,
         node_origin=global_region,
         **common,
     )
 
-    trade_dict = {}
+    trade_dict: "MutableParameterData" = {}
     merge_data(trade_dict, imp_dict, trd_dict, exp_dict)
     trade_dict = {
         k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
@@ -1159,7 +1165,7 @@ def gen_alumina_trade_tecs(s_info):
     return trade_dict
 
 
-def gen_2020_growth_constraints(s_info):
+def gen_2020_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":
     """Generate 2020 growth constraints for soderberg aluminum smelters.
 
     Parameters
@@ -1185,36 +1191,23 @@ def gen_2020_growth_constraints(s_info):
     return {"growth_activity_up": df}
 
 
-def calibrate_2020_furnaces(s_info):
-    """Calibrate 2020 furnace activity for aluminum refining by fuel.
-
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-
-    Returns
-    -------
-    dict
-        Dictionary with 'bound_activity_lo' and 'bound_activity_up' DataFrames.
-    """
+def calibrate_2020_furnaces(s_info: ScenarioInfo) -> "ParameterData":
+    """Calibrate 2020 furnace activity for aluminum refining by fuel."""
     fname = "MetallurgicalAluminaRefiningFuelConsumption_1985-2023.csv"
+    # country mapping from "Areas" field at:
+    # https://international-aluminium.org/statistics/metallurgical-alumina-refining-fuel-consumption
     iai_ref_map = {
         "Africa & Asia (ex China)": [
-            "Azerbaijan",
-            "Azerbaijan",
             "Azerbaijan",
             "Guinea",
             "India",
             "Iran",
-            "Kazakhstan",
             "Kazakhstan",
             "Turkey",
         ],
         "North America": [
             "Canada",
             "United States of America",
-            "US Virgin Islands",
             "US Virgin Islands",
         ],
         "South America": [
@@ -1233,45 +1226,36 @@ def calibrate_2020_furnaces(s_info):
             "Germany",
             "Greece",
             "Hungary",
-            "Hungary",
-            "Hungary",
             "Ireland",
             "Italy",
             "Montenegro",
             "Romania",
             "Russian Federation",
-            "Russian Federation",
-            "Serbia and Montenegro",
             "Serbia and Montenegro",
             "Slovakia",
             "Slovenia",
             "Spain",
             "Ukraine",
-            "Ukraine",
             "United Kingdom",
         ],
         "China": ["China"],
     }
-    iai_mis_dict = {
-        "Turkey": "TUR",
-        "Serbia and Montenegro": "SRB",
-        "US Virgin Islands": "VIR",
-        "German Democratic Republic": "DDR",
-    }
+    pycountry.COUNTRY_NAME.update(
+        {
+            "US Virgin Islands": "Virgin Islands of the United States",
+        }
+    )
     fuel_tec_map = {
         "Coal": "furnace_coal_aluminum",
         "Gas": "furnace_gas_aluminum",
         "Oil": "furnace_foil_aluminum",
         "Electricity": "furnace_elec_aluminum",
     }
-    iai_ref_map = {k: v[0] for k, v in invert_dictionary(iai_ref_map).items()}
-    df_iai_cmap = pd.Series(iai_ref_map).to_frame().reset_index()
+    iai_ref_map_inv = {k: v[0] for k, v in invert_dictionary(iai_ref_map).items()}
+    df_iai_cmap = pd.Series(iai_ref_map_inv).to_frame().reset_index()
 
     df_iai_cmap["ISO"] = df_iai_cmap["index"].apply(
-        lambda x: get_pycountry_iso(
-            x,
-            iai_mis_dict,
-        )
+        lambda x: pycountry.iso_3166_alpha_3(x)
     )
     df_iai_cmap.drop(columns="index", inplace=True)
 
@@ -1302,10 +1286,9 @@ def calibrate_2020_furnaces(s_info):
     tec_map_df = pd.Series(fuel_tec_map).to_frame().reset_index()
     tec_map_df.columns = ["Variable", "technology"]
 
-    test_r12 = add_R12_column(
-        test.reset_index(), package_data_path("node", "R12.yaml"), "ISO"
-    )
-    test_r12 = test_r12.groupby(["Variable", "R12"]).sum(numeric_only=True)
+    test = test.reset_index()
+    test["R12"] = add_region_column(test, ("node", "R12.yaml"), "ISO")
+    test_r12 = test.groupby(["Variable", "R12"]).sum(numeric_only=True)
     test_r12 = (
         test_r12.loc[["Coal", "Gas", "Oil"]]
         .div(10**6)
@@ -1338,7 +1321,7 @@ def calibrate_2020_furnaces(s_info):
     return {"bound_activity_lo": test_r12, "bound_activity_up": zbounds}
 
 
-def gen_refining_input(s_info):
+def gen_refining_input(s_info: ScenarioInfo) -> "ParameterData":
     """Generate input parameter for aluminum refining technology.
 
     Parameters
@@ -1376,10 +1359,12 @@ def gen_refining_input(s_info):
         "South America": ["R12_LAM"],
         "China": ["R12_CHN"],
     }
-    iai_int_r12_map = {k: v[0] for k, v in invert_dictionary(iai_int_r12_map).items()}
+    iai_int_r12_map_inv = {
+        k: v[0] for k, v in invert_dictionary(iai_int_r12_map).items()
+    }
 
     df_act = (
-        pd.Series(iai_int_r12_map)
+        pd.Series(iai_int_r12_map_inv)
         .to_frame()
         .reset_index()
         .set_index(0)
@@ -1415,7 +1400,7 @@ def gen_refining_input(s_info):
     return {"input": df_msg}
 
 
-def gen_trade_growth_constraints(s_info):
+def gen_trade_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":
     """Generate growth and initial activity constraints for aluminum and alumina trade.
 
     Parameters
@@ -1452,12 +1437,12 @@ def gen_trade_growth_constraints(s_info):
                 + [i for i in range(2060, 2115, 10)],
             )
         )
-    pars = {}
+    pars: "MutableParameterData" = {}
     merge_data(pars, par_dict1, par_dict2)
     return pars
 
 
-def gen_max_recycling_rel(s_info, ssp):
+def gen_max_recycling_rel(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate parametrization for maximum recycling relation.
 
     Parameters
@@ -1499,7 +1484,7 @@ def gen_max_recycling_rel(s_info, ssp):
     return {"relation_activity": df}
 
 
-def gen_scrap_prep_heat(s_info, ssp):
+def gen_scrap_prep_heat(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate heat input parametrization for aluminum scrap preparation.
 
     Parameters
@@ -1548,7 +1533,7 @@ def gen_scrap_prep_heat(s_info, ssp):
     return {"input": df}
 
 
-def get_scrap_prep_cost(s_info, ssp):
+def get_scrap_prep_cost(s_info: ScenarioInfo, ssp: str) -> "ParameterData":
     """Generate variable cost parametrization for aluminum scrap preparation.
 
     Parameters
@@ -1654,3 +1639,40 @@ def get_scrap_prep_cost(s_info, ssp):
         .assign(year_vtg=lambda x: x.year_act)
     )
     return {"var_cost": df}
+
+
+def remove_scrap_in_firstyear(pars: dict) -> None:
+    """Remove scrap input and output parameter data for 2020."""
+    inp = pars["input"]
+    inp = inp[
+        ~(
+            (inp["technology"] == "secondary_aluminum")
+            & (inp["commodity"] == "aluminum")
+            & (inp["year_act"] == 2020)
+        )
+    ]
+    pars["input"] = inp
+    out = pars["output"]
+    out = out[
+        ~(
+            (out["level"] == "new_scrap")
+            & (out["commodity"] == "aluminum")
+            & (out["year_act"] == 2020)
+        )
+    ]
+    pars["output"] = out
+
+
+def remove_old_cf4_alu_relation(scen: "Scenario") -> None:
+    """Correct CF4 Emission relations.
+
+    Remove transport related technologies from `CF4_Emissions` and `CF4_alm_red`
+    relations in ``relation_activity``
+    """
+    trp_tecs = [i for i in scen.set("technology") if i.endswith("_trp")]
+    CF4_trp_emissions = scen.par(
+        "relation_activity",
+        filters={"relation": ["CF4_Emission", "CF4_alm_red"], "technology": trp_tecs},
+    )
+    # with scen.transact("CF4 relations corrected."):
+    scen.remove_par("relation_activity", CF4_trp_emissions)

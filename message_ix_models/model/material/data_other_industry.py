@@ -17,328 +17,21 @@ from message_ix_models.model.material.data_util import (
     map_iea_db_to_msg_regs,
     read_iea_tec_map,
 )
-from message_ix_models.util import package_data_path
+from message_ix_models.model.material.share_constraints import (
+    add_industry_coal_shr_constraint,
+)
+from message_ix_models.model.material.util import get_ssp_from_context, read_config
+from message_ix_models.util import (
+    broadcast,
+    merge_data,
+    nodes_ex_world,
+    package_data_path,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
 
-
-def modify_demand_and_hist_activity(scen: "Scenario") -> None:
-    """Takes care of demand changes due to the introduction of material parents.
-
-    Shed industrial energy demand properly. Also need take care of remove dynamic
-    constraints for certain energy carriers. Adjust the historical activity of the
-    related industry technologies that provide output to different categories of
-    industrial demand (e.g. i_therm, i_spec, i_feed). The historical activity is reduced
-    the same % as the industrial demand is reduced.
-
-    Parameters
-    ----------
-    scen
-        Scenario where industry demand should be adjusted.
-    """
-    # NOTE Temporarily modifying industrial energy demand
-    # From IEA database (dumped to an excel)
-
-    s_info = ScenarioInfo(scen)
-    fname = "MESSAGEix-Materials_final_energy_industry.xlsx"
-
-    if "R12_CHN" in s_info.N:
-        sheet_n = "R12"
-        region_type = "R12_"
-        region_name_CPA = "RCPA"
-        region_name_CHN = "CHN"
-    else:
-        sheet_n = "R11"
-        region_type = "R11_"
-        region_name_CPA = "CPA"
-        region_name_CHN = ""
-
-    df = pd.read_excel(
-        package_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
-    )
-
-    # Filter the necessary variables
-    df = df[
-        (df["SECTOR"] == "feedstock (petrochemical industry)")
-        | (df["SECTOR"] == "feedstock (total)")
-        | (df["SECTOR"] == "industry (chemicals)")
-        | (df["SECTOR"] == "industry (iron and steel)")
-        | (df["SECTOR"] == "industry (non-ferrous metals)")
-        | (df["SECTOR"] == "industry (non-metallic minerals)")
-        | (df["SECTOR"] == "industry (total)")
-    ]
-    df = df[df["RYEAR"] == 2015]
-
-    # NOTE: Total cehmical industry energy: 27% thermal, 8% electricity, 65% feedstock
-    # SOURCE: IEA Sankey 2020: https://www.iea.org/sankey/#?c=World&s=Final%20consumption
-    # 67% of total chemicals energy is used for primary chemicals (ammonia,methnol,HVCs)
-    # SOURCE: https://www.iea.org/data-and-statistics/charts/primary-chemical-production-in-the-sustainable-development-scenario-2000-2030
-
-    # Retreive data for i_spec
-    # 67% of total chemcials electricity demand comes from primary chemicals (IEA)
-    # (Excludes petrochemicals as the share is negligable)
-    # Aluminum, cement and steel included.
-    # NOTE: Steel has high shares (previously it was not inlcuded in i_spec)
-
-    df_spec = df[
-        (df["FUEL"] == "electricity")
-        & (df["SECTOR"] != "industry (total)")
-        & (df["SECTOR"] != "feedstock (petrochemical industry)")
-        & (df["SECTOR"] != "feedstock (total)")
-    ]
-    df_spec_total = df[
-        (df["SECTOR"] == "industry (total)") & (df["FUEL"] == "electricity")
-    ]
-
-    df_spec_new = pd.DataFrame(
-        columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
-    )
-    for r in df_spec["REGION"].unique():
-        df_spec_temp = df_spec.loc[df_spec["REGION"] == r]
-        df_spec_total_temp = df_spec_total.loc[df_spec_total["REGION"] == r]
-        df_spec_temp.loc[:, "i_spec"] = (
-            df_spec_temp.loc[:, "RESULT"]
-            / df_spec_total_temp.loc[:, "RESULT"].values[0]
-        )
-        df_spec_new = pd.concat([df_spec_temp, df_spec_new], ignore_index=True)
-
-    df_spec_new.drop(["FUEL", "RYEAR", "UNIT_OUT", "RESULT"], axis=1, inplace=True)
-    df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] = (
-        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"]
-        * 0.67
-    )
-
-    df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
-
-    # Already set to zero: ammonia, methanol, HVCs cover most of the feedstock
-
-    df_feed = df[
-        (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
-    ]
-    # df_feed_total =
-    # df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
-    df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
-    df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
-
-    for r in df_feed["REGION"].unique():
-        i = 0
-        df_feed_temp.at[i, "REGION"] = r
-        df_feed_temp.at[i, "i_feed"] = 1
-        i = i + 1
-        df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
-
-    # Retreive data for i_therm
-    # 67% of chemical thermal energy chemicals comes from primary chemicals. (IEA)
-    # NOTE: Aluminum is excluded since refining process is not explicitly represented
-    # NOTE: CPA has a 3% share while it used to be 30% previosuly ??
-
-    df_therm = df[
-        (df["FUEL"] != "electricity")
-        & (df["FUEL"] != "total")
-        & (df["SECTOR"] != "industry (total)")
-        & (df["SECTOR"] != "feedstock (petrochemical industry)")
-        & (df["SECTOR"] != "feedstock (total)")
-        & (df["SECTOR"] != "industry (non-ferrous metals)")
-    ]
-    df_therm_total = df[
-        (df["SECTOR"] == "industry (total)")
-        & (df["FUEL"] != "total")
-        & (df["FUEL"] != "electricity")
-    ]
-    df_therm_total = (
-        df_therm_total.groupby(by="REGION").sum().drop(["RYEAR"], axis=1).reset_index()
-    )
-    df_therm = (
-        df_therm.groupby(by=["REGION", "SECTOR"])
-        .sum()
-        .drop(["RYEAR"], axis=1)
-        .reset_index()
-    )
-    df_therm_new = pd.DataFrame(
-        columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
-    )
-
-    for r in df_therm["REGION"].unique():
-        df_therm_temp = df_therm.loc[df_therm["REGION"] == r]
-        df_therm_total_temp = df_therm_total.loc[df_therm_total["REGION"] == r]
-        df_therm_temp.loc[:, "i_therm"] = (
-            df_therm_temp.loc[:, "RESULT"]
-            / df_therm_total_temp.loc[:, "RESULT"].values[0]
-        )
-        df_therm_new = pd.concat([df_therm_temp, df_therm_new], ignore_index=True)
-        df_therm_new = df_therm_new.drop(["RESULT"], axis=1)
-
-    df_therm_new.drop(["FUEL", "RYEAR", "UNIT_OUT"], axis=1, inplace=True)
-    df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"] = (
-        df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"]
-        * 0.67
-    )
-
-    # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
-    # Since the value did not allign with the one in the IEA website.
-    index = (df_therm_new["SECTOR"] == "industry (iron and steel)") & (
-        (df_therm_new["REGION"] == region_name_CPA)
-        | (df_therm_new["REGION"] == region_name_CHN)
-    )
-
-    df_therm_new.loc[index, "i_therm"] = 0.2
-
-    df_therm_new = df_therm_new.groupby(["REGION"]).sum(numeric_only=True).reset_index()
-
-    # TODO: Useful technology efficiencies will also be included
-
-    # Add the modified demand and historical activity to the scenario
-
-    # Relted technologies that have outputs to useful industry level.
-    # Historical activity of theese will be adjusted
-    tec_therm = [
-        "biomass_i",
-        "coal_i",
-        "elec_i",
-        "eth_i",
-        "foil_i",
-        "gas_i",
-        "h2_i",
-        "heat_i",
-        "hp_el_i",
-        "hp_gas_i",
-        "loil_i",
-        "meth_i",
-        "solar_i",
-    ]
-    tec_fs = [
-        "coal_fs",
-        "ethanol_fs",
-        "foil_fs",
-        "gas_fs",
-        "loil_fs",
-        "methanol_fs",
-    ]
-    tec_sp = ["sp_coal_I", "sp_el_I", "sp_eth_I", "sp_liq_I", "sp_meth_I", "h2_fc_I"]
-
-    thermal_df_hist = scen.par("historical_activity", filters={"technology": tec_therm})
-    spec_df_hist = scen.par("historical_activity", filters={"technology": tec_sp})
-    feed_df_hist = scen.par("historical_activity", filters={"technology": tec_fs})
-    useful_thermal = scen.par("demand", filters={"commodity": "i_therm"})
-    useful_spec = scen.par("demand", filters={"commodity": "i_spec"})
-    useful_feed = scen.par("demand", filters={"commodity": "i_feed"})
-
-    for r in df_therm_new["REGION"]:
-        r_MESSAGE = region_type + r
-
-        useful_thermal.loc[useful_thermal["node"] == r_MESSAGE, "value"] = (
-            useful_thermal.loc[useful_thermal["node"] == r_MESSAGE, "value"]
-            * (1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0])
-        )
-
-        thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE, "value"] = (
-            thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE, "value"]
-            * (1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0])
-        )
-
-    for r in df_spec_new["REGION"]:
-        r_MESSAGE = region_type + r
-
-        useful_spec.loc[useful_spec["node"] == r_MESSAGE, "value"] = useful_spec.loc[
-            useful_spec["node"] == r_MESSAGE, "value"
-        ] * (1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0])
-
-        spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE, "value"] = (
-            spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE, "value"]
-            * (1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0])
-        )
-
-    for r in df_feed_new["REGION"]:
-        r_MESSAGE = region_type + r
-
-        useful_feed.loc[useful_feed["node"] == r_MESSAGE, "value"] = useful_feed.loc[
-            useful_feed["node"] == r_MESSAGE, "value"
-        ] * (1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0])
-
-        feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE, "value"] = (
-            feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE, "value"]
-            * (1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0])
-        )
-
-    scen.check_out()
-    scen.add_par("demand", useful_thermal)
-    scen.add_par("demand", useful_spec)
-    scen.add_par("demand", useful_feed)
-    scen.commit("Demand values adjusted")
-
-    scen.check_out()
-    scen.add_par("historical_activity", thermal_df_hist)
-    scen.add_par("historical_activity", spec_df_hist)
-    scen.add_par("historical_activity", feed_df_hist)
-    scen.commit(
-        comment="historical activity for useful level industry \
-    technologies adjusted"
-    )
-
-    # For aluminum there is no significant deduction required
-    # (refining process not included and thermal energy required from
-    # recycling is not a significant share.)
-    # For petro: based on 13.1 GJ/tonne of ethylene and the demand in the model
-
-    # df = scen.par(demand, filters={commodity:i_therm})
-    # df.value = df.value * 0.38 #(30% steel, 25% cement, 7% petro)
-    #
-    # scen.check_out()
-    # scen.add_par(demand, df)
-    # scen.commit(comment = modify i_therm demand)
-
-    # Adjust the i_spec.
-    # Electricity usage seems negligable in the production of HVCs.
-    # Aluminum: based on IAI China data 20%.
-
-    # df = scen.par(demand, filters={commodity:i_spec})
-    # df.value = df.value * 0.80  #(20% aluminum)
-    #
-    # scen.check_out()
-    # scen.add_par(demand, df)
-    # scen.commit(comment = modify i_spec demand)
-
-    # Adjust the i_feedstock.
-    # 45 GJ/tonne of ethylene or propylene or BTX
-    # 2020 demand of one of these: 35.7 Mt
-    # Makes up around 30% of total feedstock demand.
-
-    # df = scen.par(demand, filters={commodity:i_feed})
-    # df.value = df.value * 0.7  #(30% HVCs)
-    #
-    # scen.check_out()
-    # scen.add_par(demand, df)
-    # scen.commit(comment = modify i_feed demand)
-
-    # NOTE Aggregate industrial coal demand need to adjust to
-    #      the sudden intro of steel setor in the first model year
-
-    t_i = ["coal_i", "elec_i", "gas_i", "heat_i", "loil_i", "solar_i"]
-
-    for t in t_i:
-        df = scen.par("growth_activity_lo", filters={"technology": t, "year_act": 2020})
-
-        scen.check_out()
-        scen.remove_par("growth_activity_lo", df)
-        scen.commit(comment="remove growth_lo constraints")
-
-    scen.check_out()
-    for substr in ["up", "lo"]:
-        df = scen.par(f"bound_activity_{substr}")
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_fs")) & (df["year_act"] == 2020)],
-        )
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_i")) & (df["year_act"] == 2020)],
-        )
-        scen.remove_par(
-            f"bound_activity_{substr}",
-            df[(df["technology"].str.endswith("_I")) & (df["year_act"] == 2020)],
-        )
-    scen.commit(comment="remove bounds")
+    from message_ix_models.types import ParameterData
 
 
 def get_hist_act_data(
@@ -566,3 +259,155 @@ def gen_other_ind_demands(ssp: str) -> dict[str, pd.DataFrame]:
         )
         demands[comm] = df.copy(deep=True)
     return demands
+
+
+def get_ssp_low_temp_shr_up(s_info: ScenarioInfo, ssp) -> "ParameterData":
+    """Generate SSP-specific parametrization for ``UE_industry_th_low_temp_heat``.
+
+    Updates the original constraint values of MESSAGEix-GLOBIOM to reflect structural
+    differences in MESSAGEix-Materials industry sector based on SSP narrative.
+    """
+    lt_heat_shr_start = 0.35
+    ssp_lt_heat_shr_end = {
+        "SSP1": 0.65,
+        "SSP2": 0.5,
+        "SSP3": 0.35,
+        "SSP4": 0.6,
+        "SSP5": 0.5,
+        "LED": 0.65,
+    }
+    end_year = {
+        "SSP1": 2040,
+        "SSP2": 2055,
+        "SSP3": 2055,
+        "SSP4": 2045,
+        "SSP5": 2050,
+        "LED": 2035,
+    }
+    start_year = 2030
+    end_years = pd.DataFrame(index=list(end_year.keys()), data=end_year.values())
+    end_vals = pd.DataFrame(
+        index=list(ssp_lt_heat_shr_end.keys()), data=ssp_lt_heat_shr_end.values()
+    )
+    val_diff = end_vals - lt_heat_shr_start
+    year_diff = end_years - start_year
+    common = {
+        "shares": "UE_industry_th_low_temp_heat",
+        "time": "year",
+        "unit": "-",
+        "value": lt_heat_shr_start,
+    }
+    df = make_df("share_commodity_up", **common)
+    df = df.pipe(broadcast, node_share=nodes_ex_world(s_info.N)).pipe(
+        broadcast,
+        year_act=[i for i in s_info.yv_ya.year_act.unique() if i >= start_year],
+    )
+
+    def get_shr(row):
+        if row["year_act"] <= end_year[ssp]:
+            val = (
+                row["value"]
+                + (row["year_act"] - start_year)
+                * (val_diff / year_diff).loc[ssp].values[0]
+            )
+        else:
+            val = ssp_lt_heat_shr_end[ssp]
+        return val
+
+    df = df.assign(value=df.apply(lambda x: get_shr(x), axis=1))
+    return {"share_commodity_up": df}
+
+
+def reset_t_d_calibration(scenario: "Scenario") -> None:
+    """Reset transmission activity calibration of a scenario.
+
+    Remove bounds on activity of technologies with t_d suffix in 2020 from given
+    scenario.
+    """
+    for bound in ["up", "lo"]:
+        par = f"bound_activity_{bound}"
+        df = scenario.par(par, filters={"year_act": 2020})
+        scenario.remove_par(
+            f"bound_activity_{bound}", df[df["technology"].str.contains("t_d")]
+        )
+
+
+def reset_elec_i(info: ScenarioInfo) -> "ParameterData":
+    """Calibrate technologies activity bounds and growth constraints.
+
+    This is necessary to avoid base year infeasibilities in year 2020.
+    Originally developed for the `SSP_dev_*` scenarios, where most technology activities
+    are fixed in 2020.
+
+    Parameters
+    ----------
+    scenario
+        instance to apply parameter changes to
+    """
+    hist_years = [i for i in info.yv_ya["year_vtg"].unique() if i <= 2025]
+    act = make_df(
+        "historical_activity",
+        technology="elec_i",
+        mode="M1",
+        time="year",
+        value=0,
+        unit="???",
+        year_act=hist_years,
+    ).pipe(broadcast, node_loc=nodes_ex_world(info.N))
+    cap = make_df(
+        "historical_new_capacity",
+        technology="elec_i",
+        value=0,
+        unit="???",
+        year_vtg=hist_years,
+    ).pipe(broadcast, node_loc=nodes_ex_world(info.N))
+    par_data = {
+        "historical_activity": act[act["year_act"].lt(info.y0)],
+        "bound_activity_lo": act[act["year_act"].ge(info.y0)],
+        "bound_activity_up": act[act["year_act"].ge(info.y0)],
+        "historical_new_capacity": cap[cap["year_vtg"].lt(info.y0)],
+        "bound_new_capacity_lo": cap[cap["year_vtg"].ge(info.y0)],
+        "bound_new_capacity_up": cap[cap["year_vtg"].ge(info.y0)],
+    }
+    return par_data
+
+
+def read_elec_i_ini_act() -> "ParameterData":
+    """Reads ``initial_activity_up`` parametrization for `elec_i` ``technology``.
+
+    Values were originally copied from `hp_el_i` ``technology``.
+    """
+    df = pd.read_csv(package_data_path("material", "other", "ini_act_elec_i.csv"))
+    df["technology"] = "elec_i"
+    return {"initial_activity_up": df}
+
+
+def gen_data_other(scenario) -> "ParameterData":
+    """Generate data and prepare scenario for "other industry" build.
+
+    - Reset transmission activity calibration to avoid infeasibilities
+    - Generate demand data for "other industry"
+    - Generate historical activity calibration data for industry technologies
+    - Generate constraint parameter data for specific technologies
+    """
+    context = read_config()
+    reset_t_d_calibration(scenario)
+    par_data = {}
+    demands = pd.concat(
+        v[v["year"].isin(scenario.vintage_and_active_years()["year_act"].unique())]
+        for v in gen_other_ind_demands(get_ssp_from_context(context)).values()
+    )
+    par_data["demand"] = demands
+    # overwrite non-Materials industry technology calibration
+    calib_data = get_hist_act(
+        scenario, [1990, 1995, 2000, 2010, 2015, 2020], use_cached=True
+    )
+    merge_data(
+        par_data,
+        calib_data,
+        add_industry_coal_shr_constraint(scenario),
+        get_ssp_low_temp_shr_up(ScenarioInfo(scenario), get_ssp_from_context(context)),
+        read_elec_i_ini_act(),
+        reset_elec_i(ScenarioInfo(scenario)),
+    )
+    return par_data

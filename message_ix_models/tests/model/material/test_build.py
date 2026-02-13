@@ -62,7 +62,7 @@ def test_build_bare_res(
 
     # Build succeeds without error
     # options = {"dummy_supply": True}
-    build.build(ctx, scenario, modify_existing_constraints=False, old_calib=True)
+    build.build(ctx, scenario)
 
     if solve:
         scenario.solve(solve_options=dict(lpmethod=4, iis=1))

@@ -1,12 +1,9 @@
-import os
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Iterable, Literal
 
 import message_ix
 import openpyxl as pxl
 import pandas as pd
-import pycountry
-import yaml
 from scipy.optimize import curve_fit
 
 from message_ix_models import Context, ScenarioInfo
@@ -71,27 +68,6 @@ def prepare_xlsx_for_explorer(filepath: str) -> None:
     df.to_excel(filepath, index=False)
 
 
-def read_yaml_file(file_path: str | Path) -> dict | None:
-    """Tries to read yaml file into a dict
-
-    Parameters
-    ----------
-    file_path : str
-        file path to yaml file
-
-    Returns
-    -------
-    dict
-    """
-    with open(file_path, encoding="utf8") as file:
-        try:
-            data = yaml.safe_load(file)
-            return data
-        except yaml.YAMLError as e:
-            print(f"Error while parsing YAML file: {e}")
-            return None
-
-
 def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str]]:
     """Create inverted dictionary from existing dictionary, where values turn
     into keys and vice versa
@@ -113,43 +89,6 @@ def invert_dictionary(original_dict: dict[str, list[str]]) -> dict[str, list[str
                 inverted_dict[array_element] = []
             inverted_dict[array_element].append(key)
     return inverted_dict
-
-
-def excel_to_csv(material_dir: str, fname: str) -> None:
-    """Helper to create trackable copies xlsx files used for MESSAGEix-Materials
-    data input by printing each sheet to a csv file. Output is saved in
-     "data/materials/version control"
-
-    Parameters
-    ----------
-    material_dir
-        path to industry sector data folder
-    fname
-        file name of xlsx file
-    """
-    xlsx_dict = pd.read_excel(
-        package_data_path("material", material_dir, fname), sheet_name=None
-    )
-    if not os.path.isdir(package_data_path("material", "version control")):
-        os.mkdir(package_data_path("material", "version control"))
-    os.mkdir(package_data_path("material", "version control", fname))
-    for tab in xlsx_dict.keys():
-        xlsx_dict[tab].to_csv(
-            package_data_path("material", "version control", fname, f"{tab}.csv"),
-            index=False,
-        )
-
-
-def get_all_input_data_dirs() -> list[str]:
-    """Iterable for getting all material input data folders
-
-    Returns
-    -------
-    list of folder names of material data
-    """
-    elements = os.listdir(package_data_path("material"))
-    elements = [i for i in elements if os.path.isdir(package_data_path("material", i))]
-    return elements
 
 
 def remove_from_list_if_exists(element: Any, _list: list) -> None:
@@ -179,7 +118,7 @@ def exponential(x: float | list[float], b: float, m: float) -> float:
 
     Returns
     -------
-    Union[float, list[float]]
+    float | list[float]
         function value for given b, m and x
     """
     return b * m**x
@@ -373,71 +312,15 @@ def path_fallback(context_or_regions: Context | str, *parts) -> Path:
     raise FileNotFoundError(candidates)
 
 
-def get_pycountry_iso(row: str, mis_dict: dict[str, str]) -> str:
-    """Convenience function to get ISO3 code with pycountry or from custom mapping dict.
-
-    Parameters
-    ----------
-    row
-    mis_dict
-
-    Returns
-    -------
-    str
-    """
-    try:
-        row = pycountry.countries.lookup(row).alpha_3
-    except LookupError:
-        try:
-            row = mis_dict[row]
-        except KeyError:
-            print(f"{row} is not mapped to an ISO")
-            row = None
-    return row
-
-
-def get_r12_reg(df, r12_map_inv, col_name: str):
-    """Helper function to get R12 region from dataframe
-
-    Parameters
-    ----------
-    df
-    r12_map_inv
-        dictionary with R12 regions as values and ISO3 country codes as keys
-    col_name
-        Name of the column in the dataframe to check for R12 region
-
-    Returns
-    -------
-
-    """
-    try:
-        df = r12_map_inv[df[col_name]]
-    except KeyError:
-        df = None
-    return df
-
-
-def add_R12_column(
-    df: pd.DataFrame, file_path: str | Path, iso_column: str = "COUNTRY"
-) -> pd.DataFrame:
-    """Convenience function to add R12 region column to dataframe
-
-    Parameters
-    ----------
-    df
-    file_path
-    iso_column
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    yaml_data = read_yaml_file(file_path)
-    yaml_data.pop("World")
+def add_region_column(
+    df: pd.DataFrame, parts: Iterable[str], iso_column: str = "COUNTRY"
+) -> pd.Series:
+    """Convenience function to add R12 region column to dataframe."""
+    yaml_data = load_package_data(*parts)
+    if "World" in yaml_data:
+        yaml_data.pop("World")
 
     r12_map = {k: v["child"] for k, v in yaml_data.items()}
     r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
 
-    df["R12"] = df.apply(lambda x: get_r12_reg(x, r12_map_inv, iso_column), axis=1)
-    return df
+    return df[iso_column].map(r12_map_inv)

@@ -11,17 +11,18 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, List
 
 import pandas as pd
-from message_ix import Scenario, make_df
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     broadcast,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
 )
 
-from .data_util import read_timeseries
+from .data_util import drop_redundant_rows, read_timeseries
 from .util import read_config
 
 log = logging.getLogger(__name__)
@@ -30,120 +31,6 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models.types import ParameterData
-
-
-def read_data_generic(scenario: "Scenario") -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Read and clean data from the generic furnace and boiler techno-economic file.
-
-    Parameters
-    ----------
-    scenario : Scenario
-        Scenario instance to build generic technologies on.
-
-    Returns
-    -------
-    tuple of pd.DataFrame
-        - DataFrame with static techno-economic data.
-        - DataFrame with time-series data.
-    """
-    # Read the file
-    data_generic = pd.read_excel(
-        package_data_path(
-            "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
-        ),
-        sheet_name="generic",
-    )
-
-    # Clean the data
-    # Drop columns that don't contain useful information
-    data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
-    data_generic_ts = read_timeseries(
-        scenario, "other", None, "generic_furnace_boiler_techno_economic.xlsx"
-    )
-
-    # Unit conversion
-    # At the moment this is done in the excel file, can be also done here
-    # To make sure we use the same units
-
-    return data_generic, data_generic_ts
-
-
-def add_non_co2_emission_coefficients(
-    scen: "Scenario", df_input: pd.DataFrame, method="from_disk"
-):
-    """Derive non-CO2 emission coefficients for furnaces.
-
-    Parameters
-    ----------
-    scen : Scenario
-        Scenario instance.
-    df_input : pd.DataFrame
-        DataFrame of furnace input parameters.
-    method : str, optional
-        Method to obtain emission coefficients ("from_disk" or "from_scenario").
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with non-CO2 emission coefficients for furnaces.
-    """
-    if method == "from_disk":
-        df_emi = pd.read_csv(
-            package_data_path(
-                "material", "other", "industry_thermal_emi_coefficients.csv"
-            )
-        )
-    else:
-        df_emi = get_thermal_industry_emi_coefficients(scen)
-    df_input = df_input[df_input["year_act"].ge(scen.firstmodelyear)]
-    df_input = df_input.set_index(["node_loc", "year_act", "commodity", "technology"])
-    df_furnace_emi = calculate_furnace_non_co2_emi_coeff(df_input, df_emi)
-    return df_furnace_emi
-
-
-def add_ind_therm_link_relations(tecs: List[str], years: List[str], nodes: List[str]):
-    """Generate industrial thermal demand link relation values for given technologies.
-
-    Parameters
-    ----------
-    tecs
-        List of technology names.
-    years
-        List of years for relation activity.
-    nodes
-        List of model nodes.
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with relation_activity for industrial thermal demand links.
-    """
-    col_val_dict = {
-        "relation": "IndThermDemLink",
-        "mode": ["high_temp", "low_temp"],
-        "unit": "???",
-        "value": 1,
-    }
-    df = (
-        make_df("relation_activity", **col_val_dict)
-        .pipe(broadcast, node_loc=nodes)
-        .pipe(broadcast, year_rel=years)
-        .pipe(same_node)
-        .pipe(broadcast, technology=tecs)
-    )
-    df["year_act"] = df["year_rel"]
-    df = df[
-        ~(
-            (
-                (df["technology"].str.startswith("solar"))
-                | (df["technology"].str.startswith("fc_h2_"))
-                | (df["technology"].str.startswith("furnace_h2"))
-                | (df["technology"].str.startswith("dheat"))
-            )
-            & (df["year_act"].isin([2020, 2025]))
-        )
-    ]
-    return df
 
 
 def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterData":
@@ -174,17 +61,17 @@ def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # For each technology there are differnet input and output combinations
+    # For each technology there are different input and output combinations
     # Iterate over technologies
 
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
+    modelyears = s_info.Y
     yv_ya = s_info.yv_ya
 
     # Do not parametrize GLB region the same way
     nodes = nodes_ex_world(s_info.N)
     global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
     for t in config["technology"]["add"]:
-        t = t.id
+        t = getattr(t, "id", t)
 
         # Select the subset of data associated with this technology
         # TODO Use `for data_generic.groupby("technology")` above
@@ -287,18 +174,45 @@ def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
     )
     results["relation_activity"].append(
         add_ind_therm_link_relations(
-            [t.id for t in config["technology"]["add"]],
+            [getattr(t, "id", t) for t in config["technology"]["add"]],
             yv_ya["year_act"].unique(),
             nodes,
         )
     )
+
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-    reduced_pdict = {}
-    for k, v in results.items():
-        if {"year_act", "year_vtg"}.issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-    return reduced_pdict
+    drop_redundant_rows(scenario, results)
+    merge_data(results, calculate_co2_emi_coeff(results["input"]))
+    return results
+
+
+def read_data_generic(scenario: "Scenario") -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Read and clean data from the generic furnace and boiler techno-economic file.
+
+    Parameters
+    ----------
+    scenario : Scenario
+        Scenario instance to build generic technologies on.
+
+    Returns
+    -------
+    tuple of pd.DataFrame
+        - DataFrame with static techno-economic data.
+        - DataFrame with time-series data.
+    """
+    # Read the file
+    data_generic = pd.read_csv(package_data_path("material", "other", "generic.csv"))
+
+    # Clean the data
+    # Drop columns that don't contain useful information
+    data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
+    data_generic_ts = read_timeseries(scenario, "other", None, "timeseries_R12.csv")
+
+    # Unit conversion
+    # At the moment this is done in the Excel file, can be also done here
+    # To make sure we use the same units
+
+    return data_generic, data_generic_ts
 
 
 def gen_data_generic_ts(
@@ -387,6 +301,39 @@ def gen_data_generic_ts(
             results[p].append(df)
 
 
+def add_non_co2_emission_coefficients(
+    scen: "Scenario", df_input: pd.DataFrame, method="from_disk"
+):
+    """Derive non-CO2 emission coefficients for furnaces.
+
+    Parameters
+    ----------
+    scen : Scenario
+        Scenario instance.
+    df_input : pd.DataFrame
+        DataFrame of furnace input parameters.
+    method : str, optional
+        Method to obtain emission coefficients ("from_disk" or "from_scenario").
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with non-CO2 emission coefficients for furnaces.
+    """
+    if method == "from_disk":
+        df_emi = pd.read_csv(
+            package_data_path(
+                "material", "other", "industry_thermal_emi_coefficients.csv"
+            )
+        )
+    else:
+        df_emi = get_thermal_industry_emi_coefficients(scen)
+    df_input = df_input[df_input["year_act"].ge(scen.firstmodelyear)]
+    df_input = df_input.set_index(["node_loc", "year_act", "commodity", "technology"])
+    df_furnace_emi = calculate_furnace_non_co2_emi_coeff(df_input, df_emi)
+    return df_furnace_emi
+
+
 def get_thermal_industry_emi_coefficients(scen: "Scenario") -> pd.DataFrame:
     """Retrieve and normalize non-CO2 emission coefficients of ``i_therm`` technologies.
 
@@ -429,31 +376,6 @@ def get_thermal_industry_emi_coefficients(scen: "Scenario") -> pd.DataFrame:
     ).drop_duplicates()
     df_joined["emi_factor"] = df_joined["value"] / df_joined["value_in"]
     return df_joined
-
-
-def get_furnace_inputs(scen: "Scenario", first_year: int) -> pd.DataFrame:
-    """Query input coefficients for furnace technologies from a Scenario instance.
-
-    Parameters
-    ----------
-    scen
-        Scenario instance to pull input parameter from.
-    first_year
-        Earliest year for which furnace input parameter should be retrieved.
-
-    Returns
-    -------
-    pd.DataFrame
-        Furnace input parameters indexed by node, year, commodity, and technology.
-    """
-    furn_tecs = "furnace"
-    df_furn = scen.par("input")
-    df_furn = df_furn[
-        (df_furn["technology"].str.contains(furn_tecs))
-        & (df_furn["year_act"].ge(first_year))
-    ]
-    df_furn = df_furn.set_index(["node_loc", "year_act", "commodity", "technology"])
-    return df_furn
 
 
 def calculate_furnace_non_co2_emi_coeff(
@@ -500,3 +422,103 @@ def calculate_furnace_non_co2_emi_coeff(
     df_final_new["year_rel"] = df_final_new["year_act"]
     df_final_new["unit"] = "???"
     return df_final_new
+
+
+def add_ind_therm_link_relations(tecs: List[str], years: List[str], nodes: List[str]):
+    """Generate industrial thermal demand link relation values for given technologies.
+
+    Parameters
+    ----------
+    tecs
+        List of technology names.
+    years
+        List of years for relation activity.
+    nodes
+        List of model nodes.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with relation_activity for industrial thermal demand links.
+    """
+    col_val_dict = {
+        "relation": "IndThermDemLink",
+        "mode": ["high_temp", "low_temp"],
+        "unit": "???",
+        "value": 1,
+    }
+    df = (
+        make_df("relation_activity", **col_val_dict)
+        .pipe(broadcast, node_loc=nodes)
+        .pipe(broadcast, year_rel=years)
+        .pipe(same_node)
+        .pipe(broadcast, technology=tecs)
+    )
+    df["year_act"] = df["year_rel"]
+    df = df[
+        ~(
+            (
+                (df["technology"].str.startswith("solar"))
+                | (df["technology"].str.startswith("fc_h2_"))
+                | (df["technology"].str.startswith("furnace_h2"))
+                | (df["technology"].str.startswith("dheat"))
+            )
+            & (df["year_act"].isin([2020, 2025]))
+        )
+    ]
+    return df
+
+
+def calculate_co2_emi_coeff(inp: pd.DataFrame) -> "ParameterData":
+    """Derive CO2 emission coefficients for furnace technologies.
+
+    Parameters
+    ----------
+    inp
+        ``input`` parameter data for furnace technologies.
+    """
+    fuel_ef = pd.read_csv(
+        package_data_path("material", "other", "fuels_emi_fact.csv"), index_col=0
+    )
+    inp = inp.drop(columns=["year_vtg"]).drop_duplicates()
+    inp = (
+        inp.set_index([i for i in inp.columns if i not in ["value"]])
+        .mul(fuel_ef)
+        .reset_index()
+    )
+    rel = (
+        (
+            make_df("relation_activity", **inp, relation="CO2_ind")
+            .pipe(same_node)
+            .assign(year_rel=lambda x: x.year_act)
+        )
+        .dropna()
+        .round(5)
+    )
+    rel.loc[rel["technology"].str.contains("refining"), "relation"] = "CO2_cc"
+    return {"relation_activity": rel}
+
+
+def get_furnace_inputs(scen: "Scenario", first_year: int) -> pd.DataFrame:
+    """Query input coefficients for furnace technologies from a Scenario instance.
+
+    Parameters
+    ----------
+    scen
+        Scenario instance to pull input parameter from.
+    first_year
+        Earliest year for which furnace input parameter should be retrieved.
+
+    Returns
+    -------
+    pd.DataFrame
+        Furnace input parameters indexed by node, year, commodity, and technology.
+    """
+    furn_tecs = "furnace"
+    df_furn = scen.par("input")
+    df_furn = df_furn[
+        (df_furn["technology"].str.contains(furn_tecs))
+        & (df_furn["year_act"].ge(first_year))
+    ]
+    df_furn = df_furn.set_index(["node_loc", "year_act", "commodity", "technology"])
+    return df_furn

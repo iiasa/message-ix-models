@@ -5,7 +5,6 @@ invoke the commands defined in this module.
 """
 
 import logging
-import os
 
 import click
 import message_ix
@@ -15,11 +14,7 @@ from message_ix_models.model.material.data_util import (
     add_macro_materials,
     gen_te_projections,
 )
-from message_ix_models.model.material.util import (
-    excel_to_csv,
-    get_all_input_data_dirs,
-    update_macro_calib_file,
-)
+from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.util import (
     package_data_path,
     private_data_path,
@@ -39,25 +34,25 @@ def cli(ssp):
 
 
 @cli.command("build")
-@click.option(
-    "--iea_data_path",
-    default="P:ene.model\\IEA_database\\Florian\\",
-    help="File path for external data input",
-)
 @click.option("--tag", default="", help="Suffix to the scenario name")
 @click.option(
     "--mode", default="by_url", type=click.Choice(["by_url", "cbudget", "by_copy"])
 )
 @click.option("--scenario_name", default="NoPolicy_3105_macro")
-@click.option("--old_calib", default=False)
 @click.option(
     "--update_costs",
     default=False,
 )
+@click.option("--power_sector", default=False)
 @common_params("nodes")
 @click.pass_obj
 def build_scen(
-    context, iea_data_path, tag, mode, scenario_name, old_calib, update_costs
+    context,
+    tag,
+    mode,
+    scenario_name,
+    update_costs,
+    power_sector,
 ):
     """Build a scenario.
 
@@ -66,13 +61,6 @@ def build_scen(
     memory, i.e. ``jvmargs=["-Xmx16G"]``.
     """
 
-    if not os.path.isfile(iea_data_path + "REV2022_allISO_IEA.parquet") & ~old_calib:
-        log.warning(
-            "The proprietary data file: 'REV2022_allISO_IEA.parquet' based on IEA"
-            "Extended Energy Balances required for the build with --old_calib=False"
-            " cannot be found in the given location. Aborting build..."
-        )
-        return
     import message_ix
 
     mp = context.get_platform()
@@ -105,7 +93,9 @@ def build_scen(
                 keep_solution=False,
             )
             scenario = build(
-                context, scenario, old_calib=old_calib, iea_data_path=iea_data_path
+                context,
+                scenario,
+                power_sector=power_sector,
             )
         else:
             scenario = build(
@@ -114,8 +104,7 @@ def build_scen(
                     model="MESSAGEix-Materials",
                     scenario=output_scenario_name + "_" + tag,
                 ),
-                old_calib=old_calib,
-                iea_data_path=iea_data_path,
+                power_sector=power_sector,
             )
         # Set the latest version as default
         scenario.set_as_default()
@@ -451,29 +440,6 @@ def run_LED_cprice(context, ssp, budget):
     log.info("New LED 1000f carbon prices added")
 
     scen_cprice.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
-    return
-
-
-@cli.command("make-xls-input-vc-able", hidden=True)
-@click.option(
-    "--files",
-    default="all",
-    help="optionally specify which files to make VC-able - not implemented yet",
-)
-@click.pass_obj
-def make_xls_input_vc_able(context, files):
-    if files == "all":
-        dirs = get_all_input_data_dirs()
-        dirs = [i for i in dirs if i != "version control"]
-        for dir in dirs:
-            log.info(dir)
-            files = os.listdir(package_data_path("material", dir))
-            files = [i for i in files if ((i.endswith(".xlsx")) & ~i.startswith("~$"))]
-            log.info(files)
-            for filename in files:
-                excel_to_csv(dir, filename)
-    else:
-        raise NotImplementedError
     return
 
 

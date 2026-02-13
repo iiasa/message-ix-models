@@ -3,7 +3,6 @@ clinker_dry_ccs_cement,fix_cost,R12_RCPA,,,,,MUSD/Mt,,30.0,Voldsund (2019): fix 
 clinker_dry_ccs_cement,input,R12_RCPA,final,electr,,M1,GWa/Mt,,0.008237847222222223,https://www.sciencedirect.com/science/article/pii/S1876610209000150 
 clinker_dry_ccs_cement,input,R12_RCPA,useful_cement,ht_heat,,M1,GWa/Mt,,0.000354,"previously: https://www.sciencedirect.com/science/article/abs/pii/S0263876217303003, now https://www.netl.doe.gov/energy-analysis/details?id=865aaad2-9252-44d9-a48a-95599b3072b4 (page 108, Fuel Cost)"
 clinker_dry_ccs_cement,output,R12_RCPA,,,,M1,,,,
-clinker_dry_ccs_cement,emission_factor,R12_RCPA,,,CO2,M1,,,-0.135,Voldsund (2019)
 clinker_dry_ccs_cement,technical_lifetime,R12_RCPA,,,,,yr,,25.0,Gardarsdottir (2019)
 clinker_dry_ccs_cement,capacity_factor,R12_RCPA,,,,,%,,0.91,Gardarsdottir (2019)
 clinker_dry_cement,input,R12_RCPA,final,electr,,M1,GWa/Mt,,0.003,"25% of 0.012 Gwa/Mt, based on 110 kWh/t from ETSAP IEA"
@@ -11,7 +10,6 @@ clinker_dry_cement,input,R12_RCPA,useful_cement,ht_heat,,M1,GWa/Mt,,0.1116760273
 clinker_dry_cement,input,R12_RCPA,secondary_material,raw_meal_cement,,M1,Mt/Mt,,1.55,https://www.scribd.com/doc/294782074/Raw-Meal-to-Clinker-Ratio
 clinker_dry_cement,output,R12_RCPA,tertiary_material,clinker_cement,,M1,Mt,,1.0,
 clinker_dry_cement,technical_lifetime,R12_RCPA,,,,,yr,,25.0,IEA ETSAP
-clinker_dry_cement,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,,0.15,"Process emissions, EcoFys (2009)"
 clinker_dry_cement,capacity_factor,R12_RCPA,,,,,%,,0.8,Arbitrary
 clinker_dry_cement,inv_cost,R12_RCPA,,,,,MUSD/Mt,,131.5,263 EUR/t total investment cost (2010). 50% assumed
 clinker_dry_cement,fix_cost,R12_RCPA,,,,,MUSD/Mt,,0.1,
@@ -19,7 +17,6 @@ clinker_wet_ccs_cement,fix_cost,R12_RCPA,,,,,MUSD/Mt,,30.0,Voldsund (2019): fix 
 clinker_wet_ccs_cement,input,R12_RCPA,final,electr,,M1,GWa/Mt,,0.008237847222222223,https://www.sciencedirect.com/science/article/pii/S1876610209000150 
 clinker_wet_ccs_cement,input,R12_RCPA,useful_cement,ht_heat,,M1,GWa/Mt,,0.000354,"previously: https://www.sciencedirect.com/science/article/abs/pii/S0263876217303003, now https://www.netl.doe.gov/energy-analysis/details?id=865aaad2-9252-44d9-a48a-95599b3072b4 (page 108, Fuel Cost)"
 clinker_wet_ccs_cement,output,R12_RCPA,,,,M1,,,,
-clinker_wet_ccs_cement,emission_factor,R12_RCPA,,,CO2,M1,,,-0.135,Voldsund (2019)
 clinker_wet_ccs_cement,technical_lifetime,R12_RCPA,,,,,yr,,25.0,Gardarsdottir (2019)
 clinker_wet_ccs_cement,capacity_factor,R12_RCPA,,,,,%,,0.91,Gardarsdottir (2019)
 clinker_wet_cement,input,R12_RCPA,final,electr,,M1,GWa/Mt,,0.003,"25% of 0.012 Gwa/Mt, based on 110 kWh/t from ETSAP IEA"
@@ -27,11 +24,9 @@ clinker_wet_cement,input,R12_RCPA,useful_cement,ht_heat,,M1,GWa/Mt,,0.1745433789
 clinker_wet_cement,input,R12_RCPA,secondary_material,raw_meal_cement,,M1,Mt/Mt,,1.55,https://www.scribd.com/doc/294782074/Raw-Meal-to-Clinker-Ratio
 clinker_wet_cement,output,R12_RCPA,tertiary_material,clinker_cement,,M1,Mt,,1.0,
 clinker_wet_cement,technical_lifetime,R12_RCPA,,,,,yr,,25.0,IEA ETSAP
-clinker_wet_cement,emission_factor,R12_RCPA,,,CO2,M1,MtC/Mt,,0.15,"Process emissions, EcoFys (2009)"
 clinker_wet_cement,capacity_factor,R12_RCPA,,,,,%,,0.8,Arbitrary
 clinker_wet_cement,inv_cost,R12_RCPA,,,,,MUSD/Mt,,131.5,
 clinker_wet_cement,fix_cost,R12_RCPA,,,,,MUSD/Mt,,0.1,
-DUMMY_limestone_supply_cement,emission_factor,R12_RCPA,,,CO2,M1,Mt/Mt,,0.0,From China steel. Assume it is included by having other industrial energy demand
 DUMMY_limestone_supply_cement,emission_factor,R12_RCPA,,,NOx,M1,kt/Mt,,1.75,From China steel
 DUMMY_limestone_supply_cement,emission_factor,R12_RCPA,,,SO2,M1,kt/Mt,,0.9790000000000001,From China steel
 DUMMY_limestone_supply_cement,emission_factor,R12_RCPA,,,PM2p5,M1,Mt/Mt,,0.000332,From China steel
