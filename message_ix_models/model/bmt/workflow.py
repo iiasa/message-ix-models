@@ -26,28 +26,31 @@ def solve(
 ) -> message_ix.Scenario:
     """Plain solve."""
     from message_ix.common import DEFAULT_CPLEX_OPTIONS
-    
+
     # Use default CPLEX options and update with custom settings
     solve_options = DEFAULT_CPLEX_OPTIONS.copy()
-    solve_options.update({
-        "advind": 0,
-        "lpmethod": 4,
-        "threads": 4,
-        "epopt": 1e-6,
-        "scaind": -1,
-        # "predual": 1,
-        "barcrossalg": 0,
-    })
+    solve_options.update(
+        {
+            "advind": 0,
+            "lpmethod": 4,
+            "threads": 4,
+            "epopt": 1e-6,
+            "scaind": -1,
+            # "predual": 1,
+            "barcrossalg": 0,
+        }
+    )
 
     scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=0"])
     scenario.set_as_default()
 
     return scenario
 
-def report(context: Context, scenario: message_ix.Scenario
-) -> message_ix.Scenario:
+
+def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Report the scenario."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
+
     from message_ix_models.model.material.report.run_reporting import (
         run as _materials_report,
     )
@@ -66,44 +69,50 @@ def report(context: Context, scenario: message_ix.Scenario
         scenario.check_out(timeseries_only=True)
     except ValueError:
         log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
-    
+
     df = _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
     _legacy_report(scenario)
-    
+
+    del df
+
     return scenario
 
 
-def build_T(context: Context, scenario: message_ix.Scenario, **kwargs) -> message_ix.Scenario:
+def build_T(
+    context: Context, scenario: message_ix.Scenario, **kwargs
+) -> message_ix.Scenario:
     """Build MESSAGEix-Transport with material module enabled.
-    
+
     This wrapper function modifies the context to include the "material" module
     in the transport config, then calls the main transport build function.
     """
     from message_ix_models.model.transport.config import Config
-    
+
     # Ensure transport config exists in context
     if "transport" not in context:
         # Create transport config from context if it doesn't exist
         context.transport = Config.from_context(context)
-    
+
     if context.transport._code is None:
         # Get SSP from context if available, default to "SSP2"
         ssp = getattr(context, "ssp", "SSP2")
-        # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in CL_TRANSPORT_SCENARIO)
+        # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in
+        # CL_TRANSPORT_SCENARIO)
         if not ssp.startswith("SSP"):
             ssp = f"SSP{ssp}"
         context.transport.code = ssp
-    
+
     # Add "material" module to the transport config
     context.transport.use_modules("material")
-    
+
     # Call the main transport build function with modified context
     return transport_build(context, scenario, **kwargs)
 
 
 # Main BMT workflow
+
 
 def generate(context: Context) -> Workflow:
     """Create the BMT-run workflow."""
@@ -175,7 +184,7 @@ def generate(context: Context) -> Workflow:
         "BMTX built",
         solve,
         target=f"{model_name}/baseline_BMTX",
-        clone=False, # clone true here and shift fmy to 2030
+        clone=False,  # clone true here and shift fmy to 2030
     )
 
     return wf
