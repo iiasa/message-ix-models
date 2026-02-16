@@ -175,10 +175,9 @@ def test_debug(
         Passed to :func:`.verbose_check`.
     """
     # Get a Computer prepared to build the model with the given options
-    c, _ = configure_build(test_context, regions, years, tmp_path, options=options)
-
-    # Fixture: a scenario
-    c.add("scenario", bare_res(request, test_context))
+    c, _ = configure_build(
+        test_context, regions, years, tmp_path, with_base=request, options=options
+    )
 
     # Insert key-specific and common checks
     result = check.insert(c, N_node, verbosity, tmp_path)
