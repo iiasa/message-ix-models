@@ -22,7 +22,9 @@ COMMON = dict(mode="all", time="year", time_dest="year", time_origin="year")
 #: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
 #: quantities.
 DIMS = dict(
+    node="n",
     node_loc="nl",
+    year="y",
     year_vtg="yv",
     year_act="ya",
     technology="t",
