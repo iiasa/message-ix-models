@@ -272,10 +272,16 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
             ),
         )
     },
-    'context.transport.modules == "FOO"': {
+    '"material" in context.transport.modules': {
         material.TARGET: (
             ContainsDataForParameters({"demand", "input_cap_new", "output_cap_ret"}),
             NoDuplicates(),
+        ),
+        # This key/quantity is the computed total demand for materials for transport
+        # vehicles. The adjusted `demand` values that actually enter the model cannot
+        # be computed without dummy or real data in the base scenario used for testing.
+        "demand:c-h-l-n-y:base+MT+1": (
+            HasCoords({"commodity": ["aluminum", "steel"]}),
         ),
     },
 }
