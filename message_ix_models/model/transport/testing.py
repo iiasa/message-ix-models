@@ -91,14 +91,19 @@ def assert_units(
 
 
 def configure_build(
-    test_context: "Context",
+    context: "Context",
     regions: str,
     years: str,
     tmp_path: Path | None = None,
+    with_base: "pytest.FixtureRequest | None" = None,
     **kwargs,
 ) -> tuple["Computer", ScenarioInfo]:
     """:func:`.transport.build.get_computer` wrapper for testing."""
-    test_context.update(regions=regions, years=years, output_path=tmp_path)
+    context.update(regions=regions, years=years, output_path=tmp_path)
+
+    # Fixture: a base scenario with the given `regions` and `years`
+    if with_base is not None:
+        kwargs.setdefault("scenario", bare_res(with_base, context))
 
     # Set defaults for some arguments to get_computer
     kwargs.setdefault("visualize", False)
@@ -109,13 +114,14 @@ def configure_build(
     # Use scenario code "SSP2"
     options.setdefault("code", _default_scenario_code())
 
-    # Omit plots for shorter test run times
+    # - Call prepare_computer() in this module to add test-specific data
+    # - Omit plots for shorter test run times
     options.setdefault("extra_modules", [])
-    options["extra_modules"].append("-plot")
+    options["extra_modules"].extend(["testing", "-plot"])
 
-    c = build.get_computer(test_context, **kwargs)
+    c = build.get_computer(context, **kwargs)
 
-    return c, test_context.transport.base_model_info
+    return c, context.transport.base_model_info
 
 
 def built_transport(
