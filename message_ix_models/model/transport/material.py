@@ -13,6 +13,7 @@ key, so that existing data for the MESSAGE ``demand`` parameter can be adjusted.
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
+import genno
 from genno import Keys
 from genno.core.key import single_key
 
@@ -156,11 +157,21 @@ def prepare_computer(c: "Computer") -> None:
     # Convert units: material commodities demand [Mt/year]
     c.add(k.demand[1], "convert_units", k.demand[0], units="Mt / year")
 
+    # Force units for existing model data
+    # FIXME Adjust to trust the base model's units
+    c.add(k.demand[2], "apply_units", key.demand_base, units="Mt / year")
+
     # Share of this transport total in existing material demand as of y₀
-    c.add(k.demand["share"], "div", key.demand_base, k.demand[1])
+    c.add(k.demand[3], "div", k.demand[1], k.demand[2])
+
+    # Clip values to be in (0, 0.8)
+    c.add(k.demand[4], lambda q: q.clip(0.0, 0.8), k.demand[3])
+
+    # Difference with 1.0: should be in range (0.2, 1.0)
+    c.add(k.demand["share"], "sub", genno.Quantity(1.0, units=""), k.demand[4])
 
     # Multiply existing material demand by this share
-    c.add(k.demand["adj"], "mul", key.demand_base, k.demand["share"])
+    c.add(k.demand["adj"], "mul", k.demand[2], k.demand["share"])
 
     # Convert data to MESSAGE-format data frame
     collect("demand", "as_message_df", k.demand["adj"], **_DEMAND_KW)
