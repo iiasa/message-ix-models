@@ -20,6 +20,7 @@ from message_ix_models.testing.check import (
     ContainsDataForParameters,
     HasCoords,
     HasUnits,
+    InRange,
     NoDuplicates,
     NoneMissing,
     NonNegative,
@@ -277,12 +278,12 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
             ContainsDataForParameters({"demand", "input_cap_new", "output_cap_ret"}),
             NoDuplicates(),
         ),
+        # Share of non-transport demand in the total must be in the range (0.2, 1.0)
+        "demand:c-h-l-n-y:MT+share": (InRange(min=0.2, max=1.0),),
         # This key/quantity is the computed total demand for materials for transport
         # vehicles. The adjusted `demand` values that actually enter the model cannot
         # be computed without dummy or real data in the base scenario used for testing.
-        "demand:c-h-l-n-y:base+MT+1": (
-            HasCoords({"commodity": ["aluminum", "steel"]}),
-        ),
+        "demand:c-h-l-n-y:MT+1": (HasCoords({"commodity": ["aluminum", "steel"]}),),
     },
 }
 
