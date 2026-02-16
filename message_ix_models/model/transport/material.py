@@ -23,6 +23,8 @@ from . import key, util
 if TYPE_CHECKING:
     from genno import Computer
 
+    from .config import Config
+
 
 #: Target key that collects all data generated in this module.
 TARGET = "transport::material+ixmp"
@@ -65,25 +67,6 @@ DIMS = dict(
 #: .. todo:: Retrieve from a file.
 OUTPUT_SHARE = 0.8
 
-#: Mapping from values appearing in :data:`.input_cap_new` to MESSAGEix-Transport
-#: technology IDs.
-#:
-#: .. todo:: Read this from a configuration file instead of hard-coding.
-TECHNOLOGY = {
-    "BEV": {"ELC_100"},
-    "ICE": {
-        "IAHe_ptrp",
-        "IAHm_ptrp",
-        "ICAe_ptrp",
-        "ICE_conv",
-        "ICE_nga",
-        "ICEm_ptrp",
-        "ICH_chyb",
-        "IGH_ghyb",
-    },
-    "PHEV": {"PHEV_ptrp"},
-}
-
 # Keyword arguments for as_message_df() for different parameters
 _DEMAND_KW = dict(name="demand", dims=DIMS, common=dict())
 _ICN_KW = dict(
@@ -94,8 +77,43 @@ _OCR_KW = dict(
 )
 
 
+def get_groups(config: "Config") -> dict[str, dict[str, list[str]]]:
+    """Return groups for a :func:`~genno.operator.aggregate` operation on NTNU VMI data.
+
+    These include:
+
+    - ``c`` (commodity) dimension: 1 or more original (NTNU VMI) commodity IDs
+      aggregated to :mod:`.model.material` commodity IDs.
+    - ``t`` (technology) dimension: 1:1 from original (NTNU VMI) technology IDs to
+      :mod:`.model.transport` technology IDs. This effects rename and broadcast
+      operations simultaneously.
+    """
+
+    # Aggregate ≥1 original commodity IDs into .model.material commodity IDs
+    c_groups = defaultdict(list)
+    for c_original, c_model in COMMODITY_INFO.items():
+        c_groups[c_model].append(c_original)
+
+    # Retrieve all codes for LDV technologies
+    t_all = config.spec.add.set["technology"]
+    t_LDV = t_all[t_all.index("LDV")].child
+
+    # Aggregate each original technology ID into 1 or more 'groups' of length 1
+    # (this is equivalent to a broadcast operation)
+    t_groups = {}
+    for t_model in t_LDV:
+        t_groups[t_model.id] = [
+            str(t_model.get_annotation(id="ntnu-vmi-technology").text)
+        ]
+
+    return dict(c=c_groups, t=t_groups)
+
+
 def prepare_computer(c: "Computer") -> None:
     """Prepare `c` to calculate and add data for materiality of transport."""
+    # Retrieve transport configuration
+    config = c.graph["context"].transport
+
     # Collect data in `TARGET` and connect to the "add transport data" key
     collect.computer = c
     c.add("transport_data", __name__, key=TARGET)
@@ -114,19 +132,8 @@ def prepare_computer(c: "Computer") -> None:
     indexers = dict(scenario="_CT_C_D_D")
     c.add(k.exo[0], "select", key.exo.input_cap_new, indexers=indexers)
 
-    # Aggregate ≥1 original commodity IDs into .model.material commodity IDs
-    c_groups = defaultdict(list)
-    for c_original, c_model in COMMODITY_INFO.items():
-        c_groups[c_model].append(c_original)
-    # Aggregate each original technology ID into 1 or more 'groups' of length 1
-    # (this is equivalent to a broadcast operation)
-    t_groups = {}
-    for t_original, t_model in TECHNOLOGY.items():
-        t_groups.update({t: [t_original] for t in t_model})
-
-    c.add(
-        k.exo[1], "aggregate", k.exo[0], groups=dict(c=c_groups, t=t_groups), keep=False
-    )
+    # Transform VMI data labels to MESSAGE -MT- labels
+    c.add(k.exo[1], "aggregate", k.exo[0], groups=get_groups(config), keep=False)
 
     # Convert units: (material commodities [Mt]) / (transport CAP/CAP_NEW [Mvehicle])
     c.add(k.exo[2], "convert_units", k.exo[1], units="Mt / Mvehicle")
