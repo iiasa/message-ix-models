@@ -15,9 +15,9 @@ import message_ix_models.report
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.testing import GHA, SOLVE_OPTIONS, bare_res
-from message_ix_models.util import silence_log
+from message_ix_models.util import package_data_path, silence_log
 
-from . import build
+from . import build, key
 from .config import CL_SCENARIO, Config
 
 if TYPE_CHECKING:
@@ -179,6 +179,34 @@ def built_transport(
     # result.to_excel(dump_path)
 
     return result
+
+
+def prepare_computer(c: "Computer") -> None:
+    """Adjust the transport build computer `c` for tests.
+
+    Data used by :mod:`.transport.material` is read from a file instead of the base
+    scenario.
+    """
+    from ixmp.report.common import RENAME_DIMS
+
+    context = c.graph["context"]
+
+    if context.transport.with_scenario and context.model.regions == "R12":
+        # Remove existing task to load data from the base scenario
+        c.graph.pop(key.demand_base)
+
+        # Replace with data from a file
+        c.add(
+            "load_file",
+            package_data_path(
+                "test",
+                "transport",
+                "MESSAGEix-GLOBIOM_2.2-BMT-R12_baseline_BM_20260216",
+                "demand.csv",
+            ),
+            key=key.demand_base,
+            dims=RENAME_DIMS,
+        )
 
 
 @cache
