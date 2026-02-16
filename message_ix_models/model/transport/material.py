@@ -68,7 +68,7 @@ DIMS = dict(
 OUTPUT_SHARE = 0.8
 
 # Keyword arguments for as_message_df() for different parameters
-_DEMAND_KW = dict(name="demand", dims=DIMS, common=dict())
+_DEMAND_KW = dict(name="demand", dims=util.DIMS, common=util.COMMON)
 _ICN_KW = dict(
     name="input_cap_new", dims=DIMS, common=util.COMMON | dict(level="demand")
 )
