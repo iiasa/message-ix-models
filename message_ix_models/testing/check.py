@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 import genno
+import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
@@ -238,6 +239,35 @@ class HasUnits(Check):
             return False, f"Expected {e!s}"
         else:
             return True, f"Units are {self.units!r}"
+
+
+@dataclass
+class InRange(Check):
+    """Values are in expected range."""
+
+    #: Minimum value, if any.
+    min: float = -np.inf
+
+    #: Maximum value, if any.
+    max: float = np.inf
+
+    #: Absolute tolerance.
+    atol: float = 1e-8
+
+    types = (genno.Quantity,)
+
+    def run(self, obj):
+        data = obj.to_series().rename("value").reset_index()
+
+        result = data["value"] < (self.min - self.atol)
+        if result.any(axis=None):
+            return False, f"Values <{self.min} for {result.sum()} observations"
+
+        result = data["value"] > (self.max + self.atol)
+        if result.any(axis=None):
+            return False, f"Values >{self.max} for {result.sum()} observations"
+
+        return True, self._description
 
 
 @dataclass
