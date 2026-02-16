@@ -9,6 +9,10 @@ ratios, building energy decomposition) are **not** part of this toolkit —
 they belong with their respective domain modules. Callers consume
 predictions and apply domain logic.
 
+RIME prediction (``rime`` submodule) is an adapted reimplementation of
+Werning et al. (2024), https://github.com/iiasa/rime. See ``rime.py``
+docstring for full attribution.
+
 Usage::
 
     from message_ix_models.tools.impacts import (
@@ -22,8 +26,8 @@ Usage::
     # Load GMT from MAGICC output
     gmt_2d, years = load_gmt("magicc_all_runs.xlsx", n_runs=100)
 
-    # Predict water availability
-    qtot = predict_rime(gmt_2d, "qtot_mean")  # (217, n_years)
+    # Predict water availability at native RIME resolution
+    qtot = predict_rime(gmt_2d, "qtot_mean")  # (157, n_years)
 
     # Or with caching for repeated calls
     qtot = cached_prediction(gmt_2d, "qtot_mean")
@@ -33,9 +37,7 @@ from .cache import cached_prediction, clear_cache
 from .climate import load_gmt, load_magicc_ensemble, load_magicc_percentiles
 from .rime import (
     check_emulator_linearity,
-    load_basin_mapping,
     predict_rime,
-    split_basin_macroregion,
 )
 from .risk import compute_cvar, compute_cvar_single, validate_cvar_monotonicity
 from .temporal import extract_region_code, sample_to_model_years
@@ -47,12 +49,10 @@ __all__ = [
     "compute_cvar",
     "compute_cvar_single",
     "extract_region_code",
-    "load_basin_mapping",
     "load_gmt",
     "load_magicc_ensemble",
     "load_magicc_percentiles",
     "predict_rime",
     "sample_to_model_years",
-    "split_basin_macroregion",
     "validate_cvar_monotonicity",
 ]

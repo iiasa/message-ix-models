@@ -1,4 +1,4 @@
-"""Tests for tools.impacts.rime — RIME prediction engine.
+"""Tests for tools.impacts.rime -- RIME prediction engine.
 
 Pure-function tests use synthetic data. Integration tests that need actual
 RIME NetCDF datasets are marked with skipif.
@@ -8,11 +8,8 @@ import numpy as np
 import pytest
 
 from message_ix_models.tools.impacts.rime import (
-    _N_MESSAGE_BASINS,
     _RIME_DATASETS_DIR,
     _clip_gmt,
-    load_basin_mapping,
-    split_basin_macroregion,
 )
 
 
@@ -57,15 +54,6 @@ class TestClipGmt:
         np.testing.assert_array_equal(r1, r2)
 
 
-class TestLoadBasinMapping:
-    def test_loads_217_rows(self):
-        df = load_basin_mapping()
-        assert len(df) == _N_MESSAGE_BASINS
-        assert "BASIN_ID" in df.columns
-        assert "basin_code" in df.columns
-        assert "area_km2" in df.columns
-
-
 # Integration tests requiring RIME NetCDF files
 _HAS_RIME_DATA = (
     _RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
@@ -73,36 +61,15 @@ _HAS_RIME_DATA = (
 
 
 @pytest.mark.skipif(not _HAS_RIME_DATA, reason="RIME NetCDF datasets not available")
-class TestSplitBasinMacroregion:
-    """Requires RIME data for basin-to-index mapping."""
-
-    def test_expansion_shape(self):
-        basin_mapping = load_basin_mapping()
-        fake_rime = np.ones((157, 5))
-        result = split_basin_macroregion(fake_rime, basin_mapping)
-        assert result.shape == (217, 5)
-
-    def test_nan_preservation(self):
-        basin_mapping = load_basin_mapping()
-        fake_rime = np.ones((157, 3))
-        result = split_basin_macroregion(fake_rime, basin_mapping)
-        assert result.shape == (217, 3)
-
-    def test_seasonal_3d(self):
-        basin_mapping = load_basin_mapping()
-        fake_rime = np.ones((157, 5, 2))
-        result = split_basin_macroregion(fake_rime, basin_mapping)
-        assert result.shape == (217, 5, 2)
-
-
-@pytest.mark.skipif(not _HAS_RIME_DATA, reason="RIME NetCDF datasets not available")
 class TestPredictRimeIntegration:
+    """predict_rime returns native emulator resolution (157 basins)."""
+
     def test_qtot_mean_1d(self):
         from message_ix_models.tools.impacts.rime import predict_rime
 
         gmt = np.linspace(1.0, 2.5, 10)
         result = predict_rime(gmt, "qtot_mean")
-        assert result.shape == (217, 10)
+        assert result.shape == (157, 10)
 
     def test_qtot_mean_2d(self):
         from message_ix_models.tools.impacts.rime import predict_rime
@@ -111,7 +78,7 @@ class TestPredictRimeIntegration:
         gmt_2d = rng.normal(1.5, 0.2, size=(5, 10))
         gmt_2d = np.clip(gmt_2d, 0.6, 7.4)
         result = predict_rime(gmt_2d, "qtot_mean")
-        assert result.shape == (217, 10)
+        assert result.shape == (157, 10)
 
     def test_linearity_check(self):
         from message_ix_models.tools.impacts.rime import check_emulator_linearity

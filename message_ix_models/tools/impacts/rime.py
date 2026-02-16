@@ -8,13 +8,40 @@ differ across variables.
 This module provides:
 
 - :func:`predict_rime` — unified entry point for all variables
-- :func:`load_basin_mapping` — 217-row BCU mapping
-- :func:`split_basin_macroregion` — expand 157 RIME basins to 217 MESSAGE rows
 - :func:`check_emulator_linearity` — diagnostic for percentile input gating
+
+Predictions are returned at **native emulator resolution** — domain modules
+own the transformation to MESSAGE-compatible arrays (e.g. basin expansion
+from 157 RIME basins to 217 MESSAGE rows lives in
+``model.water.data.impacts``).
 
 GMT range: RIME emulators have empirical support for 0.6-7.4 degC.  Low-budget
 overshoot scenarios can exit this range at late-century.  Mitigation: clip with
 skewed noise (beta(2,5)) to avoid boundary artifacts.
+
+Attribution
+-----------
+This module is an adapted reimplementation of the GWL-binned nearest-neighbor
+prediction from the ``rime`` package by Werning et al. It is **not** a
+derivative of the GPL-3.0 source — it reimplements the lookup logic to consume
+RIME data products (NetCDF region arrays) within the MESSAGE-ix ecosystem.
+
+Upstream: https://github.com/iiasa/rime (GPL-3.0)
+
+Reference:
+    Werning, M., Parkinson, S., et al. (2024).
+    "RIME: Regional Impact Model Emulators."
+    EarthArXiv preprint. https://doi.org/10.31223/X5H10D
+
+Key differences from upstream ``rime``:
+- Simplified API: single ``predict_rime()`` dispatches all variables
+- GMT clipping with Beta(2,5) noise for overshoot scenarios
+- No Dask parallelism, no pyam dependency
+
+Staleness warning: this implementation tracks the RIME data format as of
+early 2025 (GWL-binned NetCDF arrays). Upstream changes to ``rime.core``
+or ``rime.rime_functions`` will not propagate automatically. Periodically
+compare against the upstream API.
 """
 
 import functools
@@ -22,7 +49,6 @@ import logging
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from message_ix_models.util import package_data_path
@@ -31,12 +57,8 @@ log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Emulator-intrinsic constants (not configurable; derived from RIME datasets)
+# Emulator metadata
 # ---------------------------------------------------------------------------
-
-_NAN_BASIN_IDS = frozenset({0, 141, 154})
-_N_RIME_BASINS = 157
-_N_MESSAGE_BASINS = 217
 
 # External-name -> dataset-internal-name
 _VAR_MAP = {"local_temp": "temp_mean_anomaly"}
@@ -45,45 +67,6 @@ _VAR_MAP = {"local_temp": "temp_mean_anomaly"}
 # migrate to data/impacts/ in a future PR; until then the path couples
 # this module to the ALPS data directory.
 _RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
-
-
-# ---------------------------------------------------------------------------
-# Cached data loaders
-# ---------------------------------------------------------------------------
-
-
-@functools.lru_cache(maxsize=1)
-def _get_rime_region_mapping() -> dict[int, int]:
-    """Mapping from BASIN_ID to RIME array index.
-
-    RIME datasets have 157 basins indexed by region IDs [1..162] with gaps.
-    """
-    dataset_path = (
-        _RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
-    )
-    ds = xr.open_dataset(dataset_path)
-    rime_region_ids = ds.region.values
-    return {int(region_id): i for i, region_id in enumerate(rime_region_ids)}
-
-
-@functools.lru_cache(maxsize=1)
-def load_basin_mapping() -> pd.DataFrame:
-    """Load R12 basin mapping with MESSAGE basin codes.
-
-    Returns
-    -------
-    pd.DataFrame
-        217 rows with columns including BASIN_ID, NAME, BASIN, REGION,
-        BCU_name, area_km2, model_region, basin_code.
-    """
-    basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
-    basin_df = pd.read_csv(basin_file)
-    basin_df = basin_df[basin_df["model_region"] == "R12"].copy()
-    basin_df = basin_df.reset_index(drop=True)
-    basin_df["basin_code"] = (
-        "B" + basin_df["BASIN_ID"].astype(str) + "|" + basin_df["REGION"]
-    )
-    return basin_df
 
 
 @functools.lru_cache(maxsize=8)
@@ -224,70 +207,6 @@ def _clip_gmt(gmt_array: np.ndarray, temporal_res: str, seed: int = 42) -> np.nd
 
 
 # ---------------------------------------------------------------------------
-# Basin expansion
-# ---------------------------------------------------------------------------
-
-
-def split_basin_macroregion(
-    rime_predictions: np.ndarray,
-    basin_mapping: pd.DataFrame | None = None,
-) -> np.ndarray:
-    """Expand 157 RIME basins to 217 MESSAGE basin-region rows.
-
-    Some basins span multiple macroregions. Predictions are split
-    proportionally by area of each basin-region fragment.
-
-    Parameters
-    ----------
-    rime_predictions
-        Shape ``(157, n_timesteps)`` for annual or
-        ``(157, n_timesteps, n_seasons)`` for seasonal.
-    basin_mapping
-        If *None*, uses :func:`load_basin_mapping`.
-
-    Returns
-    -------
-    np.ndarray
-        Shape ``(217, ...)`` matching input trailing dimensions.
-        Basins 0, 141, 154 have NaN (missing RIME data).
-    """
-    if basin_mapping is None:
-        basin_mapping = load_basin_mapping()
-
-    basin_id_to_rime_idx = _get_rime_region_mapping()
-
-    is_seasonal = rime_predictions.ndim == 3
-    if is_seasonal:
-        n_rime, n_timesteps, n_seasons = rime_predictions.shape
-        message_predictions = np.full((217, n_timesteps, n_seasons), np.nan)
-    else:
-        n_rime, n_timesteps = rime_predictions.shape
-        message_predictions = np.full((217, n_timesteps), np.nan)
-
-    basin_total_areas = basin_mapping.groupby("BASIN_ID")["area_km2"].sum()
-
-    for i, row in basin_mapping.iterrows():
-        basin_id = row["BASIN_ID"]
-        area_km2 = row["area_km2"]
-
-        if basin_id in basin_id_to_rime_idx:
-            rime_idx = basin_id_to_rime_idx[basin_id]
-            total_area = basin_total_areas[basin_id]
-            area_fraction = area_km2 / total_area
-
-            if is_seasonal:
-                message_predictions[i, :, :] = (
-                    rime_predictions[rime_idx, :, :] * area_fraction
-                )
-            else:
-                message_predictions[i, :] = (
-                    rime_predictions[rime_idx, :] * area_fraction
-                )
-
-    return message_predictions
-
-
-# ---------------------------------------------------------------------------
 # Single-trajectory prediction (internal)
 # ---------------------------------------------------------------------------
 
@@ -325,19 +244,16 @@ def _predict_single(
             f"{rime_var}_dry" if percentile is None else f"{rime_var}_dry_{percentile}"
         )
         pred_dry = _predict_from_gmt(gmt_array, str(dataset_path), var_dry)
-        pred_dry_expanded = split_basin_macroregion(pred_dry)
 
         var_wet = (
             f"{rime_var}_wet" if percentile is None else f"{rime_var}_wet_{percentile}"
         )
         pred_wet = _predict_from_gmt(gmt_array, str(dataset_path), var_wet)
-        pred_wet_expanded = split_basin_macroregion(pred_wet)
 
-        return (pred_dry_expanded, pred_wet_expanded)
+        return (pred_dry, pred_wet)
 
     predict_var = rime_var if percentile is None else f"{rime_var}_{percentile}"
-    rime_predictions = _predict_from_gmt(gmt_array, str(dataset_path), predict_var)
-    return split_basin_macroregion(rime_predictions)
+    return _predict_from_gmt(gmt_array, str(dataset_path), predict_var)
 
 
 # ---------------------------------------------------------------------------
@@ -380,12 +296,13 @@ def predict_rime(
     Returns
     -------
     np.ndarray or tuple
-        1D input:
-            - basin variables: ``(217, n_years)``
-            - regional variables: ``(12, n_years)`` or ``(12, arch, urt, n_years)``
-        2D input:
-            Same shapes, ensemble-averaged.
-        Seasonal returns ``(dry, wet)`` tuple.
+        Native emulator resolution:
+            - basin variables (qtot_mean, qr, local_temp): ``(157, n_years)``
+            - capacity_factor: ``(12, n_years)``
+            - EI_cool, EI_heat: ``(12, arch, urt, n_years)``
+        2D input: same shapes, ensemble-averaged.
+        Seasonal basin variables return ``(dry, wet)`` tuple of
+        ``(157, n_years)`` arrays.
     """
     gmt_array = np.asarray(gmt_array)
 
