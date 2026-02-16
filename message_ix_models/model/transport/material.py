@@ -13,7 +13,8 @@ key, so that existing data for the MESSAGE ``demand`` parameter can be adjusted.
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from genno import Keys
+import genno
+from genno import Key, Keys
 from genno.core.key import single_key
 
 from message_ix_models.util.genno import Collector
@@ -27,9 +28,9 @@ if TYPE_CHECKING:
 
 
 #: Target key that collects all data generated in this module.
-TARGET = "transport::material+ixmp"
+TARGET = "transport::MT+ixmp"
 
-collect = Collector(TARGET, "{}::material+ixmp".format)
+collect = Collector(TARGET, "{}::MT+ixmp".format)
 
 # FIXME Do not hard-code this. Instead, use 1 or more of:
 # - Labels in input_cap_new.csv that align with .model.materials.
@@ -123,7 +124,7 @@ def prepare_computer(c: "Computer") -> None:
         # Same key as used in .transport.ldv.stock
         # TODO Move to .key
         sales="sales:n-t-y:LDV",
-        demand=key.demand_base + "MT",
+        demand=Key("demand", key.demand_base.dims, "MT"),
     )
 
     # From input_cap_new.csv, select:
@@ -156,11 +157,24 @@ def prepare_computer(c: "Computer") -> None:
     # Convert units: material commodities demand [Mt/year]
     c.add(k.demand[1], "convert_units", k.demand[0], units="Mt / year")
 
+    # Force units for existing model data
+    # FIXME Adjust to trust the base model's units
+    c.add(k.demand[2], "apply_units", key.demand_base, units="Mt / year")
+
     # Share of this transport total in existing material demand as of y₀
-    c.add(k.demand["share"], "div", key.demand_base, k.demand[1])
+    c.add(k.demand[3], "div", k.demand[1], k.demand[2])
+
+    # Clip values to be in (0, 0.8)
+    c.add(k.demand[4], lambda q: q.clip(0.0, 0.8), k.demand[3])
+
+    # Difference with 1.0: should be in range (0.2, 1.0)
+    c.add(k.demand[5], "sub", genno.Quantity(1.0, units=""), k.demand[4])
+
+    # Select only values for y0
+    c.add(k.demand["share"], "select", k.demand[5], "y0::coord")
 
     # Multiply existing material demand by this share
-    c.add(k.demand["adj"], "mul", key.demand_base, k.demand["share"])
+    c.add(k.demand["adj"], "mul", k.demand[2], k.demand["share"])
 
     # Convert data to MESSAGE-format data frame
     collect("demand", "as_message_df", k.demand["adj"], **_DEMAND_KW)
