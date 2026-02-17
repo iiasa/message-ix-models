@@ -51,7 +51,7 @@ def solve(
         }
     )
 
-    scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=0"])
+    scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=1"])
     scenario.set_as_default()
 
     return scenario
@@ -94,35 +94,35 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return scenario
 
 
-def build_T(
-    context: Context, scenario: message_ix.Scenario, **kwargs
-) -> message_ix.Scenario:
-    """Build MESSAGEix-Transport with material module enabled.
+# def build_T(
+#     context: Context, scenario: message_ix.Scenario, **kwargs
+# ) -> message_ix.Scenario:
+#     """Build MESSAGEix-Transport with material module enabled.
 
-    This wrapper function modifies the context to include the "material" module
-    in the transport config, then calls the main transport build function.
-    """
-    from message_ix_models.model.transport.config import Config
+#     This wrapper function modifies the context to include the "material" module
+#     in the transport config, then calls the main transport build function.
+#     """
+#     from message_ix_models.model.transport.config import Config
 
-    # Ensure transport config exists in context
-    if "transport" not in context:
-        # Create transport config from context if it doesn't exist
-        context.transport = Config.from_context(context)
+#     # Ensure transport config exists in context
+#     if "transport" not in context:
+#         # Create transport config from context if it doesn't exist
+#         context.transport = Config.from_context(context)
 
-    if context.transport._code is None:
-        # Get SSP from context if available, default to "SSP2"
-        ssp = getattr(context, "ssp", "SSP2")
-        # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in
-        # CL_TRANSPORT_SCENARIO)
-        if not ssp.startswith("SSP"):
-            ssp = f"SSP{ssp}"
-        context.transport.code = ssp
+#     if context.transport._code is None:
+#         # Get SSP from context if available, default to "SSP2"
+#         ssp = getattr(context, "ssp", "SSP2")
+#         # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in
+#         # CL_TRANSPORT_SCENARIO)
+#         if not ssp.startswith("SSP"):
+#             ssp = f"SSP{ssp}"
+#         context.transport.code = ssp
 
-    # Add "material" module to the transport config
-    context.transport.use_modules("material")
+#     # Add "material" module to the transport config
+#     context.transport.use_modules("material")
 
-    # Call the main transport build function with modified context
-    return transport_build(context, scenario, **kwargs)
+#     # Call the main transport build function with modified context
+#     return transport_build(context, scenario, **kwargs)
 
 
 # Main BMT workflow
@@ -185,21 +185,35 @@ def generate(context: Context) -> Workflow:
     # - .model.transport.config.Config.code
     scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
 
-    # Add step(s) on top of "BM reported" that build MESSAGEix-Transport. For reference:
+    # Add step(s) on top of the previous step (M cloned) that build MESSAGEix-Transport. For reference:
     # - .model.transport.workflow.add_steps
     # - .model.workflow.from_codelist, which makes a similar call
     #
     # `name` is the name of the final step
-    name = transport.add_steps(wf, "BM reported", scenario_code)
+    name = transport.add_steps(wf, "M cloned", scenario_code)
 
-    # Clone to the URL desired for this workflow, at a step named "BMT built".
+    # Clone to the URL desired for this workflow, at a step named "MT built".
     # Giving action=None means nothing is run on the scenario.
-    url = f"{model_name}/baseline_BMT"
-    wf.add_step("BMT built", name, action=None, target=url, clone=True)
+    url = f"{model_name}/baseline_MT"
+    wf.add_step("MT built", name, action=None, target=url, clone=True)
 
     # NB .model.transport.workflow.generate sets context.solve including
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
+    
+    wf.add_step(
+        "MT solved",
+        "MT built",
+        solve,
+    )
+
+    wf.add_step(
+        "BMT built",
+        "MT solved",
+        build_B,
+        target=f"{model_name}/baseline_BMT",
+        clone=dict(keep_solution=False),
+    )
 
     wf.add_step(
         "BMT solved",
@@ -221,7 +235,12 @@ def generate(context: Context) -> Workflow:
         solve,
         target=f"{model_name}/baseline_BMTX",
         clone=False,  # clone true here and shift fmy to 2030
-        clone=False,  # clone true here and shift fmy to 2030
+    )
+
+    wf.add_step(
+        "BMTX baseline reported",
+        "BMTX baseline solved",
+        report,
     )
 
     return wf
