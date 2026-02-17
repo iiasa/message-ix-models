@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from message_ix_models.tools.impacts.rime import _RIME_DATASETS_DIR, predict_rime
+from message_ix_models.tools.impacts import clip_gmt, impacts_data_path, predict_rime
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
@@ -46,8 +46,8 @@ def _get_rime_region_mapping() -> dict[int, int]:
     Uses a reference dataset (qtot_mean annual) to discover the mapping;
     region IDs are identical across all basin-level RIME datasets.
     """
-    dataset_path = (
-        _RIME_DATASETS_DIR / "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
+    dataset_path = impacts_data_path(
+        "rime", "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
     )
     ds = xr.open_dataset(dataset_path)
     rime_region_ids = ds.region.values
@@ -149,7 +149,8 @@ def predict_water_rime(
     gmt_array,
     variable: str,
     temporal_res: str = "annual",
-    **kwargs,
+    hydro_model: str = "CWatM",
+    percentile: str | None = None,
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Predict water variable at MESSAGE basin resolution (217 rows).
 
@@ -164,8 +165,10 @@ def predict_water_rime(
         Basin-level variable: ``qtot_mean``, ``qr``, or ``local_temp``.
     temporal_res
         ``"annual"`` or ``"seasonal2step"``.
-    **kwargs
-        Passed to :func:`predict_rime` (percentile, sel, hydro_model).
+    hydro_model
+        Hydrological model name for dataset selection.
+    percentile
+        Uncertainty percentile suffix (e.g. ``"p10"``).
 
     Returns
     -------
@@ -173,7 +176,29 @@ def predict_water_rime(
         Annual: ``(217, n_years)``.
         Seasonal: ``((217, n_years), (217, n_years))`` tuple (dry, wet).
     """
-    raw = predict_rime(gmt_array, variable, temporal_res, **kwargs)
+    gmt_array = np.asarray(gmt_array)
+
+    # Clip GMT below emulator range
     if temporal_res == "seasonal2step":
-        return (split_basin_macroregion(raw[0]), split_basin_macroregion(raw[1]))
+        gmt_clipped = clip_gmt(gmt_array, gmt_min=0.8, gmt_ceil=1.2)
+    else:
+        gmt_clipped = clip_gmt(gmt_array, gmt_min=0.6, gmt_ceil=0.9)
+
+    # Resolve dataset path — caller names the variable, we build the path
+    window = "11"
+    dataset_path = impacts_data_path(
+        "rime",
+        f"rime_regionarray_{variable}_{hydro_model}_{temporal_res}_window{window}.nc",
+    )
+
+    if temporal_res == "seasonal2step":
+        sfx = f"_{percentile}" if percentile else ""
+        var_dry = f"{variable}_dry{sfx}"
+        var_wet = f"{variable}_wet{sfx}"
+        raw_dry = predict_rime(gmt_clipped, dataset_path, var_dry)
+        raw_wet = predict_rime(gmt_clipped, dataset_path, var_wet)
+        return (split_basin_macroregion(raw_dry), split_basin_macroregion(raw_wet))
+
+    var_name = variable if not percentile else f"{variable}_{percentile}"
+    raw = predict_rime(gmt_clipped, dataset_path, var_name)
     return split_basin_macroregion(raw)
