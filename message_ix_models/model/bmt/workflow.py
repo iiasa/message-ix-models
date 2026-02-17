@@ -292,6 +292,20 @@ def generate(context: Context) -> Workflow:
     # NB .model.transport.workflow.generate sets context.solve including
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
+    
+    wf.add_step(
+        "MT solved",
+        "MT built",
+        solve,
+    )
+
+    wf.add_step(
+        "BMT built",
+        "MT solved",
+        build_B,
+        target=f"{model_name}/baseline_BMT",
+        clone=dict(keep_solution=False),
+    )
 
     name = wf.add_step("MT solved", name, solve)
 
