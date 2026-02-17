@@ -3,10 +3,8 @@
 import pandas as pd
 import pytest
 
-from message_ix_models.tools.impacts.temporal import (
-    extract_region_code,
-    sample_to_model_years,
-)
+from message_ix_models.tools.impacts import extract_region_code
+from message_ix_models.tools.impacts.temporal import sample_to_model_years
 
 
 class TestSampleToModelYears:
