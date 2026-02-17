@@ -140,12 +140,15 @@ class TestSelectByStress:
 class TestFilterBasinsByRegionStress:
     """Test stress mode integration in filter_basins_by_region()."""
 
-    def test_stress_mode_returns_valid_output(self, test_context):
+    @pytest.fixture
+    def df_basins(self):
         from message_ix_models.util import package_data_path
 
-        df_basins = pd.read_csv(
+        return pd.read_csv(
             package_data_path("water", "delineation", "basins_by_region_simpl_R12.csv")
         )
+
+    def test_stress_mode_returns_valid_output(self, test_context, df_basins):
         test_context.reduced_basin = True
         test_context.basin_selection = "stress"
         test_context.regions = "R12"
@@ -157,3 +160,33 @@ class TestFilterBasinsByRegionStress:
         assert len(filtered) < len(df_basins)
         assert len(filtered["REGION"].unique()) == 12
         assert not filtered["BCU_name"].isna().any()
+
+    @pytest.mark.parametrize("basin_selection", ["first_k", "stress"])
+    def test_filter_list_additive_on_automatic(
+        self, test_context, df_basins, basin_selection
+    ):
+        """filter_list augments automatic selection rather than replacing it."""
+        test_context.reduced_basin = True
+        test_context.basin_selection = basin_selection
+        test_context.regions = "R12"
+        test_context.ssp = "SSP2"
+
+        # Run automatic selection alone (1 per region = 12 basins)
+        auto_only = filter_basins_by_region(df_basins, test_context, n_per_region=1)
+        auto_basins = set(auto_only["BCU_name"])
+
+        # Pick a basin NOT in the automatic set to add via filter_list
+        all_basins = set(df_basins["BCU_name"])
+        extra_basins = list(all_basins - auto_basins)[:3]
+        assert len(extra_basins) > 0, "Need basins outside automatic set"
+
+        test_context.filter_list = extra_basins
+        combined = filter_basins_by_region(df_basins, test_context, n_per_region=1)
+        combined_basins = set(combined["BCU_name"])
+
+        # Automatic basins are still present
+        assert auto_basins <= combined_basins
+        # Extra basins were added
+        assert set(extra_basins) <= combined_basins
+        # Total is the union
+        assert len(combined) == len(auto_basins) + len(extra_basins)

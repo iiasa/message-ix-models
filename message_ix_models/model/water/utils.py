@@ -85,19 +85,34 @@ def filter_basins_by_region(
 ) -> pd.DataFrame:
     """Filter basins based on context configuration.
 
+    Selection is two-step:
+
+    1. **Automatic selection** — either ``"first_k"`` (head *n* per region) or
+       ``"stress"`` (diversity-sampled across the demand/supply ratio spectrum),
+       controlled by ``context.basin_selection``.
+    2. **filter_list augmentation** — if ``context.filter_list`` is set, those
+       basins are *added* to the automatic set (union, not replacement).
+
     Parameters
     ----------
     df_basins : pd.DataFrame
-        DataFrame with basin data including 'REGION' and 'BCU_name' columns
+        DataFrame with basin data including 'REGION' and 'BCU_name' columns.
     context : Context, optional
-        Context object that may contain basin filtering configuration
+        Context object that may contain:
+
+        - ``reduced_basin`` (bool): enable filtering (default False).
+        - ``basin_selection`` (str): ``"first_k"`` or ``"stress"``
+          (default ``"first_k"``).
+        - ``num_basins`` (int): override *n_per_region*.
+        - ``filter_list`` (list[str]): additional BCU_name values to include
+          on top of the automatic selection.
     n_per_region : int, default 3
-        Default number of basins to keep per region (used as fallback)
+        Default number of basins to keep per region (used as fallback).
 
     Returns
     -------
     pd.DataFrame
-        Filtered DataFrame based on configuration
+        Filtered DataFrame based on configuration.
     """
     if not context:
         context = Context.get_instance(-1)
@@ -110,74 +125,51 @@ def filter_basins_by_region(
         log.info("Basin filtering disabled, returning all basins")
         return df_basins
 
-    # Basin filtering is enabled
+    # Basin filtering is enabled — run automatic selection, then augment with
+    # filter_list if provided.
     filter_list = getattr(context, "filter_list", None)
     num_basins = getattr(context, "num_basins", None)
-
-    if filter_list:
-        # Filter to specific basin list
-        filtered = df_basins[df_basins["BCU_name"].isin(filter_list)]
-
-        # Check if we have at least 1 basin per R12 region
-        all_regions = set(df_basins["REGION"].unique())
-        filtered_regions = set(filtered["REGION"].unique())
-        missing_regions = all_regions - filtered_regions
-
-        if missing_regions:
-            log.info(f"Adding one basin per missing region: {missing_regions}")
-            # Add one basin from each missing region
-            for region in missing_regions:
-                region_basins = df_basins[df_basins["REGION"] == region]
-                # Add the first basin from this region
-                filtered = pd.concat(
-                    [filtered, region_basins.head(1)], ignore_index=True
-                )
-
-        log.info(
-            f"Filtered basins from {len(df_basins)} to {len(filtered)} "
-            f"using custom filter list: {filter_list} (with 1 basin per missing region)"
-        )
-
-        return filtered.reset_index(drop=True)
-
-    # Check for stress-based selection mode
     basin_selection = getattr(context, "basin_selection", "first_k")
+
+    # Step 1: automatic selection (stress or first_k)
+    if "REGION" not in df_basins.columns:
+        log.info("REGION column not found, cannot filter by region")
+        return df_basins
 
     if basin_selection == "stress":
         n = num_basins if num_basins is not None else n_per_region
         ssp = getattr(context, "ssp", "SSP2")
         stress_df = compute_basin_demand_ratio(context.regions, ssp=ssp)
         selected = _select_by_stress(stress_df, n_per_region=n)
-
-        filtered = df_basins[df_basins["BCU_name"].isin(selected)].reset_index(
-            drop=True
-        )
+        filtered = df_basins[df_basins["BCU_name"].isin(selected)]
         log.info(
             f"Stress-based selection: {len(df_basins)} -> {len(filtered)} basins "
             f"(n_per_region={n})"
         )
-        return filtered
+    else:
+        if num_basins is not None:
+            n_per_region = num_basins
+        filtered = df_basins.groupby("REGION", group_keys=False).apply(
+            lambda x: x.head(n_per_region)
+        )
+        log.info(
+            f"first_k selection: {len(df_basins)} -> {len(filtered)} basins "
+            f"(n_per_region={n_per_region})"
+        )
 
-    if num_basins is not None:
-        n_per_region = num_basins
+    # Step 2: augment with filter_list (additive — union with automatic selection)
+    if filter_list:
+        extra = df_basins[
+            df_basins["BCU_name"].isin(filter_list)
+            & ~df_basins["BCU_name"].isin(filtered["BCU_name"])
+        ]
+        if len(extra):
+            log.info(
+                f"filter_list adds {len(extra)} basins on top of automatic selection"
+            )
+            filtered = pd.concat([filtered, extra], ignore_index=True)
 
-    # Group by region and take first n rows from each group
-    if "REGION" not in df_basins.columns:
-        log.info("REGION column not found, cannot filter by region")
-        return df_basins
-
-    filtered = (
-        df_basins.groupby("REGION", group_keys=False)
-        .apply(lambda x: x.head(n_per_region))
-        .reset_index(drop=True)
-    )
-
-    log.info(
-        f"Filtered basins from {len(df_basins)} to {len(filtered)} "
-        f"(keeping first {n_per_region} per region)"
-    )
-
-    return filtered
+    return filtered.reset_index(drop=True)
 
 
 def compute_basin_demand_ratio(
