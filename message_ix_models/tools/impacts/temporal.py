@@ -4,10 +4,6 @@ Climate data (MAGICC, RIME) typically has annual resolution (2020-2100).
 MESSAGE uses non-uniform timesteps (5-year steps with gaps). This module
 resamples annual data to match model year grids.
 
-No equivalent exists in the codebase. The genno ``interpolate`` operator
-fills gaps in existing model data — it does not resample external climate
-timeseries. ``tools/costs/`` derives years from codelists but does not
-resample annual data.
 """
 
 import logging
@@ -89,22 +85,3 @@ def sample_to_model_years(
             result[y] = result[last_available]
 
     return result
-
-
-# Placed here rather than in a separate module because the function is
-# trivial and there is no existing util/node.py to host it.  Re-exported
-# from __init__.py so callers don't depend on this placement.
-def extract_region_code(node: str) -> str:
-    """Extract short region code from MESSAGE node name.
-
-    Parameters
-    ----------
-    node
-        MESSAGE node name (e.g. ``"R12_AFR"`` or ``"AFR"``).
-
-    Returns
-    -------
-    str
-        Short code (e.g. ``"AFR"``).
-    """
-    return node[4:] if node.startswith("R12_") else node

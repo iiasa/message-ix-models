@@ -8,6 +8,7 @@ differ across variables.
 This module provides:
 
 - :func:`predict_rime` — unified entry point for all variables
+- :func:`clip_gmt` — clip below-range GMT with skewed noise
 - :func:`check_emulator_linearity` — diagnostic for percentile input gating
 
 Predictions are returned at **native emulator resolution** — domain modules
@@ -51,22 +52,12 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-from message_ix_models.util import package_data_path
-
 log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Emulator metadata
+# Dataset loading
 # ---------------------------------------------------------------------------
-
-# External-name -> dataset-internal-name
-_VAR_MAP = {"local_temp": "temp_mean_anomaly"}
-
-# RIME datasets currently live under data/alps/rime_datasets/. This will
-# migrate to data/impacts/ in a future PR; until then the path couples
-# this module to the ALPS data directory.
-_RIME_DATASETS_DIR = package_data_path("alps", "rime_datasets")
 
 
 @functools.lru_cache(maxsize=8)
@@ -76,94 +67,62 @@ def _load_rime_dataset(dataset_path: str) -> xr.Dataset:
 
 
 # ---------------------------------------------------------------------------
-# Dataset path resolution
+# GMT clipping
 # ---------------------------------------------------------------------------
 
 
-def _get_dataset_path(
-    variable: str, temporal_res: str = "annual", hydro_model: str = "CWatM"
-) -> Path:
-    """Resolve path to a RIME NetCDF dataset.
+def clip_gmt(
+    gmt_array: np.ndarray,
+    gmt_min: float = 0.6,
+    gmt_ceil: float = 0.9,
+    seed: int = 42,
+) -> np.ndarray:
+    """Clip GMT values below RIME emulator minimum with skewed noise.
+
+    Values below *gmt_min* are replaced with ``gmt_min + beta(2,5) * (gmt_ceil
+    - gmt_min)``, landing in ``[gmt_min, gmt_ceil]``.  Values at or above
+    *gmt_min* are unchanged.
 
     Parameters
     ----------
-    variable
-        Target variable. One of: qtot_mean, qr, local_temp,
-        capacity_factor, EI_cool, EI_heat.
-    temporal_res
-        ``"annual"`` or ``"seasonal2step"``.
-    hydro_model
-        Hydrological model name (basin variables only).
-
-    Raises
-    ------
-    NotImplementedError
-        If capacity_factor or EI requested with seasonal resolution.
-    FileNotFoundError
-        If the dataset file does not exist.
+    gmt_array
+        GMT values (degC above pre-industrial). Any shape.
+    gmt_min
+        Lower bound of emulator support.
+    gmt_ceil
+        Upper bound of noise range for clipped values.
+    seed
+        RNG seed for reproducibility.
     """
-    if variable.startswith("EI_"):
-        if temporal_res == "seasonal2step":
-            raise NotImplementedError(
-                "Building energy intensity only supports annual temporal resolution"
-            )
-        mode = variable.split("_")[1]  # 'cool' or 'heat'
-        dataset_path = _RIME_DATASETS_DIR / f"region_EI_{mode}_gwl_binned.nc"
+    gmt_clipped = np.asarray(gmt_array).copy()
+    original_shape = gmt_clipped.shape
+    gmt_flat = gmt_clipped.flatten()
 
-    elif variable == "capacity_factor":
-        if temporal_res == "seasonal2step":
-            raise NotImplementedError(
-                "Capacity factor only supports annual temporal resolution"
-            )
-        dataset_path = _RIME_DATASETS_DIR / "r12_capacity_gwl_ensemble.nc"
+    low_gmt_mask = gmt_flat < gmt_min
+    n_low = np.sum(low_gmt_mask)
 
-    else:
-        rime_var = _VAR_MAP.get(variable, variable)
-        window = (
-            "0"
-            if rime_var == "temp_mean_anomaly" and temporal_res == "annual"
-            else "11"
-        )
-        dataset_filename = (
-            f"rime_regionarray_{rime_var}_{hydro_model}"
-            f"_{temporal_res}_window{window}.nc"
-        )
-        dataset_path = _RIME_DATASETS_DIR / dataset_filename
+    if n_low > 0:
+        rng = np.random.default_rng(seed)
+        noise = rng.beta(2, 5, size=n_low) * (gmt_ceil - gmt_min)
+        gmt_flat[low_gmt_mask] = gmt_min + noise
 
-    if not dataset_path.exists():
-        raise FileNotFoundError(
-            f"RIME dataset not found: {dataset_path}\n"
-            f"Available variables: qtot_mean, qr, local_temp, "
-            f"capacity_factor, EI_cool, EI_heat\n"
-            f"Available temporal resolutions: annual, seasonal2step "
-            f"(not for capacity_factor/EI)\n"
-            f"Available hydro models: CWatM, H08, MIROC-INTEG-LAND, WaterGAP2-2e"
-        )
-
-    return dataset_path
+    return gmt_flat.reshape(original_shape)
 
 
 # ---------------------------------------------------------------------------
-# Low-level prediction
+# Core prediction
 # ---------------------------------------------------------------------------
 
 
-def _predict_from_gmt(gmt, dataset_path: str, variable: str, sel: dict | None = None):
-    """GWL-binned nearest-neighbor lookup for a scalar GMT value.
-
-    Parameters
-    ----------
-    gmt
-        Global warming level (degC above pre-industrial).
-    dataset_path
-        Path to RIME NetCDF dataset.
-    variable
-        Variable name within the dataset.
-    sel
-        Optional dimension selections applied before GWL interpolation.
-    """
+def _predict_from_gmt(
+    gmt: float | np.floating,
+    dataset_path: str,
+    var_name: str,
+    sel: dict | None = None,
+) -> np.ndarray:
+    """GWL-binned nearest-neighbor lookup for a scalar GMT value."""
     ds = _load_rime_dataset(dataset_path)
-    data = ds[variable]
+    data = ds[var_name]
 
     if sel is not None:
         for dim, value in sel.items():
@@ -173,102 +132,12 @@ def _predict_from_gmt(gmt, dataset_path: str, variable: str, sel: dict | None = 
     return data.sel(gwl=gmt, method="nearest").values
 
 
-# ---------------------------------------------------------------------------
-# GMT clipping
-# ---------------------------------------------------------------------------
-
-
-def _clip_gmt(gmt_array: np.ndarray, temporal_res: str, seed: int = 42) -> np.ndarray:
-    """Clip GMT values below RIME emulator minimum with skewed noise.
-
-    Annual emulators: support [0.6, 7.4] degC.
-    Seasonal emulators: support [0.8, 7.4] degC (87% NaN at 0.6-0.7 for many basins).
-
-    Values below minimum are clipped to [min, min + noise_range] with
-    beta(2, 5) noise to avoid boundary artifacts.
-    """
-    gmt_clipped = np.asarray(gmt_array).copy()
-    original_shape = gmt_clipped.shape
-    gmt_flat = gmt_clipped.flatten()
-
-    gmt_min = 0.8 if temporal_res == "seasonal2step" else 0.6
-    gmt_ceil = 1.2 if temporal_res == "seasonal2step" else 0.9
-
-    low_gmt_mask = gmt_flat < gmt_min
-    n_low = np.sum(low_gmt_mask)
-
-    if n_low > 0:
-        rng = np.random.default_rng(seed)
-        # Clipped values land in [gmt_min, gmt_ceil]
-        noise = rng.beta(2, 5, size=n_low) * (gmt_ceil - gmt_min)
-        gmt_flat[low_gmt_mask] = gmt_min + noise
-
-    return gmt_flat.reshape(original_shape)
-
-
-# ---------------------------------------------------------------------------
-# Single-trajectory prediction (internal)
-# ---------------------------------------------------------------------------
-
-
-def _predict_single(
-    gmt_array: np.ndarray,
-    variable: str,
-    temporal_res: str,
-    percentile: str | None,
-    sel: dict | None,
-    hydro_model: str,
-):
-    """Single-trajectory RIME prediction (internal helper)."""
-    dataset_path = _get_dataset_path(variable, temporal_res, hydro_model)
-
-    # Building energy intensity
-    if variable.startswith("EI_"):
-        mode = variable.split("_")[1]
-        if mode == "cool":
-            var_name = "EI_ac_m2" if percentile is None else f"EI_ac_m2_{percentile}"
-        else:
-            var_name = "EI_h_m2" if percentile is None else f"EI_h_m2_{percentile}"
-        return _predict_from_gmt(gmt_array, str(dataset_path), var_name, sel=sel)
-
-    # Regional variables (capacity_factor)
-    if variable == "capacity_factor":
-        predict_var = variable if percentile is None else f"{variable}_{percentile}"
-        return _predict_from_gmt(gmt_array, str(dataset_path), predict_var)
-
-    # Basin-level variables (qtot_mean, qr, local_temp)
-    rime_var = _VAR_MAP.get(variable, variable)
-
-    if temporal_res == "seasonal2step":
-        var_dry = (
-            f"{rime_var}_dry" if percentile is None else f"{rime_var}_dry_{percentile}"
-        )
-        pred_dry = _predict_from_gmt(gmt_array, str(dataset_path), var_dry)
-
-        var_wet = (
-            f"{rime_var}_wet" if percentile is None else f"{rime_var}_wet_{percentile}"
-        )
-        pred_wet = _predict_from_gmt(gmt_array, str(dataset_path), var_wet)
-
-        return (pred_dry, pred_wet)
-
-    predict_var = rime_var if percentile is None else f"{rime_var}_{percentile}"
-    return _predict_from_gmt(gmt_array, str(dataset_path), predict_var)
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
-
 def predict_rime(
-    gmt_array,
-    variable: str,
-    temporal_res: str = "annual",
-    percentile: str | None = None,
+    gmt_array: np.ndarray,
+    dataset_path: str | Path,
+    var_name: str,
     sel: dict | None = None,
-    hydro_model: str = "CWatM",
-):
+) -> np.ndarray:
     """Predict RIME variable from GMT array.
 
     Handles single trajectories (1D) and ensembles (2D). For 2D input
@@ -281,70 +150,51 @@ def predict_rime(
         GMT values (degC above pre-industrial).
         Shape ``(n_years,)`` for single trajectory, or
         ``(n_runs, n_years)`` for ensemble.
-    variable
-        Target variable. One of: ``qtot_mean``, ``qr``, ``local_temp``,
-        ``capacity_factor``, ``EI_cool``, ``EI_heat``.
-    temporal_res
-        ``"annual"`` or ``"seasonal2step"``.
-    percentile
-        Uncertainty percentile suffix (e.g. ``"p10"``, ``"p50"``).
+    dataset_path
+        Path to RIME NetCDF dataset.
+    var_name
+        Variable name within the dataset (e.g. ``"qtot_mean"``,
+        ``"capacity_factor"``, ``"EI_cool"``).
     sel
-        Dimension selections for building variables.
-    hydro_model
-        Hydrological model for basin variables.
+        Optional dimension selections applied before GWL interpolation.
 
     Returns
     -------
-    np.ndarray or tuple
-        Native emulator resolution:
-            - basin variables (qtot_mean, qr, local_temp): ``(157, n_years)``
-            - capacity_factor: ``(12, n_years)``
-            - EI_cool, EI_heat: ``(12, arch, urt, n_years)``
+    np.ndarray
+        Native emulator resolution. Shape depends on variable:
+        - basin variables: ``(157, n_years)``
+        - capacity_factor: ``(12, n_years)``
+        - EI variables: ``(12, arch, urt, n_years)`` (dims vary by sel)
         2D input: same shapes, ensemble-averaged.
-        Seasonal basin variables return ``(dry, wet)`` tuple of
-        ``(157, n_years)`` arrays.
     """
     gmt_array = np.asarray(gmt_array)
+    path_str = str(dataset_path)
 
     if gmt_array.ndim == 1:
-        gmt_clipped = _clip_gmt(gmt_array, temporal_res)
-        return _predict_single(
-            gmt_clipped, variable, temporal_res, percentile, sel, hydro_model
-        )
+        preds = [
+            _predict_from_gmt(float(g), path_str, var_name, sel=sel) for g in gmt_array
+        ]
+        return np.stack(preds, axis=-1)
 
     if gmt_array.ndim == 2:
-        n_runs, n_years = gmt_array.shape
-        gmt_clipped = _clip_gmt(gmt_array, temporal_res)
-
-        predictions = [
-            _predict_single(
-                gmt_clipped[i],
-                variable,
-                temporal_res,
-                percentile,
-                sel,
-                hydro_model,
-            )
-            for i in range(n_runs)
-        ]
-
-        if temporal_res == "seasonal2step":
-            dry_stack = np.stack([p[0] for p in predictions], axis=0)
-            wet_stack = np.stack([p[1] for p in predictions], axis=0)
-            return (np.mean(dry_stack, axis=0), np.mean(wet_stack, axis=0))
-
-        pred_stack = np.stack(predictions, axis=0)
-        return np.mean(pred_stack, axis=0)
+        n_runs = gmt_array.shape[0]
+        run_results = []
+        for i in range(n_runs):
+            preds = [
+                _predict_from_gmt(float(g), path_str, var_name, sel=sel)
+                for g in gmt_array[i]
+            ]
+            run_results.append(np.stack(preds, axis=-1))
+        return np.mean(np.stack(run_results, axis=0), axis=0)
 
     raise ValueError(f"gmt_array must be 1D or 2D, got shape {gmt_array.shape}")
 
 
 def check_emulator_linearity(
-    variable: str,
+    dataset_path: str | Path,
+    var_name: str,
     gmt_range: tuple[float, float],
-    temporal_res: str = "annual",
     n_probe: int = 20,
-    hydro_model: str = "CWatM",
 ) -> dict:
     """Probe emulator response linearity over a GMT range.
 
@@ -356,16 +206,14 @@ def check_emulator_linearity(
 
     Parameters
     ----------
-    variable
-        RIME variable to test.
+    dataset_path
+        Path to RIME NetCDF dataset.
+    var_name
+        Variable name within the dataset.
     gmt_range
         ``(gmt_low, gmt_high)`` range to probe.
-    temporal_res
-        Temporal resolution.
     n_probe
         Number of GMT values to sample.
-    hydro_model
-        Hydrological model.
 
     Returns
     -------
@@ -375,34 +223,17 @@ def check_emulator_linearity(
     """
     gmt_low, gmt_high = gmt_range
     gmt_probes = np.linspace(gmt_low, gmt_high, n_probe)
-    gmt_mean = np.mean(gmt_probes)
+    gmt_mean = float(np.mean(gmt_probes))
+    path_str = str(dataset_path)
 
-    # Predict at each probe point
-    results = []
-    for g in gmt_probes:
-        pred = _predict_single(
-            np.array([g]), variable, temporal_res, None, None, hydro_model
-        )
-        if isinstance(pred, tuple):
-            pred = pred[0]  # use dry season for diagnostic
-        results.append(pred)
+    results = [_predict_from_gmt(float(g), path_str, var_name) for g in gmt_probes]
+    e_of_f = np.nanmean(np.stack(results, axis=0), axis=0)  # E[f(GMT)]
+    f_of_e = _predict_from_gmt(gmt_mean, path_str, var_name)
 
-    probe_stack = np.stack(results, axis=0)
-    e_of_f = np.nanmean(probe_stack, axis=0)  # E[f(GMT)]
-
-    # Predict at mean GMT
-    f_of_e = _predict_single(
-        np.array([gmt_mean]), variable, temporal_res, None, None, hydro_model
-    )
-    if isinstance(f_of_e, tuple):
-        f_of_e = f_of_e[0]
-
-    # Compute relative deviation where f_of_e is non-zero
     with np.errstate(divide="ignore", invalid="ignore"):
         rel_dev = np.abs(e_of_f - f_of_e) / np.abs(f_of_e)
 
     rel_dev = rel_dev[np.isfinite(rel_dev)]
-
     max_dev = float(np.max(rel_dev)) if len(rel_dev) > 0 else 0.0
     mean_dev = float(np.mean(rel_dev)) if len(rel_dev) > 0 else 0.0
 

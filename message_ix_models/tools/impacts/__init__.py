@@ -1,7 +1,7 @@
 """Climate impact prediction toolkit.
 
 Provides GMT-to-impact prediction via RIME emulators, ensemble risk metrics
-(CVaR), and supporting utilities for GMT input parsing, caching, and year
+(CVaR), and supporting utilities for GMT array extraction and year
 resampling.
 
 Domain-specific transformation formulas (water GW share, Jones cooling
@@ -16,43 +16,57 @@ docstring for full attribution.
 Usage::
 
     from message_ix_models.tools.impacts import (
+        impacts_data_path,
         predict_rime,
-        load_gmt,
-        compute_cvar,
-        cached_prediction,
-        sample_to_model_years,
+        clip_gmt,
+        gmt_ensemble,
+        GmtArray,
     )
 
-    # Load GMT from MAGICC output
-    gmt_2d, years = load_gmt("magicc_all_runs.xlsx", n_runs=100)
-
-    # Predict water availability at native RIME resolution
-    qtot = predict_rime(gmt_2d, "qtot_mean")  # (157, n_years)
-
-    # Or with caching for repeated calls
-    qtot = cached_prediction(gmt_2d, "qtot_mean")
+    ds = "rime_regionarray_qtot_mean_CWatM_annual_window11.nc"
+    path = impacts_data_path("rime", ds)
+    qtot = predict_rime(gmt_1d, path, "qtot_mean")
 """
 
-from .cache import cached_prediction, clear_cache
-from .climate import load_gmt, load_magicc_ensemble, load_magicc_percentiles
-from .rime import (
-    check_emulator_linearity,
-    predict_rime,
-)
-from .risk import compute_cvar, compute_cvar_single, validate_cvar_monotonicity
-from .temporal import extract_region_code, sample_to_model_years
+from functools import partial
+
+from message_ix_models.util import package_data_path
+
+from .climate import GmtArray, gmt_ensemble, gmt_expectation
+from .rime import check_emulator_linearity, clip_gmt, predict_rime
+from .risk import compute_cvar_single, cvar_coherent, cvar_pointwise
+from .temporal import sample_to_model_years
+
+impacts_data_path = partial(package_data_path, "impacts")
+
+
+def extract_region_code(node: str) -> str:
+    """Extract short region code from MESSAGE node name.
+
+    Parameters
+    ----------
+    node
+        MESSAGE node name (e.g. ``"R12_AFR"`` or ``"AFR"``).
+
+    Returns
+    -------
+    str
+        Short code (e.g. ``"AFR"``).
+    """
+    return node[4:] if node.startswith("R12_") else node
+
 
 __all__ = [
-    "cached_prediction",
+    "GmtArray",
     "check_emulator_linearity",
-    "clear_cache",
-    "compute_cvar",
+    "clip_gmt",
     "compute_cvar_single",
+    "cvar_coherent",
+    "cvar_pointwise",
     "extract_region_code",
-    "load_gmt",
-    "load_magicc_ensemble",
-    "load_magicc_percentiles",
+    "gmt_ensemble",
+    "gmt_expectation",
+    "impacts_data_path",
     "predict_rime",
     "sample_to_model_years",
-    "validate_cvar_monotonicity",
 ]
