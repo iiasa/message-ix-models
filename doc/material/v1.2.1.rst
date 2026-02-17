@@ -20,7 +20,7 @@ Summary of changes:
 CLI changes
 ===========
 
-- The `--power-sector` option added to `material-ix build` command, to allow building the model with or without the power sector materials module.
+- The ``--power-sector`` option added to ``material-ix build`` command, to allow building the model with or without the power sector materials module.
 
 Deprecations
 ============
@@ -34,6 +34,7 @@ Removed:
 - :py:`get_spec`
 - :py:`gen_mock_demand_steel`
 - :py:`gen_mock_demand_petro`
+- :py:`read_yaml_file`
 
 Renamed:
 
@@ -51,7 +52,7 @@ New features
   - :file:`MESSAGE_global_model_technologies.xlsx`
   - :file:`NTNU_LCA_coefficients.xlsx`
 
-- New general function :func:`.drop_redundant_rows` to reduce set of parameters with `year_act` & `year_vtg` dimension by entries where: :math:`y^A - y^V > technical\_lifetime`.
+- New general function :func:`.drop_redundant_rows` to reduce set of parameters with ``year_act`` & ``year_vtg`` dimension by entries where: :math:`y^A - y^V > technical\_lifetime`.
 - New dataclass :class:`.CommShareConfig`: for better structure of :mod:`.model.material.share_constraints`
 
 
