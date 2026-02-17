@@ -1084,12 +1084,12 @@ def build_B(
     prices = pd.read_csv(price_path)
 
     # sturm_r
-    sturm_r_path = private_data_path("buildings", "report_MESSAGE_resid_SSP2_nopol_post.csv")
+    sturm_r_path = private_data_path("buildings", "report_MESSAGE_resid_SSP2.csv")
     # sturm_r_path = package_data_path("buildings", "debug-sturm-resid.csv")
     sturm_r = pd.read_csv(sturm_r_path, index_col=0)
 
     # sturm_c
-    sturm_c_path = private_data_path("buildings", "report_MESSAGE_comm_SSP2_nopol_post.csv")
+    sturm_c_path = private_data_path("buildings", "report_MESSAGE_comm_SSP2.csv")
     # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
     sturm_c = pd.read_csv(sturm_c_path, index_col=0)
     # sturm_c.loc[sturm_c["commodity"].str.contains("other_uses", na=False), "value"] = 0

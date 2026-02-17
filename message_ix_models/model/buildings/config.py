@@ -15,7 +15,7 @@ class Config:
     :attr:`.model.Config.regions`.
     """
 
-    with_materials: bool = False
+    with_materials: bool = True
 
     # @classmethod
     # def from_context(cls, context, options=None):
