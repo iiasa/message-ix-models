@@ -1,0 +1,30 @@
+var:
+  out
+
+iamc_prefix:
+  Biomass Supply|
+
+unit: GWa
+
+vars:
+# Shipped biomass imports
+  Biomass Supply|Imports|Shipped Biomass|:
+    filter:
+      { technology: [biomass_shipped_exp], mode: M1, commodity: biomass, level: [shipped] }
+    short:
+      biomass_shipped_exp
+
+# Shipped biomass imports
+  Biomass Supply|Imports|Shipped Biomass (Base)|:
+    filter:
+      { technology: biomass_imp, mode: M1, commodity: biomass, level: secondary }
+    short:
+      biomass_imp
+
+# Aggregate biomass extraction
+  Biomass Supply|Domestic|Biomass Extraction:
+    filter:
+      { technology: [land_use_biomass], mode: M1, commodity: biomass, level: primary }
+    short:
+      extr_biomass_dom
+

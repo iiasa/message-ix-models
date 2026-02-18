@@ -1,0 +1,37 @@
+var:
+  out
+
+iamc_prefix:
+  Crude Supply|
+
+unit: GWa
+
+vars:
+# Piped crude imports
+  Crude Supply|Imports|Piped Crude Oil|:
+    filter:
+      { technology: [crudeoil_piped_exp], mode: M1, commodity: crudeoil, level: [piped] }
+    short:
+      crudeoil_piped_exp
+
+# Shipped crude imports
+  Crude Supply|Imports|Shipped Crude Oil|:
+    filter:
+      { technology: [crudeoil_shipped_exp], mode: M1, commodity: crudeoil, level: [shipped] }
+    short:
+      crudeoil_shipped_exp
+
+# Shipped crude imports
+  Crude Supply|Imports|Shipped Crude Oil (Base)|:
+    filter:
+      { technology: oil_imp, mode: M1, commodity: crudeoil, level: secondary }
+    short:
+      oil_imp
+
+# Aggregate crude oil extraction
+  Crude Supply|Domestic|Crude Oil Extraction:
+    filter:
+      { technology: [oil_extr_1, oil_extr_2, oil_extr_3, oil_extr_4, oil_extr_5, oil_extr_6, oil_extr_7], mode: M1, commodity: crudeoil, level: primary }
+    short:
+      extr_crudeoil_dom
+
