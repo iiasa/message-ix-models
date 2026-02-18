@@ -1,0 +1,573 @@
+Region,technology,parameter,Unit,value,availability,Description,Source
+all,dheat_aluminum,capacity_factor,,0.65,2030,,
+all,fc_h2_aluminum,capacity_factor,,0.85,2030,,
+all,furnace_biomass_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_coal_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_elec_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_ethanol_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_foil_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_gas_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_h2_aluminum,capacity_factor,,0.65,2030,,
+all,furnace_loil_aluminum,capacity_factor,,0.65,1980,,
+all,furnace_methanol_aluminum,capacity_factor,,0.65,2020,,
+all,hp_elec_aluminum,capacity_factor,,0.65,1980,,
+all,dheat_cement,capacity_factor,,0.65,2030,,
+all,dheat_petro,capacity_factor,,0.65,2030,,
+all,dheat_refining,capacity_factor,,0.65,2030,,
+all,dheat_resins,capacity_factor,,0.65,2030,,
+all,dheat_steel,capacity_factor,,0.65,2030,,
+all,furnace_biomass_cement,capacity_factor,,0.65,1980,,
+all,furnace_biomass_petro,capacity_factor,,0.65,1980,,
+all,furnace_biomass_refining,capacity_factor,,0.65,1980,,
+all,furnace_biomass_resins,capacity_factor,,0.65,1980,,
+all,furnace_biomass_steel,capacity_factor,,0.65,1980,,
+all,solar_aluminum,capacity_factor,,0.65,2030,,
+all,furnace_coal_cement,capacity_factor,,0.65,1980,,
+all,furnace_coal_petro,capacity_factor,,0.65,1980,,
+all,furnace_coal_refining,capacity_factor,,0.65,1980,,
+all,furnace_coal_resins,capacity_factor,,0.65,1980,,
+all,furnace_coal_steel,capacity_factor,,0.65,1980,,
+all,furnace_coke_petro,capacity_factor,,0.65,1980,,
+all,furnace_coke_refining,capacity_factor,,0.65,1980,,
+all,furnace_elec_cement,capacity_factor,,0.65,1980,,
+all,furnace_elec_petro,capacity_factor,,0.65,1980,,
+all,furnace_elec_refining,capacity_factor,,0.65,1980,,
+all,furnace_elec_resins,capacity_factor,,0.65,1980,,
+all,furnace_elec_steel,capacity_factor,,0.65,1980,,
+all,furnace_ethanol_cement,capacity_factor,,0.65,1980,,
+all,furnace_ethanol_petro,capacity_factor,,0.65,1980,,
+all,furnace_ethanol_refining,capacity_factor,,0.65,1980,,
+all,furnace_ethanol_resins,capacity_factor,,0.65,1980,,
+all,furnace_ethanol_steel,capacity_factor,,0.65,1980,,
+all,furnace_foil_cement,capacity_factor,,0.65,1980,,
+all,furnace_foil_petro,capacity_factor,,0.65,1980,,
+all,furnace_foil_refining,capacity_factor,,0.65,1980,,
+all,furnace_foil_resins,capacity_factor,,0.65,1980,,
+all,furnace_foil_steel,capacity_factor,,0.65,1980,,
+all,furnace_gas_cement,capacity_factor,,0.65,1980,,
+all,furnace_gas_petro,capacity_factor,,0.65,1980,,
+all,furnace_gas_refining,capacity_factor,,0.65,1980,,
+all,furnace_gas_resins,capacity_factor,,0.65,1980,,
+all,furnace_gas_steel,capacity_factor,,0.65,1980,,
+all,furnace_h2_cement,capacity_factor,,0.65,2030,,
+all,furnace_h2_petro,capacity_factor,,0.65,2030,,
+all,furnace_h2_refining,capacity_factor,,0.65,2030,,
+all,furnace_h2_resins,capacity_factor,,0.65,2030,,
+all,furnace_h2_steel,capacity_factor,,0.65,2030,,
+all,furnace_loil_cement,capacity_factor,,0.65,1980,,
+all,furnace_loil_petro,capacity_factor,,0.65,1980,,
+all,furnace_loil_refining,capacity_factor,,0.65,1980,,
+all,furnace_loil_resins,capacity_factor,,0.65,1980,,
+all,furnace_loil_steel,capacity_factor,,0.65,1980,,
+all,furnace_methanol_cement,capacity_factor,,0.65,2020,,
+all,furnace_methanol_petro,capacity_factor,,0.65,2020,,
+all,furnace_methanol_refining,capacity_factor,,0.65,2020,,
+all,furnace_methanol_resins,capacity_factor,,0.65,2020,,
+all,furnace_methanol_steel,capacity_factor,,0.65,2020,,
+all,hp_elec_cement,capacity_factor,,0.65,1980,,
+all,hp_elec_petro,capacity_factor,,0.65,1980,,
+all,hp_elec_refining,capacity_factor,,0.65,1980,,
+all,hp_elec_resins,capacity_factor,,0.65,1980,,
+all,hp_elec_steel,capacity_factor,,0.65,1980,,
+all,solar_cement,capacity_factor,,0.65,2030,,
+all,solar_petro,capacity_factor,,0.65,2030,,
+all,solar_refining,capacity_factor,,0.65,2030,,
+all,solar_resins,capacity_factor,,0.65,2030,,
+all,solar_steel,capacity_factor,,0.65,2030,,
+all,fc_h2_cement,capacity_factor,,0.85,2030,,
+all,fc_h2_petro,capacity_factor,,0.85,2030,,
+all,fc_h2_refining,capacity_factor,,0.85,2030,,
+all,fc_h2_resins,capacity_factor,,0.85,2030,,
+all,fc_h2_steel,capacity_factor,,0.85,2030,,
+all,furnace_coal_cement,emission_factor|PM2p5,kt / Gwa,0.0009830043378995434,1980,,fromGAINS_abated EF
+all,furnace_coal_aluminum,emission_factor|PM2p5,kt / Gwa,0.0009830043378995434,1980,,fromGAINS_abated EF
+all,furnace_coal_petro,emission_factor|PM2p5,kt / Gwa,0.0009830043378995434,1980,,fromGAINS_abated EF
+all,furnace_coal_refining,emission_factor|PM2p5,kt / Gwa,0.0009830043378995434,1980,,fromGAINS_abated EF
+all,furnace_coal_resins,emission_factor|PM2p5,kt / Gwa,0.0009830043378995434,1980,,fromGAINS_abated EF
+all,furnace_coal_steel,emission_factor|PM2p5,kt / Gwa,0.0009830043378995434,1980,,fromGAINS_abated EF
+all,furnace_gas_aluminum,emission_factor|PM2p5,kt / Gwa,0.0007955993173515983,1980,,fromGAINS_abated EF
+all,furnace_gas_cement,emission_factor|PM2p5,kt / Gwa,0.0007955993173515983,1980,,fromGAINS_abated EF
+all,furnace_gas_petro,emission_factor|PM2p5,kt / Gwa,0.0007955993173515983,1980,,fromGAINS_abated EF
+all,furnace_gas_refining,emission_factor|PM2p5,kt / Gwa,0.0007955993173515983,1980,,fromGAINS_abated EF
+all,furnace_gas_resins,emission_factor|PM2p5,kt / Gwa,0.0007955993173515983,1980,,fromGAINS_abated EF
+all,furnace_gas_steel,emission_factor|PM2p5,kt / Gwa,0.0007955993173515983,1980,,fromGAINS_abated EF
+all,dheat_aluminum,fix_cost,MUS2005/GW,7.5,1980,,
+all,dheat_cement,fix_cost,MUS2005/GW,7.5,1980,,
+all,dheat_petro,fix_cost,MUS2005/GW,7.5,1980,,
+all,dheat_refining,fix_cost,MUS2005/GW,7.5,1980,,
+all,dheat_resins,fix_cost,MUS2005/GW,7.5,1980,,
+all,dheat_steel,fix_cost,MUS2005/GW,7.5,1980,,MESSAGE global model
+all,fc_h2_aluminum,fix_cost,MUS2005/GW,0.0,2030,,
+all,fc_h2_cement,fix_cost,MUS2005/GW,0.0,2030,,
+all,fc_h2_petro,fix_cost,MUS2005/GW,0.0,2030,,
+all,fc_h2_refining,fix_cost,MUS2005/GW,0.0,2030,,
+all,fc_h2_resins,fix_cost,MUS2005/GW,0.0,2030,,
+all,fc_h2_steel,fix_cost,MUS2005/GW,0.0,2030,,MESSAGE global model
+all,furnace_biomass_aluminum,fix_cost,MUS2005/GW,41.17,1980,,
+all,furnace_biomass_cement,fix_cost,MUS2005/GW,41.17,1980,,
+all,furnace_biomass_petro,fix_cost,MUS2005/GW,41.17,1980,,
+all,furnace_biomass_refining,fix_cost,MUS2005/GW,41.17,1980,,
+all,furnace_biomass_resins,fix_cost,MUS2005/GW,41.17,1980,,
+all,furnace_biomass_steel,fix_cost,MUS2005/GW,41.17,1980,,MESSAGE global model
+all,furnace_coal_aluminum,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_coal_cement,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_coal_petro,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_coal_refining,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_coal_resins,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_coal_steel,fix_cost,MUS2005/GW,37.5,1980,,MESSAGE global model
+all,furnace_coke_petro,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_coke_refining,fix_cost,MUS2005/GW,37.5,1980,,
+all,furnace_elec_aluminum,fix_cost,MUS2005/GW,7.5,1980,,
+all,furnace_elec_cement,fix_cost,MUS2005/GW,7.5,1980,,
+all,furnace_elec_petro,fix_cost,MUS2005/GW,7.5,1980,,
+all,furnace_elec_refining,fix_cost,MUS2005/GW,7.5,1980,,
+all,furnace_elec_resins,fix_cost,MUS2005/GW,7.5,1980,,
+all,furnace_elec_steel,fix_cost,MUS2005/GW,7.5,1980,,MESSAGE global model
+all,furnace_ethanol_aluminum,fix_cost,MUS2005/GW,9.5,1980,,
+all,furnace_gas_aluminum,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_gas_cement,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_gas_petro,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_gas_refining,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_gas_resins,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_gas_steel,fix_cost,MUS2005/GW,11.25,1980,,MESSAGE global model
+all,furnace_ethanol_cement,fix_cost,MUS2005/GW,9.5,1980,,
+all,furnace_ethanol_petro,fix_cost,MUS2005/GW,9.5,1980,,
+all,furnace_ethanol_refining,fix_cost,MUS2005/GW,9.5,1980,,
+all,furnace_ethanol_resins,fix_cost,MUS2005/GW,9.5,1980,,
+all,furnace_ethanol_steel,fix_cost,MUS2005/GW,9.5,1980,,MESSAGE global model
+all,furnace_foil_aluminum,fix_cost,MUS2005/GW,18.75,1980,,
+all,furnace_foil_cement,fix_cost,MUS2005/GW,18.75,1980,,
+all,furnace_foil_petro,fix_cost,MUS2005/GW,18.75,1980,,
+all,furnace_foil_refining,fix_cost,MUS2005/GW,18.75,1980,,
+all,furnace_foil_resins,fix_cost,MUS2005/GW,18.75,1980,,
+all,furnace_foil_steel,fix_cost,MUS2005/GW,18.75,1980,,MESSAGE global model
+all,furnace_h2_aluminum,fix_cost,MUS2005/GW,11.25,2030,,
+all,furnace_h2_cement,fix_cost,MUS2005/GW,11.25,2030,,
+all,furnace_h2_petro,fix_cost,MUS2005/GW,11.25,2030,,
+all,furnace_h2_refining,fix_cost,MUS2005/GW,11.25,2030,,
+all,furnace_h2_resins,fix_cost,MUS2005/GW,11.25,2030,,
+all,furnace_h2_steel,fix_cost,MUS2005/GW,11.25,2030,,MESSAGE global model
+all,furnace_loil_aluminum,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_loil_cement,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_loil_petro,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_loil_refining,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_loil_resins,fix_cost,MUS2005/GW,11.25,1980,,
+all,furnace_loil_steel,fix_cost,MUS2005/GW,11.25,1980,,MESSAGE global model
+all,furnace_methanol_aluminum,fix_cost,MUS2005/GW,9.5,2020,,
+all,furnace_methanol_cement,fix_cost,MUS2005/GW,9.5,2020,,
+all,furnace_methanol_petro,fix_cost,MUS2005/GW,9.5,2020,,
+all,furnace_methanol_refining,fix_cost,MUS2005/GW,9.5,2020,,
+all,furnace_methanol_resins,fix_cost,MUS2005/GW,9.5,2020,,
+all,furnace_methanol_steel,fix_cost,MUS2005/GW,9.5,2020,,MESSAGE global model
+all,hp_elec_aluminum,fix_cost,MUS2005/GW,67.5,1980,,
+all,hp_elec_cement,fix_cost,MUS2005/GW,67.5,1980,,
+all,hp_elec_petro,fix_cost,MUS2005/GW,67.5,1980,,
+all,hp_elec_refining,fix_cost,MUS2005/GW,67.5,1980,,
+all,hp_elec_resins,fix_cost,MUS2005/GW,67.5,1980,,
+all,hp_elec_steel,fix_cost,MUS2005/GW,67.5,1980,,MESSAGE global model
+all,solar_aluminum,fix_cost,MUS2005/GW,22.67,1980,,
+all,solar_cement,fix_cost,MUS2005/GW,22.67,1980,,
+all,solar_petro,fix_cost,MUS2005/GW,22.67,1980,,
+all,solar_refining,fix_cost,MUS2005/GW,22.67,1980,,
+all,solar_resins,fix_cost,MUS2005/GW,22.67,1980,,
+all,solar_steel,fix_cost,MUS2005/GW,22.67,1980,,MESSAGE global model
+all,dheat_resins,input|d_heat|final|low_temp,GWa,1.0,1980,Same values with petro furnaces assumed,
+all,fc_h2_aluminum,input|hydrogen|final|low_temp,GWa,2.564,2030,,MESSAGE Global model
+all,dheat_steel,input|d_heat|final|low_temp,GWa,1.0,1980,,MESSAGE Global model
+all,dheat_petro,input|d_heat|final|low_temp,GWa,1.0,1980,,
+all,furnace_biomass_resins,input|biomass|final|high_temp,GWa,2.105653409090909,1980,Same values with petro furnaces assumed,
+all,furnace_biomass_steel,input|biomass|final|high_temp,GWa,2.105653409090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,fc_h2_refining,input|hydrogen|secondary|low_temp,GWa,2.564,2030,,MESSAGE Global model
+all,furnace_biomass_refining,input|biomass|primary|high_temp,GWa,2.105653409090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,fc_h2_petro,input|hydrogen|final|low_temp,GWa,2.564,2030,,MESSAGE Global model
+all,fc_h2_resins,input|hydrogen|final|low_temp,GWa,2.564,2030,Same values with petro furnaces assumed,
+all,furnace_biomass_resins,input|biomass|final|low_temp,GWa,2.105653409090909,1980,Same values with petro furnaces assumed,
+all,furnace_biomass_steel,input|biomass|final|low_temp,GWa,2.105653409090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_biomass_refining,input|biomass|primary|low_temp,GWa,2.105653409090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coal_refining,input|coal|secondary|high_temp,GWa,2.183465909090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_biomass_cement,input|biomass|final|high_temp,GWa,1.1,1980,Efficiency of boilers are used to match the base year values,MESSAGE model biomass_i
+all,furnace_biomass_petro,input|biomass|final|high_temp,GWa,1.3787672924901186,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coal_resins,input|coal|final|high_temp,GWa,2.183465909090909,1980,Same values with petro furnaces assumed,
+all,furnace_coal_steel,input|coal|final|high_temp,GWa,2.183465909090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coal_refining,input|coal|secondary|low_temp,GWa,2.183465909090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coke_refining,input|pet_coke|intermediate|high_temp,GWa,2.183465909090909,1980,,
+all,furnace_biomass_petro,input|biomass|final|low_temp,GWa,1.3787672924901186,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coal_resins,input|coal|final|low_temp,GWa,2.183465909090909,1980,Same values with petro furnaces assumed,
+all,furnace_coal_steel,input|coal|final|low_temp,GWa,2.183465909090909,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coke_refining,input|pet_coke|intermediate|low_temp,GWa,2.183465909090909,1980,,
+all,furnace_elec_refining,input|electr|secondary|high_temp,GWa,1.3251704545454548,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_coal_cement,input|coal|final|high_temp,GWa,1.0,1980,Efficiency from MESSAGE model used to match base year values,MESSAGE model coal_i
+all,furnace_coal_petro,input|coal|final|high_temp,GWa,1.4297183794466404,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_elec_resins,input|electr|final|high_temp,GWa,1.3251704545454548,1980,Same values with petro furnaces assumed,
+all,furnace_elec_steel,input|electr|final|high_temp,GWa,1.3251704545454548,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_elec_refining,input|electr|secondary|low_temp,GWa,1.3251704545454548,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_elec_steel,input|electr|final|low_temp,GWa,1.3251704545454548,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,hp_elec_aluminum,input|electr|final|low_temp,GWa,0.333,1980,,MESSAGE Global model
+all,furnace_coal_petro,input|coal|final|low_temp,GWa,1.4297183794466404,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_ethanol_refining,input|ethanol|secondary|high_temp,GWa,1.4925852272727271,1980,,
+all,furnace_elec_resins,input|electr|final|low_temp,GWa,1.3251704545454548,1980,Same values with petro furnaces assumed,
+all,furnace_ethanol_steel,input|ethanol|final|low_temp,GWa,1.4925852272727271,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,fc_h2_steel,input|hydrogen|final|low_temp,GWa,2.564,2030,,MESSAGE Global model
+all,furnace_elec_cement,input|electr|final|high_temp,GWa,1.0,1980,Value from the model is directly used to match tha base year values,MESSAGE Global model
+all,furnace_coke_petro,input|pet_coke|intermediate|high_temp,GWa,2.183465909090909,1980,,
+all,furnace_coke_petro,input|pet_coke|intermediate|low_temp,GWa,2.183465909090909,1980,,
+all,furnace_ethanol_resins,input|ethanol|final|low_temp,GWa,1.4925852272727271,1980,Same values with petro furnaces assumed,
+all,furnace_ethanol_steel,input|ethanol|final|high_temp,GWa,1.4925852272727271,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_ethanol_refining,input|ethanol|secondary|low_temp,GWa,1.4925852272727271,1980,,
+all,dheat_aluminum,input|d_heat|final|low_temp,GWa,1.0,1980,,
+all,furnace_elec_petro,input|electr|final|high_temp,GWa,0.8677124505928855,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_ethanol_resins,input|ethanol|final|high_temp,GWa,1.4925852272727271,1980,Same values with petro furnaces assumed,
+all,furnace_foil_steel,input|fueloil|final|low_temp,GWa,1.8710369318181819,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_foil_refining,input|fueloil|secondary|high_temp,GWa,1.8710369318181819,1980,,
+all,furnace_h2_aluminum,input|hydrogen|final|high_temp,GWa,1.05,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_ethanol_cement,input|ethanol|final|high_temp,GWa,1.05,1980,,
+all,furnace_elec_petro,input|electr|final|low_temp,GWa,0.8677124505928855,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_foil_resins,input|fueloil|final|low_temp,GWa,1.8710369318181819,1980,Same values with petro furnaces assumed,
+all,furnace_foil_resins,input|fueloil|final|high_temp,GWa,1.8710369318181819,1980,Same values with petro furnaces assumed,
+all,furnace_foil_steel,input|fueloil|final|high_temp,GWa,1.8710369318181819,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_foil_refining,input|fueloil|secondary|low_temp,GWa,1.8710369318181819,1980,,
+all,furnace_elec_aluminum,input|electr|final|high_temp,GWa,1.05,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_elec_aluminum,input|electr|final|low_temp,GWa,1.05,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_foil_cement,input|fueloil|final|high_temp,GWa,1.05,1980,,
+all,furnace_ethanol_petro,input|ethanol|final|low_temp,GWa,0.9773344861660078,1980,,
+all,furnace_ethanol_petro,input|ethanol|final|high_temp,GWa,0.9773344861660078,1980,,
+all,furnace_gas_refining,input|gas|secondary|high_temp,GWa,1.66,1980,The efficiency is used as a basis of calcualtion for other furnaces. 60% efficiency chosen. ,
+all,furnace_gas_refining,input|gas|secondary|low_temp,GWa,1.66,1980,The efficiency is used as a basis of calcualtion for other furnaces. 60% efficiency chosen,
+all,furnace_ethanol_aluminum,input|ethanol|final|high_temp,GWa,1.1,1980,,
+all,furnace_gas_cement,input|gas|final|high_temp,GWa,1.05,1980,Same efficiency assumed as gas_i to match the base year values,MESSAGE model gas_i technology
+all,furnace_foil_petro,input|fueloil|final|low_temp,GWa,1.2251420454545454,1980,,
+all,furnace_gas_resins,input|gas|final|high_temp,GWa,1.66,1980,Same values with petro furnaces assumed,
+all,furnace_gas_steel,input|gas|final|high_temp,GWa,1.66,1980,The efficiency is used as a basis of calcualtion for other furnaces. 60% efficiency chosen. ,JRC report for aluminum. Furnace efficiencies between: 20% - 60%. https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
+all,furnace_ethanol_aluminum,input|ethanol|final|low_temp,GWa,1.1,1980,,
+all,furnace_methanol_aluminum,input|methanol|final|high_temp,GWa,1.1,2020,,
+all,furnace_foil_petro,input|fueloil|final|high_temp,GWa,1.2251420454545454,1980,,
+all,furnace_gas_resins,input|gas|final|low_temp,GWa,1.66,1980,Same values with petro furnaces assumed,
+all,furnace_gas_steel,input|gas|final|low_temp,GWa,1.66,1980,The efficiency is used as a basis of calcualtion for other furnaces. 60% efficiency chosen,JRC report for aluminum. Furnace efficiencies between: 20% - 60%. https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
+all,furnace_methanol_aluminum,input|methanol|final|low_temp,GWa,1.1,2020,,
+all,furnace_h2_aluminum,input|hydrogen|final|low_temp,GWa,1.05,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_gas_petro,input|gas|final|high_temp,GWa,1.0869565217391304,1980,The efficiency is used as a basis of calcualtion for other furnaces. 60% efficiency chosen. ,
+all,furnace_h2_cement,input|hydrogen|final|high_temp,GWa,1.05,2030,Value from the model is directly used to match the base year values,Value from h2_i technology in MESSAGE
+all,furnace_h2_petro,input|hydrogen|final|high_temp,GWa,0.847198532488012,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_gas_petro,input|gas|final|low_temp,GWa,1.0869565217391304,1980,The efficiency is used as a basis of calcualtion for other furnaces. 60% efficiency chosen,
+all,furnace_h2_petro,input|hydrogen|final|low_temp,GWa,0.847198532488012,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_h2_resins,input|hydrogen|final|high_temp,GWa,1.293841598815692,2030,Same values with petro furnaces assumed,
+all,furnace_h2_refining,input|hydrogen|secondary|low_temp,GWa,1.293841598815692,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_h2_refining,input|hydrogen|secondary|high_temp,GWa,1.293841598815692,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_foil_aluminum,input|fueloil|final|high_temp,GWa,1.15,1980,,
+all,furnace_h2_resins,input|hydrogen|final|low_temp,GWa,1.293841598815692,2030,Same values with petro furnaces assumed,
+all,furnace_loil_resins,input|lightoil|final|low_temp,GWa,1.8710369318181819,1980,Same values with petro furnaces assumed,
+all,furnace_loil_steel,input|lightoil|final|low_temp,GWa,1.8710369318181819,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_foil_aluminum,input|fueloil|final|low_temp,GWa,1.15,1980,,
+all,furnace_loil_aluminum,input|lightoil|final|high_temp,GWa,1.15,1980,,
+all,furnace_loil_cement,input|lightoil|final|high_temp,GWa,1.05,1980,,
+all,furnace_h2_steel,input|hydrogen|final|high_temp,GWa,1.293841598815692,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_loil_resins,input|lightoil|final|high_temp,GWa,1.8710369318181819,1980,Same values with petro furnaces assumed,
+all,furnace_loil_steel,input|lightoil|final|high_temp,GWa,1.8710369318181819,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_loil_aluminum,input|lightoil|final|low_temp,GWa,1.15,1980,,
+all,furnace_biomass_aluminum,input|biomass|final|high_temp,GWa,1.2,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_loil_petro,input|lightoil|final|low_temp,GWa,1.2251420454545454,1980,,
+all,furnace_methanol_resins,input|methanol|final|low_temp,GWa,1.4925852272727271,2020,Same values with petro furnaces assumed,
+all,furnace_methanol_steel,input|methanol|final|low_temp,GWa,1.4925852272727271,2020, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_biomass_aluminum,input|biomass|final|low_temp,GWa,1.2,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_methanol_cement,input|methanol|final|high_temp,GWa,1.05,2020,,
+all,furnace_loil_petro,input|lightoil|final|high_temp,GWa,1.2251420454545454,1980,,
+all,furnace_methanol_resins,input|methanol|final|high_temp,GWa,1.4925852272727271,2020,Same values with petro furnaces assumed,
+all,furnace_methanol_steel,input|methanol|final|high_temp,GWa,1.4925852272727271,2020, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_loil_refining,input|lightoil|secondary|high_temp,GWa,1.8710369318181819,1980,,
+all,furnace_loil_refining,input|lightoil|secondary|low_temp,GWa,1.8710369318181819,1980,,
+all,furnace_coal_aluminum,input|coal|final|high_temp,GWa,1.15,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_methanol_petro,input|methanol|final|low_temp,GWa,0.9773344861660078,2020,,
+all,hp_elec_resins,input|electr|final|low_temp,GWa,0.333,1980,Same values with petro furnaces assumed,
+all,hp_elec_steel,input|electr|final|low_temp,GWa,0.333,1980,,MESSAGE Global model
+all,furnace_coal_aluminum,input|coal|final|low_temp,GWa,1.15,1980, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,furnace_methanol_petro,input|methanol|final|high_temp,GWa,0.9773344861660078,2020,,
+all,furnace_methanol_refining,input|methanol|secondary|high_temp,GWa,1.4925852272727271,2020,,
+all,furnace_methanol_refining,input|methanol|secondary|low_temp,GWa,1.4925852272727271,2020,,
+all,hp_elec_petro,input|electr|final|low_temp,GWa,0.333,1980,,MESSAGE Global model
+all,hp_elec_refining,input|electr|secondary|low_temp,GWa,0.333,1980,,MESSAGE Global model
+all,furnace_gas_aluminum,input|gas|final|high_temp,GWa,1.05,1980,The efficiency is used as a basis of calcualtion for other furnaces. 40% efficiency chosen,JRC report for aluminum. Furnace efficiencies between: 20% - 60%. https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
+all,furnace_gas_aluminum,input|gas|final|low_temp,GWa,1.05,1980,The efficiency is used as a basis of calcualtion for other furnaces. 40% efficiency chosen,JRC report for aluminum. Furnace efficiencies between: 20% - 60%. https://publications.jrc.ec.europa.eu/repository/handle/JRC96680
+all,furnace_h2_steel,input|hydrogen|final|low_temp,GWa,1.293841598815692,2030, Efficiency of gas furnaces are known from JRC report. Other furnaces are  corrected by the efficiency difference between gas and boilers with other fuels.,own calculation
+all,dheat_aluminum,inv_cost,MUS2005/GW,27.69,1980,,
+all,dheat_cement,inv_cost,MUS2005/GW,27.69,1980,,
+all,dheat_petro,inv_cost,MUS2005/GW,27.69,1980,,
+all,dheat_refining,inv_cost,MUS2005/GW,27.69,1980,,
+all,dheat_resins,inv_cost,MUS2005/GW,27.69,1980,,
+all,dheat_steel,inv_cost,MUS2005/GW,27.69,1980,,MESSAGE global model
+all,fc_h2_aluminum,inv_cost,MUS2005/GW,1909.0,2030,,
+all,fc_h2_cement,inv_cost,MUS2005/GW,1909.0,2030,,
+all,fc_h2_petro,inv_cost,MUS2005/GW,1909.0,2030,,
+all,fc_h2_refining,inv_cost,MUS2005/GW,1909.0,2030,,
+all,fc_h2_resins,inv_cost,MUS2005/GW,1909.0,2030,,
+all,fc_h2_steel,inv_cost,MUS2005/GW,1909.0,2030,,MESSAGE global model
+all,furnace_biomass_aluminum,inv_cost,MUS2005/GW,195.47333333333333,1980,average of 12 regions in 2020,MESSAGE global model
+all,furnace_biomass_cement,inv_cost,MUS2005/GW,195.47333333333333,1980,average of 12 regions in 2020,MESSAGE global model
+all,furnace_biomass_petro,inv_cost,MUS2005/GW,195.47333333333333,1980,average of 12 regions in 2020,MESSAGE global model
+all,furnace_biomass_refining,inv_cost,MUS2005/GW,195.47333333333333,1980,average of 12 regions in 2020,MESSAGE global model
+all,furnace_biomass_resins,inv_cost,MUS2005/GW,195.47333333333333,1980,average of 12 regions in 2020,MESSAGE global model
+all,furnace_biomass_steel,inv_cost,MUS2005/GW,195.47333333333333,1980,average of 12 regions in 2020,MESSAGE global model
+all,furnace_coal_aluminum,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_coal_cement,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_coal_petro,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_coal_refining,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_coal_resins,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_coal_steel,inv_cost,MUS2005/GW,94.15,1980,,MESSAGE global model
+all,furnace_coke_petro,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_coke_refining,inv_cost,MUS2005/GW,94.15,1980,,
+all,furnace_elec_aluminum,inv_cost,MUS2005/GW,27.69,1980,,
+all,furnace_elec_cement,inv_cost,MUS2005/GW,27.69,1980,,
+all,furnace_elec_petro,inv_cost,MUS2005/GW,27.69,1980,,
+all,furnace_elec_refining,inv_cost,MUS2005/GW,27.69,1980,,
+all,furnace_elec_resins,inv_cost,MUS2005/GW,27.69,1980,,
+all,furnace_elec_steel,inv_cost,MUS2005/GW,27.69,1980,,MESSAGE global model
+all,furnace_gas_aluminum,inv_cost,MUS2005/GW,53.72,1980,,
+all,furnace_gas_cement,inv_cost,MUS2005/GW,53.72,1980,,
+all,furnace_gas_petro,inv_cost,MUS2005/GW,53.72,1980,,
+all,furnace_gas_refining,inv_cost,MUS2005/GW,53.72,1980,,
+all,furnace_gas_resins,inv_cost,MUS2005/GW,53.72,1980,,
+all,furnace_gas_steel,inv_cost,MUS2005/GW,53.72,1980,,MESSAGE global model
+all,furnace_ethanol_aluminum,inv_cost,MUS2005/GW,57.41,1980,,
+all,furnace_ethanol_cement,inv_cost,MUS2005/GW,57.41,1980,,
+all,furnace_ethanol_petro,inv_cost,MUS2005/GW,57.41,1980,,
+all,furnace_ethanol_refining,inv_cost,MUS2005/GW,57.41,1980,,
+all,furnace_ethanol_resins,inv_cost,MUS2005/GW,57.41,1980,,
+all,furnace_ethanol_steel,inv_cost,MUS2005/GW,57.41,1980,,MESSAGE global model
+all,furnace_foil_aluminum,inv_cost,MUS2005/GW,59.26,1980,,
+all,furnace_foil_cement,inv_cost,MUS2005/GW,59.26,1980,,
+all,furnace_foil_petro,inv_cost,MUS2005/GW,59.26,1980,,
+all,furnace_foil_refining,inv_cost,MUS2005/GW,59.26,1980,,
+all,furnace_foil_resins,inv_cost,MUS2005/GW,59.26,1980,,
+all,furnace_foil_steel,inv_cost,MUS2005/GW,59.26,1980,,MESSAGE global model
+all,furnace_h2_aluminum,inv_cost,MUS2005/GW,53.72,2030,,
+all,furnace_h2_cement,inv_cost,MUS2005/GW,53.72,2030,,
+all,furnace_h2_petro,inv_cost,MUS2005/GW,53.72,2030,,
+all,furnace_h2_refining,inv_cost,MUS2005/GW,53.72,2030,,
+all,furnace_h2_resins,inv_cost,MUS2005/GW,53.72,2030,,
+all,furnace_h2_steel,inv_cost,MUS2005/GW,53.72,2030,,MESSAGE global model
+all,furnace_loil_aluminum,inv_cost,MUS2005/GW,51.51,1980,,
+all,furnace_loil_cement,inv_cost,MUS2005/GW,51.51,1980,,
+all,furnace_loil_petro,inv_cost,MUS2005/GW,51.51,1980,,
+all,furnace_loil_refining,inv_cost,MUS2005/GW,51.51,1980,,
+all,furnace_loil_resins,inv_cost,MUS2005/GW,51.51,1980,,
+all,furnace_loil_steel,inv_cost,MUS2005/GW,51.51,1980,,MESSAGE global model
+all,furnace_methanol_aluminum,inv_cost,MUS2005/GW,57.4099999999999,2020,,
+all,furnace_methanol_cement,inv_cost,MUS2005/GW,57.4099999999999,2020,,
+all,furnace_methanol_petro,inv_cost,MUS2005/GW,57.4099999999999,2020,,
+all,furnace_methanol_refining,inv_cost,MUS2005/GW,57.4099999999999,2020,,
+all,furnace_methanol_resins,inv_cost,MUS2005/GW,57.4099999999999,2020,,
+all,furnace_methanol_steel,inv_cost,MUS2005/GW,57.4099999999999,2020,,MESSAGE global model
+all,hp_elec_aluminum,inv_cost,MUS2005/GW,443.08,1980,,
+all,hp_elec_cement,inv_cost,MUS2005/GW,443.08,1980,,
+all,hp_elec_petro,inv_cost,MUS2005/GW,443.08,1980,,
+all,hp_elec_refining,inv_cost,MUS2005/GW,443.08,1980,,
+all,hp_elec_resins,inv_cost,MUS2005/GW,443.08,1980,,
+all,hp_elec_steel,inv_cost,MUS2005/GW,443.08,1980,,MESSAGE global model
+all,solar_aluminum,inv_cost,MUS2005/GW,415.679999999996,1980,,
+all,solar_cement,inv_cost,MUS2005/GW,415.679999999996,1980,,
+all,solar_petro,inv_cost,MUS2005/GW,415.679999999996,1980,,
+all,solar_refining,inv_cost,MUS2005/GW,415.679999999996,1980,,
+all,solar_resins,inv_cost,MUS2005/GW,415.679999999996,1980,,
+all,solar_steel,inv_cost,MUS2005/GW,415.679999999996,1980,,MESSAGE global model
+all,furnace_biomass_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_coal_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_coke_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_elec_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_ethanol_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_foil_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_h2_refining,output|ht_heat|secondary|high_temp,GWa,1.0,2030,,
+all,furnace_loil_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_methanol_refining,output|ht_heat|secondary|high_temp,GWa,1.0,2020,,
+all,furnace_gas_refining,output|ht_heat|secondary|high_temp,GWa,1.0,1980,,
+all,furnace_biomass_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_coal_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_elec_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_ethanol_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_foil_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_h2_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,2030,,
+all,furnace_loil_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_methanol_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,2020,,
+all,furnace_gas_aluminum,output|ht_heat|useful_aluminum|high_temp,GWa,1.0,1980,,
+all,furnace_biomass_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_coal_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_elec_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_ethanol_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_foil_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_h2_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,2030,,
+all,furnace_loil_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_methanol_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,2020,,
+all,furnace_gas_cement,output|ht_heat|useful_cement|high_temp,GWa,1.0,1980,,
+all,furnace_biomass_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_coal_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_coke_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_elec_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_ethanol_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_foil_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_h2_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,2030,,
+all,furnace_loil_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_methanol_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,2020,,
+all,furnace_gas_petro,output|ht_heat|useful_petro|high_temp,GWa,1.0,1980,,
+all,furnace_biomass_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_coal_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_elec_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_ethanol_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_foil_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_h2_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,2030,,
+all,furnace_loil_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_methanol_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,2020,,
+all,furnace_gas_resins,output|ht_heat|useful_resins|high_temp,GWa,1.0,1980,,
+all,furnace_biomass_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,furnace_coal_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,furnace_elec_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,furnace_ethanol_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,furnace_foil_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,furnace_h2_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,2030,,
+all,furnace_loil_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,furnace_methanol_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,2020,,
+all,furnace_gas_steel,output|ht_heat|useful_steel|high_temp,GWa,1.0,1980,,
+all,fc_h2_refining,output|lt_heat|secondary|low_temp,GWa,1.0,2030,,
+all,furnace_biomass_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_coal_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_coke_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_elec_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_ethanol_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_foil_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_h2_refining,output|lt_heat|secondary|low_temp,GWa,1.0,2030,,
+all,furnace_loil_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_methanol_refining,output|lt_heat|secondary|low_temp,GWa,1.0,2020,,
+all,hp_elec_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,solar_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,furnace_gas_refining,output|lt_heat|secondary|low_temp,GWa,1.0,1980,,
+all,dheat_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,fc_h2_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,2030,,
+all,furnace_biomass_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_coal_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_elec_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_ethanol_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_foil_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_h2_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,2030,,
+all,furnace_loil_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_methanol_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,2020,,
+all,hp_elec_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,solar_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,furnace_gas_aluminum,output|lt_heat|useful_aluminum|low_temp,GWa,1.0,1980,,
+all,solar_cement,output|lt_heat|useful_cement|low_temp,GWa,1.0,1980,,
+all,dheat_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,fc_h2_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,2030,,
+all,furnace_biomass_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_coal_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_coke_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_elec_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_ethanol_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_foil_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_h2_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,2030,,
+all,furnace_loil_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_methanol_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,2020,,
+all,hp_elec_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,solar_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,furnace_gas_petro,output|lt_heat|useful_petro|low_temp,GWa,1.0,1980,,
+all,dheat_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,fc_h2_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,2030,,
+all,furnace_biomass_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_coal_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_elec_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_ethanol_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_foil_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_h2_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,2030,,
+all,furnace_loil_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_methanol_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,2020,,
+all,hp_elec_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,solar_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,furnace_gas_resins,output|lt_heat|useful_resins|low_temp,GWa,1.0,1980,,
+all,dheat_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,fc_h2_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,2030,,
+all,furnace_biomass_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_coal_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_elec_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_ethanol_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_foil_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_h2_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,2030,,
+all,furnace_loil_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_methanol_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,2020,,
+all,hp_elec_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,solar_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,furnace_gas_steel,output|lt_heat|useful_steel|low_temp,GWa,1.0,1980,,
+all,fc_h2_cement,technical_lifetime,yr,10.0,2030,,
+all,fc_h2_petro,technical_lifetime,yr,10.0,2030,,
+all,fc_h2_refining,technical_lifetime,yr,10.0,2030,,
+all,fc_h2_resins,technical_lifetime,yr,10.0,2030,,
+all,fc_h2_steel,technical_lifetime,yr,10.0,2030,,MESSAGE Global model
+all,solar_cement,technical_lifetime,yr,15.0,1980,,
+all,solar_petro,technical_lifetime,yr,15.0,1980,,
+all,solar_refining,technical_lifetime,yr,15.0,1980,,
+all,solar_resins,technical_lifetime,yr,15.0,1980,,
+all,solar_steel,technical_lifetime,yr,15.0,1980,,MESSAGE Global model
+all,dheat_cement,technical_lifetime,yr,20.0,1980,,
+all,dheat_petro,technical_lifetime,yr,20.0,1980,,
+all,dheat_refining,technical_lifetime,yr,20.0,1980,,
+all,dheat_resins,technical_lifetime,yr,20.0,1980,,
+all,dheat_steel,technical_lifetime,yr,20.0,1980,,MESSAGE Global model
+all,furnace_elec_cement,technical_lifetime,yr,20.0,1980,,
+all,furnace_elec_petro,technical_lifetime,yr,20.0,1980,,
+all,furnace_elec_refining,technical_lifetime,yr,20.0,1980,,
+all,furnace_elec_resins,technical_lifetime,yr,20.0,1980,,
+all,furnace_elec_steel,technical_lifetime,yr,20.0,1980,,MESSAGE Global model
+all,hp_elec_cement,technical_lifetime,yr,20.0,1980,,
+all,hp_elec_petro,technical_lifetime,yr,20.0,1980,,
+all,hp_elec_refining,technical_lifetime,yr,20.0,1980,,
+all,hp_elec_resins,technical_lifetime,yr,20.0,1980,,
+all,hp_elec_steel,technical_lifetime,yr,20.0,1980,,MESSAGE Global model
+all,furnace_biomass_cement,technical_lifetime,yr,25.0,1980,,
+all,furnace_biomass_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_biomass_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_biomass_resins,technical_lifetime,yr,25.0,1980,,
+all,furnace_biomass_steel,technical_lifetime,yr,25.0,1980,,MESSAGE Global model
+all,furnace_coal_cement,technical_lifetime,yr,25.0,1980,,
+all,furnace_coal_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_coal_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_coal_resins,technical_lifetime,yr,25.0,1980,,
+all,furnace_coal_steel,technical_lifetime,yr,25.0,1980,,MESSAGE Global model
+all,furnace_coke_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_coke_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_ethanol_cement,technical_lifetime,yr,25.0,1980,,
+all,furnace_ethanol_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_ethanol_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_ethanol_resins,technical_lifetime,yr,25.0,1980,,
+all,furnace_ethanol_steel,technical_lifetime,yr,25.0,1980,,MESSAGE Global model
+all,furnace_foil_cement,technical_lifetime,yr,25.0,1980,,
+all,furnace_foil_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_foil_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_foil_resins,technical_lifetime,yr,25.0,1980,,
+all,furnace_foil_steel,technical_lifetime,yr,25.0,1980,,MESSAGE Global model
+all,furnace_h2_cement,technical_lifetime,yr,25.0,2030,,
+all,furnace_h2_petro,technical_lifetime,yr,25.0,2030,,
+all,furnace_h2_refining,technical_lifetime,yr,25.0,2030,,
+all,furnace_h2_resins,technical_lifetime,yr,25.0,2030,,
+all,furnace_h2_steel,technical_lifetime,yr,25.0,2030,,MESSAGE Global model
+all,furnace_loil_cement,technical_lifetime,yr,25.0,1980,,
+all,furnace_loil_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_loil_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_loil_resins,technical_lifetime,yr,25.0,1980,,
+all,furnace_loil_steel,technical_lifetime,yr,25.0,1980,,MESSAGE Global model
+all,furnace_methanol_cement,technical_lifetime,yr,25.0,2020,,
+all,furnace_methanol_petro,technical_lifetime,yr,25.0,2020,,
+all,furnace_methanol_refining,technical_lifetime,yr,25.0,2020,,
+all,furnace_methanol_resins,technical_lifetime,yr,25.0,2020,,
+all,furnace_methanol_steel,technical_lifetime,yr,25.0,2020,,MESSAGE Global model
+all,dheat_aluminum,technical_lifetime,yr,20.0,1980,,
+all,fc_h2_aluminum,technical_lifetime,yr,10.0,2030,,
+all,furnace_biomass_aluminum,technical_lifetime,yr,25.0,1980,,
+all,furnace_coal_aluminum,technical_lifetime,yr,25.0,1980,,
+all,furnace_elec_aluminum,technical_lifetime,yr,20.0,1980,,
+all,furnace_ethanol_aluminum,technical_lifetime,yr,25.0,1980,,
+all,furnace_gas_cement,technical_lifetime,yr,25.0,1980,,
+all,furnace_foil_aluminum,technical_lifetime,yr,25.0,1980,,
+all,furnace_gas_petro,technical_lifetime,yr,25.0,1980,,
+all,furnace_gas_refining,technical_lifetime,yr,25.0,1980,,
+all,furnace_gas_resins,technical_lifetime,yr,25.0,1980,,
+all,furnace_h2_aluminum,technical_lifetime,yr,25.0,2030,,
+all,furnace_loil_aluminum,technical_lifetime,yr,25.0,1980,,
+all,furnace_gas_steel,technical_lifetime,yr,25.0,1980,,MESSAGE Global model
+all,furnace_methanol_aluminum,technical_lifetime,yr,25.0,2020,,
+all,hp_elec_aluminum,technical_lifetime,yr,20.0,1980,,
+all,furnace_gas_aluminum,technical_lifetime,yr,25.0,1980,,
+all,solar_aluminum,technical_lifetime,yr,15.0,1980,,

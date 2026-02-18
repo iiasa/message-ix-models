@@ -1,0 +1,6 @@
+relation,technology,mode,value,comment
+CO2_Emission,bf_ccs_steel,M2,-0.21368,"Range between 0.7 -  0.867, Otto et al., 2017; Fan & Friedmann, 2021; TNO"
+CO2_Emission,dri_gas_ccs_steel,M1,-0.13,"0.5 t/DRI (midrex tehcnical boruchure), 85% capture rate (IEA, CCS Working Group)"
+CO2_Emission,DUMMY_limestone_supply_steel,M1,0.12,
+CO2_ind,DUMMY_coal_supply,M1,0.814,
+CO2_ind,DUMMY_gas_supply,M1,0.482,

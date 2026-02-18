@@ -1,0 +1,21 @@
+AME:
+  - R12_AFR
+  - R12_MEA
+AS:
+  - R12_PAS
+CN:
+  - R12_CHN
+  - R12_RCPA
+EIT:
+  - R12_FSU
+IN:
+  - R12_SAS
+LA:
+  - R12_LAM
+PAC:
+  - R12_PAO
+RER:
+  - R12_EEU
+  - R12_WEU
+US:
+  - R12_NAM
