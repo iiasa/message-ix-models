@@ -1358,10 +1358,10 @@ def prepare_edit_files(
         costdf["technology"] = costdf["technology"].str.replace("ethanol_", "eth_")
         costdf["technology"] = costdf["technology"].str.replace("fueloil_", "foil_")
 
-        for tec in [i for i in covered_tec if i != "gas_piped"]:
+        for tec in covered_tec: #[i for i in covered_tec if i != "gas_piped"]:
             log.info("Add fix cost for " + tec)
 
-            if "piped" in tec:
+            if "piped" in tec and tec != 'gas_piped':
                 tec_shipped = tec.replace("piped", "shipped")
                 add_df = costdf[costdf["technology"].str.contains(tec_shipped)].copy()
                 add_df["technology"] = add_df["technology"].str.replace(
@@ -1399,7 +1399,7 @@ def prepare_edit_files(
             add_df["value"] = np.where(
                 add_df["value"].isnull(), mean_cost, add_df["value"]
             )
-            add_df["value"] = round(add_df["value"] / 5, 0)
+            add_df["value"] = round(add_df["value"], 0)
 
             add_df["unit"] = "USD/GWa"
 
