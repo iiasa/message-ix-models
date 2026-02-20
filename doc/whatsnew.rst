@@ -7,7 +7,7 @@ Next release
 - New module :mod:`tools.impacts <message_ix_models.tools.impacts>` providing
   GMT-to-impact prediction via RIME regional emulators, CVaR ensemble risk
   metrics, and supporting utilities for GMT array construction and model-year
-  resampling (:pull:`???`).
+  resampling (:pull:`479`).
   Basin geometry utilities :func:`.load_basin_mapping` and
   :func:`.split_basin_macroregion` added to :mod:`.model.water.utils`.
   :func:`.extract_region_code` added to :mod:`.util.node`.
