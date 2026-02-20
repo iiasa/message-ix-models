@@ -1,0 +1,28 @@
+# PLOT CONFIGURATION
+region_colors:
+  R12_AFR: "#1b9e77"
+  R12_EEU: "#d95f02"
+  R12_FSU: "#7570b3"
+  R12_LAM: "#e7298a"
+  R12_MEA: "#66a61e"
+  R12_NAM: "#e6ab02"
+  R12_PAO: "#a6761d"
+  R12_PAS: "#666666"
+  R12_WEU: "#1f78b4"
+  R12_CHN: "#b2df8a"
+  R12_RCPA: "#fb9a99"
+  R12_SAS: "#cab2d6"
+
+region_labels:
+  R12_AFR: "Africa"
+  R12_EEU: "Eastern Europe"
+  R12_FSU: "Former Soviet Union"
+  R12_LAM: "Latin America"
+  R12_MEA: "Middle East"
+  R12_NAM: "North America"
+  R12_PAO: "Pacific OECD"
+  R12_PAS: "Pacific Asia"
+  R12_WEU: "Western Europe"
+  R12_CHN: "China"
+  R12_RCPA: "Rest of Centrally Planned Asia"
+  R12_SAS: "South Asia"

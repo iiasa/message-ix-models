@@ -125,28 +125,29 @@ for mod, scen in [('weu_security', 'SSP2'),
                   ('weu_security', 'FSU2100'),
                   ('weu_security', 'NAM500'),
                   ('weu_security', 'NAM1000'),
-                  ('weu_security', 'FSU2040_NAM500'),
-                  ('weu_security', 'FSU2040_NAM1000'),
-                  ('weu_security', 'FSU2100_NAM500'),
-                  ('weu_security', 'FSU2100_NAM1000'),
+                  #('weu_security', 'FSU2040_NAM500'),
+                  #('weu_security', 'FSU2040_NAM1000'),
+                 # ('weu_security', 'FSU2100_NAM500'),
+                 # ('weu_security', 'FSU2100_NAM1000'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
     scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
     rep = Reporter.from_scenario(scenario)
     
+    fuel_supply = pd.DataFrame()
     # Collect all gas supply reporting
     for fuel in ['biomass', 'coal', 'crude', 'ethanol', 'fueloil', 'gas', 'h2', 'lightoil', 'methanol']:
         fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
-        fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply_df])
+        fuel_supply = pd.concat([fuel_supply, fuel_supply_df])
 
-    fuel_supply_out['fuel_type'] = fuel_supply_out['variable'].str.split('|').str[0]
-    fuel_supply_out['fuel_type'] = fuel_supply_out['fuel_type'].str.replace(' Supply', '')
+    fuel_supply['fuel_type'] = fuel_supply['variable'].str.split('|').str[0]
+    fuel_supply['fuel_type'] = fuel_supply['fuel_type'].str.replace(' Supply', '')
 
-    fuel_supply_out['supply_type'] = fuel_supply_out['variable'].str.split('|').str[1]
-    fuel_supply_out['exporter'] = np.where(fuel_supply_out['supply_type'] == 'Imports',
-                                            fuel_supply_out['variable'].str.split('|').str[-1], '')
-    fuel_exports = fuel_supply_out.copy()
+    fuel_supply['supply_type'] = fuel_supply['variable'].str.split('|').str[1]
+    fuel_supply['exporter'] = np.where(fuel_supply['supply_type'] == 'Imports',
+                                       fuel_supply['variable'].str.split('|').str[-1], '')
+    fuel_exports = fuel_supply.copy()
     fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
     fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
     fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
@@ -156,9 +157,9 @@ for mod, scen in [('weu_security', 'SSP2'),
     fuel_exports['supply_type'] = 'Exports'
     fuel_exports['value'] *= -1 # Set to negative
 
-    fuel_supply_out = fuel_supply_out[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
+    fuel_supply = fuel_supply[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
     fuel_exports = fuel_exports[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
-    fuel_supply_out = pd.concat([fuel_supply_out, fuel_exports])
+    fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply, fuel_exports])
 
 fuel_supply_out.to_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
 
