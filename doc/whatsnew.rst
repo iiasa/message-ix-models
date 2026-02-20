@@ -8,11 +8,6 @@ Next release
   GMT-to-impact prediction via RIME regional emulators, CVaR ensemble risk
   metrics, and supporting utilities for GMT array construction and model-year
   resampling (:pull:`479`).
-  Basin geometry utilities :func:`.load_basin_mapping` and
-  :func:`.split_basin_macroregion` added to :mod:`.model.water.utils`.
-  :func:`.extract_region_code` added to :mod:`.util.node`.
-  Fixes wrong GMT clip bounds in :func:`.predict_cooling_cf` and missing year
-  guard in :func:`.build_cooling_constraints`.
 
 - :mod:`message_ix_models` supports and is tested against `Pandas 3.0.0 <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v3.0.0.html>`_,
   released 2026-01-21 (:pull:`470`).
