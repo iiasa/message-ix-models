@@ -3,7 +3,6 @@
 import pandas as pd
 import pytest
 
-from message_ix_models.tools.impacts import extract_region_code
 from message_ix_models.tools.impacts.temporal import sample_to_model_years
 
 
@@ -57,17 +56,3 @@ class TestSampleToModelYears:
         df = pd.DataFrame({"basin": ["B1"], "name": ["test"]})
         with pytest.raises(ValueError, match="No integer year columns"):
             sample_to_model_years(df, ["basin", "name"], [2020])
-
-
-class TestExtractRegionCode:
-    def test_with_prefix(self):
-        assert extract_region_code("R12_AFR") == "AFR"
-        assert extract_region_code("R12_WEU") == "WEU"
-
-    def test_without_prefix(self):
-        assert extract_region_code("AFR") == "AFR"
-        assert extract_region_code("RCPA") == "RCPA"
-
-    def test_other_prefix(self):
-        # Should not strip non-R12 prefixes
-        assert extract_region_code("R11_AFR") == "R11_AFR"

@@ -1,95 +1,107 @@
-"""CVaR ensemble risk metrics.
+"""CVaR risk metrics over RIME ensemble predictions.
 
-Conditional Value-at-Risk (CVaR) for ensemble climate impact predictions.
-CVaR_alpha = E[X | X <= q_alpha]: the expected value in the worst alpha%
-of outcomes.
+Conditional Value-at-Risk (CVaR_alpha) = E[X | X <= q_alpha]:
+the expected impact in the worst *alpha*% of climate outcomes.
 
-Two modes:
+Both functions call :func:`~.rime.predict_rime` with ``aggregate="none"``
+to obtain the full ``(n_runs, n_spatial, n_years)`` ensemble, then reduce
+along the run axis.
+
+Two reduction modes:
 
 - :func:`cvar_pointwise` — independent at each (spatial, year) cell.
   Maximally pessimistic: compounds worst-case across timesteps.
 - :func:`cvar_coherent` — selects worst alpha% of full trajectories.
   Temporally coherent: represents persistently unlucky but realizable paths.
 
-Both return numpy arrays. Callers wrap in DataFrames if they need labels.
+Both return ``(n_spatial, n_years)`` arrays. Callers wrap in DataFrames
+if they need labels.
 """
+
+from pathlib import Path
 
 import numpy as np
 
-
-def compute_cvar_single(values: np.ndarray, alpha: float) -> float:
-    """CVaR for a 1D distribution.
-
-    Parameters
-    ----------
-    values
-        1D array of outcomes.
-    alpha
-        CVaR level as percentile (0 < alpha < 100). 10 = worst 10%.
-    """
-    values = np.asarray(values)
-    if not 0 < alpha < 100:
-        raise ValueError(f"alpha must be between 0 and 100, got {alpha}")
-    cutoff = max(1, int(np.ceil(len(values) * alpha / 100.0)))
-    return float(np.mean(np.sort(values)[:cutoff]))
+from .rime import predict_rime
 
 
 def cvar_pointwise(
-    values_3d: np.ndarray,
+    gmt_array: np.ndarray,
+    dataset_path: str | Path,
+    var_name: str,
     alpha: float,
+    sel: dict | None = None,
 ) -> np.ndarray:
-    """Pointwise CVaR along the ensemble axis.
+    """Pointwise CVaR over RIME ensemble predictions.
 
-    Sorts runs independently at each (spatial, year) cell, takes the
-    worst *alpha*% and averages.
+    For each (spatial, year) cell independently, sorts runs and averages
+    the worst *alpha*% — maximally pessimistic across timesteps.
 
     Parameters
     ----------
-    values_3d
-        Shape ``(n_runs, n_spatial, n_years)``.
+    gmt_array
+        Shape ``(n_runs, n_years)``. Must be 2D.
+    dataset_path
+        Path to RIME NetCDF dataset.
+    var_name
+        Variable name within the dataset.
     alpha
-        CVaR level as percentile (0 < alpha < 100).
+        CVaR level as percentile (0 < alpha < 100). E.g. 10 = worst 10%.
+    sel
+        Optional dimension selections passed to :func:`~.rime.predict_rime`.
 
     Returns
     -------
     np.ndarray
         Shape ``(n_spatial, n_years)``.
     """
-    values_3d = np.asarray(values_3d)
-    if values_3d.ndim != 3:
-        raise ValueError(f"Expected 3D array, got shape {values_3d.shape}")
-    n_runs = values_3d.shape[0]
+    if not 0 < alpha < 100:
+        raise ValueError(f"alpha must be between 0 and 100, got {alpha}")
+    ensemble = predict_rime(
+        gmt_array, dataset_path, var_name, sel=sel, aggregate="none"
+    )
+    n_runs = ensemble.shape[0]
     cutoff = max(1, int(np.ceil(n_runs * alpha / 100.0)))
-    sorted_vals = np.sort(values_3d, axis=0)
-    return np.mean(sorted_vals[:cutoff], axis=0)
+    return np.mean(np.sort(ensemble, axis=0)[:cutoff], axis=0)
 
 
 def cvar_coherent(
-    values_3d: np.ndarray,
+    gmt_array: np.ndarray,
+    dataset_path: str | Path,
+    var_name: str,
     alpha: float,
+    sel: dict | None = None,
 ) -> np.ndarray:
-    """Coherent CVaR: select worst trajectories, then average.
+    """Coherent CVaR over RIME ensemble predictions.
 
-    Trajectory "badness" = mean across all spatial units and years.
-    Selects worst *alpha*% of trajectories by this score.
+    Ranks trajectories by mean impact across all spatial units and years,
+    selects the worst *alpha*%, and averages — temporally coherent paths.
 
     Parameters
     ----------
-    values_3d
-        Shape ``(n_runs, n_spatial, n_years)``.
+    gmt_array
+        Shape ``(n_runs, n_years)``. Must be 2D.
+    dataset_path
+        Path to RIME NetCDF dataset.
+    var_name
+        Variable name within the dataset.
     alpha
         CVaR level as percentile (0 < alpha < 100).
+    sel
+        Optional dimension selections passed to :func:`~.rime.predict_rime`.
 
     Returns
     -------
     np.ndarray
         Shape ``(n_spatial, n_years)``.
     """
-    values_3d = np.asarray(values_3d)
-    if values_3d.ndim != 3:
-        raise ValueError(f"Expected 3D array, got shape {values_3d.shape}")
-    n_runs = values_3d.shape[0]
+    if not 0 < alpha < 100:
+        raise ValueError(f"alpha must be between 0 and 100, got {alpha}")
+    ensemble = predict_rime(
+        gmt_array, dataset_path, var_name, sel=sel, aggregate="none"
+    )
+    n_runs = ensemble.shape[0]
     cutoff = max(1, int(np.ceil(n_runs * alpha / 100.0)))
-    scores = np.mean(values_3d, axis=(1, 2))
+    scores = np.mean(ensemble, axis=(1, 2))
     worst_idx = np.argsort(scores)[:cutoff]
-    return np.mean(values_3d[worst_idx], axis=0)
+    return np.mean(ensemble[worst_idx], axis=0)

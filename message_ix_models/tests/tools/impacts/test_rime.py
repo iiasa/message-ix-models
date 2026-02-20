@@ -4,6 +4,8 @@ Pure-function tests use synthetic data. Integration tests that need actual
 RIME NetCDF datasets are marked with skipif.
 """
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -49,6 +51,77 @@ class TestClipGmt:
         r1 = clip_gmt(gmt, seed=42)
         r2 = clip_gmt(gmt, seed=42)
         np.testing.assert_array_equal(r1, r2)
+
+
+class TestPredictRimeLinearityGuard:
+    """2D predict_rime warns or raises based on emulator linearity."""
+
+    # Fake per-run prediction: shape (n_spatial=3,) returned for each GMT scalar.
+    _FAKE_SPATIAL = np.ones(3)
+
+    def _mock_predict_from(self):
+        return patch(
+            "message_ix_models.tools.impacts.rime._predict_from_gmt",
+            return_value=self._FAKE_SPATIAL,
+        )
+
+    def _mock_linearity(self, max_deviation: float):
+        return patch(
+            "message_ix_models.tools.impacts.rime.check_emulator_linearity",
+            return_value={
+                "max_deviation": max_deviation,
+                "mean_deviation": max_deviation,
+                "is_linear": max_deviation < 0.05,
+            },
+        )
+
+    def test_linear_emulator_no_warning(self, caplog):
+        """Linear emulator (deviation <= 1%): no linearity warning emitted."""
+        import logging
+
+        from message_ix_models.tools.impacts.rime import predict_rime
+
+        gmt_2d = np.ones((5, 4)) * 1.5
+        with self._mock_predict_from(), self._mock_linearity(0.005):
+            with caplog.at_level(
+                logging.WARNING, logger="message_ix_models.tools.impacts.rime"
+            ):
+                predict_rime(gmt_2d, "dummy.nc", "qtot_mean")
+
+        assert not any("non-linear" in r.message for r in caplog.records)
+
+    def test_nonlinear_multi_run_warns(self, caplog):
+        """Non-linear emulator + n_runs > 1: log warning emitted, no raise."""
+        import logging
+
+        from message_ix_models.tools.impacts.rime import predict_rime
+
+        gmt_2d = np.ones((5, 4)) * 1.5
+        with self._mock_predict_from(), self._mock_linearity(0.08):
+            with caplog.at_level(
+                logging.WARNING, logger="message_ix_models.tools.impacts.rime"
+            ):
+                predict_rime(gmt_2d, "dummy.nc", "qtot_mean")
+
+        assert any("non-linear" in r.message for r in caplog.records)
+
+    def test_nonlinear_single_run_raises(self):
+        """Non-linear emulator + n_runs == 1: ValueError."""
+        from message_ix_models.tools.impacts.rime import predict_rime
+
+        gmt_2d = np.ones((1, 4)) * 1.5
+        with self._mock_predict_from(), self._mock_linearity(0.08):
+            with pytest.raises(ValueError, match="non-linear emulator"):
+                predict_rime(gmt_2d, "dummy.nc", "qtot_mean")
+
+    def test_linear_single_run_no_raise(self):
+        """Linear emulator + n_runs == 1: no error."""
+        from message_ix_models.tools.impacts.rime import predict_rime
+
+        gmt_2d = np.ones((1, 4)) * 1.5
+        with self._mock_predict_from(), self._mock_linearity(0.005):
+            result = predict_rime(gmt_2d, "dummy.nc", "qtot_mean")
+        assert result.shape == (3, 4)
 
 
 # Integration tests requiring RIME NetCDF files

@@ -17,6 +17,7 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
+from message_ix_models.util.node import extract_region_code
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -605,7 +606,7 @@ def _add_nexus_params(
     # Output: distribute to basins by share
     outputs = []
     for region in node_region:
-        region_code = region.split("_")[-1]
+        region_code = extract_region_code(region)
         basins = df_sw[df_sw["node_dest"].str.contains(region_code, na=False)]
         if basins.empty:
             continue

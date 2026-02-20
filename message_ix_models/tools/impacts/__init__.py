@@ -34,36 +34,18 @@ from message_ix_models.util import package_data_path
 
 from .climate import GmtArray, gmt_ensemble, gmt_expectation
 from .rime import check_emulator_linearity, clip_gmt, predict_rime
-from .risk import compute_cvar_single, cvar_coherent, cvar_pointwise
+from .risk import cvar_coherent, cvar_pointwise
 from .temporal import sample_to_model_years
 
 impacts_data_path = partial(package_data_path, "impacts")
-
-
-def extract_region_code(node: str) -> str:
-    """Extract short region code from MESSAGE node name.
-
-    Parameters
-    ----------
-    node
-        MESSAGE node name (e.g. ``"R12_AFR"`` or ``"AFR"``).
-
-    Returns
-    -------
-    str
-        Short code (e.g. ``"AFR"``).
-    """
-    return node[4:] if node.startswith("R12_") else node
 
 
 __all__ = [
     "GmtArray",
     "check_emulator_linearity",
     "clip_gmt",
-    "compute_cvar_single",
     "cvar_coherent",
     "cvar_pointwise",
-    "extract_region_code",
     "gmt_ensemble",
     "gmt_expectation",
     "impacts_data_path",

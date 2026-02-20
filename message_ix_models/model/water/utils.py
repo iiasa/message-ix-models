@@ -1,3 +1,4 @@
+import functools
 import logging
 from collections import defaultdict
 from functools import lru_cache
@@ -5,6 +6,7 @@ from itertools import product
 from typing import TYPE_CHECKING
 from warnings import warn
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 from iam_units import registry
@@ -469,3 +471,96 @@ def get_vintage_and_active_years(
     result = yv_ya[valid_mask].reset_index(drop=True)
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Basin geometry (R12, 217 MESSAGE basin-region rows)
+# ---------------------------------------------------------------------------
+
+#: RIME basin IDs with no coverage data; original scenario values are preserved.
+NAN_BASIN_IDS: frozenset[int] = frozenset({0, 141, 154})
+
+#: Number of RIME basins (native emulator resolution).
+N_RIME_BASINS: int = 157
+
+#: Number of MESSAGE basin-region rows after transboundary splitting.
+N_MESSAGE_BASINS: int = 217
+
+
+@functools.lru_cache(maxsize=1)
+def load_basin_mapping() -> pd.DataFrame:
+    """Load R12 basin mapping with MESSAGE basin codes.
+
+    Returns
+    -------
+    pd.DataFrame
+        217 rows with columns including ``BASIN_ID``, ``NAME``, ``BASIN``,
+        ``REGION``, ``BCU_name``, ``area_km2``, ``model_region``,
+        ``basin_code``.
+    """
+    basin_file = package_data_path("water", "infrastructure", "all_basins.csv")
+    basin_df = pd.read_csv(basin_file)
+    basin_df = basin_df[basin_df["model_region"] == "R12"].copy()
+    basin_df = basin_df.reset_index(drop=True)
+    basin_df["basin_code"] = (
+        "B" + basin_df["BASIN_ID"].astype(str) + "|" + basin_df["REGION"]
+    )
+    return basin_df
+
+
+def split_basin_macroregion(
+    rime_predictions: np.ndarray,
+    basin_mapping: pd.DataFrame | None = None,
+    basin_id_to_rime_idx: dict[int, int] | None = None,
+) -> np.ndarray:
+    """Expand RIME basin predictions from native resolution to MESSAGE rows.
+
+    RIME delivers 157 basins; MESSAGE uses 217 basin-region rows because
+    transboundary basins are split proportionally by area across macroregions.
+
+    Parameters
+    ----------
+    rime_predictions
+        Shape ``(N_RIME_BASINS, n_timesteps)`` for annual or
+        ``(N_RIME_BASINS, n_timesteps, n_seasons)`` for seasonal.
+    basin_mapping
+        If *None*, uses :func:`load_basin_mapping`.
+    basin_id_to_rime_idx
+        Mapping from ``BASIN_ID`` to RIME array index. Callers with access
+        to a RIME dataset should pass this; if *None* the expansion skips
+        basins not found in the mapping (NaN rows remain).
+
+    Returns
+    -------
+    np.ndarray
+        Shape ``(N_MESSAGE_BASINS, ...)`` matching input trailing dimensions.
+        Rows for basin IDs in :data:`NAN_BASIN_IDS` are NaN.
+    """
+    if basin_mapping is None:
+        basin_mapping = load_basin_mapping()
+
+    is_seasonal = rime_predictions.ndim == 3
+    if is_seasonal:
+        n_rime, n_timesteps, n_seasons = rime_predictions.shape
+        out = np.full((N_MESSAGE_BASINS, n_timesteps, n_seasons), np.nan)
+    else:
+        n_rime, n_timesteps = rime_predictions.shape
+        out = np.full((N_MESSAGE_BASINS, n_timesteps), np.nan)
+
+    if basin_id_to_rime_idx is None:
+        return out
+
+    basin_total_areas = basin_mapping.groupby("BASIN_ID")["area_km2"].sum()
+
+    for i, row in basin_mapping.iterrows():
+        basin_id = row["BASIN_ID"]
+        if basin_id not in basin_id_to_rime_idx:
+            continue
+        rime_idx = basin_id_to_rime_idx[basin_id]
+        area_fraction = row["area_km2"] / basin_total_areas[basin_id]
+        if is_seasonal:
+            out[i, :, :] = rime_predictions[rime_idx, :, :] * area_fraction
+        else:
+            out[i, :] = rime_predictions[rime_idx, :] * area_fraction
+
+    return out

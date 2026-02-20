@@ -137,12 +137,16 @@ def predict_rime(
     dataset_path: str | Path,
     var_name: str,
     sel: dict | None = None,
+    aggregate: str = "mean",
 ) -> np.ndarray:
     """Predict RIME variable from GMT array.
 
-    Handles single trajectories (1D) and ensembles (2D). For 2D input
-    ``(n_runs, n_years)``, returns ``E[RIME(GMT_i)]`` — the expectation
-    across ensemble members.
+    Performs a GWL-binned nearest-neighbour lookup for each GMT value.
+    For ensemble input ``(n_runs, n_years)``, applies the lookup per run
+    per year — a Monte Carlo estimate of ``E_{P(GMT)}[f(GMT)]``: for each
+    timestep *t*, samples ``f(GMT_{run,t})`` across all ensemble members
+    and aggregates. This is meaningful only when the emulator response is
+    approximately linear; use :func:`check_emulator_linearity` to verify.
 
     Parameters
     ----------
@@ -156,17 +160,35 @@ def predict_rime(
         Variable name within the dataset (e.g. ``"qtot_mean"``,
         ``"capacity_factor"``, ``"EI_cool"``).
     sel
-        Optional dimension selections applied before GWL interpolation.
+        Optional dimension selections applied before GWL lookup.
+    aggregate
+        How to reduce the ensemble axis for 2D input:
+
+        ``"mean"`` *(default)*
+            Return ``E[f(GMT)]`` — sample mean across runs.
+            Shape matches 1D output (no run axis).
+        ``"none"``
+            Return the full ``(n_runs, n_spatial, n_years)`` array.
+            Use this when downstream callers need per-run data,
+            e.g. to compute CVaR via :func:`~.risk.cvar_pointwise`.
+
+        Ignored for 1D input.
 
     Returns
     -------
     np.ndarray
-        Native emulator resolution. Shape depends on variable:
-        - basin variables: ``(157, n_years)``
-        - capacity_factor: ``(12, n_years)``
-        - EI variables: ``(12, arch, urt, n_years)`` (dims vary by sel)
-        2D input: same shapes, ensemble-averaged.
+        Native emulator resolution. Shape depends on variable and input:
+
+        - 1D input or ``aggregate="mean"``:
+          basin variables ``(157, n_years)``,
+          capacity_factor ``(12, n_years)``,
+          EI variables ``(12, ..., n_years)``
+        - ``aggregate="none"``:
+          ``(n_runs, n_spatial, n_years)`` (spatial dims as above)
     """
+    if aggregate not in ("mean", "none"):
+        raise ValueError(f"aggregate must be 'mean' or 'none', got {aggregate!r}")
+
     gmt_array = np.asarray(gmt_array)
     path_str = str(dataset_path)
 
@@ -178,6 +200,23 @@ def predict_rime(
 
     if gmt_array.ndim == 2:
         n_runs = gmt_array.shape[0]
+        lin = check_emulator_linearity(
+            path_str, var_name, (float(gmt_array.min()), float(gmt_array.max()))
+        )
+        if lin["max_deviation"] > 0.01:
+            if n_runs == 1:
+                raise ValueError(
+                    f"predict_rime: single-run ensemble with non-linear emulator "
+                    f"({var_name}, max deviation {lin['max_deviation']:.1%}). "
+                    f"f(E[GMT]) is not a reliable substitute for E[f(GMT)]."
+                )
+            log.warning(
+                "predict_rime: non-linear emulator response for %s "
+                "(max deviation %.1f%%)%s — MC mean is approximate",
+                var_name,
+                lin["max_deviation"] * 100,
+                f"; only {n_runs} runs (recommend >= 100)" if n_runs < 100 else "",
+            )
         run_results = []
         for i in range(n_runs):
             preds = [
@@ -185,11 +224,15 @@ def predict_rime(
                 for g in gmt_array[i]
             ]
             run_results.append(np.stack(preds, axis=-1))
-        return np.mean(np.stack(run_results, axis=0), axis=0)
+        ensemble = np.stack(run_results, axis=0)  # (n_runs, n_spatial, n_years)
+        if aggregate == "none":
+            return ensemble
+        return np.mean(ensemble, axis=0)
 
     raise ValueError(f"gmt_array must be 1D or 2D, got shape {gmt_array.shape}")
 
 
+@functools.lru_cache(maxsize=32)
 def check_emulator_linearity(
     dataset_path: str | Path,
     var_name: str,
