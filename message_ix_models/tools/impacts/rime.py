@@ -99,7 +99,7 @@ def clip_gmt(
     gmt_flat = gmt_clipped.flatten()
 
     low_gmt_mask = gmt_flat < gmt_min
-    n_low = np.sum(low_gmt_mask)
+    n_low = int(np.sum(low_gmt_mask))
 
     if n_low > 0:
         rng = np.random.default_rng(seed)
