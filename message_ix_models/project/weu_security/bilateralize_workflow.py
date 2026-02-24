@@ -94,21 +94,14 @@ for model_scen in models_scenarios.keys():
             out_scenario.remove_par(g, remdf)
             out_scenario.add_par(g, updf)
 
-#    print("Update crude resource remaining")
-#    resdf =  out_scenario.par("resource_remaining", filters = {"commodity": ["crude_1", "crude_2", "crude_3", "crude_4",
-#                                                                             "crude_5", "crude_6", "crude_7"]})
-#    remdf = resdf.copy()
-#    resdf['value'] = 0.05
-#    with out_scenario.transact("update resource remaining for crude in EEU, LAM, PAO"):
-#        out_scenario.remove_par("resource_remaining", remdf)
-#        out_scenario.add_par("resource_remaining", resdf)
-
     print("Remove oil_imp_c relation activity")
     for p in ["relation_activity", "relation_upper", "relation_lower"]:
         remdf = out_scenario.par(p, filters = {"relation": "oil_imp_c"})
         with out_scenario.transact(f"remove relation {p}"):
             out_scenario.remove_par(p, remdf)
-            
+
+    print("Add balance equality sets")
+    be_df = out_scenario.par("output"
     print("Solve scenario")
     out_scenario.solve()
     mp.close_db()
