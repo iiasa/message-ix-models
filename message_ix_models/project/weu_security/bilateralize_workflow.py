@@ -101,7 +101,13 @@ for model_scen in models_scenarios.keys():
             out_scenario.remove_par(p, remdf)
 
     print("Add balance equality sets")
-    be_df = out_scenario.par("output"
+    be_df = out_scenario.par("output", filters = {"technology": config['covered_trade_technologies']})
+    be_df = be_df[be_df['level'].isin(['piped', 'shipped'])]
+    be_df = be_df[['commodity', 'level']].drop_duplicates()
+
+    with out_scenario.transact("add balance equality sets"):
+        out_scenario.add_set("balance_equality", be_df)
+        
     print("Solve scenario")
     out_scenario.solve()
     mp.close_db()
