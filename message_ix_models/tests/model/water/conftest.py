@@ -8,6 +8,25 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import package_data_path
 
+REGION_CONFIG = {
+    "R11": {"regions": "R11", "type_reg": "global"},
+    "R12": {"regions": "R12", "type_reg": "global"},
+    "ZMB": {"regions": "ZMB", "type_reg": "country"},
+}
+
+
+def water_params(region, *, reduced_basin=False, **extra):
+    """Build a water_context param dict for the given region.
+
+    Encodes the region→type_reg mapping once. When *reduced_basin* is True,
+    adds ``first_k`` selection with ``num_basins=2`` (24 basins total).
+    """
+    base = {**REGION_CONFIG[region]}
+    if reduced_basin:
+        base.update(reduced_basin=True, basin_selection="first_k", num_basins=2)
+    base.update(extra)
+    return base
+
 
 def setup_valid_basins(context, regions="R12"):
     """Set up valid_basins attribute for test contexts.
@@ -56,7 +75,16 @@ def water_context(test_context, request):
     test_context.nexus_set = params.get("nexus_set", "nexus")
 
     # Optional attributes
-    for attr in ["RCP", "REL", "SDG", "ssp"]:
+    for attr in [
+        "RCP",
+        "REL",
+        "SDG",
+        "ssp",
+        "reduced_basin",
+        "basin_selection",
+        "num_basins",
+        "filter_list",
+    ]:
         if attr in params:
             setattr(test_context, attr, params[attr])
 
