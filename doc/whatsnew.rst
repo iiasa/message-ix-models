@@ -11,7 +11,7 @@ Next release
 
 - Add reduced basin filtering for water module with ``--reduced-basin`` and
   demand/supply stress-based selection via ``--basin-selection stress``
-  (:issue:`414`).
+  (:pull:`432`, :issue:`414`).
 
 - Fix water module parameter bugs and refactor cooling (:pull:`405`):
   infrastructure M1/Mf mode fixes, regional average shares for cooling allocation,
