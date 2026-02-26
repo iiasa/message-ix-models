@@ -111,16 +111,17 @@ def run_nam_boost(base_scenario_name: str,
         out_scenario.add_par('bound_activity_lo', bounddf)
 
     # Remove activity constraints on targeted technologies
-    with out_scenario.transact("Remove up activity constraints on target exporters in specified year"):
-         for par in ["growth_activity_up", "initial_activity_up"]:
+    with out_scenario.transact("Remove activity constraints on target exporters in specified year"):
+         for par in ["growth_activity_up", "initial_activity_up",
+                     "growth_activity_lo", "initial_activity_lo"]:
              basepar = out_scenario.par(par, filters = {"technology": bound_technologies,
-                                                        "node_loc": bound_exporters,
+             #                                           "node_loc": bound_exporters,
                                                         "year_act": bound_year})
              if len(basepar) != 0:
                  print(f"...{par}")
                  out_scenario.remove_par(par, basepar)
                  
-    # Adjust low constraints (allow steeper decline) for targeted technologies
+    # Adjust low constraints (allow steeper decline) for targeted technologies (except bound year)
     with out_scenario.transact("Adjust lo activity constraints on target tec"):
          for par in ["growth_activity_lo"]:
              basepar = out_scenario.par(par, filters = {"technology": bound_technologies})
@@ -131,16 +132,6 @@ def run_nam_boost(base_scenario_name: str,
                  print(f"...{par}")
                  out_scenario.remove_par(par, basepar)
                  out_scenario.add_par(par, adjpar)
-
-    # Remove hi and lo activity constraints for non-targeted exporters for targeted tec
-    #with out_scenario.transact("Remove activity constraints on target tec for non-target exporters"):
-    #     for par in ["growth_activity_up", "initial_activity_up"]:
-    #         basepar = out_scenario.par(par, filters = {"technology": bound_technologies})
-    #         basepar = basepar[basepar['node_loc'].isin(bound_exporters) == False]
-    ##         
-     #        if len(basepar) != 0:
-     #            print(f"...{par}")
-     #            out_scenario.remove_par(par, basepar)
                  
     # Solve scenario             
     if solve_scenario == True:
