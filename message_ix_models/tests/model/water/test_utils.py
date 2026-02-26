@@ -78,34 +78,19 @@ def test_get_vintage_and_active_years(
 # --- Tests for stress-based basin selection ---
 
 
-class TestComputeBasinDemandRatio:
-    """Tests for compute_basin_demand_ratio()."""
+def test_compute_basin_demand_ratio():
+    """Shape, columns, completeness, stress signal for basin demand ratio."""
+    result = compute_basin_demand_ratio("R12")
+    assert len(result) == 217
+    assert {"BCU_name", "REGION", "supply_mcm", "demand_mcm", "demand_ratio"} == set(
+        result.columns
+    )
+    assert not result["demand_ratio"].isna().any()
+    assert len(result["REGION"].unique()) == 12
 
-    def test_r12_shape_and_columns(self):
-        result = compute_basin_demand_ratio("R12")
-        assert len(result) == 217
-        expected_cols = {
-            "BCU_name",
-            "REGION",
-            "supply_mcm",
-            "demand_mcm",
-            "demand_ratio",
-        }
-        assert expected_cols == set(result.columns)
-
-    def test_no_nan_in_ratio(self):
-        result = compute_basin_demand_ratio("R12")
-        assert not result["demand_ratio"].isna().any()
-
-    def test_all_regions_present(self):
-        result = compute_basin_demand_ratio("R12")
-        assert len(result["REGION"].unique()) == 12
-
-    def test_high_stress_basins_exist(self):
-        """At least some basins should have demand/supply > 10%."""
-        result = compute_basin_demand_ratio("R12", demand_year=2050)
-        high_stress = result[result["demand_ratio"] > 0.10]
-        assert len(high_stress) > 0, "No high-stress basins found"
+    # Separate call — different args
+    result_2050 = compute_basin_demand_ratio("R12", demand_year=2050)
+    assert (result_2050["demand_ratio"] > 0.10).any(), "No high-stress basins found"
 
 
 class TestSelectByStress:
@@ -137,56 +122,36 @@ class TestSelectByStress:
             assert len(group) <= 2
 
 
-class TestFilterBasinsByRegionStress:
-    """Test stress mode integration in filter_basins_by_region()."""
+@pytest.mark.parametrize("basin_selection", ["first_k", "stress"])
+def test_filter_list_additive_on_automatic(test_context, basin_selection):
+    """filter_list augments automatic selection rather than replacing it."""
+    from message_ix_models.util import package_data_path
 
-    @pytest.fixture
-    def df_basins(self):
-        from message_ix_models.util import package_data_path
+    df_basins = pd.read_csv(
+        package_data_path("water", "delineation", "basins_by_region_simpl_R12.csv")
+    )
 
-        return pd.read_csv(
-            package_data_path("water", "delineation", "basins_by_region_simpl_R12.csv")
-        )
+    test_context.reduced_basin = True
+    test_context.basin_selection = basin_selection
+    test_context.regions = "R12"
+    test_context.ssp = "SSP2"
 
-    def test_stress_mode_returns_valid_output(self, test_context, df_basins):
-        test_context.reduced_basin = True
-        test_context.basin_selection = "stress"
-        test_context.regions = "R12"
-        test_context.ssp = "SSP2"
+    # Run automatic selection alone (1 per region = 12 basins)
+    auto_only = filter_basins_by_region(df_basins, test_context, n_per_region=1)
+    auto_basins = set(auto_only["BCU_name"])
 
-        filtered = filter_basins_by_region(df_basins, test_context, n_per_region=2)
+    # Pick a basin NOT in the automatic set to add via filter_list
+    all_basins = set(df_basins["BCU_name"])
+    extra_basins = list(all_basins - auto_basins)[:3]
+    assert len(extra_basins) > 0, "Need basins outside automatic set"
 
-        assert len(filtered) > 0
-        assert len(filtered) < len(df_basins)
-        assert len(filtered["REGION"].unique()) == 12
-        assert not filtered["BCU_name"].isna().any()
+    test_context.filter_list = extra_basins
+    combined = filter_basins_by_region(df_basins, test_context, n_per_region=1)
+    combined_basins = set(combined["BCU_name"])
 
-    @pytest.mark.parametrize("basin_selection", ["first_k", "stress"])
-    def test_filter_list_additive_on_automatic(
-        self, test_context, df_basins, basin_selection
-    ):
-        """filter_list augments automatic selection rather than replacing it."""
-        test_context.reduced_basin = True
-        test_context.basin_selection = basin_selection
-        test_context.regions = "R12"
-        test_context.ssp = "SSP2"
-
-        # Run automatic selection alone (1 per region = 12 basins)
-        auto_only = filter_basins_by_region(df_basins, test_context, n_per_region=1)
-        auto_basins = set(auto_only["BCU_name"])
-
-        # Pick a basin NOT in the automatic set to add via filter_list
-        all_basins = set(df_basins["BCU_name"])
-        extra_basins = list(all_basins - auto_basins)[:3]
-        assert len(extra_basins) > 0, "Need basins outside automatic set"
-
-        test_context.filter_list = extra_basins
-        combined = filter_basins_by_region(df_basins, test_context, n_per_region=1)
-        combined_basins = set(combined["BCU_name"])
-
-        # Automatic basins are still present
-        assert auto_basins <= combined_basins
-        # Extra basins were added
-        assert set(extra_basins) <= combined_basins
-        # Total is the union
-        assert len(combined) == len(auto_basins) + len(extra_basins)
+    # Automatic basins are still present
+    assert auto_basins <= combined_basins
+    # Extra basins were added
+    assert set(extra_basins) <= combined_basins
+    # Total is the union
+    assert len(combined) == len(auto_basins) + len(extra_basins)
