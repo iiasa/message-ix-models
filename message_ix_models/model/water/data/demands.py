@@ -201,6 +201,8 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     for key, df in d.items():
         df.rename(columns={"Unnamed: 0": "year"}, inplace=True)
         df.set_index("year", inplace=True)
+        # Cast column index from StringDtype to object for xarray compatibility
+        df.columns = df.columns.astype(object)
         dfs[key] = df
 
     # convert the dictionary of dataframes to xarray

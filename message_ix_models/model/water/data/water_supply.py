@@ -1002,11 +1002,16 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     # Reading data, the data is spatially and temprally aggregated from GHMs
     df_sw, df_gw = read_water_availability(context)
 
-    # reading sample for assiging basins
+    # reading sample for assigning basins
     PATH = package_data_path(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
-    df_x = pd.read_csv(PATH)
+    df_x_full = pd.read_csv(PATH)
+    # Index positions of valid basins in the full CSV (for positional CSV filtering)
+    valid_indices = df_x_full[df_x_full["BCU_name"].isin(context.valid_basins)].index
+    df_x = df_x_full[df_x_full["BCU_name"].isin(context.valid_basins)].reset_index(
+        drop=True
+    )
 
     dmd_df = make_df(
         "demand",
@@ -1030,6 +1035,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
+        df_env = df_env.iloc[valid_indices].reset_index(drop=True)
         df_env.index = df_x["BCU_name"].index
         df_env = df_env.stack().reset_index()
         df_env.columns = pd.Index(["Region", "years", "value"])
@@ -1052,8 +1058,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
-        # new_cols = pd.to_datetime(df_env.columns, format="%Y/%m/%d")
-        # df_env.columns = new_cols
+        df_env = df_env.iloc[valid_indices].reset_index(drop=True)
         df_env.index = df_x["BCU_name"].index
         df_env = df_env.stack().reset_index()
         df_env.columns = pd.Index(["Region", "years", "value"])
