@@ -241,7 +241,30 @@ def remove_pao_coal_constraint(
                 scen.remove_par("relation_activity", relact_df)
                 scen.remove_par("relation_upper", relupp_df)
 
-
+# %% Ensure balance equality (no commodity left at shipped/piped level)
+def ensure_balance_equality(
+    scen: message_ix.Scenario, log, covered_tec
+):
+    """
+    Ensure that there is no leftover shipped/piped commodity
+    """
+    log.info("Remove import/export balance equality sets")
+    be_rem = scen.set("balance_equality")
+    be_rem = be_rem[(be_rem['level'].str.contains('import'))|(be_rem['level'].str.contains('export'))]
+    with scen.transact('remove balance equality for import/export'):
+        scen.remove_set('balance_equality', be_rem)
+    
+    log.info("Add balance equality sets")
+    be_df = scen.par("output")
+    for tec in covered_tec:
+        log.info(f"---Add {tec}")
+        tecdf = be_df[be_df['technology'].str.contains(tec)].copy()
+        comdf = tecdf[['commodity', 'level']].drop_duplicates()
+        comdf = comdf[comdf['level'].isin(['piped', 'shipped'])].drop_duplicates()
+    
+        with scen.transact(f"add balance equality sets for {tec}"):
+            scen.add_set("balance_equality", comdf)
+            
 # %% Write just the GDX files
 def save_to_gdx(mp: ixmp.Platform, scenario, output_path: str):
     """
@@ -422,6 +445,9 @@ def load_and_solve(
 
     # Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM
     remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=MESSAGEix_GLOBIOM)
+
+    # Ensure balance equality
+    ensure_balance_equality(scen=scen, log=log, covered_tec=covered_tec)
 
     # Solve or save scenario
     solve_or_save(
