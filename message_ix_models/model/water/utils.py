@@ -131,6 +131,14 @@ def filter_basins_by_region(
     num_basins = getattr(context, "num_basins", None)
     basin_selection = getattr(context, "basin_selection", "first_k")
 
+    if num_basins is None:
+        log.info(f"num_basins not set, using default n_per_region={n_per_region}")
+    elif num_basins < 3:
+        log.warning(
+            f"num_basins={num_basins} is below 3; results may not capture "
+            f"sufficient basin diversity per region"
+        )
+
     # Step 1: automatic selection (stress or first_k)
     if "REGION" not in df_basins.columns:
         log.info("REGION column not found, cannot filter by region")
@@ -149,9 +157,8 @@ def filter_basins_by_region(
     else:
         if num_basins is not None:
             n_per_region = num_basins
-        filtered = df_basins.groupby("REGION", group_keys=False).apply(
-            lambda x: x.head(n_per_region)
-        )
+        mask = df_basins.groupby("REGION").cumcount() < n_per_region
+        filtered = df_basins[mask]
         log.info(
             f"first_k selection: {len(df_basins)} -> {len(filtered)} basins "
             f"(n_per_region={n_per_region})"
