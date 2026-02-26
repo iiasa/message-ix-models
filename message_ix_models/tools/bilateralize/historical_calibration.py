@@ -738,7 +738,7 @@ def build_historical_activity(
     check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
-    
+
     outdf = reformat_to_parameter(
         indf=tradedf,
         message_regions=message_regions,
@@ -746,9 +746,12 @@ def build_historical_activity(
         project_name=project_name,
         config_name=config_name,
     )
-    outdf = outdf.groupby(['node_loc', 'technology', 'year_act',
-                        'mode', 'time'])['value'].sum().reset_index()
-                        
+    outdf = (
+        outdf.groupby(["node_loc", "technology", "year_act", "mode", "time"])["value"]
+        .sum()
+        .reset_index()
+    )
+
     outdf["unit"] = "GWa"
 
     return outdf.drop_duplicates()
