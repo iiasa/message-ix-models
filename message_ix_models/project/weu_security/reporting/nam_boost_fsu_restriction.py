@@ -15,12 +15,13 @@ region_labels = config['region_labels']
 # Import fuel supply data
 indf = pd.read_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
 
-plot_scenarios = ['FSU2040_NAM500', ]
+plot_scenarios = ['FSU2040_NAM500', 'FSU2040_NAM1000', 'FSU2100_NAM500', 'FSU2100_NAM1000']
+
 # Clean data
 df = indf[indf['supply_type'] == 'Imports'].copy()
 df = df[df['fuel_type'].isin(['Coal', 'Crude', 'Gas', 'Light Oil'])]
 
-scenarios = 
+scenarios = plot_scenarios
 fuel_types = sorted(df["fuel_type"].unique())
 
 # Expecting 4 scenarios × 2 fuel types

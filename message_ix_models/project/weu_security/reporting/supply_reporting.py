@@ -125,10 +125,10 @@ for mod, scen in [('weu_security', 'SSP2'),
                   ('weu_security', 'FSU2100'),
                   ('weu_security', 'NAM500'),
                   ('weu_security', 'NAM1000'),
-                  #('weu_security', 'FSU2040_NAM500'),
-                  #('weu_security', 'FSU2040_NAM1000'),
-                 # ('weu_security', 'FSU2100_NAM500'),
-                 # ('weu_security', 'FSU2100_NAM1000'),
+                  ('weu_security', 'FSU2040_NAM500'),
+                  ('weu_security', 'FSU2040_NAM1000_update'),
+                  ('weu_security', 'FSU2100_NAM500'),
+                  ('weu_security', 'FSU2100_NAM1000'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
