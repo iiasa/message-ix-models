@@ -54,7 +54,7 @@ def _load_scenario_and_cooling_data(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
 
-    # Load basin delineation
+    # FIXME Derive node_region from scenario/codelist rather than basin CSV
     df_node = pd.read_csv(basin_path)
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
