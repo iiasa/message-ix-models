@@ -132,7 +132,5 @@ co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_PAS,-0.13,copied from CO2
 co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_NAM,-0.13,copied from CO2 entry from steel_R12
 co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_PAO,-0.13,copied from CO2 entry from steel_R12
 co2_trans_disp,relation_activity,dri_gas_ccs_steel,R12_AFR,-0.13,copied from CO2 entry from steel_R12
-max_global_recycling_steel,relation_lower,,R12_CHN,630.0,
-max_global_recycling_steel,relation_upper,,R12_CHN,630.0,
 minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_CHN,1.0,
 minimum_recycling_steel,relation_activity,scrap_recovery_steel_3,R12_EEU,1.0,

@@ -385,7 +385,6 @@ steel:
   relation:
     add:
       - minimum_recycling_steel
-      - max_global_recycling_steel
       - max_regional_recycling_steel
       - eaf_bound_2020
       - bof_bound_2020
