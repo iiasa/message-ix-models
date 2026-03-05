@@ -126,9 +126,12 @@ for mod, scen in [('weu_security', 'SSP2'),
                   ('weu_security', 'NAM500'),
                   ('weu_security', 'NAM1000'),
                   ('weu_security', 'FSU2040_NAM500'),
-                  ('weu_security', 'FSU2040_NAM1000_update'),
+                  ('weu_security', 'FSU2040_NAM1000'),
                   ('weu_security', 'FSU2100_NAM500'),
                   ('weu_security', 'FSU2100_NAM1000'),
+                  ('weu_security', 'SSP2_reexport'),
+                  ('weu_security', 'NAM1000_reexport'),
+                  ('weu_security', 'FSU2100_NAM1000_reexport')
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
@@ -148,10 +151,11 @@ for mod, scen in [('weu_security', 'SSP2'),
     fuel_supply['exporter'] = np.where(fuel_supply['supply_type'] == 'Imports',
                                        fuel_supply['variable'].str.split('|').str[-1], '')
     fuel_exports = fuel_supply.copy()
-    fuel_exports = fuel_exports[['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
-    fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
+    fuel_exports = fuel_exports[['region', 'exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
+    #fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
     fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
-    fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type']
+    fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type'] + "|" + fuel_exports['region']
+    fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'variable', 'unit', 'year'])['value'].sum().reset_index()
     fuel_exports = fuel_exports.rename(columns = {'exporter': 'region'})
     fuel_exports['exporter'] = ''
     fuel_exports['supply_type'] = 'Exports'

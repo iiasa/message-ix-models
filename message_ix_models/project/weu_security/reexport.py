@@ -6,6 +6,63 @@ from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 
+def adjust_reexports(base_scenario_name:str,
+                     trade_commodity:str,
+                     base_level:str):
+    
+    # Import scenario and models
+    mp = ixmp.Platform()
+    base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
+    out_scenario_name = base_scenario_name + '_adjRex'
+    out_scenario = base_scenario.clone(model = 'weu_security', scenario = out_scenario_name, keep_solution = False)
+
+    # Output from domestic production should have updated level
+    dom_prod = base_scenario.par('output', filters = {'commodity': trade_commodity,
+                                                      'level': base_level})
+    dom_prod = dom_prod[dom_prod['technology'].str.contains('_imp') == False]
+    dom_prod_base = dom_prod.copy()
+    dom_prod['level'] = base_level + '_1' # Update level
+
+    # Create fuel balancing to move level from base_level_1 to base_level
+    fb_input = base_scenario.par('input', filters = {'technology': 'coal_bal'}) # use coal as basis
+    fb_input_base = fb_input.copy()
+    fb_input['level'] = base_level + '_1'
+    fb_input['technology'] = trade_commodity + '_bal'
+
+    fb_output = base_scenario.par('output', filters = {'technology': 'coal_bal'})
+    fb_output_base = fb_output.copy()
+    fb_output['level'] = base_level
+    fb_output['technology'] = trade_commodity + '_bal'
+
+    # Update fuel export input to use base_level_1
+    export_input = base_scenario.par('input', filters = {'commodity': trade_commodity,
+                                                        'level': base_level})
+    export_input = export_input[export_input['technology'].str.contains('_exp')]
+    export_input_base = export_input.copy()
+    export_input['level'] = base_level + '_1'
+
+    # Add all back to scenario
+    with out_scenario.transact("Add fuel balancing level set"):
+        out_scenario.add_set("level", base_level + '_1')
+        out_scenario.add_set("technology", trade_commodity + '_bal')
+        
+    with out_scenario.transact("Update output from domestic production"):
+        out_scenario.remove_par('output', dom_prod_base)
+        out_scenario.add_par('output', dom_prod)
+
+    with out_scenario.transact("Update fuel balancing"):
+        out_scenario.remove_par('input', fb_input_base)
+        out_scenario.remove_par('output', fb_output_base)
+        out_scenario.add_par('input', fb_input)
+        out_scenario.add_par('output', fb_output)
+
+    with out_scenario.transact("Update export input"):
+        out_scenario.remove_par('input', export_input_base)
+        out_scenario.add_par('input', export_input)
+
+    out_scenario.solve()
+    mp.close_db()
+
 def add_reexports(base_scenario_name:str,
                   covered_trade_technologies:list[str]):
     
@@ -62,6 +119,11 @@ def add_reexports(base_scenario_name:str,
 
     out_scenario.solve()
     mp.close_db()
+
+
+adjust_reexports(base_scenario_name = "SSP2",
+                 trade_commodity = 'lightoil',
+                 base_level = 'secondary')
 
 covered_trade_technologies = ['crudeoil_shipped', 'crudeoil_piped',
                               'LNG_shipped', 'gas_piped']

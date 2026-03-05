@@ -14,6 +14,7 @@ region_labels = config['region_labels']
 
 # Import fuel supply data
 df = pd.read_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
+df['exporter'] = np.where(df['supply_type'] == 'Exports', df['region'], df['exporter'])
 
 def plot_eur_supply(df:pd.DataFrame,
                     plot_fuel:str,
@@ -77,19 +78,40 @@ def plot_eur_supply(df:pd.DataFrame,
         data = bars_pivot.loc[scenario]
         years = data.index
 
-        bottom = np.zeros(len(years))
+        bottom_pos = np.zeros(len(years))
+        bottom_neg = np.zeros(len(years))
 
-        # stacked bars by exporter
+        # stacked bars by exporter — positive and negative separately
         for exporter in data.columns:
-            ax.bar(
-                years,
-                data[exporter],
-                bottom=bottom,
-                label=exporter,
-                width=2,
-                color=region_colors.get(exporter, "#cccccc")  # fallback gray
-            )
-            bottom += data[exporter].values
+            values = data[exporter].values
+
+            pos_vals = np.where(values > 0, values, 0)
+            neg_vals = np.where(values < 0, values, 0)
+
+            if pos_vals.any():
+                ax.bar(
+                    years,
+                    pos_vals,
+                    bottom=bottom_pos,
+                    label=exporter,
+                    width=2,
+                    color=region_colors.get(exporter, "#cccccc")
+                )
+                bottom_pos += pos_vals
+
+            if neg_vals.any():
+                ax.bar(
+                    years,
+                    neg_vals,
+                    bottom=bottom_neg,
+                    label=exporter if not pos_vals.any() else "_nolegend_",
+                    width=2,
+                    color=region_colors.get(exporter, "#cccccc")
+                )
+                bottom_neg += neg_vals
+
+        # zero line for reference
+        ax.axhline(0, color="black", linewidth=0.8, linestyle="--", alpha=0.5)
 
         # total line (black)
         total_s = total[total["scenario"] == scenario].set_index("year")
@@ -129,11 +151,11 @@ plot_eur_supply(df = df,
                 plot_fuel = ["Gas"],
                 plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
                 plot_regions = ["R12_WEU", "R12_EEU"],
-                plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070])
+                plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060])
+
 
 plot_eur_supply(df = df,
-                plot_fuel = ["Gas"],
-                plot_scenarios = ["FSU2040", "FSU2040_NAM500", "FSU2040_NAM1000_update"],
+                plot_fuel = ["Light Oil"],
+                plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
                 plot_regions = ["R12_WEU", "R12_EEU"],
-                plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070])
-
+                plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060])
