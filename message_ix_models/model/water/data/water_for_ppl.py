@@ -17,6 +17,7 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
+from message_ix_models.util.node import extract_region_code
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -121,9 +122,11 @@ def _compute_cooling_rates(input_cool: pd.DataFrame) -> pd.DataFrame:
 
     # Cooling fraction: heat to be rejected
     input_cool["cooling_fraction"] = input_cool.apply(
-        lambda r: r["value"] - 1
-        if "hpl" in str(r.get("parent_tech", ""))
-        else r["value"] * (1 - flue_loss) - 1,
+        lambda r: (
+            r["value"] - 1
+            if "hpl" in str(r.get("parent_tech", ""))
+            else r["value"] * (1 - flue_loss) - 1
+        ),
         axis=1,
     )
 
@@ -603,7 +606,7 @@ def _add_nexus_params(
     # Output: distribute to basins by share
     outputs = []
     for region in node_region:
-        region_code = region.split("_")[-1]
+        region_code = extract_region_code(region)
         basins = df_sw[df_sw["node_dest"].str.contains(region_code, na=False)]
         if basins.empty:
             continue

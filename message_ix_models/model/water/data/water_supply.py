@@ -11,6 +11,7 @@ from message_ix_models.model.water.utils import (
     KM3_TO_MCM,
     USD_KM3_TO_USD_MCM,
     GWa_KM3_TO_GWa_MCM,
+    filter_basins_by_region,
     get_vintage_and_active_years,
 )
 from message_ix_models.util import (
@@ -41,7 +42,13 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
-        df_x = pd.read_csv(PATH)
+        df_x_full = pd.read_csv(PATH)
+
+        # Get positional indices of valid basins from the unfiltered list
+        valid_mask = df_x_full["BCU_name"].isin(context.valid_basins)
+        valid_indices = df_x_full[valid_mask].index
+        df_x = df_x_full[valid_mask].reset_index(drop=True)
+
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
@@ -53,7 +60,8 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
 
-        # Reading data, the data is spatially and temporally aggregated from GHMs
+        # Filter df_sw to matching positional rows, then reset both indices
+        df_sw = df_sw.iloc[valid_indices].reset_index(drop=True)
         df_sw["BCU_name"] = df_x["BCU_name"]
         df_sw["MSGREG"] = (
             context.map_ISO_c[context.regions]
@@ -93,9 +101,15 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
-        df_x = pd.read_csv(PATH)
+        df_x_full = pd.read_csv(PATH)
 
-        # Reading data, the data is spatially and temporally aggregated from GHMs
+        # Get positional indices of valid basins from the unfiltered list
+        valid_mask = df_x_full["BCU_name"].isin(context.valid_basins)
+        valid_indices = df_x_full[valid_mask].index
+        df_x = df_x_full[valid_mask].reset_index(drop=True)
+
+        # Filter df_sw to matching positional rows, then reset both indices
+        df_sw = df_sw.iloc[valid_indices].reset_index(drop=True)
         df_sw["BCU_name"] = df_x["BCU_name"]
 
         df_sw["MSGREG"] = (
@@ -165,6 +179,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     PATH = package_data_path("water", "delineation", FILE)
 
     df_node = pd.read_csv(PATH)
+
+    # Apply basin filter to reduce number of basins per region
+    df_node = filter_basins_by_region(df_node, context)
+
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -191,7 +209,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
     PATH2 = package_data_path("water", "availability", FILE2)
     df_hist = pd.read_csv(PATH2)
-    df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
+
+    # Filter to only include valid basins (nexus mode only)
+    if context.nexus_set == "nexus":
+        df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
+        df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     if context.nexus_set == "cooling":
         # Add output df  for surfacewater supply for regions
