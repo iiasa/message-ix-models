@@ -15,9 +15,12 @@ This work extends the water sector linkage described by Parkinson et al. (2019) 
 CLI usage
 =========
 
-Use the :doc:`CLI </cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Example:
-``mix-models --url=ixmp://ixmp_dev/ENGAGE_SSP2_v4.1.7/baseline_clone_test water cooling``
-model and scenario specifications can be either set manually in ``cli.py`` or specified in the ``--url`` option
+Use the :doc:`CLI </cli>` command ``mix-models water-ix`` to invoke the commands defined in :mod:`.water.cli`.
+Model and scenario specifications can be set via the ``--url`` option or in ``cli.py``.
+
+Example::
+
+   mix-models --url=ixmp://ixmp_dev/ENGAGE_SSP2_v4.1.7/baseline_clone_test water-ix nexus
 
 .. code::
 
@@ -37,18 +40,37 @@ model and scenario specifications can be either set manually in ``cli.py`` or sp
    nexus    Add basin structure connected to the energy sector and water...
    report   function to run the water report_full from cli to the scenario...
 
+.. code::
+
+   Usage: mix-models water-ix nexus [OPTIONS]
+
+   Options:
+   --rcps [no_climate|6p0|2p6|7p0]   Climate scenario (default: no_climate).
+   --rels [low|med|high]              Hydrological data reliability (default: low).
+   --sdgs TEXT                        Water SDG measures (default: baseline).
+   --macro                            Solve with MESSAGE-MACRO.
+   --reduced-basin / --no-reduced-basin
+                                      Enable basin filtering (default: off).
+   --basin-selection [first_k|stress] Automatic selection method (default: first_k).
+                                      first_k: head n basins per region in CSV order.
+                                      stress: sample across demand/supply ratio spectrum.
+   --num-basins INTEGER               Basins per region (default: 3).
+   --filter-list TEXT                 Extra basins to add to the automatic selection
+                                      (repeatable). Final set is the union of automatic
+                                      selection and filter-list entries.
+
 Country vs Global implementation
 --------------------------------
 
 The :mod:`message_ix_models.model.water` is designed to being able to add water components to either a global R11 (or R12) model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
-For any of the region configuration a shapefile is needed to run the pre-processing part, while, once the data is prepared, only a .csv file similar to those in `message_ix_models.data.water.delineation` is needed.
+For any of the region configuration a shapefile is needed to run the pre-processing part, while, once the data is prepared, only a .csv file similar to those in :file:`message_ix_models/data/water/delineation/` is needed.
 
 To work with a country model please ensure that:
 
 1. country model and scenario are specified either in ``--url`` or in the ``cli.py`` script
 2. the option ``--regions`` is used with the ISO3 code of the country (e.g. for Israel ``--regions=ISR``)
-3. Following the Israel example add a 'country'.yaml file in `message_ix_models.data.node` for the specific country
-4. Following the Israel example add the country ISO3 code in the 'regions' options in `message_ix_models.utils.click`
+3. Following the Israel example add a 'country'.yaml file in :file:`message_ix_models/data/node/` for the specific country
+4. Following the Israel example add the country ISO3 code in the 'regions' options in :mod:`message_ix_models.util.click`
 
 Annual vs sub-annual implementation
 -----------------------------------
