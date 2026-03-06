@@ -22,19 +22,22 @@ except ImportError:  # ixmp/message_ix v3.7.0
         as_message_df,
     )
 from sdmx.model.v21 import Annotation, Code
-
+from message_ix import make_df
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
+from message_ix_models.model.bmt.utils import subtract_material_demand
 from message_ix_models.model.structure import (
     generate_set_elements,
     get_codes,
     get_region_codes,
 )
 from message_ix_models.util import (
+    broadcast,
     load_package_data,
     make_io,
     merge_data,
     nodes_ex_world,
+    private_data_path,
 )
 
 from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
@@ -42,7 +45,7 @@ from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
 if TYPE_CHECKING:
-    from message_ix import Scenario
+    from message_ix import Scenario, make_df
 
     from message_ix_models.types import MutableParameterData, ParameterData
 
@@ -142,6 +145,12 @@ def get_spec(context: Context) -> Spec:
     load_config(context)
 
     s = deepcopy(context["buildings spec"])
+
+    # Read config and save to context.buildings
+    from message_ix_models.model.buildings.config import Config
+
+    config = Config()
+    context.buildings = config
 
     if context.buildings.with_materials:
         s.require.set["commodity"].extend(MATERIALS)
@@ -296,15 +305,31 @@ def load_config(context: Context) -> None:
     # Generate commodities that replace corresponding rc_* in the base model
     for c in filter(lambda x: x.id.startswith("rc_"), get_codes("commodity")):
         new = deepcopy(c)
-        new.id = c.id.replace("rc_", "afofi_")
+        new.id = c.id.replace("rc_", "afofio_")
         s.add.set["commodity"].append(new)
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
-    expr = re.compile("_(rc|RC)$")
+    # Match both _RC/_rc at end and _RC_RT/_rc_RT patterns
+    expr = re.compile("_(rc|RC)(_RT)?$")
+
+    # Technologies that should not be transformed to afofi
+    exclude_techs = {}
+
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
+        # Skip technologies that should not be transformed
+        if t.id in exclude_techs:
+            continue
+
         # Generate a new Code object, preserving annotations
         new = deepcopy(t)
-        new.id = expr.sub("_afofi", t.id)
+        # Replace _RC or _rc with _afofio, preserving _RT suffix if present
+        # e.g., sp_el_RC_RT -> sp_el_afofio_RT, loil_rc -> loil_afofio
+        if t.id.endswith("_RT"):
+            # Replace _RC_RT or _rc_RT with _afofio_RT
+            new.id = re.sub("_(rc|RC)_RT$", "_afofio_RT", t.id)
+        else:
+            # Replace _RC or _rc at end with _afofio
+            new.id = re.sub("_(rc|RC)$", "_afofio", t.id)
         new.annotations.append(Annotation(id="derived-from", text=t.id))
 
         # This will be added
@@ -562,8 +587,6 @@ def prepare_data(
             else:
                 tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
 
-            # commented: for debugging
-            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
 
             # Modify data
             for name, filters, extra in (  # type: ignore
@@ -598,6 +621,224 @@ def prepare_data(
     # commented: This is superseded by .navigate.workflow.add_globiom_step
     # # Add data for a backstop supply of (biomass, secondary)
     # merge_data(result, bio_backstop(scenario))
+
+    return result
+
+
+def prepare_data_B(
+    scenario: message_ix.Scenario,
+    info: ScenarioInfo,
+    prices: pd.DataFrame,
+    sturm_r: pd.DataFrame,
+    sturm_c: pd.DataFrame,
+    demand_static: pd.DataFrame = None,
+    with_materials: bool = True,
+    relations: list[str] = [],
+) -> "ParameterData":
+    """Derive data for MESSAGEix-Buildings from `scenario`. 
+    Function-wise same as prepare_data(). 
+
+    Input data:
+    - Use the MESSAGE-format report of MESSAGEix-Buildings (demand_resid and demand_comm)
+    - Static external demand that is not updated in each iteration (demand_static)
+
+    Buildings demand includes:
+    - A: Resid and Comm cool/heat/hotwater demand (from STURM, with price iteration)
+    - B: Resid app/cook demand (from ACCESS, no iteration)
+    - C: Resid non-commecial biomass demand (from ACCESS, no iteration)
+    - D: Resid and Comm material demand (from STURM, no iteration)
+    - E: Residual AFOFIO demand (external)
+    """
+
+    # Data frames for each parameter
+    result: "MutableParameterData" = dict()
+
+    # Reset index 
+    for df in [sturm_r, sturm_c, demand_static]:
+        if df is not None and "node" not in df.columns:
+            df.reset_index(inplace=True)
+
+    # Add 2110 data by copying from 2100 if missing
+    for df_name, df in [("sturm_r", sturm_r), ("sturm_c", sturm_c), ("demand_static", demand_static)]:
+        if df is not None and "year" in df.columns:
+            if 2110 not in df["year"].values and 2100 in df["year"].values:
+                # Copy 2100 data to 2110
+                df_2100 = df[df["year"] == 2100].copy()
+                df_2100["year"] = 2110
+                # Update the original dataframe
+                if df_name == "sturm_r":
+                    sturm_r = pd.concat([sturm_r, df_2100], ignore_index=True)
+                elif df_name == "sturm_c":
+                    sturm_c = pd.concat([sturm_c, df_2100], ignore_index=True)
+                elif df_name == "demand_static":
+                    demand_static = pd.concat([demand_static, df_2100], ignore_index=True)
+                log.info(f"Added 2110 data by copying from 2100 for {df_name}")
+
+    # Step 1: generate new technologies and commodities for Buildings demands (part A, B)
+    # Prepare demand data
+    commodity_info = cast("MutableMapping", load_package_data("buildings", "commodity.yaml"))
+    buildings_commodities = set(commodity_info.keys()) 
+    #TODO: another way is to use the add in set.yaml
+    demand = pd.concat([sturm_r, sturm_c, demand_static], ignore_index=True)
+    demand = demand[demand["commodity"].isin(buildings_commodities)]
+
+    result["demand"] = demand
+
+    # Quit building if the scenario already has Buildings demands
+    try:
+        existing_commodities = set(scenario.par("demand")["commodity"].unique())
+        if existing_commodities & buildings_commodities:
+            log.info(f"Scenario already has Buildings demands. Skipping technology generation.")
+            return result
+    except (KeyError, ValueError):
+        pass
+
+    # Mapping from commodity to base model's *_rc technology
+    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
+    data = defaultdict(list)
+
+    # Generate input, output, capacity_factor, emission_factor, relation_activity for new technologies
+    # Deal with 2 exceptions:
+    # - Rooftop technologies for input
+    # - Lightoil gas
+    for fuel in prices["commodity"].unique():
+        # Find the original rc technology for the fuel
+        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
+
+        # Create the technologies for the new commodities
+        for commodity in filter(
+            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
+        ):
+            # Fix for lightoil gas included
+            if "lightoil-gas" in commodity:
+                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
+            else:
+                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
+            log.info(f"  Commodity: {commodity} -> Tech: {tech_new}")
+
+            # Modify data
+            for name, filters, extra in (  # type: ignore
+                ("input", {}, {}),  # NB value=1.0 is done by adapt_emission_factors()
+                ("output", {}, dict(commodity=commodity, value=1.0)),
+                ("capacity_factor", {}, {}),
+                ("emission_factor", {}, {}),
+                ("relation_activity", dict(relation=relations), {}),
+            ):
+                filters["technology"] = [tech_orig]
+                input_data = scenario.par(name, filters=filters).assign(
+                    technology=tech_new, **extra
+                )
+                data[name].append(input_data)
+                # Deal with rooftop technologies for input
+                # All newly created electricity technologies that can use rooftop PV should have:
+                # - M1: electr at level "final" (already exists)
+                # - M2: electr at level "final_RT" (add this)
+                rt_tech= [
+                    "electr_comm_cool", 
+                    "electr_resid_cool",
+                    "electr_resid_apps",
+                    "electr_resid_other_uses",
+                    "electr_comm_other_uses",
+                    "electr_resid_cook",
+                    # not hotwater and heating as they requires corresponding storage technologies
+                ]
+                if name == "input" and len(input_data) > 0:
+                    electr_inputs = input_data[
+                        (input_data["technology"].isin(rt_tech))
+                        & (input_data["commodity"] == "electr")
+                        & (input_data["level"] == "final")
+                        & (input_data["mode"] == "M1")
+                    ].copy()
+                    if len(electr_inputs) > 0:
+                        # Create M2 inputs with level "final_RT"
+                        electr_inputs_m2 = electr_inputs.assign(
+                            level="final_RT",
+                            mode="M2"
+                        )
+                        data[name].append(electr_inputs_m2)
+                        log.info(f"Added {len(electr_inputs_m2)} M2 input rows for technology {tech_new}")
+                elif name == "output" and len(input_data) > 0:
+                    electr_outputs = input_data[
+                        (input_data["technology"].isin(rt_tech))
+                        & (input_data["mode"] == "M1")
+                    ].copy()
+                    if len(electr_outputs) > 0:
+                        electr_outputs_m2 = electr_outputs.assign(mode="M2")
+                        data[name].append(electr_outputs_m2)
+                        log.info(f"Added {len(electr_outputs_m2)} M2 output rows for technology {tech_new}")
+
+    tmp = {k: pd.concat(v) for k, v in data.items()}
+    
+    adapt_emission_factors(tmp)
+    merge_data(result, tmp)
+
+    # Step 2: generate new technologies and commodities for Buildings demands (part C)
+    try:
+        existing_commodities = set(scenario.par("demand")["commodity"].unique())
+        if "non-comm" not in existing_commodities:
+            log.info("Scenario does not have 'non-comm' demand.")
+            # TODO: add the chain to build biomass_nc technologies too
+            # TODO: not clear about the logic of keeping which version of non-comm
+            return result
+    except (KeyError, ValueError):
+        pass
+
+    # Step 3: generate new technologies and commodities for the residual rc (part E)
+    # - replace rc_spec and rc_therm with afofio_spec and afofio_therm
+    # - AFOFIO demand read from CSV files
+    afofio_demand = demand_static[demand_static["commodity"].isin(["afofio_spec", "afofio_therm"])]
+    result["demand"] = pd.concat([result["demand"], afofio_demand], ignore_index=True)
+
+    # Mapping from original to generated commodity names
+    c_map = {f"rc_{name}": f"afofio_{name}" for name in ("spec", "therm")}
+
+    # Create AFOFIO technologies by transforming RC technologies
+    # Identify technologies that output to rc_spec or rc_therm
+    rc_techs = scenario.par(
+        "output", filters={"commodity": ["rc_spec", "rc_therm"]}
+    )["technology"].unique()
+
+    def transform_tech_name(tech_name: str) -> str:
+        if tech_name.endswith("_RT"):
+            # Handle _RC_RT or _rc_RT -> _afofio_RT
+            return re.sub("_(rc|RC)_RT$", "_afofio_RT", tech_name)
+        else:
+            # Handle _RC or _rc at end -> _afofio
+            return re.sub("_(rc|RC)$", "_afofio", tech_name)
+
+    replace = {
+        "commodity": c_map,
+        "technology": {
+            t: transform_tech_name(t)
+            for t in rc_techs
+        },
+    }
+
+    t_shares = Quantity(1.0, name="afofio tech share") 
+    # 1.0 scaling as actual demand data read in
+
+    merge_data(
+        result,
+        scale_and_replace(  # type: ignore [arg-type]
+            scenario, replace, t_shares, relations=relations, relax=0.05
+        ),
+    )
+
+    # Step 4: build materials for new constructions and demolitions (part D)
+    if with_materials:
+        # Set up buildings-materials linkage
+        merge_data(result, materials(scenario, info, sturm_r, sturm_c))
+
+    # Step 5: other format check and adjustments
+    for key, df in result.items(): # convert year columns in all DataFrames in result dict
+        year_cols = [col for col in df.columns if col.startswith("year")]
+        if year_cols:
+            result[key] = df.astype({col: int for col in year_cols})
+    result["demand"] = result["demand"].assign( # assign levels
+        level=result["demand"].commodity.apply(
+            lambda x: "demand" if ("floor" in x or any(mat in x.lower() for mat in MATERIALS)) else "useful"
+        )
+    )
 
     return result
 
@@ -667,6 +908,7 @@ def main(
         sturm_c,
         context.buildings.with_materials,
         relations=spec.require.set["relation"],
+        afofi_demand=None,  # Use calculated AFOFI demand
     )
 
     # Remove unused commodities and technologies
@@ -737,10 +979,14 @@ def materials(
         df_mat = (sturm_r if rc == "resid" else sturm_c).query(
             f"commodity == '{c}' and node == '{n}'"
         )
-        # Input or output efficiency:
-        # - Duplicate the final (2100) value for 2110.
-        # - Take a number of values corresponding to len(info.Y), allowing the first
-        #   model year to be 2020 or 2025.
+        # Handle missing years: if 2020 missing use 2025; if 2110 missing use 2100
+        for target, source in [(2020, 2025), (2110, 2100)]:
+            if target not in df_mat["year"].values:
+                df_source = df_mat[df_mat["year"] == source]
+                if len(df_source) > 0:
+                    df_target = df_source.copy()
+                    df_target["year"] = target
+                    df_mat = pd.concat([df_mat, df_target], ignore_index=True).sort_values("year")
         eff = pd.concat([df_mat.value, df_mat.value.tail(1)]).iloc[-len(info.Y) :]
 
         if typ == "demand":
@@ -774,50 +1020,203 @@ def materials(
         for name, df in data.items():
             result[name].append(df)
 
-    # Retrieve data once
-    mat_demand = scenario.par("demand", {"level": "demand"})
-    index_cols = ["node", "year", "commodity"]
+    # Add floor construction and demolition demands from sturm_r and sturm_c if not already present
+    expr = "(comm|resid)_floor_(construc|demoli)tion"
+    existing = pd.concat(result["demand"], ignore_index=True) if result["demand"] else pd.DataFrame()
+    if not (len(existing) > 0 and existing["commodity"].str.fullmatch(expr, na=False).any()):
+        floor_demand = pd.concat([
+            df[df["commodity"].str.fullmatch(expr, na=False)] 
+            for df in [sturm_r, sturm_c] if df is not None and len(df) > 0
+        ], ignore_index=True)
+        if len(floor_demand) > 0:
+            result["demand"].append(floor_demand)
+    
+    # Use the reusable function to subtract material demand
+    # One can change the method parameter to use different approaches:
+    # - "bm_subtraction": Building material subtraction (default)
+    # - "im_subtraction": Infrastructure material subtraction (to be implemented)
+    # - "pm_subtraction": Power material subtraction (to be implemented)
+    # - "tm_subtraction": Transport material subtraction (to be implemented)
+    mat_demand = subtract_material_demand(
+        scenario, info, sturm_r, sturm_c, method="bm_subtraction"
+    )
 
-    # Subtract building material demand from existing demands in scenario
-    for rc, base_data, how in (("resid", sturm_r, "right"), ("comm", sturm_c, "outer")):
-        new_col = f"demand_{rc}_const"
-
-        # - Drop columns.
-        # - Rename "value" to e.g. "demand_resid_const".
-        # - Extract MESSAGEix-Materials commodity name from STURM commodity name.
-        # - Drop other rows.
-        # - Set index.
-        df = (
-            base_data.drop(columns=["level", "time", "unit"])
-            .rename(columns={"value": new_col})
-            .assign(
-                commodity=lambda _df: _df.commodity.str.extract(
-                    f"{rc}_mat_demand_(cement|steel|aluminum)", expand=False
-                )
-            )
-            .dropna(subset=["commodity"])
-            .set_index(index_cols)
-        )
-
-        # Merge existing demands at level "demand".
-        # - how="right": drop all rows in par("demand", …) that have no match in `df`.
-        # - how="outer": keep the union of rows in `mat_demand` (e.g. from sturm_r) and
-        #   in `df` (from sturm_c); fill NA with zeroes.
-        mat_demand = mat_demand.join(df, on=index_cols, how=how).fillna(0)
-
-    # False if main() is being run for the second time on `scenario`
-    first_pass = "construction_resid_build" not in info.set["technology"]
-
-    # If not on the first pass, this modification is already performed; skip
-    if first_pass:
-        # - Compute new value = (existing value - STURM values), but no less than 0.
-        # - Drop intermediate column.
-        # - Add to combined data.
-        result["demand"].append(
-            mat_demand.eval("value = value - demand_comm_const - demand_resid_const")
-            .assign(value=lambda df: df["value"].clip(0))
-            .drop(columns=["demand_comm_const", "demand_resid_const"])
-        )
+    # Add the modified demand to results
+    result["demand"].append(mat_demand)
 
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
+
+
+# works in the same way as main() but applicable for ssp baseline scenarios
+def build_B(
+    context: Context,
+    scenario: message_ix.Scenario,
+):
+    """Set up the structure and data for MESSAGEix_Buildings on `scenario`.
+
+    Parameters
+    ----------
+    scenario
+        Scenario to set up.
+    """
+    info = ScenarioInfo(scenario)
+
+    from message_ix_models.model.buildings.config import Config
+
+    config = Config()
+    context.buildings = config
+
+    scenario.check_out()
+
+    try:
+        # TODO explain what this is for
+        scenario.init_set("time_relative")
+    except ValueError:
+        pass  # Already exists
+
+    # Generate a spec for the model
+    spec = get_spec(context)
+
+    # Temporary: input for prepare data seperately read from csv
+    # prices
+    price_path = private_data_path("buildings", "input_prices_R12.csv")
+    prices = pd.read_csv(price_path)
+
+    # sturm_r
+    sturm_r_path = private_data_path("buildings", "report_MESSAGE_resid_SSP2_nopol_post.csv")
+    # sturm_r_path = package_data_path("buildings", "debug-sturm-resid.csv")
+    sturm_r = pd.read_csv(sturm_r_path, index_col=0)
+
+    # sturm_c
+    sturm_c_path = private_data_path("buildings", "report_MESSAGE_comm_SSP2_nopol_post.csv")
+    # sturm_c_path = package_data_path("buildings", "debug-sturm-comm.csv")
+    sturm_c = pd.read_csv(sturm_c_path, index_col=0)
+    # sturm_c.loc[sturm_c["commodity"].str.contains("other_uses", na=False), "value"] = 0
+
+    # static demand
+    demand_static_path = private_data_path("buildings", "static_20251227.csv")
+    demand_static = pd.read_csv(demand_static_path, index_col=0)
+    demand_static.loc[demand_static["commodity"].str.contains("afofio", na=False), "value"] = 0
+
+    # Prepare data based on the contents of `scenario`
+    data = prepare_data_B(
+        scenario,
+        info,
+        prices,
+        sturm_r,
+        sturm_c,
+        demand_static,
+        context.buildings.with_materials,
+        relations=spec.require.set["relation"],
+    )
+
+    # Remove unused commodities and technologies
+    prune_spec(spec, data)
+
+    # Simple callback for apply_spec()
+    def _add_data(s, **kw):
+        return data
+
+    # FIXME check whether this works correctly on the re-solve of a scenario that has
+    #       already been set up
+    options = dict(fast=True)
+    build.apply_spec(scenario, spec, _add_data, **options)
+
+    # TODO: think about if bound of residiual rc should be removed at all or not
+    # Make sure the historical bound correctly calibrated
+    # Remove bounds for technologies containing "_rc", "_RC_RT", or "_afofio"
+    bound_parameters = [
+        'bound_activity_lo',
+        'bound_activity_up',
+        'bound_new_capacity_lo',
+        'bound_new_capacity_up',
+        'bound_total_capacity_lo',
+        'bound_total_capacity_up',
+    ]
+    
+    patterns_to_remove = ["_rc", "_RC_RT", "_afofio"]
+    
+    with scenario.transact("Remove bounds for residual rc"):
+        for par_name in bound_parameters:
+            # Get parameter data
+            par_df = scenario.par(par_name)
+            
+            if par_df.empty:
+                continue
+            
+            # Filter technologies containing the patterns
+            tech_mask = par_df['technology'].str.contains('|'.join(patterns_to_remove), case=False, na=False)
+            techs_to_remove = par_df[tech_mask]
+            
+            if not techs_to_remove.empty:
+                # Get unique technologies that will be removed
+                removed_techs = sorted(techs_to_remove['technology'].unique())
+                log.info(
+                    f"Removing {len(techs_to_remove)} rows from {par_name} "
+                    f"for technologies: {removed_techs}"
+                )
+                
+                # Remove the parameter data
+                scenario.remove_par(par_name, techs_to_remove)
+
+    # TODO: think about how to systematically cover all UE constraints related to rc
+    # Converting share_commodity_up UE_RT_elec_share_RC_max to share_mode_up
+
+    # Remove old share_commodity_up constraint and from shares set
+    with scenario.transact("Remove old UE_RT_elec_share_RC_max constraint"):
+        ue_rt_rows = scenario.par("share_commodity_up", filters={"shares": "UE_RT_elec_share_RC_max"})
+        if not ue_rt_rows.empty:
+            scenario.remove_par("share_commodity_up", ue_rt_rows)
+            log.info(f"Removed {len(ue_rt_rows)} rows from share_commodity_up for UE_RT_elec_share_RC_max")
+
+        if "UE_RT_elec_share_RC_max" in scenario.set("shares").tolist():
+            scenario.remove_set("shares", "UE_RT_elec_share_RC_max")
+            log.info("Removed UE_RT_elec_share_RC_max from shares set")
+    
+    # Get all regions and years from the scenario
+    all_regions = sorted([r for r in scenario.set('node') if "R12_" in r])
+    all_years = sorted([int(y) for y in scenario.set('year')])
+
+    # Technologies to apply the constraint to
+    technologies = [
+        "electr_comm_cool", 
+        "electr_resid_cool",
+        "electr_resid_apps",
+        "electr_resid_other_uses",
+        "electr_comm_other_uses",
+        "electr_resid_cook",
+        # "electr_resid_heat",
+        # "electr_comm_heat",
+        # "electr_resid_hotwater",
+        # "electr_comm_hotwater",
+    ]
+
+    # Create base DataFrame with fixed dimensions, then broadcast over variable dimensions
+    df_share_mode_up = (
+        make_df(
+            "share_mode_up",
+            shares="RT_elec_share_RC_max",
+            mode="M2",
+            time="year",
+            value=0.35,
+            unit="-",
+        )
+        .assign(node_share=None, technology=None, year_act=None)
+        .pipe(
+            broadcast,
+            node_share=all_regions,
+            technology=technologies,
+            year_act=all_years,
+        )
+    )
+
+    # Add par
+    with scenario.transact("add the share mode constraint"):
+        scenario.add_set("shares", "RT_elec_share_RC_max")   
+        scenario.add_par("share_mode_up", df_share_mode_up)
+        log.info(f"Added share mode constraint RT_elec_share_RC_max")
+
+    scenario.set_as_default()
+
+    log.info(f"Built {scenario.url} and set as default")
