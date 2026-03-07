@@ -194,7 +194,15 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     )
 
     df_fin_use_r12 = get_consumption_ts("SSP2")
-    scrap_avail = get_weibull_scrap_release(df_fin_use_r12)
+    apu_tsu_ratio = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "apu_tsu_ratio.csv"
+        ),
+        index_col=0,
+    )
+    scrap_avail = get_weibull_scrap_release(
+        df_fin_use_r12.mul(apu_tsu_ratio["value"], axis=0)
+    )
     demand = gen_demand("SSP2")
 
     merge_data(
@@ -1217,7 +1225,7 @@ def read_hist_cap(tec: Literal["eaf", "bof", "bf"]) -> dict[str, pd.DataFrame]:
     return {"historical_new_capacity": df}
 
 
-def get_consumption_ts(ssp):
+def get_consumption_ts(ssp) -> pd.DataFrame:
     mapping = {
         "SSP1": {"phi": 5, "mu": 0.1, "q": 0.01},
         "SSP2": {"phi": 5, "mu": 0.1, "q": 0.1},
@@ -1248,13 +1256,13 @@ def get_consumption_ts(ssp):
 
 def get_weibull_scrap_release(
     df_fin_use_r12, lambda_param=40, beta=1.7, recovery_factor=0.85
-):
+) -> pd.DataFrame:
     df = df_fin_use_r12.copy(deep=True)
     # interpolate years between projection year bins
     df[[i for i in range(2023, 2110) if i not in df_fin_use_r12.columns]] = None
     df = df[sorted(df.columns)]
     df = df.astype(float).T.interpolate()
-    # apply weibull distribution to each region
+    # apply Weibull distribution to each region
     for col in df.columns:
         df[col] = weibull_scrap_release(df[col], lambda_param, beta)
 
@@ -1263,11 +1271,9 @@ def get_weibull_scrap_release(
     bins = [i for i in range(2016, 2060, 5)] + [i for i in range(2061, 2115, 10)]
     labels = [i for i in range(2020, 2060, 5)] + [i for i in range(2060, 2115, 10)]
 
-    # Create a new column with bin labels
+    # Compute mean scrap release for each model year and scale with recovery factor
     df["year_vtg"] = pd.cut(df.index, bins=bins, labels=labels, right=False)
-    scrap_projection = df.groupby("year_vtg").sum()
-    scrap_projection.loc[:2060] = scrap_projection.loc[:2060].div(5).round(1)
-    scrap_projection.loc[2070:] = scrap_projection.loc[2070:].div(10).round(1)
+    scrap_projection = df.groupby("year_vtg").mean().round(1)
     scrap_projection = scrap_projection.mul(recovery_factor).round(1)
     scrap_projection = (
         scrap_projection.melt(ignore_index=False)
@@ -1277,7 +1283,7 @@ def get_weibull_scrap_release(
     return scrap_projection
 
 
-def calculate_scrap_demand_ratio(demand, scrap):
+def calculate_scrap_demand_ratio(demand, scrap) -> "ParameterData":
     ratio = (
         scrap.set_index(["node", "year"])
         .div(demand.set_index(["node", "year"]))
