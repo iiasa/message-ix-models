@@ -43,6 +43,9 @@ export_NH3,"","",500,0,2005
 export_aluminum,"","",500,0,1985
 export_petro,"","",250,0,1980
 export_steel,"","",250,0,1990
+export_pig_iron,"","",250,0,1990
+export_sponge_iron,"","",250,0,1990
+export_steel_scrap,"","",250,0,1990
 fc_h2_aluminum,energy,h2_fc_I,1909,0,2030
 fc_h2_cement,energy,h2_fc_I,1909,0,2030
 fc_h2_petro,energy,h2_fc_I,1909,0,2030

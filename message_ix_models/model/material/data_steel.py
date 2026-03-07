@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, Literal
 
 import message_ix
+import numpy as np
 import pandas as pd
 from message_ix import make_df
 
@@ -17,6 +18,7 @@ from message_ix_models.model.material.data_util import (
     calculate_ini_new_cap,
     drop_redundant_rows,
     gen_emi_rel_data,
+    gen_trade_tecs,
     read_rel,
     read_sector_data,
     read_timeseries,
@@ -216,6 +218,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         read_hist_cap("bf"),
         gen_emi_rel_data(s_info, "steel"),
         calculate_scrap_demand_ratio(demand, scrap_avail),
+        gen_trade_pars(s_info),
     )
     maybe_remove_water_tec(scenario, results)
 
@@ -1294,3 +1297,106 @@ def calculate_scrap_demand_ratio(demand, scrap):
     df = make_df("output", **ratio, **dims).pipe(same_node).round(5)
     df["year_vtg"] = df["year_act"]
     return {"output": df}
+
+
+def gen_trade_calib(s_info: ScenarioInfo) -> "ParameterData":
+    df = pd.read_csv(
+        package_data_path(
+            "material", "steel", "baseyear_calibration", "net_import_2020.csv"
+        )
+    )
+
+    def balance_positive_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        For each column in `df`, if the column sum is positive, reduce the positive
+        entries proportionally so the column sum becomes (approximately) zero.
+        Negative (and zero) entries are left unchanged.
+        """
+        df = df.copy()
+        col_sum = df.sum(axis=0)
+        pos_sum = df.clip(lower=0).sum(axis=0).sub(0.001)
+
+        # factor = 1 - T / P where T = col_sum, P = pos_sum
+        factor = pd.Series(1.0, index=df.columns)
+        mask = (col_sum > 0) & (pos_sum > 0)
+        factor.loc[mask] = 1.0 - (col_sum.loc[mask] / pos_sum.loc[mask])
+
+        positives = df.where(df > 0, 0)
+        negatives = df.where(df <= 0, 0)
+
+        positives_adj = positives.multiply(factor, axis="columns")
+        result = positives_adj + negatives
+
+        return result
+
+    df = balance_positive_columns(df.set_index("R12")).reset_index().round(4)
+    df = (
+        df.rename({"R12": "node_loc"}, axis=1)
+        .melt(ignore_index=False, var_name="technology", id_vars="node_loc")
+        .assign(
+            technology=lambda x: np.where(
+                x["value"] > 0,
+                "import_" + x["technology"].str.lower(),
+                "export_" + x["technology"].str.lower(),
+            ),
+            value=lambda x: abs(x["value"]),
+        )
+    )
+    df = make_df(
+        "bound_activity_up", **df, mode="M1", time="year", unit="Mt", year_act=2020
+    )
+    factorial = make_df(
+        "bound_activity_up",
+        mode="M1",
+        time="year",
+        unit="Mt",
+        year_act=2020,
+        technology=df["technology"].unique(),
+    ).pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
+    zero = (
+        pd.concat([df.drop("value", axis=1), factorial.drop("value", axis=1)])
+        .drop_duplicates(keep=False)
+        .assign(value=0)
+    )
+    df = pd.concat([df, zero])
+    return {"bound_activity_up": df, "bound_activity_lo": df}
+
+
+def gen_trade_scenario(trd_pars) -> "ParameterData":
+    """Generate constraints for steel trade for a scenario.
+
+    Scenario can be defined by user and should be one of the following:
+    - "no_trade": No trade allowed, i.e. all imports and exports are constrained
+    - "free_trade": Free trade allowed, i.e. no constraints on imports and exports
+    - "calibrated_trade": Trade constrained to 2020 levels, i.e.
+    imports and exports cannot exceed 2020 levels (as defined in gen_trade_calib)
+
+    Returns
+    -------
+
+    """
+    dim_df = (
+        trd_pars["output"]
+        .drop("value", axis=1)
+        .query("~technology.str.contains('trade')")
+        .query("year_act > 2020")
+    )
+    gro = make_df("growth_activity_up", **dim_df, value=0.05)
+    ini = make_df("initial_activity_up", **dim_df, value=1.0)
+    return {"growth_activity_up": gro, "initial_activity_up": ini}
+
+
+def gen_trade_pars(s_info) -> "ParameterData":
+    trd_pars = {}
+    for name, comm, lvl in [
+        ("steel", "steel", "useful_material"),
+        ("pig_iron", "pig_iron", "tertiary_material"),
+        ("sponge_iron", "sponge_iron", "tertiary_material"),
+        ("steel_scrap", "steel", "end_of_life"),
+    ]:
+        cfg = dict(name=name, commodity=comm, level=lvl, unit="Mt")
+        merge_data(trd_pars, gen_trade_tecs(s_info, cfg))
+    bounds = gen_trade_calib(s_info)
+    constraints = gen_trade_scenario(trd_pars)
+    merge_data(trd_pars, constraints, bounds)
+    return trd_pars

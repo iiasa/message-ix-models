@@ -17,6 +17,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_util import (
     drop_redundant_rows,
     gen_emi_rel_data,
+    gen_trade_tecs,
     read_rel,
     read_timeseries,
 )
@@ -29,7 +30,6 @@ from message_ix_models.model.material.util import (
 )
 from message_ix_models.util import (
     broadcast,
-    make_io,
     merge_data,
     nodes_ex_world,
     package_data_path,
@@ -545,7 +545,12 @@ def gen_data_aluminum(scenario: "Scenario", dry_run: bool = False) -> "Parameter
     rel_dict = gen_data_alu_rel(data_aluminum_rel, modelyears)
 
     trade_dict = gen_data_alu_trade(scenario)
-    alumina_trd = gen_alumina_trade_tecs(s_info)
+    alumina_trd = gen_trade_tecs(
+        s_info,
+        dict(
+            name="alumina", commodity="alumina", level="secondary_material", unit="Mt"
+        ),
+    )
     growth_constr_dict = gen_2020_growth_constraints(s_info)
     ref_heat_input = gen_refining_input(s_info)
     ref_hist_act = calibrate_2020_furnaces(s_info)
@@ -1091,78 +1096,6 @@ def gen_refining_hist_act() -> "ParameterData":
         "bound_activity_up": bound_act,
     }
     return par_dict
-
-
-def gen_alumina_trade_tecs(s_info: ScenarioInfo) -> "ParameterData":
-    """Generate trade technology parameter data for alumina.
-
-    Parameters
-    ----------
-    s_info : ScenarioInfo
-        Scenario information object.
-
-    Returns
-    -------
-    dict
-        Dictionary of trade technology parameter DataFrames.
-    """
-    modelyears = s_info.Y
-    nodes = nodes_ex_world(s_info.N)
-    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
-
-    common = {
-        "time": "year",
-        "time_origin": "year",
-        "time_dest": "year",
-        "mode": "M1",
-        "node_loc": nodes,
-    }
-    exp_dict = make_io(
-        src=("alumina", "secondary_material", "Mt"),
-        dest=("alumina", "export", "Mt"),
-        efficiency=1.0,
-        on="input",
-        technology="export_alumina",
-        node_dest=global_region,
-        node_origin=nodes,
-        **common,
-    )
-    imp_dict = make_io(
-        src=("alumina", "import", "Mt"),
-        dest=("alumina", "secondary_material", "Mt"),
-        efficiency=1.0,
-        on="input",
-        technology="import_alumina",
-        node_origin=global_region,
-        node_dest=nodes,
-        **common,
-    )
-
-    common = {
-        "time": "year",
-        "time_origin": "year",
-        "time_dest": "year",
-        "mode": "M1",
-        "node_loc": global_region,
-    }
-    trd_dict = make_io(
-        src=("alumina", "export", "Mt"),
-        dest=("alumina", "import", "Mt"),
-        efficiency=1.0,
-        on="input",
-        technology="trade_alumina",
-        node_dest=global_region,
-        node_origin=global_region,
-        **common,
-    )
-
-    trade_dict: "MutableParameterData" = {}
-    merge_data(trade_dict, imp_dict, trd_dict, exp_dict)
-    trade_dict = {
-        k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
-        for k, v in trade_dict.items()
-    }
-    return trade_dict
 
 
 def gen_2020_growth_constraints(s_info: ScenarioInfo) -> "ParameterData":

@@ -4,7 +4,7 @@ import pytest
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.data_aluminum import (
-    gen_alumina_trade_tecs,
+    gen_trade_tecs,
     gen_data_aluminum,
     gen_refining_hist_act,
     load_bgs_data,
@@ -89,6 +89,11 @@ def test_gen_alumina_trade_tecs():
     info = ScenarioInfo()
     info.set["node"] = ["node0", "node1", "R12_GLB"]
     info.set["year"] = [2020, 2025]
-    out = gen_alumina_trade_tecs(info)
+    out = gen_trade_tecs(
+        info,
+        dict(
+            name="alumina", commodity="alumina", level="secondary_material", unit="Mt"
+        ),
+    )
     for v in out.values():
         assert not v.isna().any(axis=None)

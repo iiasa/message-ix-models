@@ -377,6 +377,15 @@ steel:
     - trade_steel
     - import_steel
     - export_steel
+    - trade_pig_iron
+    - import_pig_iron
+    - export_pig_iron
+    - trade_sponge_iron
+    - import_sponge_iron
+    - export_sponge_iron
+    - trade_steel_scrap
+    - import_steel_scrap
+    - export_steel_scrap
     - other_EOL_steel
     - total_EOL_steel
     - bf_biomass_steel

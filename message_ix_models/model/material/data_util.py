@@ -23,6 +23,8 @@ from message_ix_models.tools.costs.projections import create_cost_projections
 from message_ix_models.util import (
     broadcast,
     load_package_data,
+    make_io,
+    merge_data,
     nodes_ex_world,
     package_data_path,
     same_node,
@@ -803,3 +805,75 @@ def drop_redundant_rows(scen: "Scenario", results: "MutableParameterData"):
             .drop_duplicates()
             .drop(columns="value_lifetime")
         )
+
+
+def gen_trade_tecs(s_info: ScenarioInfo, config) -> "ParameterData":
+    """Generate trade technology parameter data for a commodity.
+
+    Parameters
+    ----------
+    s_info : ScenarioInfo
+        Scenario information object.
+
+    Returns
+    -------
+    dict
+        Dictionary of trade technology parameter DataFrames.
+    """
+    name, comm, level, unit = (
+        config["name"],
+        config["commodity"],
+        config["level"],
+        config["unit"],
+    )
+    modelyears = s_info.Y
+    nodes = nodes_ex_world(s_info.N)
+    global_region = [i for i in s_info.N if i.endswith("_GLB")][0]
+
+    common = {
+        "time": "year",
+        "time_origin": "year",
+        "time_dest": "year",
+        "mode": "M1",
+        "node_loc": nodes,
+        "on": "input",
+        "efficiency": 1.0,
+    }
+    exp_dict = make_io(
+        src=(comm, level, unit),
+        dest=(comm, "export", unit),
+        technology=f"export_{name}",
+        node_dest=global_region,
+        node_origin=nodes,
+        **common,
+    )
+    imp_dict = make_io(
+        src=(comm, "import", unit),
+        dest=(comm, level, unit),
+        technology=f"import_{name}",
+        node_origin=global_region,
+        node_dest=nodes,
+        **common,
+    )
+    common.update({"node_loc": global_region})
+    trd_dict = make_io(
+        src=(comm, "export", unit),
+        dest=(comm, "import", unit),
+        technology=f"trade_{name}",
+        node_dest=global_region,
+        node_origin=global_region,
+        **common,
+    )
+
+    trade_dict: "MutableParameterData" = {}
+    merge_data(trade_dict, imp_dict, trd_dict)
+    exp_dict = {
+        k: v.pipe(broadcast, year_act=modelyears, year_vtg=modelyears)
+        for k, v in exp_dict.items()
+    }
+    trade_dict = {
+        k: v.pipe(broadcast, year_act=modelyears).assign(year_vtg=lambda x: x.year_act)
+        for k, v in trade_dict.items()
+    }
+    merge_data(trade_dict, exp_dict)
+    return trade_dict
