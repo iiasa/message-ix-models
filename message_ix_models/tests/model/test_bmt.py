@@ -386,6 +386,7 @@ def test_build_PM_returns_scenario(test_context, request):
                 "node_origin": node,
                 "commodity": "cement",
                 "level": "product",
+                "time": "year",
                 "time_origin": "year",
                 "value": 0.1,
                 "unit": unit,
