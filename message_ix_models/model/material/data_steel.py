@@ -937,7 +937,7 @@ def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
         unit="???",
     )
     pig = common | dict(commodity="pig_iron", level="tertiary_material")
-    scrap = common | dict(commodity="steel", level="new_scrap")
+    scrap = common | dict(commodity="steel_scrap", level="new")
     conversion_eff = dict(pig=0.95, scrap=0.99)
 
     # Accumulate data frames with distinct node_loc, year_act, and values
@@ -997,21 +997,22 @@ def gen_finishing_steel_io(s_info: ScenarioInfo) -> dict[str, pd.DataFrame]:
     dimensions = {
         "technology": "finishing_steel",
         "mode": "M1",
-        "commodity": "steel",
         "time": "year",
         "time_dest": "year",
         "unit": "???",
     }
     df = pd.read_csv(package_data_path("material", "steel", "finishing_loss_ratio.csv"))
     df_out_steel = (
-        make_df("output", **df, **dimensions, level="useful_material")
+        make_df(
+            "output", **df, **dimensions, level="useful_material", commodity="steel"
+        )
         .pipe(same_node)
         .pipe(broadcast, year_act=s_info.Y)
         .assign(year_vtg=lambda x: x["year_act"])
     )
     df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
     df_out_scrap = (
-        make_df("output", **df, **dimensions, level="new_scrap")
+        make_df("output", **df, **dimensions, level="new", commodity="steel_scrap")
         .pipe(same_node)
         .pipe(broadcast, year_act=s_info.Y)
         .assign(year_vtg=lambda x: x["year_act"])
@@ -1039,7 +1040,6 @@ def gen_manuf_steel_io(
     dimensions = {
         "technology": "manuf_steel",
         "mode": "M1",
-        "commodity": "steel",
         "time": "year",
         "time_dest": "year",
         "unit": "???",
@@ -1051,14 +1051,16 @@ def gen_manuf_steel_io(
         .rename(columns={"index": "node_loc", 0: "value"})
     )
     df_out_steel = (
-        make_df("output", **df, **dimensions, level="product")
+        make_df("output", **df, **dimensions, level="product", commodity="steel")
         .pipe(same_node)
         .pipe(broadcast, year_act=s_info.Y)
         .assign(year_vtg=lambda x: x["year_act"])
     )
     df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
     df_out_scrap = (
-        make_df("output", **df, **dimensions, level="new_scrap")
+        make_df(
+            "output", **df, **dimensions, level="new", commodity="steel_scrap"
+        )
         .pipe(same_node)
         .pipe(broadcast, year_act=s_info.Y)
         .assign(year_vtg=lambda x: x["year_act"])
@@ -1286,7 +1288,7 @@ def calculate_scrap_demand_ratio(demand, scrap) -> "ParameterData":
         "technology": "other_EOL_steel",
         "level": "end_of_life",
         "mode": "M1",
-        "commodity": "steel",
+        "commodity": "steel_scrap",
         "time": "year",
         "time_dest": "year",
         "unit": "-",
@@ -1389,7 +1391,7 @@ def gen_trade_pars(s_info) -> "ParameterData":
         ("steel", "steel", "useful_material"),
         ("pig_iron", "pig_iron", "tertiary_material"),
         ("sponge_iron", "sponge_iron", "tertiary_material"),
-        ("steel_scrap", "steel", "end_of_life"),
+        ("steel_scrap", "steel_scrap", "end_of_life"),
     ]:
         cfg = dict(name=name, commodity=comm, level=lvl, unit="Mt")
         merge_data(trd_pars, gen_trade_tecs(s_info, cfg))
