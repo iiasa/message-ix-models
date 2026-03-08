@@ -45,6 +45,8 @@ These are handled by :func:`.buildings.build_and_solve`.
 
    These steps are handled by :func:`.buildings.pre_solve`.
 
+   When the buildings module is run as part of the :doc:`/bmt/index` workflow, it calls :func:`.buildings.build.build_B`, which loads inputs (prices, STURM outputs, static demand) specified in :attr:`context.buildings` or from :file:`data/bmt/config.yaml`, calls :func:`.buildings.build.prepare_data_B` to derive parameter data from the base scenario and those inputs, then applies the buildings spec to the scenario. :func:`.buildings.build.prepare_data_B` produces demand and technology parameters (input, output, capacity factor, etc.) for buildings commodities and the residual AFOFIO representation; it can also add materials linkage when :attr:`with_materials` is true.
+
 2. **Solve.**
    Because prices are endogenous in MESSAGE, solving the MESSAGE scenario produced by (1.4) can result in prices that are *different* from the ones provided to ACCESS and STURM in steps (1.2) and (1.3).
 
@@ -188,6 +190,12 @@ Values given in code or on the command line will override these.
 
 Code reference
 ==============
+
+Key functions for the BMT “BM built” step and for building buildings structure/data:
+
+.. autofunction:: message_ix_models.model.buildings.build.build_B
+
+.. autofunction:: message_ix_models.model.buildings.build.prepare_data_B
 
 .. currentmodule:: message_ix_models.model
 
