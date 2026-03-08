@@ -119,6 +119,7 @@ Other submodules are documented on their respective pages:
    material/index
    transport/index
    water/index
+   bmt/index
 
 .. _index-projects:
 
