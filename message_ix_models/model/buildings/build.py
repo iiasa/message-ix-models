@@ -1234,6 +1234,17 @@ def build_B(
     # Generate a spec for the model
     spec = get_spec(context)
 
+    # Restrict required relations to those present on the scenario
+    scenario_relations = set(scenario.set("relation").tolist())
+    req_relation = spec.require.set["relation"]
+
+    def _id(e):
+        return getattr(e, "id", e)
+
+    spec.require.set["relation"] = [
+        r for r in req_relation if _id(r) in scenario_relations
+    ]
+
     # Inputs for prepare_data_B from context.buildings or defaults
     prices = _load_csv("prices")
     sturm_r = _load_csv("sturm_r", index_col=0)
