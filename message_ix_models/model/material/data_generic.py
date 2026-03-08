@@ -170,14 +170,14 @@ def gen_data_generic(scenario: "Scenario", dry_run: bool = False) -> "ParameterD
     gen_data_generic_ts(data_generic_ts, results, nodes, global_region)
 
     results["relation_activity"].append(
-        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"]))
+        add_non_co2_emission_coefficients(scenario, pd.concat(results["input"])).dropna()
     )
     results["relation_activity"].append(
         add_ind_therm_link_relations(
             [getattr(t, "id", t) for t in config["technology"]["add"]],
             yv_ya["year_act"].unique(),
             nodes,
-        )
+        ).dropna()
     )
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
