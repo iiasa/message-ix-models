@@ -100,7 +100,6 @@ generic:
 
   level:
     add:
-    - useful_steel
     - useful_cement
     - useful_aluminum
     - useful_refining
@@ -109,19 +108,6 @@ generic:
 
   technology:
     add:
-    - furnace_foil_steel
-    - furnace_loil_steel
-    - furnace_biomass_steel
-    - furnace_ethanol_steel
-    - furnace_methanol_steel
-    - furnace_gas_steel
-    - furnace_coal_steel
-    - furnace_elec_steel
-    - furnace_h2_steel
-    - hp_elec_steel
-    - fc_h2_steel
-    - solar_steel
-    - dheat_steel
     - furnace_foil_cement
     - furnace_loil_cement
     - furnace_biomass_cement
