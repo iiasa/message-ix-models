@@ -311,13 +311,14 @@ steel:
     - co_gas
     - bf_gas
     - off_gas
+    - steel_scrap
 
   level:
     add:
-    - new_scrap
-    - old_scrap_1
-    - old_scrap_2
-    - old_scrap_3
+    - new
+    - old_1
+    - old_2
+    - old_3
     - primary_material
     - secondary_material
     - tertiary_material
