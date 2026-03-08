@@ -43,8 +43,6 @@ MODULE_WITH_CONFIG_DATACLASS: tuple[tuple[str, str, bool, bool], ...] = (
     ("message_ix_models.model.config", "model", True, True),
     ("message_ix_models.report.config", "report", True, False),
     ("message_ix_models.transport.config", "transport", False, False),
-    ("message_ix_models.model.material.config", "material", False, False),
-    ("message_ix_models.model.buildings.config", "buildings", False, False),
 )
 
 
@@ -473,8 +471,3 @@ class Context:
         Shorthand for :meth:`.Config.write_debug_archive`.
         """
         self.core.write_debug_archive()
-
-    def print_contents(self):
-        for attr in dir(self):
-            if not attr.startswith("__"):
-                print(f"{attr}: {getattr(self, attr)}")
