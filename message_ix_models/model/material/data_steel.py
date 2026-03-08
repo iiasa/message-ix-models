@@ -86,15 +86,6 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
     yv_ya = s_info.yv_ya
     yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1970]
 
-    df = yv_ya.loc[yv_ya.year_act == 2020]
-    df["year_act"] = None
-    pre_model = df.pipe(broadcast, year_act=df.year_vtg)
-    pre_model = pre_model[
-        (pre_model["year_act"].ge(pre_model["year_vtg"]))
-        & (pre_model["year_act"].lt(2020))
-    ]
-    yv_ya = pd.concat([pre_model, yv_ya])
-
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
     for t in config["technology"]["add"]:
