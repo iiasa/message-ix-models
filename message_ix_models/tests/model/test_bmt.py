@@ -3,6 +3,13 @@
 Covers workflow steps and build functions in :mod:`message_ix_models.model.bmt`:
 - BM built / build_B (buildings), in :mod:`.model.buildings.build`
 - BMTX built / build_PM (power sector materials), in :mod:`.model.bmt.utils`
+
+Coverage notes:
+- prepare_data_B and build_B: tested with and without materials
+  (with_materials=False and with_materials=True in test_prepare_data_B_*,
+  test_build_B_runs_with_minimal_data, test_build_B_runs_with_materials).
+- utils: build_PM (test_build_PM_*), _generate_vetting_csv (test_generate_vetting_csv*).
+- CLI: bmt group and run subcommand (test_bmt_cli_help, test_bmt_run_dry_run).
 """
 
 import logging
@@ -12,7 +19,7 @@ import pandas as pd
 import pytest
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.bmt.utils import build_PM
+from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
 from message_ix_models.model.bmt.workflow import generate
 from message_ix_models.model.buildings.build import build_B, prepare_data_B
 from message_ix_models.testing import bare_res
@@ -88,6 +95,20 @@ def bmt_context(test_context, tmp_path):
         with_materials=False,
     )
     return test_context
+
+
+@pytest.fixture
+def bmt_context_with_materials(bmt_context):
+    """Like bmt_context but with with_materials=True for build_B materials path."""
+    b = bmt_context.buildings
+    bmt_context.buildings = SimpleNamespace(
+        prices=b.prices,
+        sturm_r=b.sturm_r,
+        sturm_c=b.sturm_c,
+        demand_static=b.demand_static,
+        with_materials=True,
+    )
+    return bmt_context
 
 
 def _add_minimal_rc_pars(scenario):
@@ -181,6 +202,17 @@ def _add_buildings_tech_set(scenario):
     scenario.commit("Add buildings tech set for BMT test")
 
 
+def _add_materials_commodities(scenario):
+    """Add steel, cement, aluminum so get_spec(with_materials=True) succeeds."""
+    scenario.check_out()
+    for c in ("steel", "cement", "aluminum"):
+        try:
+            scenario.add_set("commodity", c)
+        except ValueError:
+            pass  # already present
+    scenario.commit("Add materials commodities for with_materials=True test")
+
+
 # --- Tests for prepare_data_B ---
 
 
@@ -220,7 +252,7 @@ def test_prepare_data_B_with_rc_tech_data(bmt_context, request):
         sturm_r,
         sturm_c,
         demand_static=demand_static,
-        with_materials=False,
+        with_materials=True,
         relations=[],
     )
 
@@ -244,6 +276,18 @@ def test_build_B_runs_with_minimal_data(bmt_context, request):
     build_B(bmt_context, scenario)
 
     # Scenario should still be usable and have been modified
+    assert scenario is not None
+
+
+def test_build_B_runs_with_materials(bmt_context_with_materials, request):
+    """build_B runs with with_materials=True (materials linkage path)."""
+    scenario = bare_res(request, bmt_context_with_materials)
+    _add_minimal_rc_pars(scenario)
+    _add_materials_commodities(scenario)
+    _add_buildings_tech_set(scenario)
+
+    build_B(bmt_context_with_materials, scenario)
+
     assert scenario is not None
 
 
@@ -355,3 +399,75 @@ def test_build_PM_callable(test_context, request):
     except (KeyError, ValueError) as e:
         # Minimal scenario may lack inv_cost etc. for gen_data_power_sector
         pytest.skip(f"build_PM needs full scenario data: {e}")
+
+
+# --- Tests for _generate_vetting_csv (utils.py) ---
+
+
+def test_generate_vetting_csv(tmp_path):
+    """_generate_vetting_csv writes CSV of original/modified demand and subtraction."""
+    original_demand = pd.DataFrame(
+        {
+            "node": ["R12_AFR", "R12_AFR"],
+            "year": [2020, 2030],
+            "commodity": ["cement", "cement"],
+            "value": [10.0, 20.0],
+        }
+    )
+    modified_demand = pd.DataFrame(
+        {
+            "node": ["R12_AFR", "R12_AFR"],
+            "year": [2020, 2030],
+            "commodity": ["cement", "cement"],
+            "value": [7.0, 15.0],
+        }
+    )
+    out = tmp_path / "vetting.csv"
+
+    _generate_vetting_csv(original_demand, modified_demand, str(out))
+
+    assert out.exists()
+    df = pd.read_csv(out)
+    assert list(df.columns) == [
+        "node",
+        "year",
+        "commodity",
+        "original_demand",
+        "modified_demand",
+        "subtracted_amount",
+        "subtraction_percentage",
+    ]
+    assert len(df) == 2
+    assert df["subtracted_amount"].tolist() == [3.0, 5.0]
+    assert df["subtraction_percentage"].tolist() == [30.0, 25.0]
+
+
+def test_generate_vetting_csv_zero_original(tmp_path):
+    """_generate_vetting_csv handles zero original demand (no div-by-zero)."""
+    original_demand = pd.DataFrame(
+        {"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"], "value": [0.0]}
+    )
+    modified_demand = pd.DataFrame(
+        {"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"], "value": [0.0]}
+    )
+    out = tmp_path / "vetting_zero.csv"
+
+    _generate_vetting_csv(original_demand, modified_demand, str(out))
+
+    assert out.exists()
+    df = pd.read_csv(out)
+    assert df["subtraction_percentage"].iloc[0] == 0.0
+
+
+# --- Tests for BMT CLI (cli.py) ---
+
+
+def test_bmt_cli_help(mix_models_cli):
+    """bmt and bmt run show --help."""
+    mix_models_cli.assert_exit_0(["bmt", "--help"])
+    mix_models_cli.assert_exit_0(["bmt", "run", "--help"])
+
+
+def test_bmt_run_dry_run(mix_models_cli):
+    """bmt run --dry-run TARGET runs workflow in dry-run (writes SVG, no execution)."""
+    mix_models_cli.assert_exit_0(["bmt", "run", "--dry-run", "BM built"])
