@@ -347,42 +347,51 @@ def test_build_PM_returns_scenario(test_context, request):
         scenario.platform.add_unit(unit, "")
     except Exception:
         pass  # already exists
-    scenario.init_par(
-        "input_cap_new",
-        idx_sets=["node", "technology", "year", "node", "commodity", "level", "time"],
-        idx_names=[
-            "node_loc",
-            "technology",
-            "year_vtg",
-            "node_origin",
-            "commodity",
-            "level",
-            "time_origin",
-        ],
-    )
-    nodes = scenario.set("node")
-    years = scenario.set("year")
-    techs = scenario.set("technology")
-    if len(nodes) and len(years) and len(techs):
-        node = nodes[0]
-        y = int(years[0])
-        tech = techs[0]
-        df = pd.DataFrame(
-            [
-                {
-                    "node_loc": node,
-                    "technology": tech,
-                    "year_vtg": y,
-                    "node_origin": node,
-                    "commodity": "cement",
-                    "level": "product",
-                    "time_origin": "year",
-                    "value": 0.1,
-                    "unit": unit,
-                }
-            ]
+    if "input_cap_new" not in scenario.par_list():
+        scenario.init_par(
+            "input_cap_new",
+            idx_sets=[
+                "node",
+                "technology",
+                "year",
+                "node",
+                "commodity",
+                "level",
+                "time",
+            ],
+            idx_names=[
+                "node_loc",
+                "technology",
+                "year_vtg",
+                "node_origin",
+                "commodity",
+                "level",
+                "time_origin",
+            ],
         )
-        scenario.add_par("input_cap_new", df)
+        nodes = scenario.set("node")
+        years = scenario.set("year")
+        techs = scenario.set("technology")
+        if len(nodes) and len(years) and len(techs):
+            node = nodes[0]
+            y = int(years[0])
+            tech = techs[0]
+            df = pd.DataFrame(
+                [
+                    {
+                        "node_loc": node,
+                        "technology": tech,
+                        "year_vtg": y,
+                        "node_origin": node,
+                        "commodity": "cement",
+                        "level": "product",
+                        "time_origin": "year",
+                        "value": 0.1,
+                        "unit": unit,
+                    }
+                ]
+            )
+            scenario.add_par("input_cap_new", df)
     scenario.commit("Add minimal input_cap_new for build_PM test")
 
     result = build_PM(test_context, scenario)
