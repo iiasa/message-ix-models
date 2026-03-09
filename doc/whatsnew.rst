@@ -408,7 +408,7 @@ Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`, :pull:`32
   :data:`.mode_share_freight`,
   :data:`.pdt_cap_ref`, and
   :data:`.speed`.
-- Add LED-specific parametrization for :data:`.activity_ldv`,
+- Add LED-specific parametrization for :class:`activity_ldv <.ActivityVehicle>`,
   :data:`.lifetime_ldv`,
   :py:`load_factor_ldv`, and
   :data:`.pdt_cap_proj`.
@@ -416,7 +416,8 @@ Update :doc:`/transport/index` (:pull:`259`, :pull:`289`, :pull:`300`, :pull:`32
 - Generate SDMX-ML structural metadata, including data flow definitions, and SDMX-{CSV,ML} data outputs for certain reported quantities.
 
   - New input data flow :data:`.input_share`.
-  - Add :py:`scenario` dimension to :data:`.activity_ldv`, :data:`.lifetime_ldv`, input data flow and files.
+  - Add :py:`scenario` dimension to :class:`activity_ldv <.ActivityVehicle>`,
+    :data:`.lifetime_ldv`, input data flow and files.
 - Expand use of fixed/shared keys from :mod:`.transport.key`.
 - Improve documentation:
 

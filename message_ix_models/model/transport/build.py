@@ -170,6 +170,11 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     for kw in source_kw:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
 
+    # Miscellaneous data
+    kw = dict(nodes=context.model.regions, config=config)
+    data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
+
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
     data.MERtoPPP.add_tasks(c, **kw, **c_s)
@@ -235,10 +240,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
-
-    data.LoadFactorLDV.add_tasks(
-        c, context=context, strict=False, nodes=context.model.regions, config=config
-    )
 
 
 #: :mod:`genno` tasks for model structure information that are 'static'—that is, do not

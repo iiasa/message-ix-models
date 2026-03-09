@@ -20,13 +20,13 @@ Data flows
 
 Quick links to each of the data flows:
 :data:`~.data.activity_passenger`
-:data:`~.data.activity_vehicle`
+:data:`~.data.activity_vehicle_out`
 :data:`~.data.fe_transport`
 :data:`~.data.gdp_in`
 :data:`~.data.population_in`
 
 .. autodata:: message_ix_models.model.transport.data.activity_passenger
-.. autodata:: message_ix_models.model.transport.data.activity_vehicle
+.. autodata:: message_ix_models.model.transport.data.activity_vehicle_out
 .. autodata:: message_ix_models.model.transport.data.fe_transport
 .. autodata:: message_ix_models.model.transport.data.gdp_in
 .. autodata:: message_ix_models.model.transport.data.population_in

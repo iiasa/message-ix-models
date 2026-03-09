@@ -35,7 +35,7 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 
-from .util import EXTRAPOLATE
+from .util import EXTRAPOLATE, region_path_fallback
 
 if TYPE_CHECKING:
     import sdmx.message
@@ -59,6 +59,52 @@ IEA_EWEB_FLOW = [
     "WORLDAV",
     "WORLDMAR",
 ]
+
+
+class ActivityVehicle(ExoDataSource):
+    """Activity (distance) per vehicle per year."""
+
+    @dataclass
+    class Options(BaseOptions):
+        #: Transport configuration.
+        config: "Config | None" = None
+
+        #: ID of the node code list.
+        nodes: str = ""
+
+    options: Options
+
+    filename = "activity-vehicle.csv"
+    key = Key("activity:n-t-y:vehicle")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        from genno.operator import load_file
+
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+
+        # Convert units
+        c.add(k[0], "convert_units", base_key, units="Mm/year")
+
+        # Broadcast to all scenarios and nodes
+        coords = ["scenario::all", "n::ex world"]
+        dim = ("scenario", "n")
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=dim)
+
+        # Select values for the current scenario; drop the 'scenario' dimension
+        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+
+        # Interpolate on "y" dimension
+        c.add(self.key, "interpolate", k[2], "y::coords", **EXTRAPOLATE)
+
+        # TODO Broadcast technology groups → individual technology IDs
+        return self.key
 
 
 class IEA_Future_of_Trucks(ExoDataSource):
@@ -651,12 +697,6 @@ activity_freight = _input_dataflow(
     units="Gt / km",
 )
 
-activity_ldv = _input_dataflow(
-    key="ldv activity:scenario-n-y:exo",
-    name="Activity (driving distance) per light duty vehicle",
-    units="km / year",
-)
-
 age_ldv = _input_dataflow(
     path="ldv-age",
     key="age:n-t-y:ldv+exo",
@@ -955,7 +995,7 @@ activity_passenger = _output_dataflow(
     key="pdt:n-y-t",
     units="dimensionless",
 )
-activity_vehicle = _output_dataflow(
+activity_vehicle_out = _output_dataflow(
     id="ACTIVITY_VEHICLE",
     name="Vehicle activity",
     description='Same as the IAMC ‘variable’ code "Energy Service|Transportation".',
