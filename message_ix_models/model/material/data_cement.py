@@ -16,8 +16,12 @@ from message_ix_models.util import (
     same_node,
 )
 
+from .data_steel import gen_data_steel_rel
 from .data_util import (
     calculate_ini_new_cap,
+    drop_redundant_rows,
+    gen_emi_rel_data,
+    read_rel,
     read_sector_data,
     read_timeseries,
 )
@@ -27,7 +31,7 @@ from .util import get_ssp_from_context, read_config
 if TYPE_CHECKING:
     from message_ix import Scenario
 
-    from message_ix_models.types import MutableParameterData, ParameterData
+    from message_ix_models.types import ParameterData
 
 FIXED = dict(time="year", time_origin="year", time_dest="year")
 
@@ -172,31 +176,12 @@ def gen_data_cement(scenario: "Scenario", dry_run: bool = False) -> "ParameterDa
         read_furnace_2020_bound(),
         gen_clinker_ratios(s_info),
         gen_addon_conv_ccs(nodes, s_info.Y),
+        gen_relation_data(scenario, s_info),
+        gen_emi_rel_data(s_info, "cement"),
     )
 
-    results = drop_redundant_rows(results)
+    drop_redundant_rows(scenario, results)
     return results
-
-
-def drop_redundant_rows(results: "ParameterData") -> "MutableParameterData":
-    """Drop duplicate row and those where :math:`y^A - y^V > 25` years.
-
-    Parameters
-    ----------
-    results :
-        A dictionary of dataframes with parameter names as keys.
-
-    Returns
-    -------
-    ParameterData
-    """
-    reduced_pdict = {}
-    for k, v in results.items():
-        if {"year_act", "year_vtg"}.issubset(v.columns):
-            v = v[(v["year_act"] - v["year_vtg"]) <= 25]
-        reduced_pdict[k] = v.drop_duplicates().copy(deep=True)
-
-    return reduced_pdict
 
 
 def gen_addon_conv_ccs(nodes: list[str], years: list[int]) -> "ParameterData":
@@ -288,3 +273,13 @@ def gen_clinker_ratios(s_info: "ScenarioInfo") -> "ParameterData":
         .query("0 <= year_act - year_vtg <= 25")
     )
     return {"input": df}
+
+
+def gen_relation_data(scenario: "Scenario", s_info: "ScenarioInfo") -> "ParameterData":
+    """Generate relation_activity parameter data for cement model."""
+    data_cem_rel = read_rel(scenario, "cement", None, "relations_R12.csv").pipe(
+        broadcast, Region=nodes_ex_world(s_info.N)
+    )
+    pars: dict[str, list] = {"relation_activity": []}
+    gen_data_steel_rel(data_cem_rel, pars, set(nodes_ex_world(s_info.N)), s_info.Y)
+    return {par_name: pd.concat(dfs) for par_name, dfs in pars.items()}
