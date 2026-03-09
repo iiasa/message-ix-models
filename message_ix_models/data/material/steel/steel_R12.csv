@@ -99,7 +99,7 @@ cokeoven_steel,input,R12_RCPA,final,coal,,M1,GWa/GWa,1.3333333333333333,"IEA bal
 # cokeoven_steel,input,R12_RCPA,water_supply,water,,M1,Mm3/GWa,0.5073570776255708,,
 cokeoven_steel,output,R12_RCPA,final,coke_iron,,M1,GWa,1.0,,
 cokeoven_steel,output,R12_RCPA,final,co_gas,,M1,GWa,0.06666666666666667,"ratio derived from IEA balance 2018 (world), FE COG output ~1.3EJ, coal input to CO  ~26EJ ",
-cokeoven_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,322.94898696281075,,
+cokeoven_steel,var_cost,R12_RCPA,,,,M1,MUSD/GWa,40.0,,
 cokeoven_steel,capacity_factor,R12_RCPA,,,,,%,0.701,,
 cokeoven_steel,technical_lifetime,R12_RCPA,,,,,y,30.0,,
 dri_steel,input,R12_RCPA,secondary_material,pellet_iron,,M1,Mt/Mt,1.7,"https://2024.aisusteel.org/wp-content/uploads/2024/10/Dr-John-Atherton_IIMA.pdf Slide 10",
