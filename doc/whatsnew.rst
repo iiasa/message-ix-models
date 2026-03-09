@@ -8,6 +8,11 @@ Next release
   released 2026-01-21 (:pull:`470`).
 - New module :mod:`tools.bilateralize <message_ix_models.tools.bilateralize>`
   to change scenarios to a bilateral representation of trade (:pull:`438`).
+
+- Add reduced basin filtering for water module with ``--reduced-basin`` and
+  demand/supply stress-based selection via ``--basin-selection stress``
+  (:pull:`432`, :issue:`414`).
+
 - Fix water module parameter bugs and refactor cooling (:pull:`405`):
   infrastructure M1/Mf mode fixes, regional average shares for cooling allocation,
   water supply level hierarchy corrections, and test suite improvements.

@@ -6,6 +6,55 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util import package_data_path
+
+REGION_CONFIG = {
+    "R11": {"regions": "R11", "type_reg": "global"},
+    "R12": {"regions": "R12", "type_reg": "global"},
+    "ZMB": {"regions": "ZMB", "type_reg": "country"},
+}
+
+
+def water_params(region, *, reduced_basin=False, **extra):
+    """Build a water_context param dict for the given region.
+
+    Encodes the region→type_reg mapping once. When *reduced_basin* is True,
+    adds ``first_k`` selection with ``num_basins=2`` (24 basins total).
+    """
+    base = {**REGION_CONFIG[region]}
+    if reduced_basin:
+        base.update(reduced_basin=True, basin_selection="first_k", num_basins=2)
+    base.update(extra)
+    return base
+
+
+def setup_valid_basins(context, regions="R12"):
+    """Set up valid_basins attribute for test contexts.
+
+    This helper function ensures that test contexts have the valid_basins
+    attribute that is normally set by the map_basin() function during
+    model building. This is required for basin filtering functionality.
+
+    Parameters
+    ----------
+    context : Context
+        Test context object that needs valid_basins attribute
+    regions : str, default "R12"
+        Region code for basin delineation file
+    """
+    from message_ix_models.model.water.utils import filter_basins_by_region
+
+    basin_file = f"basins_by_region_simpl_{regions}.csv"
+    basin_path = package_data_path("water", "delineation", basin_file)
+    df_basins = pd.read_csv(basin_path)
+
+    # Apply basin filtering if enabled
+    df_filtered = filter_basins_by_region(df_basins, context)
+
+    # Set valid_basins as set of basin names
+    context.valid_basins = set(df_filtered["BCU_name"].astype(str))
+
+    return context
 
 
 @pytest.fixture
@@ -26,7 +75,16 @@ def water_context(test_context, request):
     test_context.nexus_set = params.get("nexus_set", "nexus")
 
     # Optional attributes
-    for attr in ["RCP", "REL", "SDG", "ssp"]:
+    for attr in [
+        "RCP",
+        "REL",
+        "SDG",
+        "ssp",
+        "reduced_basin",
+        "basin_selection",
+        "num_basins",
+        "filter_list",
+    ]:
         if attr in params:
             setattr(test_context, attr, params[attr])
 
@@ -35,6 +93,9 @@ def water_context(test_context, request):
         nodes = get_codes(f"node/{test_context.regions}")
         nodes = list(map(str, nodes[nodes.index("World")].child))
         test_context.map_ISO_c = {test_context.regions: nodes[0]}
+
+    # Set up valid_basins for basin filtering
+    setup_valid_basins(test_context, regions=test_context.regions)
 
     return test_context
 

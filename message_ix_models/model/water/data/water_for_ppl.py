@@ -54,7 +54,7 @@ def _load_scenario_and_cooling_data(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
 
-    # Load basin delineation
+    # FIXME Derive node_region from scenario/codelist rather than basin CSV
     df_node = pd.read_csv(basin_path)
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -121,9 +121,11 @@ def _compute_cooling_rates(input_cool: pd.DataFrame) -> pd.DataFrame:
 
     # Cooling fraction: heat to be rejected
     input_cool["cooling_fraction"] = input_cool.apply(
-        lambda r: r["value"] - 1
-        if "hpl" in str(r.get("parent_tech", ""))
-        else r["value"] * (1 - flue_loss) - 1,
+        lambda r: (
+            r["value"] - 1
+            if "hpl" in str(r.get("parent_tech", ""))
+            else r["value"] * (1 - flue_loss) - 1
+        ),
         axis=1,
     )
 

@@ -7,17 +7,16 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     map_basin_region_wat,
 )
+from message_ix_models.tests.model.water.conftest import water_params
 
 
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11
-        {"regions": "R11", "type_reg": "global", "RCP": "2p6", "REL": "med"},
-        # Global R12
-        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "med"},
-        # Country ZMB
-        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "med"},
+        water_params("R11", RCP="2p6", REL="med"),
+        water_params("R12", RCP="2p6", REL="med"),
+        water_params("ZMB", RCP="2p6", REL="med"),
+        water_params("R12", reduced_basin=True, RCP="2p6", REL="med"),
     ],
     indirect=True,
 )
@@ -39,12 +38,10 @@ def test_map_basin_region_wat(water_context):
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11
-        {"regions": "R11", "type_reg": "global", "RCP": "2p6", "REL": "med"},
-        # Global R12
-        {"regions": "R12", "type_reg": "global", "RCP": "2p6", "REL": "med"},
-        # Country ZMB
-        {"regions": "ZMB", "type_reg": "country", "RCP": "2p6", "REL": "med"},
+        water_params("R11", RCP="2p6", REL="med"),
+        water_params("R12", RCP="2p6", REL="med"),
+        water_params("ZMB", RCP="2p6", REL="med"),
+        water_params("R12", reduced_basin=True, RCP="2p6", REL="med"),
     ],
     indirect=True,
 )
@@ -64,30 +61,10 @@ def test_add_water_supply(water_context, water_scenario, assert_message_params):
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11
-        {
-            "regions": "R11",
-            "type_reg": "global",
-            "RCP": "2p6",
-            "REL": "med",
-            "SDG": True,
-        },
-        # Global R12
-        {
-            "regions": "R12",
-            "type_reg": "global",
-            "RCP": "2p6",
-            "REL": "med",
-            "SDG": True,
-        },
-        # Country ZMB
-        {
-            "regions": "ZMB",
-            "type_reg": "country",
-            "RCP": "2p6",
-            "REL": "med",
-            "SDG": True,
-        },
+        water_params("R11", RCP="2p6", REL="med", SDG=True),
+        water_params("R12", RCP="2p6", REL="med", SDG=True),
+        water_params("ZMB", RCP="2p6", REL="med", SDG=True),
+        water_params("R12", reduced_basin=True, RCP="2p6", REL="med", SDG=True),
     ],
     indirect=True,
 )
