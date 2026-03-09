@@ -13,6 +13,7 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.material.data_util import drop_redundant_rows
 from message_ix_models.model.material.demand import gen_demand_petro
 from message_ix_models.model.material.util import (
     get_ssp_from_context,
@@ -163,26 +164,8 @@ def gen_data(
     if lower_costs:
         par_dict = experiment_lower_CPA_SAS_costs(par_dict)
 
-    df_lifetime = par_dict["technical_lifetime"]
-    dict_lifetime = (
-        df_lifetime.loc[:, ["technology", "value"]]
-        .set_index("technology")
-        .to_dict()["value"]
-    )
+    drop_redundant_rows(scenario, par_dict)
 
-    class missingdict(dict):
-        def __missing__(self, key):
-            return 1
-
-    dict_lifetime = missingdict(dict_lifetime)
-    for i in par_dict.keys():
-        if ("year_vtg" in par_dict[i].columns) & ("year_act" in par_dict[i].columns):
-            df_temp = par_dict[i]
-            df_temp["lifetime"] = df_temp["technology"].map(dict_lifetime)
-            df_temp = df_temp[
-                (df_temp["year_act"] - df_temp["year_vtg"]) <= df_temp["lifetime"]
-            ]
-            par_dict[i] = df_temp.drop("lifetime", axis="columns")
     pars = ["inv_cost", "fix_cost"]
     tec_list = [
         "biomass_NH3",

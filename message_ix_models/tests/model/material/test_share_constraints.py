@@ -1,16 +1,16 @@
+from importlib.metadata import version
 from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
 from message_ix import make_df
+from packaging.version import Version as V
 
 from message_ix_models.model.material.share_constraints import (
-    add_new_share_cat,
+    CommShareConfig,
     gen_com_share_df,
-    gen_comm_map,
-    gen_comm_shr_map,
 )
-from message_ix_models.testing import bare_res
+from message_ix_models.testing import GHA, bare_res
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -55,14 +55,16 @@ def test_gen_com_share_df() -> None:
     assert (make_df("share_commodity_up").columns == df.columns).all()
 
 
-def test_add_new_share_cat(scenario) -> None:
-    add_new_share_cat(
-        scenario, "test", "test_total", "test_share", ["coal_i"], ["coal_i", "elec_i"]
-    )
-
-
+@pytest.mark.skipif(
+    GHA and (V(version("message_ix")) < V("3.9")),
+    reason="Fails on GHA with message_ix < v3.9",
+)
 def test_gen_comm_map(scenario) -> None:
-    df = gen_comm_map(scenario, "test", "test", ["coal_i"], ["R12_AFR"])
+    cfg = CommShareConfig.from_files(scenario, "coal_residual_industry")
+    cfg.nodes = ["R12_AFR"]
+    cfg.share_name = "test"
+    cfg.type_tec_all_name = "test"
+    df = cfg.get_map_share_set_total(scenario)
     dims = {
         "node": "R12_AFR",
         "node_share": "R12_AFR",
@@ -75,7 +77,3 @@ def test_gen_comm_map(scenario) -> None:
     df_expected = pd.DataFrame(dims, index=[0])
     assert sorted(df_expected.columns) == sorted(df.columns)
     assert pd.concat([df, df_expected]).drop_duplicates(keep=False).empty
-
-
-def test_gen_comm_shr_map(scenario) -> None:
-    gen_comm_shr_map(scenario, "test", "test_tot", "test_shr", ["coali"], ["coali"])
