@@ -38,7 +38,7 @@ def _cache_path_factory() -> Path:
     )
 
 
-def _local_data_factory() -> Path:
+def _local_data_factory(*parts: str) -> Path:
     """Default value for :attr:`.Config.local_data."""
     from platformdirs import user_data_path
 
@@ -50,6 +50,7 @@ def _local_data_factory() -> Path:
         )
         .expanduser()
         .resolve()
+        .joinpath(*parts)
     )
 
 
