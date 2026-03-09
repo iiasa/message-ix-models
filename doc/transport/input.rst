@@ -137,8 +137,9 @@ Quick links to each of the data flows:
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
 :class:`~.data.Lifetime`
-:data:`~.data.load_factor_ldv`
-:data:`~.data.load_factor_nonldv`
+:data:`~.data.load_factor_f`
+:data:`~.data.load_factor_p`
+:class:`~.data.LoadFactorLDV`
 :data:`~.data.mer_to_ppp`
 :data:`~.data.mode_share_freight`
 :data:`~.data.pdt_cap_proj`
@@ -233,7 +234,9 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.input_ref_ldv
 .. autodata:: message_ix_models.model.transport.data.input_share
 .. autoclass:: message_ix_models.model.transport.data.Lifetime
-.. autodata:: message_ix_models.model.transport.data.load_factor_ldv
+.. autodata:: message_ix_models.model.transport.data.load_factor_f
+.. autodata:: message_ix_models.model.transport.data.load_factor_p
+.. autoclass:: message_ix_models.model.transport.data.LoadFactorLDV
 
    The code that handles this file interpolates on the |y| dimension.
 
@@ -243,8 +246,7 @@ Quick links to each of the data flows:
 
    .. todo:: Transcribe the method into this document.
 
-.. autodata:: message_ix_models.model.transport.data.load_factor_nonldv
-.. autodata:: message_ix_models.model.transport.data.mer_to_ppp
+   .. autodata:: message_ix_models.model.transport.data.mer_to_ppp
 .. autodata:: message_ix_models.model.transport.data.mode_share_freight
 
 .. _transport-pdt-cap-proj:
