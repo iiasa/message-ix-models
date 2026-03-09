@@ -1,0 +1,49 @@
+# Activity (driving distance) per light-duty vehicle
+#
+# Source: duplicate of R11/ldv-activity.csv; see comments there. The
+# value for R11_FSU is repeated for R14_{CAS,RUS,SCS,UBM}.
+#
+# Unit: kilometre / year
+#
+scenario, technology, node,    year, value
+*,        LDV,        R14_AFR, 2020, 10391
+*,        LDV,        R14_AFR, 2110, 10391
+*,        LDV,        R14_CPA, 2020, 16000
+*,        LDV,        R14_CPA, 2110, 16000
+*,        LDV,        R14_EEU, 2020,  8962
+*,        LDV,        R14_EEU, 2110,  8962
+*,        LDV,        R14_LAM, 2020, 14600
+*,        LDV,        R14_LAM, 2110, 14600
+*,        LDV,        R14_MEA, 2020, 14000
+*,        LDV,        R14_MEA, 2110, 14000
+*,        LDV,        R14_NAM, 2020, 25860
+*,        LDV,        R14_NAM, 2110, 25860
+*,        LDV,        R14_PAO, 2020, 10000
+*,        LDV,        R14_PAO, 2110, 10000
+*,        LDV,        R14_PAS, 2020, 12000
+*,        LDV,        R14_PAS, 2110, 12000
+*,        LDV,        R14_RUS, 2020, 11482
+*,        LDV,        R14_RUS, 2110, 11482
+*,        LDV,        R14_SAS, 2020, 10400
+*,        LDV,        R14_SAS, 2110, 10400
+*,        LDV,        R14_WEU, 2020, 11646
+*,        LDV,        R14_WEU, 2110, 11646
+*,        LDV,        R14_CAS, 2020, 11482
+*,        LDV,        R14_CAS, 2110, 11482
+*,        LDV,        R14_SCS, 2020, 11482
+*,        LDV,        R14_SCS, 2110, 11482
+*,        LDV,        R14_UBM, 2020, 11482
+*,        LDV,        R14_UBM, 2110, 11482
+
+*,        AIR,        *,       2020, 10000
+*,        AIR,        *,       2110, 10000
+*,        2W,         *,       2020, 10000
+*,        2W,         *,       2110, 10000
+*,        BUS,        *,       2020, 10000
+*,        BUS,        *,       2110, 10000
+*,        P RAIL,     *,       2020, 10000
+*,        P RAIL,     *,       2110, 10000
+*,        F RAIL,     *,       2020, 10000
+*,        F RAIL,     *,       2110, 10000
+*,        F ROAD,     *,       2020, 10000
+*,        F ROAD,     *,       2110, 10000
