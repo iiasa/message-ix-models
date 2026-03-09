@@ -113,7 +113,7 @@ The :program:`git` history of files, or the GitHub "blame" view can also be used
 Quick links to each of the data flows:
 :data:`~.data.act_non_ldv`
 :data:`~.data.activity_freight`
-:data:`~.data.activity_ldv`
+:class:`~.data.ActivityVehicle`
 :data:`~.data.age_ldv`
 :data:`~.data.cap_new_ldv`
 :data:`~.data.class_ldv`
@@ -153,7 +153,7 @@ Quick links to each of the data flows:
 
 .. autodata:: message_ix_models.model.transport.data.act_non_ldv
 .. autodata:: message_ix_models.model.transport.data.activity_freight
-.. autodata:: message_ix_models.model.transport.data.activity_ldv
+.. autoclass:: message_ix_models.model.transport.data.ActivityVehicle
 
    node = R12_AFR [1]_
      Obtained from literature, based on estimates from South Africa. The reported value for South Africa is lower (18000 km/year, `source <https://blog.sbtjapan.com/car-info/what-mileage-is-good-for-a-used-car#:~:text=Average%20Mileage%20in%20South%20Africa,is%20just%20a%20general%20guideline>`__) than the one for Kenya (22000 km/year, `source <https://www.changing-transport.org/wp-content/uploads/2019_Updated-transport-data-in-Kenya.pdf>`__).
