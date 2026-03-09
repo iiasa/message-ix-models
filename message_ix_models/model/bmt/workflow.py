@@ -67,6 +67,7 @@ def _run_transport_report(
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Report the scenario (transport, materials, legacy that contains buildings."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
+
     from message_ix_models.model.material.report.run_reporting import (
         run as _materials_report,
     )
