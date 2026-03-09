@@ -1,0 +1,9 @@
+# Load factor of freight vehicles
+#
+# Units: tonne / vehicle
+#
+# Source: placeholder
+#
+technology, value
+F RAIL,     1.0
+F ROAD,     1.0

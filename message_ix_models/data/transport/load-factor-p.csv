@@ -1,4 +1,4 @@
-# Load factor (occupancy) of non-LDV vehicles
+# Load factor (occupancy) of passenger vehicles except LDVs
 #
 # Source: transcribed from MESSAGE (V) Transport .chn files
 # Original source unknown.
@@ -7,8 +7,8 @@
 #
 technology, value
 # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
-# rail_pub,80
-2W,1.0
-RAIL,200
-AIR,115
-BUS,20.9
+# rail_pub,  80
+2W,           1.0
+RAIL,       200
+AIR,        115
+BUS,         20.9

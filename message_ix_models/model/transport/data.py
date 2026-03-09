@@ -918,9 +918,17 @@ input_share = _input_dataflow(
 )
 
 
-load_factor_nonldv = _input_dataflow(
-    key="load factor nonldv:t:exo",
-    name="Load factor (occupancy) of non-LDV passenger vehicles",
+load_factor_f = _input_dataflow(
+    key="load factor:t:F+exo",
+    name="Load factor of freight vehicles",
+    path="load-factor-f.csv",
+    units="tonne / vehicle",
+)
+
+load_factor_p = _input_dataflow(
+    key="load factor:t:P+exo",
+    name="Load factor (occupancy) of passenger vehicles ex LDV",
+    path="load-factor-p.csv",
     units="passenger / vehicle",
 )
 
