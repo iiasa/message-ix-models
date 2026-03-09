@@ -108,6 +108,33 @@ On other page(s): :doc:`disutility`.
 Usage
 =====
 
+via SLURM/:program:`sbatch`
+---------------------------
+
+A script like the following can be used
+to repeatedly invoke :program:`mix-models sbatch` with different jobs labels,
+corresponding to different labels `mix-models transport run`.
+This has the effect of starting multiple Slurm jobs, one per label:
+
+.. code-block:: shell
+
+   #!/bin/sh
+
+   while IFS=$'\n' read -r label; do
+     mix-models sbatch -m model.transport --remote --go \
+       -v username=kishimot \
+       -v J="'$label'" -- \
+       "--from='' '$label reported'"
+     # Pause so overlapping clone operations do not fail
+     sleep 90s
+   done << LABELS
+   SSP1
+   SSP2
+   SSP3
+   LABELS
+
+   exit 0
+
 Automated workflow
 ------------------
 
