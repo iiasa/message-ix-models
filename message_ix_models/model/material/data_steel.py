@@ -923,7 +923,7 @@ def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
     dict
         Dictionary with 'input' parameter DataFrame.
     """
-    special_regions = ["R12_EEU"]  # , "R12_NAM"]
+    special_regions = ["R12_AFR"]  # , "R12_NAM"]
     other_regions = [
         i for i in nodes_ex_world(s_info.N) if i not in special_regions + ["R12_CHN"]
     ]
@@ -944,8 +944,8 @@ def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
     dfs = []
     for node_loc, year_act, x in (
         (other_regions, years, 0.8),
-        (["R12_CHN"], [2020, 2025], 0.83),
-        (special_regions, [2020, 2025], 0.79),
+        (["R12_CHN"], [2020, 2025], 0.85),
+        (special_regions, [2020, 2025], 0.77),
         (special_regions + ["R12_CHN"], [i for i in years if i > 2025], 0.8),
     ):
         dfs.append(
