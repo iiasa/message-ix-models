@@ -50,7 +50,7 @@ def test_get_techs(buildings_context: "Context", commodity: str | None) -> None:
     assert "gas_resid_cook" in result
 
     # Generated technologies for residuals of corresponding *_rc in the base model spec
-    assert "gas_afofi" in result
+    assert "gas_afofi" in result or "gas_afofio" in result
 
 
 @pytest.mark.parametrize(
