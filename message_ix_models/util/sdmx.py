@@ -502,6 +502,11 @@ class URNLookupMixin(Generic[T]):
                 break
         return result
 
+    def __str__(self) -> str:
+        return self.urn.partition("=")[2]
+
+    __repr__ = __str__
+
 
 class URNLookupEnum(URNLookupMixin, Enum):
     """Class constructed by ItemSchemeEnumType."""

@@ -185,6 +185,26 @@ class TestItemSchemeEnum:
         assert _exp_max_value(E2) == max(member.value for member in E2)
 
 
+class TestURNLookupEnum:
+    @pytest.fixture
+    def obj(self):
+        class Foo(URNLookupEnum, metaclass=ItemSchemeEnumType):
+            def _get_item_scheme(self):
+                return read("AGENCIES")
+
+        return Foo["IIASA_ECE"]
+
+    def test_urn(self, obj: URNLookupEnum) -> None:
+        """:attr:`.urn` retrieves the string URN for an enumeration member."""
+        assert re.fullmatch(
+            rf"{_urn_prefix}.base.Agency=IIASA_ECE:AGENCIES.*\.IIASA_ECE", obj.urn
+        )
+
+    def test_str(self, obj: URNLookupEnum) -> None:
+        """:func:`str` on a member retrieves a partial URN."""
+        assert re.fullmatch(r"IIASA_ECE:AGENCIES.*\.IIASA_ECE", str(obj))
+
+
 def test_eval_anno(caplog, recwarn):
     c = Code()
 
