@@ -191,7 +191,10 @@ class MappingAdapter(Adapter):
 class WildcardAdapter(Adapter):
     """Adapt data using by broadcasting wildcard ("*") entries for 1 dimension."""
 
+    #: Dimension on which to expand wildcard.
     dim: str
+
+    #: Expected full list of coords along :attr:`dim`.
     coords: set[str]
 
     def __init__(self, dim: str, coords: Sequence[str]) -> None:
