@@ -180,6 +180,10 @@ def test_bare(
 
     rep, key1 = prepare_reporter(test_context, scenario)
 
+    # commented: Generate 'full' task graphs for presentation materials
+    # rep.visualize("transport-report.svg", "transport all", rankdir="LR")
+    # rep.visualize("transport-build.svg", "add transport data", rankdir="LR")
+
     # Reporting `key` succeeds
     rep.get(key1)
 
