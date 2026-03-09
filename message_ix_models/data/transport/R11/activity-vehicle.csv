@@ -1,0 +1,73 @@
+# Activity (driving distance) per light-duty vehicle
+#
+# Source: Extracted from ldv-cost-efficiency.xlsx by D.L. McCollum;
+# see also comments in that file, most of which are copied here:
+#
+# - “Note: Modest and Frequent mileages for all non-NAM regions are
+#   scaled relative to the NAM values from MA3T. This is because we
+#   only have driving data for the average driver (supplied by Page
+#   Kyle of the GCAM team in March 2014).”
+#
+# Unit: kilometre / year
+#
+scenario, technology, node,    year, value
+# driver_type="M" (moderate)
+# *,      LDV,        R11_NAM, 2020, 13930
+# *,      LDV,        R11_NAM, 2110, 13930
+# driver_type="A" (average)
+*,        LDV,        R11_NAM, 2020, 25860
+*,        LDV,        R11_NAM, 2110, 25860
+# driver_type="F" (frequent)
+# *,      LDV,        R11_NAM, 2020, 45550
+# *,      LDV,        R11_NAM, 2110, 45550
+# DLM: “See the "vkt_veh_yr_GCAM.xlsx" spreadsheet that Page Kyle sent
+# me in late-March 2014. The value in this cell is an average of GCAM's
+# Brazil and Latin America regions.”
+*,        LDV,        R11_LAM, 2020, 14600
+*,        LDV,        R11_LAM, 2110, 14600
+# “…GCAM's Western Europe region.”
+*,        LDV,        R11_WEU, 2020, 11646
+*,        LDV,        R11_WEU, 2110, 11646
+# “…GCAM's Eastern Europe region.”
+*,        LDV,        R11_EEU, 2020,  8962
+*,        LDV,        R11_EEU, 2110,  8962
+# “…GCAM's Former Soviet Union region.”
+*,        LDV,        R11_FSU, 2020, 11482
+*,        LDV,        R11_FSU, 2110, 11482
+# “…GCAM's Middle East region.”
+*,        LDV,        R11_MEA, 2020, 14000
+*,        LDV,        R11_MEA, 2110, 14000
+# “…GCAM's Africa region.”
+*,        LDV,        R11_AFR, 2020, 10391
+*,        LDV,        R11_AFR, 2110, 10391
+# “…GCAM's China region. Actually, GCAM assumes an average value of
+# ~20500 km/yr for China, which seems too high in my opinion, so I
+# revised this value downwards. I made an assumption that the value
+# should be 20% lower, an estimate I arrived at based on the
+# consideration that GCAM assumes that average annual driving distances
+# in the US are 20% lower than what MA3T shows for the average driver
+# (19200 in GCAM vs. 25860 in MA3T).
+*,        LDV,        R11_CPA, 2020, 16000
+*,        LDV,        R11_CPA, 2110, 16000
+# “…GCAM's Japan and Australia-NZ regions.”
+*,        LDV,        R11_PAO, 2020, 10000
+*,        LDV,        R11_PAO, 2110, 10000
+# “…GCAM's Korea and Southeast Asia regions.”
+*,        LDV,        R11_PAS, 2020, 12000
+*,        LDV,        R11_PAS, 2110, 12000
+# “…GCAM's India region.”
+*,        LDV,        R11_SAS, 2020, 10400
+*,        LDV,        R11_SAS, 2110, 10400
+
+*,        AIR,        *,       2020, 10000
+*,        AIR,        *,       2110, 10000
+*,        2W,         *,       2020, 10000
+*,        2W,         *,       2110, 10000
+*,        BUS,        *,       2020, 10000
+*,        BUS,        *,       2110, 10000
+*,        P RAIL,     *,       2020, 10000
+*,        P RAIL,     *,       2110, 10000
+*,        F RAIL,     *,       2020, 10000
+*,        F RAIL,     *,       2110, 10000
+*,        F ROAD,     *,       2020, 10000
+*,        F ROAD,     *,       2110, 10000
