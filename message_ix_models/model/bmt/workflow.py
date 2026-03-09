@@ -25,7 +25,6 @@ def solve(
     """Plain solve."""
     from message_ix.common import DEFAULT_CPLEX_OPTIONS
 
-
     # Use default CPLEX options and update with custom settings
     solve_options = DEFAULT_CPLEX_OPTIONS.copy()
     solve_options.update(
@@ -59,10 +58,9 @@ def _run_transport_report(
     context: Context, scenario: message_ix.Scenario
 ) -> message_ix.Scenario:
     """Run transport reporting on the scenario (same as transport workflow report)."""
-    from message_ix_models.report import prepare_reporter
-
-    from message_ix_models.model.transport.report import callback as transport_callback
     from message_ix_models.model.transport.key import report as k_report
+    from message_ix_models.model.transport.report import callback as transport_callback
+    from message_ix_models.report import prepare_reporter
 
     if transport_callback not in context.report.callback:
         context.report.register(transport_callback)
@@ -74,6 +72,7 @@ def _run_transport_report(
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Report the scenario (transport, materials, legacy that contains buildings)."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
+
     from message_ix_models.model.material.report.run_reporting import (
         run as _materials_report,
     )
@@ -95,12 +94,15 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     # except Exception as e:
     #     log.warning("Transport reporting skipped: %s", e)
 
-    # https://github.com/iiasa/message_data/blob/bmt_dev/message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
-    # legacy report merges scenario ts into each table by root (Final Energy, Energy Service, Transport|Storck)
-    # TODO: so one needs to make sure that the transport report is mergable to legacy report
-    # which is basically already covered in the transport test_report.py
-    # also deactivate the transport part in the legacy report
-    # and check what Paul did in NAVIGATE workflow
+    # message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
+    # legacy report merges scenario ts into each table by root
+    # (3 main tables: Final Energy, Emissions, Energy Service)
+    # TODO: so one needs to make sure that the transport report is mergable to
+    # legacy report, which is basically already covered in the transport
+    # test_report.py and transport parts in the 3 main tables of legacy report
+    # are deactivated so that no double counting happens. In the next report PR,
+    # ideally the B and T reporting can be handled in a way similar to
+    # message_data/blob/navigate5.3/.../navigate/report.py#L290-L298
 
     # 2. Materials reporting
     try:
@@ -149,6 +151,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 
 
 # Main BMT workflow
+
 
 def generate(context: Context) -> Workflow:
     """Create the BMT-run workflow."""
