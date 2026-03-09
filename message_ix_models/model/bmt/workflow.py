@@ -67,8 +67,6 @@ def _run_transport_report(
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Report the scenario (transport, materials, legacy that contains buildings."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
-
-
     from message_ix_models.model.material.report.run_reporting import (
         run as _materials_report,
     )
@@ -115,14 +113,12 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         scenario.check_out(timeseries_only=True)
     except ValueError:
         log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
-
     df = _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
+    del df
 
     # 3. Legacy reporting
     _legacy_report(scenario)
-
-    del df
 
     return scenario
 
@@ -292,16 +288,23 @@ def generate(context: Context) -> Workflow:
     # NB .model.transport.workflow.generate sets context.solve including
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
-    
+
     wf.add_step(
         "MT solved",
         "MT built",
         solve,
     )
 
+    # Transport report step (from .model.transport.workflow: callback + "transport all")
+    wf.add_step(
+        "MT reported",
+        "MT solved",
+        _run_transport_report,
+    )
+
     wf.add_step(
         "BMT built",
-        "MT solved",
+        "MT reported",
         build_B,
         target=f"{model_name}/baseline_BMT",
         clone=dict(keep_solution=False),
