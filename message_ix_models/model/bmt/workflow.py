@@ -42,8 +42,32 @@ def solve(
     return scenario
 
 
+def _set_as_default(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Set the scenario as the default version and return it."""
+    scenario.set_as_default()
+    log.info("Set as default: ixmp://%s/%s", scenario.platform.name, scenario.url)
+    return scenario
+
+
+def _run_transport_report(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Run transport reporting on the scenario (same as transport workflow report)."""
+    from message_ix_models.model.transport.key import report as k_report
+    from message_ix_models.model.transport.report import callback as transport_callback
+    from message_ix_models.report import prepare_reporter
+
+    if transport_callback not in context.report.callback:
+        context.report.register(transport_callback)
+    rep, _ = prepare_reporter(context, scenario=scenario)
+    rep.get(k_report.all)
+    return scenario
+
+
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Report the scenario."""
+    """Report the scenario (transport, materials, legacy that contains buildings."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
 
     from message_ix_models.model.material.report.run_reporting import (
@@ -61,6 +85,22 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
             run_config=run_config,
         )
 
+    # 1. Transport reporting
+    # try:
+    #     _run_transport_report(context, scenario)
+    # except Exception as e:
+    #     log.warning("Transport reporting skipped: %s", e)
+
+    # https://github.com/iiasa/message_data/blob/bmt_dev/message_data/tools/
+    # post_processing/iamc_report_hackathon.py#L320-L342
+    # legacy report merges scenario ts into each table by root (Final Energy, Energy
+    # Service, Transport|Storck)
+    # TODO: so one needs to make sure that the transport report is mergable to legacy
+    # report which is basically already covered in the transport test_report.py
+    # also deactivate the transport part in the legacy report and check what Paul did in
+    # NAVIGATE workflow
+
+    # 2. Materials reporting
     try:
         scenario.check_out(timeseries_only=True)
     except ValueError:
@@ -69,6 +109,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
+    # 3. Legacy reporting
     _legacy_report(scenario)
 
     return scenario
@@ -122,21 +163,22 @@ def generate(context: Context) -> Workflow:
 
     name = wf.add_step("M", None, target=base_url)
     name = wf.add_step("M cloned", name, target=f"{url}M", clone=c)
-    name = wf.add_step("BM built", name, build_B, target=f"{url}BM_20260308", clone=c)
-    name = wf.add_step("BM solved", name, solve)
-
-    # This step requires the message_data branch `bmt_ssp`
-    name = wf.add_step("BM reported", name, report)
 
     # Retrieve a 'Code' object with 'Annotations' that identify a particular
     # MESSAGEix-Transport configuration. For reference:
     # - .model.transport.config.CL_SCENARIO
     # - .model.transport.config.ScenarioCodeAnnotations
     # - .model.transport.config.Config.code
-    scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
+    # scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
 
-    # Add step(s) on top of the previous step ("M cloned") that build
-    # MESSAGEix-Transport. For reference:
+    # CL_SCENARIO (see .model.transport.config) is built from SDMX codelist
+    # data/sdmx/IIASA_ECE_CL_TRANSPORT_SCENARIO(1.3.0).xml. From that version each
+    # scenario has two codes: id "SSP{n}" (extra_modules=[]) and
+    # "M SSP{n}" (extra_modules=["material"]).
+    # Use the code without "M " to build transport without the material module.
+    scenario_code = CL_SCENARIO.get()[context.ssp]
+
+    # Add step(s) on top of "M cloned" that build MESSAGEix-Transport. For reference:
     # - .model.transport.workflow.add_steps
     # - .model.workflow.from_codelist, which makes a similar call
     #
@@ -144,16 +186,19 @@ def generate(context: Context) -> Workflow:
     name = transport.add_steps(wf, "M cloned", scenario_code)
 
     # Clone to the URL desired for this workflow, at a step named "MT built".
-    # Giving action=None means nothing is run on the scenario.
-    name = wf.add_step("MT built", name, action=None, target=f"{url}MT", clone=True)
+    # After cloning, set the scenario as default so it is the one used by later steps
+    name = wf.add_step("MT built", name, _set_as_default, target=f"{url}MT", clone=True)
+    # TODO: check if Paul's action already has something to set as default
 
     # NB .model.transport.workflow.generate sets context.solve including
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
 
     name = wf.add_step("MT solved", name, solve)
-    name = wf.add_step("BMT build", name, build_B, target=f"{url}BMT", clone=c)
 
+    # Transport report step (from .model.transport.workflow: callback + "transport all")
+    name = wf.add_step("MT reported", name, _run_transport_report)
+    name = wf.add_step("BMT built", name, build_B, target=f"{url}BMT", clone=c)
     name = wf.add_step("BMT solved", name, solve)
     name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=False)
     name = wf.add_step(
