@@ -91,14 +91,15 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     # except Exception as e:
     #     log.warning("Transport reporting skipped: %s", e)
 
-    # https://github.com/iiasa/message_data/blob/bmt_dev/message_data/tools/
-    # post_processing/iamc_report_hackathon.py#L320-L342
-    # legacy report merges scenario ts into each table by root (Final Energy, Energy
-    # Service, Transport|Storck)
-    # TODO: so one needs to make sure that the transport report is mergable to legacy
-    # report which is basically already covered in the transport test_report.py
-    # also deactivate the transport part in the legacy report and check what Paul did in
-    # NAVIGATE workflow
+    # message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
+    # legacy report merges scenario ts into each table by root
+    # (3 main tables: Final Energy, Emissions, Energy Service)
+    # TODO: so one needs to make sure that the transport report is mergable to
+    # legacy report, which is basically already covered in the transport
+    # test_report.py and transport parts in the 3 main tables of legacy report
+    # are deactivated so that no double counting happens. In the next report PR,
+    # ideally the B and T reporting can be handled in a way similar to
+    # message_data/blob/navigate5.3/.../navigate/report.py#L290-L298
 
     # 2. Materials reporting
     try:
