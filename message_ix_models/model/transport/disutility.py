@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from genno import Key, Quantity, quote
 
 from . import util
-from .key import activity_ldv_full, exo
+from .key import exo
 from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ def prepare_computer(c: "Computer") -> None:
     # Divide disutility per vehicle by annual driving distance per vehicle → disutility
     # per vehicle-km; convert to preferred units
     # TODO add "cg" dimension to ldv activity
-    k2 = c.add(k[2], "div", k[1], activity_ldv_full)
+    k2 = c.add(k[2], "div", k[1], (exo.activity_vehicle + "LDV") / "t")
     k3 = c.add(k[3], "mul", k2, Quantity(1.0, units="vehicle / year"))
     k4 = c.add(k[4], "convert_units", k3, units="USD / km")
 
