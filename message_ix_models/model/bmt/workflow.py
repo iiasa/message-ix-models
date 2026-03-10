@@ -185,6 +185,7 @@ def prep_for_macro(
             scenario.remove_set("sector", to_remove)
 
     solve(context, scenario, model="MESSAGE")
+
     return scenario
 
 
