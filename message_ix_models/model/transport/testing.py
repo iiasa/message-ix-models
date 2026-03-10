@@ -62,8 +62,7 @@ make_mark: dict[Hashable, Callable[..., pytest.MarkDecorator]] = {
     ),
     "gh": lambda f: pytest.mark.xfail(
         condition=GHA,
-        reason=f"Temporary, for https://github.com/iiasa/message-ix-models/pull/{f}:"
-        " fails on GHA, but not locally",
+        reason=f"Temporary, for https://github.com/iiasa/message-ix-models/pull/{f}",
     ),
 }
 
