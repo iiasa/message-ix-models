@@ -7,7 +7,7 @@
 #   to get estimate of R12_CHN freight demand.”
 # - All others: manually adapted from R11/freight-activity.csv.
 #
-# Units: Gt km
+# Units: Gt km / a
 #
 node,     value
 R12_AFR,  730

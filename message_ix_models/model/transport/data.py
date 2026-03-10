@@ -737,7 +737,7 @@ act_non_ldv = _input_dataflow(
 activity_freight = _input_dataflow(
     key="freight activity:n:exo",
     name="Freight transport activity",
-    units="Gt / km",
+    units="Gt km / a",
 )
 
 age_ldv = _input_dataflow(
