@@ -143,7 +143,9 @@ def test_bare_res(
         ("R12", "B", dict(code="LED-SSP2")),
         ("R12", "B", dict(code="EDITS-CA")),
         ("R12", "B", dict(code="DIGSY-BEST-C")),
-        pytest.param("R12", "B", dict(code="SSP2", extra_modules=["material"])),
+        pytest.param(
+            "R12", "B", dict(code="SSP2", extra_modules=["material"]), marks=MARK[12]
+        ),
         # param("R14", "B", {}, marks=MARK[9]),
         # param("ISR", "A", {}, marks=MARK[3]),
     ),

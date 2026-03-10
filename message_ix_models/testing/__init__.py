@@ -20,6 +20,7 @@ import pandas as pd
 import pytest
 import sdmx.exceptions
 from ixmp import config as ixmp_config
+from packaging.version import Version
 
 from message_ix_models import util
 from message_ix_models.model import snapshot
@@ -78,6 +79,11 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
     # 11: pytest.mark.timeout(
     #     600, method="thread" if platform.system() == "Windows" else "thread"
     # ),
+    12: pytest.mark.xfail(
+        Version(version("message_ix")) < Version("3.12"),
+        reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
+        ">=3.12",
+    ),
     "#375": pytest.mark.flaky(
         reruns=3,
         rerun_delay=2,
