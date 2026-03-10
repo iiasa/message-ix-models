@@ -5,7 +5,7 @@
 # - Duplicated manually from the corresponding R11 file.
 # - Data for R11_FSU split evenly across R14_{CAS,RUS,SCS,UBM}.
 #
-# Units: Gt km
+# Units: Gt km / a
 #
 node,    value
 R14_AFR, 1210.1

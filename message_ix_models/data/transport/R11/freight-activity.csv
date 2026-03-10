@@ -2,7 +2,7 @@
 #
 # Source: placeholder; extracted from ADVANCE database
 #
-# Units: Gt km
+# Units: Gt km / a
 #
 node,    value
 R11_AFR, 1210.1
