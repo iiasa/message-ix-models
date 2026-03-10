@@ -30,6 +30,21 @@ if TYPE_CHECKING:
     from message_ix_models.types import ParameterData
 
 
+def _filter_macro_data_to_scenario(
+    data: dict[str, pd.DataFrame], scen: message_ix.Scenario
+) -> None:
+    """Filter macro calibration data to only include scenario commodities."""
+    scenario_commodities = set(scen.set("commodity").tolist())
+    for sheet_name, df in data.items():
+        if not isinstance(df, pd.DataFrame) or df.empty:
+            continue
+        if "commodity" in df.columns:
+            df = df.loc[df["commodity"].isin(scenario_commodities)]
+        if "sector" in df.columns:
+            df = df.loc[df["sector"].isin(scenario_commodities)]
+        data[sheet_name] = df.reset_index(drop=True)
+
+
 def add_macro_materials(
     scen: message_ix.Scenario, filename: str, check_converge: bool = False
 ) -> message_ix.Scenario:
@@ -54,6 +69,9 @@ def add_macro_materials(
     data = {}
     for s in xls.sheet_names:
         data[s] = xls.parse(s)
+
+    # Restrict to scenario commodities (and sector column when it holds commodity codes)
+    _filter_macro_data_to_scenario(data, scen)
 
     # # Load the new GDP values
     # df_gdp = load_GDP_COVID()
