@@ -1,0 +1,82 @@
+# Technical lifetime (maximum age) of vehicles
+#
+# Sources
+# - scenario=*: see https://github.com/iiasa/message-ix-models/pull/213
+# - scenario=LED: SharePoint ECE.prog > Documents > Transport > LED Scenario >
+#   input files > lifetime-ldv-LED.xlsx as of 2025-03-18.
+#
+# Units: year
+#
+scenario, technology, node_loc, year_vtg, value
+*,        LDV,        R12_AFR,  1990,     25
+*,        LDV,        R12_AFR,  2110,     25
+*,        LDV,        R12_CHN,  1990,     18
+*,        LDV,        R12_CHN,  2110,     18
+*,        LDV,        R12_EEU,  1990,     28
+*,        LDV,        R12_EEU,  2110,     28
+*,        LDV,        R12_FSU,  1990,     15
+*,        LDV,        R12_FSU,  2110,     15
+*,        LDV,        R12_LAM,  1990,     25
+*,        LDV,        R12_LAM,  2110,     25
+*,        LDV,        R12_MEA,  1990,     15
+*,        LDV,        R12_MEA,  2110,     15
+*,        LDV,        R12_NAM,  1990,     18
+*,        LDV,        R12_NAM,  2110,     18
+*,        LDV,        R12_PAO,  1990,     15
+*,        LDV,        R12_PAO,  2110,     15
+*,        LDV,        R12_PAS,  1990,     15
+*,        LDV,        R12_PAS,  2110,     15
+*,        LDV,        R12_RCPA, 1990,     15
+*,        LDV,        R12_RCPA, 2110,     15
+*,        LDV,        R12_SAS,  1990,     25
+*,        LDV,        R12_SAS,  2110,     25
+*,        LDV,        R12_WEU,  1990,     20
+*,        LDV,        R12_WEU,  2110,     20
+                      
+LED,      LDV,        R12_AFR,  1990,     25
+LED,      LDV,        R12_AFR,  2050,     19.36
+LED,      LDV,        R12_AFR,  2110,     19.36
+LED,      LDV,        R12_CHN,  1990,     15
+LED,      LDV,        R12_CHN,  2050,     19.36
+LED,      LDV,        R12_CHN,  2110,     19.36
+LED,      LDV,        R12_EEU,  1990,     28
+LED,      LDV,        R12_EEU,  2050,     19.55
+LED,      LDV,        R12_EEU,  2110,     19.55
+LED,      LDV,        R12_FSU,  1990,     15
+LED,      LDV,        R12_FSU,  2050,     19.55
+LED,      LDV,        R12_FSU,  2110,     19.55
+LED,      LDV,        R12_LAM,  1990,     25
+LED,      LDV,        R12_LAM,  2050,     19.36
+LED,      LDV,        R12_LAM,  2110,     19.36
+LED,      LDV,        R12_MEA,  1990,     15
+LED,      LDV,        R12_MEA,  2050,     19.36
+LED,      LDV,        R12_MEA,  2110,     19.36
+LED,      LDV,        R12_NAM,  1990,     18
+LED,      LDV,        R12_NAM,  2050,     19.55
+LED,      LDV,        R12_NAM,  2110,     19.55
+LED,      LDV,        R12_PAO,  1990,     13
+LED,      LDV,        R12_PAO,  2050,     19.55
+LED,      LDV,        R12_PAO,  2110,     19.55
+LED,      LDV,        R12_PAS,  1990,     13
+LED,      LDV,        R12_PAS,  2050,     19.36
+LED,      LDV,        R12_PAS,  2110,     19.36
+LED,      LDV,        R12_RCPA, 1990,     15
+LED,      LDV,        R12_RCPA, 2050,     19.36
+LED,      LDV,        R12_RCPA, 2110,     19.36
+LED,      LDV,        R12_SAS,  1990,     25
+LED,      LDV,        R12_SAS,  2050,     19.36
+LED,      LDV,        R12_SAS,  2110,     19.36
+LED,      LDV,        R12_WEU,  1990,     20
+LED,      LDV,        R12_WEU,  2050,     19.55
+LED,      LDV,        R12_WEU,  2110,     19.55
+
+*,        2W,         *,        1990,     15
+*,        2W,         *,        2110,     15
+*,        AIR,        *,        1990,     15
+*,        AIR,        *,        2110,     15
+*,        BUS,        *,        1990,     15
+*,        BUS,        *,        2110,     15
+*,        F RAIL,     *,        1990,     15
+*,        F RAIL,     *,        2110,     15
+*,        F ROAD,     *,        1990,     15
+*,        F ROAD,     *,        2110,     15
