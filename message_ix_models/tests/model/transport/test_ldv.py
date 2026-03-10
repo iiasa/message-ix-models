@@ -54,16 +54,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
 
     # TODO Merge the following with test_build.test_debug() using Check objects
     # Data are returned for the following parameters
-    exp_pars = {
-        "bound_new_capacity_lo",
-        "bound_new_capacity_up",
-        "capacity_factor",
-        "historical_new_capacity",
-        "input",
-        "output",
-        "technical_lifetime",
-        "var_cost",
-    }
+    exp_pars = {"capacity_factor", "input", "output", "var_cost"}
     if not dummy_LDV:
         exp_pars |= {
             "emission_factor",
@@ -139,7 +130,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
             # No missing entries
             assert not df.isna().any(axis=None), df.tostring()
 
-            if "year_vtg" not in df.columns:
+            if "year_vtg" not in df.columns or par_name == "capacity_factor":
                 continue
 
             # Data covers at least these periods

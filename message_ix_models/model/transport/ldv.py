@@ -3,11 +3,10 @@
 import logging
 from collections.abc import Mapping
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import genno
 from genno import Computer, Key, Keys
-from genno.core.key import single_key
 from message_ix import make_df
 from sdmx.model.common import Code
 
@@ -25,8 +24,8 @@ from message_ix_models.util.genno import Collector
 from . import util
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .key import activity_ldv_full, bcast_tcl, bcast_y, exo
-from .util import COMMON, EXTRAPOLATE, wildcard
+from .key import bcast_tcl, bcast_y, exo
+from .util import COMMON, wildcard
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -92,11 +91,12 @@ def prepare_computer(c: Computer):
 
     from . import factor
 
+    # Collect data in `TARGET` and connect to the "add transport data" key
     collect.computer = c
+    c.add("transport_data", __name__, key=TARGET)
 
     context = c.graph["context"]
     config: "Config" = context.transport
-    info = config.base_model_info
 
     # Some keys/shorthand
     k = Keys(
@@ -144,47 +144,6 @@ def prepare_computer(c: Computer):
         "usage", usage_data, exo.load_factor_ldv, "cg", "n::ex world", t_ldv, "y::model"
     )
 
-    ### Technical lifetime
-    tl, k_tl = "technical_lifetime", exo.lifetime_ldv
-
-    # Interpolate on "yv" dimension
-    c.add(k_tl[0], "interpolate", k_tl, "yv::coords", **EXTRAPOLATE)
-
-    # Broadcast to all nodes, scenarios, and LDV technologies
-    coords = ["scenario::all", "n::ex world", "t::LDV"]
-    c.add(k_tl[1], "broadcast_wildcard", k_tl[0], *coords, dim=("scenario", "nl", "t"))
-
-    # Select values for the current scenario
-    c.add(k_tl[2] / "scenario", "select", k_tl[1], "indexers:scenario:LED")
-
-    # Convert to integer
-    # NB This is required because the MESSAGEix GAMS implementation cannot handle non-
-    #    integer values
-    c.add(k_tl[3] / "scenario", lambda qty: qty.astype(int), k_tl[2] / "scenario")
-
-    # Convert to MESSAGE data structure
-    dims = dict(node_loc="nl", technology="t", year_vtg="yv")
-    collect(tl, "as_message_df", k_tl[3] / "scenario", name=tl, dims=dims, common={})
-
-    ### Capacity factor
-    cf, k_cf_s = "capacity_factor", exo.activity_ldv
-    k_cf = k_cf_s / "scenario"
-    # Convert units
-    c.add(k_cf_s[0], "convert_units", k_cf_s, units="Mm/year")
-    # Broadcast to all scenarios
-    c.add(k_cf_s[1], "broadcast_wildcard", k_cf_s[0], "scenario::all", dim="scenario")
-    # Select values for the current scenario
-    c.add(k_cf[2], "select", k_cf_s[1], "indexers:scenario:LED")
-    # Interpolate on "y" dimension
-    c.add(k_cf["full"], "interpolate", k_cf[2], "y::coords", **EXTRAPOLATE)
-    assert k_cf["full"] == activity_ldv_full
-    # Add dimension "t" indexing all LDV technologies
-    prev = c.add(k_cf[4] * "t", "expand_dims", k_cf["full"], "t::transport LDV")
-    # Broadcast y → (yV, yA)
-    prev = c.add(k_cf[5], "mul", prev, bcast_y.all)
-    # Convert to MESSAGE data structure
-    collect(cf, "as_message_df", prev, name=cf, dims=DIMS, common=COMMON)
-
     # Add further keys for MESSAGE-structured data
     # Techno-economic attributes
     # Select a task for the final step that computes "tech::LDV+ixmp"
@@ -206,37 +165,8 @@ def prepare_computer(c: Computer):
         except KeyError:
             k.stock = Key("")  # No such file in this configuration
     elif config.ldv_stock_method == "B":
-        k.stock = single_key(c.apply(stock))
-
-    if k.stock:
-        # Convert units
-        c.add(k.stock[0], "convert_units", k.stock, units="million * vehicle / year")
-
-        # historical_new_capacity: select only data prior to y₀
-        kw1: dict[str, Any] = dict(
-            common={},
-            dims=dict(node_loc="nl", technology="t", year_vtg="yv"),
-            name="historical_new_capacity",
-        )
-        y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
-        c.add(k.stock[1], "select", k.stock[0], indexers=dict(yv=y_historical))
-        collect(kw1["name"], "as_message_df", k.stock[1], **kw1)
-
-        # CAP_NEW/bound_new_capacity_{lo,up}
-        # - Select only data from y₀ and later.
-        # - Discard values for ICE_conv.
-        #   TODO Do not hard code this label; instead, identify the technology with the
-        #   largest share and avoid setting constraints on it.
-        # - Add both upper and lower constraints to ensure the solution contains exactly
-        #   the given value.
-        c.add(k.stock[2], "select", k.stock[0], indexers=dict(yv=info.Y))
-        indexers = dict(t=["ICE_conv"])
-        c.add(k.stock[3], "select", k.stock[2], indexers=indexers, inverse=True)
-        for kw1["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
-            collect(kw1["name"], "as_message_df", k.stock[3], **kw1)
-
-    # Add the data to the target scenario
-    c.add("transport_data", __name__, key=TARGET)
+        # Now handled in .vehicle
+        pass
 
 
 def prepare_tech_econ(
@@ -346,65 +276,6 @@ def get_dummy(context) -> "ParameterData":
     data["output"] = output
 
     return data
-
-
-def stock(c: Computer, *, margin: float = 0.2) -> Key:
-    """Prepare `c` to compute base-period stock and historical sales.
-
-    Parameters
-    ----------
-    margin :
-        Fractional margin by which to increase the resulting sales values. Because these
-        values are used to compute ``historical_new_capacity`` and
-        ``bound_new_capacity_{lo,up}``, this relaxes the resulting constraints on LDV
-        technologies in the first model period.
-    """
-    from .key import ldv_ny
-
-    k = Keys(stock="stock:n-y:LDV", sales="sales:n-t-y:LDV", result="sales:nl-t-yv:LDV")
-
-    # - Divide total LDV activity by (1) annual driving distance per vehicle and (2)
-    #   load factor (occupancy) to obtain implied stock.
-    # - Correct units: "load factor ldv:n-y" is dimensionless, should be
-    #   passenger/vehicle
-    # - Select only the base-period value.
-    c.add(k.stock[0], "div", ldv_ny + "total", activity_ldv_full)
-    c.add(k.stock[1], "div", k.stock[0], exo.load_factor_ldv / "scenario")
-    c.add(k.stock[2], "div", k.stock[1], genno.Quantity(1.0, units="passenger/vehicle"))
-    c.add(k.stock[3] / "y", "select", k.stock[2], "y0::coord")
-
-    # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
-    c.add(k.stock, "mul", k.stock[3] / "y", exo.t_share_ldv)
-
-    # TODO Move the following 4 calls to .build.add_structure() or similar
-    # Identify the subset of periods up to and including y0
-    c.add(
-        "y::to y0",
-        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
-        "y",
-        "y0",
-    )
-    # Convert duration_period to Quantity
-    c.add("duration_period:y", "duration_period", "info")
-    # Duration_period up to and including y0
-    c.add("duration_period:y:to y0", "select", "duration_period:y", "y::to y0")
-    # Groups for aggregating annual to period data
-    c.add("y::annual agg", "groups_y_annual", "duration_period:y")
-
-    # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
-    # multi-year periods)
-    c.add(k.sales["fraction"], "sales_fraction_annual", exo.age_ldv)
-    # Absolute sales in preceding years
-    c.add(k.sales["annual"], "mul", k.stock, k.sales["fraction"], 1.0 + margin)
-    # Aggregate to model periods; total sales across the period
-    c.add(k.sales["total"], "aggregate", k.sales["annual"], "y::annual agg", keep=False)
-    # Divide by duration_period for the equivalent of CAP_NEW/historical_new_capacity
-    c.add(k.sales, "div", k.sales["total"], "duration_period:y")
-
-    # Rename dimensions to match those expected in prepare_computer(), above
-    c.add(k.result, "rename_dims", k.sales, name_dict={"n": "nl", "y": "yv"})
-
-    return k.result
 
 
 def usage_data(
