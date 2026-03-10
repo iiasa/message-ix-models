@@ -313,7 +313,10 @@ class LoadFactorLDV(MultiFile):
             ("^M ", ""),  # No distinction for materials scenarios
             ("^DIGSY-WORST-C", str(self.options.config.ssp)),  # Use the respective SSP
             ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED
-            (r"^(SSP_\d+)\.(\d)", r"\1_\2"),  # "SSP_2024.1" → "SSP_2024_1"
+            (  # "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1"
+                r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)",
+                r"SSP_\1_\2",
+            ),
             (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),  # Remove trailing suffix (" foo")
         ):
             label = re.sub(pattern, repl, label)
