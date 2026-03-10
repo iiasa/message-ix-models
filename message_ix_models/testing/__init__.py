@@ -78,6 +78,11 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
     # 11: pytest.mark.timeout(
     #     600, method="thread" if platform.system() == "Windows" else "thread"
     # ),
+    12: pytest.mark.xfail(
+        version("message_ix") < "3.12",
+        reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
+        ">=3.12",
+    ),
     "#375": pytest.mark.flaky(
         reruns=3,
         rerun_delay=2,
