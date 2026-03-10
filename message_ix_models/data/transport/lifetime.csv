@@ -1,0 +1,7 @@
+# Technical lifetime (maximum age) of vehicles
+#
+# Units: year
+#
+scenario, technology, node_loc, year_vtg, value
+*,        *,          *,        1960,     15
+*,        *,          *,        2110,     15

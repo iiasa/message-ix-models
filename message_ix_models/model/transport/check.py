@@ -13,6 +13,7 @@ from message_ix_models.model.transport import (
     other,
     passenger,
     policy,
+    vehicle,
 )
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.testing.check import (
@@ -20,6 +21,7 @@ from message_ix_models.testing.check import (
     ContainsDataForParameters,
     HasCoords,
     HasUnits,
+    InRange,
     NoDuplicates,
     NoneMissing,
     NonNegative,
@@ -190,7 +192,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "pdt factor:n-y-t": (HasUnits(""),),
     # "fv factor:n-y": (HasUnits(""),),  # Fails: this key no longer exists
     # "fv:n:advance": (HasUnits(""),),  # Fails: only fuzzed data in message-ix-models
-    key.fv_cny: (HasUnits("Gt km"),),
+    key.fv_cny: (HasUnits("Gt km / a"),),
     #
     # Exogenous demand calculation succeeds
     "transport demand::ixmp": (
@@ -209,8 +211,6 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # .disutility.prepare_computer()
     "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
     disutility.TARGET: (ContainsDataForParameters({"input"}),),
-    #
-    "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     # The following partly replicates .test_ldv.test_get_ldv_data()
     # NB Cannot use NoDuplicates here yet due to:
     # - inv_cost: 50076 duplicated keys
@@ -219,17 +219,13 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     ldv.TARGET: (
         ContainsDataForParameters(
             {
-                "bound_new_capacity_lo",
-                "bound_new_capacity_up",
                 "capacity_factor",
                 "emission_factor",
                 "fix_cost",
-                "historical_new_capacity",
                 "input",
                 "inv_cost",
                 "output",
                 "relation_activity",
-                "technical_lifetime",
                 "var_cost",
             }
         ),
@@ -262,6 +258,23 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         # No structure in base scenarios to accommodate these values → discard
         HasCoords({"type_emission": ["CO2_shipping_IMO"]}, inverse=True),
     ),
+    vehicle.TARGET: (
+        ContainsDataForParameters(
+            {
+                "bound_new_capacity_lo",
+                "bound_new_capacity_up",
+                "historical_new_capacity",
+                "capacity_factor",
+                "technical_lifetime",
+            }
+        ),
+    ),
+    "capacity_factor::P ex LDV+ixmp": (HasCoords({"technology": ["ICE_H_bus"]}),),
+    "capacity_factor::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
+    "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
+    "technical_lifetime::vehicle+ixmp": (
+        HasCoords({"technology": ["ICE_H_bus", "f rail electr"]}),
+    ),
 }
 
 CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
@@ -272,11 +285,17 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
             ),
         )
     },
-    'context.transport.modules == "FOO"': {
+    '"material" in context.transport.modules': {
         material.TARGET: (
             ContainsDataForParameters({"demand", "input_cap_new", "output_cap_ret"}),
             NoDuplicates(),
         ),
+        # Share of non-transport demand in the total must be in the range (0.2, 1.0)
+        "demand:c-h-l-n-y:MT+share": (InRange(min=0.2, max=1.0),),
+        # This key/quantity is the computed total demand for materials for transport
+        # vehicles. The adjusted `demand` values that actually enter the model cannot
+        # be computed without dummy or real data in the base scenario used for testing.
+        "demand:c-h-l-n-y:MT+1": (HasCoords({"commodity": ["aluminum", "steel"]}),),
     },
 }
 

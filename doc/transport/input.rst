@@ -113,7 +113,7 @@ The :program:`git` history of files, or the GitHub "blame" view can also be used
 Quick links to each of the data flows:
 :data:`~.data.act_non_ldv`
 :data:`~.data.activity_freight`
-:data:`~.data.activity_ldv`
+:class:`~.data.ActivityVehicle`
 :data:`~.data.age_ldv`
 :data:`~.data.cap_new_ldv`
 :data:`~.data.class_ldv`
@@ -136,9 +136,10 @@ Quick links to each of the data flows:
 :data:`~.data.input_cap_new`
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
-:data:`~.data.lifetime_ldv`
-:data:`~.data.load_factor_ldv`
-:data:`~.data.load_factor_nonldv`
+:class:`~.data.Lifetime`
+:data:`~.data.load_factor_f`
+:data:`~.data.load_factor_p`
+:class:`~.data.LoadFactorLDV`
 :data:`~.data.mer_to_ppp`
 :data:`~.data.mode_share_freight`
 :data:`~.data.pdt_cap_proj`
@@ -153,7 +154,7 @@ Quick links to each of the data flows:
 
 .. autodata:: message_ix_models.model.transport.data.act_non_ldv
 .. autodata:: message_ix_models.model.transport.data.activity_freight
-.. autodata:: message_ix_models.model.transport.data.activity_ldv
+.. autoclass:: message_ix_models.model.transport.data.ActivityVehicle
 
    node = R12_AFR [1]_
      Obtained from literature, based on estimates from South Africa. The reported value for South Africa is lower (18000 km/year, `source <https://blog.sbtjapan.com/car-info/what-mileage-is-good-for-a-used-car#:~:text=Average%20Mileage%20in%20South%20Africa,is%20just%20a%20general%20guideline>`__) than the one for Kenya (22000 km/year, `source <https://www.changing-transport.org/wp-content/uploads/2019_Updated-transport-data-in-Kenya.pdf>`__).
@@ -232,8 +233,10 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.input_cap_new
 .. autodata:: message_ix_models.model.transport.data.input_ref_ldv
 .. autodata:: message_ix_models.model.transport.data.input_share
-.. autodata:: message_ix_models.model.transport.data.lifetime_ldv
-.. autodata:: message_ix_models.model.transport.data.load_factor_ldv
+.. autoclass:: message_ix_models.model.transport.data.Lifetime
+.. autodata:: message_ix_models.model.transport.data.load_factor_f
+.. autodata:: message_ix_models.model.transport.data.load_factor_p
+.. autoclass:: message_ix_models.model.transport.data.LoadFactorLDV
 
    The code that handles this file interpolates on the |y| dimension.
 
@@ -243,8 +246,7 @@ Quick links to each of the data flows:
 
    .. todo:: Transcribe the method into this document.
 
-.. autodata:: message_ix_models.model.transport.data.load_factor_nonldv
-.. autodata:: message_ix_models.model.transport.data.mer_to_ppp
+   .. autodata:: message_ix_models.model.transport.data.mer_to_ppp
 .. autodata:: message_ix_models.model.transport.data.mode_share_freight
 
 .. _transport-pdt-cap-proj:

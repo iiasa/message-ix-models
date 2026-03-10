@@ -6,6 +6,10 @@ env:
   target-ref: dev
   target-workflow: transport
 
+  # Ref to clone in the workflow.
+  # Default: use github.ref, e.g. 'main' for the schedule trigger.
+  ref: "main"
+
   # Starting point of the workflow.
   #
   # Use this value to build from a certain scenario:
@@ -22,44 +26,18 @@ env:
   # 'mix-models transport run'. Each label triggers 1 job in the target-repo/
   # target-workflow.
   #
-  # - Delete lines to disable some runs.
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP1",
-      "SSP1 exo price",
-      "SSP1 tax",
       "SSP2",
-      "SSP2 exo price",
-      "SSP2 tax",
-      "SSP3",
-      "SSP3 exo price",
-      "SSP3 tax",
-      "SSP4",
-      "SSP4 exo price",
-      "SSP4 tax",
-      "SSP5",
-      "SSP5 exo price",
-      "SSP5 tax",
-      "DIGSY-BEST-C",
-      "DIGSY-BEST-S",
-      "DIGSY-WORST-C",
-      "DIGSY-WORST-S",
-      "EDITS-CA",
-      "EDITS-HA",
-      "LED-SSP1",
-      "LED-SSP2"
+      "SSP2 exo price c59e",
+      "SSP2 tax"
     ]
-
-  # Currently disabled:
-  # [
-  #
-  # ]
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # push:
   #   branches: [ main ]
   schedule:
@@ -79,7 +57,7 @@ jobs:
     - name: Assemble JSON payload
       run: |
         echo '{
-          "ref": "${{ github.ref }}",
+          "ref": "${{ env.ref || github.ref }}",
           "base": "${{ env.base }}",
           "from-step": "${{ env.from-step }}",
           "labels": ${{ env.labels }}

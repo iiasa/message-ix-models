@@ -7,10 +7,9 @@ from genno import Key
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 from message_ix_models.util.genno import Keys
 
-from .data import LoadFactorLDV, iter_files
+from .data import ActivityVehicle, Lifetime, LoadFactorLDV, iter_files
 
 __all__ = [
-    "activity_ldv_full",
     "cg",
     "cost",
     "exo",
@@ -135,6 +134,14 @@ t_modes = "t::transport modes"
 #: Model periods.
 y = "y::model"
 
+y_ = Keys(
+    annual_agg="y::annual agg",
+    historical="y::historical",
+    to_y0="y::to y0",
+)
+
+yv = Keys(historical_idx="indexers:yv:historical")
+
 #: Keys referring to loaded input data flows (exogenous data loaded from files).
 #: Attributes correspond to the members of :mod:`.transport.data`; see
 #: :doc:`/transport/input` for a complete list.
@@ -144,9 +151,11 @@ y = "y::model"
 #:    >>> from message_ix_models.model.transport.key import exo
 #:    >>> exo.act_non_ldv
 #:    <activity:n-t-y:non-ldv+exo>
-exo = Keys(load_factor_ldv=LoadFactorLDV.key)
+exo = Keys(
+    activity_vehicle=ActivityVehicle.key,
+    lifetime=Lifetime.key,
+    load_factor_ldv=LoadFactorLDV.key,
+)
 
 for name, df in iter_files():
     setattr(exo, name, df.key)
-
-activity_ldv_full = exo.activity_ldv / "scenario" + "full"
