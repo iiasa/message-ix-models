@@ -385,14 +385,12 @@ class LoadFactorLDV(MultiFile):
 
     This source locates data in files named, for instance,
     :file:`message_ix_models/data/transport/{nodes}/load-factor-ldv/{scenario}.csv`.
-
-    Units are implicitly passengers per vehicle.
     """
 
     key = Key("load factor ldv:n-y:exo")
 
     dirname = "load-factor-ldv"
-    units = "dimensionless"
+    units = "passenger / vehicle"
 
     @property
     def filename(self) -> str:

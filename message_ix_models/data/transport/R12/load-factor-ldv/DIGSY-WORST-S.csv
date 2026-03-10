@@ -2,8 +2,7 @@
 #
 # Source: Constructed by @r-aneeque
 #
-# Units: dimensionless
-# (Implicitly passengers per vehicle.)
+# Units: passenger / vehicle
 #
 node,     year, value
 R12_AFR,  2020, 2.1

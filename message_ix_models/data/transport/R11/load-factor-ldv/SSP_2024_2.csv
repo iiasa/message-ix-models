@@ -4,6 +4,8 @@
 # Original source unknown. The values appear to assume similarity
 # between certain regions.
 #
+# Units: passenger / vehicle
+#
 scenario,    node,    year, value
 SSP(2024).2, R11_AFR, 2020, 1.807
 SSP(2024).2, R11_CPA, 2020, 1.892

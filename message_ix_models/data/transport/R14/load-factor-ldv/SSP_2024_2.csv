@@ -5,6 +5,8 @@
 # - Duplicated manually from the corresponding R11 file.
 # - Data for R11_FSU duplicated for R14_{CAS,RUS,SCS,UBM}.
 #
+# Units: passenger / vehicle
+#
 scenario,    node,     year, value
 SSP(2024).2, R14_AFR,  2020, 1.807
 SSP(2024).2, R14_CAS,  2020, 1.807
