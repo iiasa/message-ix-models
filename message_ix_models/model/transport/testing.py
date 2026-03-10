@@ -41,7 +41,7 @@ MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
             reason="Currently only possible with regions=R12 input data/config",
         ),
         3: pytest.mark.xfail(
-            raises=NotImplementedError,
+            raises=FileNotFoundError,
             reason="Missing ISR/mer-to-ppp.csv + not supported by MaybeAdaptR11Source",
         ),
         4: pytest.mark.xfail(reason="Currently unsupported"),
