@@ -191,7 +191,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "pdt factor:n-y-t": (HasUnits(""),),
     # "fv factor:n-y": (HasUnits(""),),  # Fails: this key no longer exists
     # "fv:n:advance": (HasUnits(""),),  # Fails: only fuzzed data in message-ix-models
-    key.fv_cny: (HasUnits("Gt km"),),
+    key.fv_cny: (HasUnits("Gt km / a"),),
     #
     # Exogenous demand calculation succeeds
     "transport demand::ixmp": (
