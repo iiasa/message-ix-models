@@ -17,6 +17,7 @@ import genno
 import pandas as pd
 from genno import Computer, Key
 from genno.core.key import single_key
+from genno.operator import load_file
 from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
 
@@ -82,8 +83,6 @@ class ActivityVehicle(ExoDataSource):
         self.path = region_path_fallback(self.options.nodes, self.filename)
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
@@ -140,8 +139,6 @@ class IEA_Future_of_Trucks(ExoDataSource):
         super().__init__()
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(self.path, dims=RENAME_DIMS)
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
@@ -186,6 +183,58 @@ class IEA_Future_of_Trucks(ExoDataSource):
             )
 
         return single_key(result)
+
+
+class Lifetime(ExoDataSource):
+    """Technical lifetime (maximum age) of vehicles.
+
+    Values are interpolated across the model horizon. In MESSAGE(V)-Transport, this
+    quantity had the additional dimension of driver_type, and values for t=LDV were 20
+    years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.
+    """
+
+    @dataclass
+    class Options(BaseOptions):
+        #: Transport configuration.
+        config: "Config | None" = None
+
+        #: ID of the node code list.
+        nodes: str = ""
+
+    options: Options
+
+    filename = "lifetime.csv"
+    key = Key("lifetime:nl-t-yv:exo")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+
+        # Interpolate on "y" dimension
+        c.add(k[0], "interpolate", base_key, "yv::coords", **EXTRAPOLATE)
+
+        # Broadcast to all scenarios and nodes
+        coords = ["scenario::all", "n::ex world"]
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "nl"))
+
+        # Select values for the current scenario; drop the 'scenario' dimension
+        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+
+        # Expand from "t" modes to all actual technologies
+        c.add(k[3], "call", "t::transport map", k[2])
+
+        # Convert to integer
+        # NB This is required because the MESSAGEix GAMS implementation cannot handle
+        #    non-integer values.
+        c.add(self.key, lambda qty: qty.astype(int), k[3])
+
+        return self.key
 
 
 class MaybeAdaptR11Source(ExoDataSource):
@@ -247,8 +296,6 @@ class MaybeAdaptR11Source(ExoDataSource):
                 raise NotImplementedError(msg)
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(self.path, dims=self.dims, name=self.options.measure)
 
     def __repr__(self) -> str:
@@ -319,8 +366,6 @@ class MultiFile(ExoDataSource):
             raise FileNotFoundError(msg)
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(
             self.path, dims=RENAME_DIMS, name=self.key.name, units=self.units
         )
@@ -872,15 +917,6 @@ input_share = _input_dataflow(
     units="dimensionless",
 )
 
-lifetime_ldv = _input_dataflow(
-    key="lifetime:scenario-nl-t-yv:ldv+exo",
-    path="lifetime-ldv",
-    name="Technical lifetime (maximum age) of LDVs",
-    description="""Values are interpolated across the model horizon. In MESSAGE(V)-
-Transport, this quantity had the additional dimension of driver_type, and values were 20
-years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""",
-    units="year",
-)
 
 load_factor_nonldv = _input_dataflow(
     key="load factor nonldv:t:exo",

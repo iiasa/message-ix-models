@@ -136,7 +136,7 @@ Quick links to each of the data flows:
 :data:`~.data.input_cap_new`
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
-:data:`~.data.lifetime_ldv`
+:class:`~.data.Lifetime`
 :data:`~.data.load_factor_ldv`
 :data:`~.data.load_factor_nonldv`
 :data:`~.data.mer_to_ppp`
@@ -232,7 +232,7 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.input_cap_new
 .. autodata:: message_ix_models.model.transport.data.input_ref_ldv
 .. autodata:: message_ix_models.model.transport.data.input_share
-.. autodata:: message_ix_models.model.transport.data.lifetime_ldv
+.. autoclass:: message_ix_models.model.transport.data.Lifetime
 .. autodata:: message_ix_models.model.transport.data.load_factor_ldv
 
    The code that handles this file interpolates on the |y| dimension.

@@ -135,7 +135,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
-    # Ensure that the MERtoPPP data provider is available
     from . import data
 
     # Added keys
@@ -173,6 +172,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Miscellaneous data
     kw = dict(nodes=context.model.regions, config=config)
     data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.Lifetime.add_tasks(c, **kw, **c_s)
     data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
 
     # Add data for MERtoPPP
