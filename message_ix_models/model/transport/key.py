@@ -134,6 +134,14 @@ t_modes = "t::transport modes"
 #: Model periods.
 y = "y::model"
 
+y_ = Keys(
+    annual_agg="y::annual agg",
+    historical="y::historical",
+    to_y0="y::to y0",
+)
+
+yv = Keys(historical_idx="indexers:yv:historical")
+
 #: Keys referring to loaded input data flows (exogenous data loaded from files).
 #: Attributes correspond to the members of :mod:`.transport.data`; see
 #: :doc:`/transport/input` for a complete list.
