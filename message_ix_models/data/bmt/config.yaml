@@ -12,6 +12,8 @@ buildings:
   # Whether to include materials (steel, cement, aluminum) in the buildings spec
   with_materials: true
 
+macro: "macro_calibration_input_SSP2.xlsx"
+
 # transport: {}
 # materials: {}
 # others: {}
