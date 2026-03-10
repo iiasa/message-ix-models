@@ -10,6 +10,8 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import build_B as build_B
+from message_ix_models.model.material.data_util import add_macro_materials
+from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T
@@ -119,6 +121,51 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return scenario
 
 
+def prep_for_macro(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Prepare scenario for macro calibration (mirrors ssp scenario runner).
+
+    Removes initializeyear_macro and baseyear_macro from cat_year, then solves
+    with MESSAGE only. Run this after cloning with shift_first_model_year=2030.
+    """
+    log.info("Preparing scenario for macro calibration.")
+    scenario.set_as_default()
+
+    df = scenario.set(
+        "cat_year", {"type_year": ["initializeyear_macro", "baseyear_macro"]}
+    )
+    if df is not None and len(df) > 0:
+        with scenario.transact("Remove init and baseyear for macro"):
+            scenario.remove_set("cat_year", df)
+
+    solve(context, scenario, model="MESSAGE")
+    return scenario
+
+
+def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Update macro calibration file, add MACRO to the scenario,
+    and solve with MACRO.
+    """
+    bmt = getattr(context, "bmt", None)
+    macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
+    if macro_file is None:
+        ssp = getattr(context, "ssp", "SSP2")
+        macro_file = f"macro_calibration_input_{ssp}.xlsx"
+    log.info("Calibrating macro: updating %s and adding MACRO", macro_file)
+
+    # basically even if the macro file contains more commodities than the scenario,
+    # the update_macro_calib_file and add_macro_materials will only use the commodities
+    # that are in the scenario
+    update_macro_calib_file(scenario, macro_file)
+    scenario = add_macro_materials(scenario, macro_file)
+    scenario.set_as_default()
+    log.info("MACRO calibrated, now solving with MACRO")
+    solve(context, scenario, model="MESSAGE-MACRO")
+
+    return scenario
+
+
 # def build_T(
 #     context: Context, scenario: message_ix.Scenario, **kwargs
 # ) -> message_ix.Scenario:
@@ -155,7 +202,10 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 
 def generate(context: Context) -> Workflow:
     """Create the BMT-run workflow."""
-    from message_ix_models.model.bmt.config import load_buildings_config
+    from message_ix_models.model.bmt.config import (
+        load_bmt_config,
+        load_buildings_config,
+    )
     from message_ix_models.model.transport import workflow as transport
     from message_ix_models.model.transport.config import CL_SCENARIO
 
@@ -163,8 +213,9 @@ def generate(context: Context) -> Workflow:
     context.ssp = "SSP2"
     context.model.regions = "R12"
 
-    # Load BMT buildings config (paths, with_materials) for build_B
-    context.buildings = load_buildings_config()
+    # Load BMT config (buildings, macro file for MACRO calibration, etc.) into context
+    context.bmt = load_bmt_config()
+    context.buildings = load_buildings_config(bmt_data=context.bmt)
 
     # Define model name
     model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-BMT-R12"
@@ -253,14 +304,27 @@ def generate(context: Context) -> Workflow:
         "BMTX baseline solved",
         "BMTX built",
         solve,
-        target=f"{model_name}/baseline_BMTX",
-        clone=False,  # clone true here and shift fmy to 2030
     )
 
     wf.add_step(
         "BMTX baseline reported",
         "BMTX baseline solved",
         report,
+    )
+
+    # Macro calibration: prep (clone, remove macro years, solve MESSAGE) then add MACRO
+    wf.add_step(
+        "BMTX prep macro",
+        "BMTX baseline solved",
+        prep_for_macro,
+        target=f"{model_name}/baseline_BMTX_prep_macro",
+        clone=dict(shift_first_model_year=2030),
+    )
+    wf.add_step(
+        "BMTX baseline MACRO",
+        "BMTX prep macro",
+        add_macro,
+        target=f"{model_name}/baseline_DEFAULT",
     )
 
     return wf
