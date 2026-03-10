@@ -7,6 +7,8 @@ import message_ix
 from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
+from message_ix_models.model.material.data_util import add_macro_materials
+from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T
@@ -116,6 +118,49 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return scenario
 
 
+def prep_for_macro(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Prepare scenario for macro calibration (mirrors ssp scenario runner).
+
+    Removes initializeyear_macro and baseyear_macro from cat_year, then solves
+    with MESSAGE only. Run this after cloning with shift_first_model_year=2030.
+    """
+    log.info("Preparing scenario for macro calibration.")
+    scenario.set_as_default()
+
+    df = scenario.set(
+        "cat_year", {"type_year": ["initializeyear_macro", "baseyear_macro"]}
+    )
+    if df is not None and len(df) > 0:
+        with scenario.transact("Remove init and baseyear for macro"):
+            scenario.remove_set("cat_year", df)
+
+    solve(context, scenario, model="MESSAGE")
+    return scenario
+
+
+def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Update MACRO calibration file; add MACRO to the scenario; solve with MACRO."""
+    bmt = getattr(context, "bmt", None)
+    macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
+    if macro_file is None:
+        ssp = getattr(context, "ssp", "SSP2")
+        macro_file = f"macro_calibration_input_{ssp}.xlsx"
+    log.info("Calibrating macro: updating %s and adding MACRO", macro_file)
+
+    # basically even if the macro file contains more commodities than the scenario,
+    # the update_macro_calib_file and add_macro_materials will only use the commodities
+    # that are in the scenario
+    update_macro_calib_file(scenario, macro_file)
+    scenario = add_macro_materials(scenario, macro_file)
+    scenario.set_as_default()
+    log.info("MACRO calibrated, now solving with MACRO")
+    solve(context, scenario, model="MESSAGE-MACRO")
+
+    return scenario
+
+
 def generate(context: Context) -> Workflow:
     """Create the BMT workflow.
 
@@ -202,11 +247,17 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step("BMT built", name, build_B, target=f"{url}BMT", clone=c)
     name = wf.add_step("BMT solved", name, solve)
     name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=False)
-    name = wf.add_step(
-        "BMTX baseline solved", name, solve, target=f"{url}BMTX", clone=False
-    )
-    # NB At this point, clone and shift firstmodelyear to 2030
+    name = wf.add_step("BMTX baseline solved", name, solve)
+    name = wf.add_step("BMTX baseline reported", name, report)
 
-    wf.add_step("BMTX baseline reported", name, report)
+    # Macro calibration: prep (clone, remove macro years, solve MESSAGE) then add MACRO
+    name = wf.add_step(
+        "BMTX prep macro",
+        "BMTX baseline solved",
+        prep_for_macro,
+        target=f"{url}BMTX_prep_macro",
+        clone=dict(shift_first_model_year=2030),
+    )
+    wf.add_step("BMTX baseline MACRO", name, add_macro, target=f"{url}DEFAULT")
 
     return wf
