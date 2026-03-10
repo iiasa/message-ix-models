@@ -13,7 +13,7 @@ def adjust_reexports(base_scenario_name:str,
     # Import scenario and models
     mp = ixmp.Platform()
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
-    out_scenario_name = base_scenario_name + '_adjLev'
+    out_scenario_name = base_scenario_name + '_noRE'
     out_scenario = base_scenario.clone(model = 'weu_security', scenario = out_scenario_name, keep_solution = False)
 
     # Output from domestic production should have updated level
@@ -40,10 +40,6 @@ def adjust_reexports(base_scenario_name:str,
     fb_cap = base_scenario.par('capacity_factor', filters = {'technology': 'coal_bal'})
     fb_cap['technology'] = trade_commodity + '_bal'
 
-    # Add historical activity (TODO: Update values from coal_bal)
-    fb_hact = base_scenario.par('historical_activity', filters = {'technology': 'coal_bal'})
-    fb_hact['technology'] = trade_commodity + '_bal'
-    
     # Update fuel export input to use base_level_1
     export_input = base_scenario.par('input', filters = {'commodity': trade_commodity,
                                                         'level': base_level})
@@ -64,13 +60,13 @@ def adjust_reexports(base_scenario_name:str,
         out_scenario.add_par('input', fb_input)
         out_scenario.add_par('output', fb_output)
         out_scenario.add_par('capacity_factor', fb_cap)
-        out_scenario.add_par('historical_activity', fb_hact)
         
     with out_scenario.transact("Update export input"):
         out_scenario.remove_par('input', export_input_base)
         out_scenario.add_par('input', export_input)
 
     out_scenario.solve()
+    
     mp.close_db()
 
 def add_reexports(base_scenario_name:str,

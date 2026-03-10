@@ -121,7 +121,7 @@ mp = ixmp.Platform()
 
 fuel_supply_out = pd.DataFrame()
 for mod, scen in [('weu_security', 'SSP2'),
-                  ('weu_security', 'SSP2_adjLev'),
+                  ('weu_security', 'SSP2_noRE'),
                   #('weu_security', 'FSU2040'),
                   #('weu_security', 'FSU2100'),
                   #('weu_security', 'NAM500'),
@@ -138,6 +138,10 @@ for mod, scen in [('weu_security', 'SSP2'),
     print(f"--------------------------------")
     scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
     rep = Reporter.from_scenario(scenario)
+
+    check = scenario.var("ACT")
+    check = check['year_act'].unique()
+    print(check)
     
     fuel_supply = pd.DataFrame()
     # Collect all gas supply reporting
