@@ -12,17 +12,19 @@ from typing import Any
 from message_ix_models.util import package_data_path
 
 
-def _load_yaml(path: Path) -> dict[str, Any]:
-    """Load and return the full BMT config from YAML. No defaults applied here."""
-    import yaml
-
-    with open(path) as f:
-        return yaml.safe_load(f) or {}
-
-
 def get_bmt_config_path(path: Path | None = None) -> Path:
     """Return path to :file:`data/bmt/config.yaml`."""
     return path or package_data_path("bmt", "config.yaml")
+
+
+def load_bmt_config(path: Path | None = None) -> dict[str, Any]:
+    """Load the full BMT config from :file:`data/bmt/config.yaml` for
+    :attr:`context.bmt` (e.g. ``macro`` file name, other sector settings).
+    """
+    import yaml
+
+    with open(get_bmt_config_path(path)) as f:
+        return yaml.safe_load(f) or {}
 
 
 # Defaults used only when a key is missing in the YAML (single source: this constant).
@@ -67,13 +69,15 @@ class BuildingsConfig:
         )
 
 
-def load_buildings_config(path: Path | None = None) -> BuildingsConfig:
+def load_buildings_config(
+    path: Path | None = None,
+    bmt_data: dict[str, Any] | None = None,
+) -> BuildingsConfig:
     """Load the ``buildings`` section from :file:`data/bmt/config.yaml` for
     :attr:`context.buildings`.
 
     Missing keys in the ``buildings`` section are filled from
     :data:`BUILDINGS_DEFAULTS`. If the section is missing, all defaults are used.
     """
-    data = _load_yaml(get_bmt_config_path(path))
-    buildings = data.get("buildings") or {}
-    return BuildingsConfig.from_dict(buildings)
+    data = bmt_data if bmt_data is not None else load_bmt_config(path)
+    return BuildingsConfig.from_dict(data.get("buildings") or {})
