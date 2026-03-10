@@ -91,18 +91,18 @@ def demand(c: "Computer") -> None:
 
     # Select certain modes. NB Do not drop so 't' labels can be used for 'c', next.
     freight_techs = ["F RAIL", "F ROAD"]
-    c.add(fv[5], "select", fv[4], indexers=dict(t=freight_techs))
+    c.add(fv, "select", fv[4], indexers=dict(t=freight_techs))
 
     # Relabel
-    c.add(fv_cny, "relabel2", fv[5], new_dims={"c": "transport {t}"})
+    c.add(fv_cny, "relabel2", fv, new_dims={"c": "transport {t}"})
 
     # Convert to ixmp format
     collect("demand", "as_message_df", fv_cny, **_DEMAND_KW)
 
     # Compute indices, e.g. for use in .other.prepare_computer()
     for t in freight_techs:
-        c.add(fv[5][t], "select", fv[5], indexers=dict(t=t))
-        c.add(fv[f"{t} index"], "index_to", fv[5][t], literal("y"), "y0")
+        c.add(fv[t], "select", fv, indexers=dict(t=t))
+        c.add(fv[f"{t} index"], "index_to", fv[t], literal("y"), "y0")
 
 
 def prepare_computer(c: "Computer") -> None:
