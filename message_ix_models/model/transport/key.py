@@ -7,7 +7,7 @@ from genno import Key
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 from message_ix_models.util.genno import Keys
 
-from .data import ActivityVehicle, LoadFactorLDV, iter_files
+from .data import ActivityVehicle, Lifetime, LoadFactorLDV, iter_files
 
 __all__ = [
     "cg",
@@ -145,6 +145,7 @@ y = "y::model"
 #:    <activity:n-t-y:non-ldv+exo>
 exo = Keys(
     activity_vehicle=ActivityVehicle.key,
+    lifetime=Lifetime.key,
     load_factor_ldv=LoadFactorLDV.key,
 )
 
