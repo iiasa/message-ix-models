@@ -81,7 +81,7 @@ def scenario_code() -> Iterator["Code"]:
             False,
             "IKARUS",
             False,
-            marks=[mark.slow, make_mark[2](genno.ComputationError)],
+            marks=[mark.slow, make_mark[2](RuntimeError)],
         ),
         # Pending iiasa/message_data#190
         param("ISR", "A", True, None, False, marks=MARK[3]),
