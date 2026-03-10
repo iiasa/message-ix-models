@@ -207,7 +207,7 @@ def gen_data_steel(scenario: message_ix.Scenario, dry_run: bool = False):
         gen_2020_calibration_relation(s_info, "eaf"),
         gen_2020_calibration_relation(s_info, "bof"),
         gen_2020_calibration_relation(s_info, "bf"),
-        gen_bof_pig_input(s_info),
+        gen_bof_feedstock_input(s_info),
         gen_finishing_steel_io(s_info),
         gen_manuf_steel_io(new_scrap_ratio, s_info),
         gen_iron_ore_cost(s_info, ssp),
@@ -911,7 +911,7 @@ def gen_grow_cap_up(s_info: ScenarioInfo, ssp):
     return {"growth_new_capacity_up": df}
 
 
-def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
+def gen_bof_feedstock_input(s_info: ScenarioInfo) -> "ParameterData":
     """Generate BOF feed input coefficients.
 
     Assume 20% scrap share for regions (except CHN and EEU until 2030).
@@ -927,8 +927,7 @@ def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
     other_regions = [
         i for i in nodes_ex_world(s_info.N) if i not in special_regions + ["R12_CHN"]
     ]
-    years = [i for i in range(1970, 2060, 5)] + [i for i in range(2060, 2115, 10)]
-
+    years = s_info.yv_ya["year_vtg"].unique().tolist()
     common = dict(
         mode=["M1", "M2"],
         technology="bof_steel",
@@ -943,10 +942,10 @@ def gen_bof_pig_input(s_info: ScenarioInfo) -> "ParameterData":
     # Accumulate data frames with distinct node_loc, year_act, and values
     dfs = []
     for node_loc, year_act, x in (
-        (other_regions, years, 0.8),
+        (other_regions, s_info.Y, 0.8),
         (["R12_CHN"], [2020, 2025], 0.85),
         (special_regions, [2020, 2025], 0.77),
-        (special_regions + ["R12_CHN"], [i for i in years if i > 2025], 0.8),
+        (special_regions + ["R12_CHN"], [i for i in s_info.Y if i > 2025], 0.8),
     ):
         dfs.append(
             pd.concat(
