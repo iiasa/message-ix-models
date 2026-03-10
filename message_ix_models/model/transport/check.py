@@ -13,6 +13,7 @@ from message_ix_models.model.transport import (
     other,
     passenger,
     policy,
+    vehicle,
 )
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.testing.check import (
@@ -210,8 +211,6 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # .disutility.prepare_computer()
     "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
     disutility.TARGET: (ContainsDataForParameters({"input"}),),
-    #
-    "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     # The following partly replicates .test_ldv.test_get_ldv_data()
     # NB Cannot use NoDuplicates here yet due to:
     # - inv_cost: 50076 duplicated keys
@@ -220,17 +219,13 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     ldv.TARGET: (
         ContainsDataForParameters(
             {
-                "bound_new_capacity_lo",
-                "bound_new_capacity_up",
                 "capacity_factor",
                 "emission_factor",
                 "fix_cost",
-                "historical_new_capacity",
                 "input",
                 "inv_cost",
                 "output",
                 "relation_activity",
-                "technical_lifetime",
                 "var_cost",
             }
         ),
@@ -262,6 +257,23 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         HasCoords({"type_emission": ["TCE"]}),
         # No structure in base scenarios to accommodate these values → discard
         HasCoords({"type_emission": ["CO2_shipping_IMO"]}, inverse=True),
+    ),
+    vehicle.TARGET: (
+        ContainsDataForParameters(
+            {
+                "bound_new_capacity_lo",
+                "bound_new_capacity_up",
+                "historical_new_capacity",
+                "capacity_factor",
+                "technical_lifetime",
+            }
+        ),
+    ),
+    "capacity_factor::P ex LDV+ixmp": (HasCoords({"technology": ["ICE_H_bus"]}),),
+    "capacity_factor::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
+    "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
+    "technical_lifetime::vehicle+ixmp": (
+        HasCoords({"technology": ["ICE_H_bus", "f rail electr"]}),
     ),
 }
 
