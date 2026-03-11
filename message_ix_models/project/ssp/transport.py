@@ -639,10 +639,7 @@ def method_BC_common(
     c.add(K.fe_out[2], "rename_dims", K.fe_out[1], name_dict={"c_new": "c"})
 
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
-    c.add(K.fe_out[3], "relabel", K.fe_out[2], labels=labels)
-
-    # Drop data for y0
-    c.add(K.fe_out, "select", K.fe_out[3], indexers=dict(y=[2020]), inverse=True)
+    c.add(K.fe_out, "relabel", K.fe_out[2], labels=labels)
 
 
 def method_C(c: "Computer") -> None:  # pragma: no cover
