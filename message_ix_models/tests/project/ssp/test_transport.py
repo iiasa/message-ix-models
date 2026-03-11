@@ -89,10 +89,21 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
             .sort_values(dims)
         )
 
-    # df_out.to_csv("debug-out.csv")  # DEBUG Dump to file
-
     df_in = _to_long(df_in)
     df_out = _to_long(df_out)
+
+    # Diff data:
+    # - Outer merge.
+    # - Fill NaNs resulting from insert_nans()
+    # - Compute diff and select rows where diff is larger than a certain value
+    df = (
+        df_in.merge(df_out, how="outer", on=dims, suffixes=("_in", "_out"))
+        .fillna(0)
+        .query("abs(value_out - value_in) > 1e-16")
+    )
+
+    # df_out.to_csv("debug-out.csv", index=False)  # DEBUG Dump to file
+    # df.to_csv("debug-diff.csv", index=False)  # DEBUG Dump to file
 
     # Input data already contains the variable names to be modified
     assert expected_variables(IN_, method) <= set(df_in["Variable"].unique())
@@ -121,16 +132,6 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
 
     # Output has the same set of region codes as input
     assert region == set(df_out["Region"].unique())
-
-    # Diff data:
-    # - Outer merge.
-    # - Fill NaNs resulting from insert_nans()
-    # - Compute diff and select rows where diff is larger than a certain value
-    df = (
-        df_in.merge(df_out, how="outer", on=dims, suffixes=("_in", "_out"))
-        .fillna(0)
-        .query("abs(value_out - value_in) > 1e-16")
-    )
 
     # All regions and "World" have modified values
     N_reg = {METHOD.A: 13, METHOD.B: 9, METHOD.C: 13}[method]
@@ -363,6 +364,10 @@ def test_track_GAINS() -> None:
         (
             "Emissions|CH4|Energy|Demand|Transportation|Foo",
             {"e": "CH4", "s": "Energy|Demand", "t": "Transportation|Foo"},
+        ),
+        (
+            "Emissions|CO2|Energy|Demand|Transportation",
+            {"e": "CO2", "s": "Energy|Demand", "t": "Transportation"},
         ),
     ),
 )
