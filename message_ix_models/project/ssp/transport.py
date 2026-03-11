@@ -169,7 +169,7 @@ def broadcast_st_emi(version: int, include_international: bool) -> "AnyQuantity"
             "Transportation",
             "Transportation|Road Rail and Domestic Shipping",
         ]
-        idx = slice(-2 if version == 3 else None)
+        idx = slice(-1 if version == 3 else None)
 
     return genno.Quantity(value[idx], coords={"t": t[idx]}).expand_dims(
         {"s": ["Energy|Demand"]}
@@ -656,10 +656,16 @@ def method_BC_common(
     # - Drop/partial sum over dimension "c".
     c.add(K.emi[2], "mul", k.emi0[1] / "c", K.units)
     # Re-add the (s, t) dimensions with +ve and -ve signs for certain labels
+    # - This also includes a -ve sign for the label "Transportation".
     c.add(K.emi[3], "mul", K.emi[2], K.bcast)
     to_concat = [K.emi[3]]
 
-    if k_emi_share:  # pragma: no cover  —only for METHOD.C
+    # Adjust total beyond transport for all modes
+    c.add(K.emi[4], "select", K.emi[3], indexers={"t": ["Transportation"]}, sums=True)
+    c.add(K.emi[5], "mul", K.emi[4] / ("s", "t"), K.bcast_other, -1.0)
+    to_concat.append(K.emi[5])
+
+    if False:  # pragma:  no cover —previously used for METHOD.C if k_emi_share given
         # Adjust total transportation emissions: multiply k_fe_share by input data
         # TODO Also try k_emi_share here
         c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
@@ -671,8 +677,6 @@ def method_BC_common(
         c.add(K.emi[6], "select", K.emi[5], indexers={"n": ["World"]})
         c.add(K.emi[7], "mul", K.emi[6], K.bcast_other)
         to_concat.append(K.emi[7])
-    else:
-        pass
 
     # Concatenate emissions values to be modified
     c.add(K.emi[8], "concat", *to_concat)
