@@ -6,7 +6,7 @@ from collections.abc import Hashable
 from enum import Enum, auto
 from functools import cache
 from itertools import product
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import genno
 import pandas as pd
@@ -39,6 +39,7 @@ EXPR_EMI = re.compile(
       (\|
         (?P<s>
           Energy(\|(Combustion|Demand))?
+          | Energy.and.Industrial.Processes
           | Fossil.Fuels.and.Industry
         )
         (\|
@@ -122,9 +123,7 @@ def aviation_emi_share(ref: "TQuantity") -> "TQuantity":
     )
 
 
-def broadcast_st_emi(
-    version: Literal[1, 2], include_international: bool
-) -> "AnyQuantity":
+def broadcast_st_emi(version: int, include_international: bool) -> "AnyQuantity":
     """Quantity to re-add the :math:`(s, t)` dimensions for emission data.
 
     Parameters
@@ -132,8 +131,8 @@ def broadcast_st_emi(
     version :
         Version of ‘variable’ names supported by the current module.
     include_international :
-        If :any:`True`, include "Transportation|Aviation|International" with magnitude
-        1.0. Otherwise, omit.
+        If :any:`True` and :py`version == 1`, include
+        "Transportation|Aviation|International" with magnitude 1.0. Otherwise, omit.
 
     Return
     ------
@@ -187,6 +186,7 @@ def broadcast_est_emi_other(q_ref: "TQuantity") -> "TQuantity":
     s = [
         "_T",
         "Energy",
+        "Energy and Industrial Processes",
         "Energy|Combustion",
         "Energy|Demand",
         "Fossil Fuels and Industry",
@@ -195,7 +195,8 @@ def broadcast_est_emi_other(q_ref: "TQuantity") -> "TQuantity":
     df = (
         pd.DataFrame([list(e_s) for e_s in product(e, s)], columns=dims)
         .assign(value=1.0)
-        .query("not (s == 'Energy|Combustion' and e not in @e_combustion)")
+        .query("not (s == @s[3] and e not in @e_combustion)")
+        .query("not (s == @s[2] and e != 'CO2')")
         .set_index(dims)["value"]
     )
     del e_combustion
