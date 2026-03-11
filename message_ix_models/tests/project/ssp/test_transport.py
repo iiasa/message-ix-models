@@ -39,11 +39,12 @@ METHOD_PARAM = (
 V1 = "SSP_dev_SSP2_v0.1_Blv0.18_baseline_prep_lu_bkp_solved_materials_2025_macro.csv"
 V2 = "SSP_LED_v2.3.1_baseline.csv"
 V3 = "SSP_SSP2_v6.2_SSP2_-_Low_Emissions.csv"
+V4 = "SSP_SSP5_v6.5_SSP5_-_Medium-Low_Emissions_a.csv"
 
 
 @pytest.fixture(scope="module")
 def input_csv_path() -> "pathlib.Path":
-    return package_data_path("test", "report", V3)
+    return package_data_path("test", "report", V4)
 
 
 @pytest.fixture(scope="module")
