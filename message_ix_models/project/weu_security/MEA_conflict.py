@@ -20,84 +20,44 @@ from message_ix_models.tools.bilateralize.load_and_solve import *
 
 import os
 
-def conflict_dictionary(snesitivity_scenario:str):
-    
-def friction_dictionary(sensitivity_scenario: str):
-
-    # Import scenario and models
+def add_conflict(use_scenario:message_ix.Scenario):
     config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
-    data_path = package_data_path("bilateralize")
 
-    sens_i = config['mea_conflict'][sensitivity_scenario]['exporters']
-    sens_j = config['mea_conflict'][sensitivity_scenario]['importers']
-    sens_techs_in = config['mea_conflict'][sensitivity_scenario]['technologies']
-    sens_techs = []
-    for j in sens_j:
-        jt = j.str.replace("R12_", "")
-        jt = jt.str.lower()
-        sens_techs_t = [s + f"_{jt}" for s in sens_tech_in]
-        sens_techs = sens_techs + sens_techs_t
+    conf_i = config['mea_conflict']['MEA']['exporters']
+    conf_j = config['mea_conflict']['MEA']['importers']
+    conf_techs_in = config['mea_conflict']['MEA']['technologies']
 
-    base_years = [2030, 2035]
-    
-    bound_out = pd.DataFrame()
-    for tec in sens_techs:
-        tec_list = sens_techs
-        
-        basedf = pd.DataFrame(product(sens_i, tec_list,
-                                  fric_years,
-                                  ["M1"],
-                                  ["year"]))
-        basedf.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time']
+    con_years = [2030, 2035]
 
-        bounddf = message_ix.make_df(
-            "bound_activity_up",
-            node_loc = basedf['node_loc'],
-            technology = basedf['technology'],
-            value = 0,
-            year_act = basedf['year_act'],
-            mode = basedf['mode'],
-            time = basedf['time'],
-            unit = '-')
+    base_var = use_scenario.par('var_cost', filters = {"technology": conf_techs_in,
+                                                        "node_loc": conf_i})
 
-        bound_out = pd.concat([bound_out, bounddf])
-        
-    return bound_out
+    use_var = base_var.copy()
+    use_var['value'] = use_var['value'] * 20 # Make it 20 times more expensive to ship from MEA to other regions
 
-def run_friction_scenario(base_scenario_name: str,
-                          sensitivity_scenario: str,
-                          solve_scenario = True):
+    with use_scenario.transact("Add MEA conflict on tanker shipping"):
+        use_scenario.remove_par('var_cost', base_var)
+        use_scenario.add_par('var_cost', use_var)
+
+def run_friction_scenario(base_scenario_name: str):
     
     # Import scenario and models
     config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
-
-    # Build dictionary
-    bound_out = friction_dictionary(sensitivity_scenario)
 
     mp = ixmp.Platform()
 
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
-    target_scenario = base_scenario.clone('weu_security',
-                                          sensitivity_scenario, 
-                                          keep_solution = False)
-    target_scenario.set_as_default()
+    use_scenario = base_scenario.clone('weu_security',
+                                        base_scenario_name + "_MEACON", 
+                                        keep_solution = False)
+    use_scenario.set_as_default()
 
-    with target_scenario.transact(f"Add friction sensitivity"):
-        target_scenario.add_par('bound_activity_up', bound_out)
+    add_conflict(use_scenario)
 
-    with target_scenario.transact("Remove constraints on shocked technologies"):
-        for par in ["growth_activity_lo", "growth_activity_up", "initial_activity_lo", "initial_activity_up"]:
-            basepar = target_scenario.par(par, filters = {"technology": bound_out['technology'],
-                                                          "node_loc": bound_out['node_loc']})
-            if len(basepar) != 0:
-                print(f"...{par}")
-                target_scenario.remove_par(par, basepar)
-                
-    if solve_scenario == True:
-        target_scenario.solve(quiet = False)
+    use_scenario.solve(quiet = False)
 
     mp.close_db()
 
 # Run scenarios
-run_friction_scenario('SSP2', 'MEACON', 2100)
+run_friction_scenario('SSP2')
 

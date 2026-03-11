@@ -152,8 +152,11 @@ mea_conflict:
       - R12_SAS
       - R12_WEU
     technologies:
-      - crudeoil_shipped_exp
-      - foil_shipped_exp
-      - loil_shipped_exp
-      - LNG_shipped_exp
+      - crudeoil_tanker_loil
+      - lh2_tanker_lh2
+      - lh2_tanker_loil
+      - LNG_tanker_LNG
+      - LNG_tanker_loil
+      - oil_tanker_foil
+      - oil_tanker_loil
            
