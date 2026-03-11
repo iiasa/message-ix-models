@@ -444,17 +444,24 @@ class StructureFactory(ABC, Generic[MaintainableT]):
         and up-to-date version of the artefact as of :attr:`version`. This updated
         version is stored using :func:`write`.
         """
-        existing = read(cls.urn)
+        try:
+            # Read the existing artefact from file
+            existing = read(cls.urn)
+        except FileNotFoundError:
+            # No existing file
+            existing = None
 
-        if existing.version != cls.version or force:
+        if existing is None or existing.version != cls.version or force:
             result = cls.create()
 
             # Touch up `existing` for a fair comparison
-            existing.maintainer = result.maintainer
+            if existing is not None:
+                existing.maintainer = result.maintainer
 
             # Compare `existing` and `result`
-            if not existing.compare(result, strict=True):
+            if existing is None or not existing.compare(result, strict=True):
                 # `result` somehow differs from `existing`:
+                # - No existing artefact.
                 # - `existing` is an older version; cls.version has been bumped.
                 # - Some other change to cls.generate()`
 
@@ -494,6 +501,18 @@ class URNLookupMixin(Generic[T]):
             if name == self.name:
                 break
         return result
+
+    @classmethod
+    def get_urn(cls, member: "URNLookupMixin") -> str:
+        for k, v in cls.__dict__["_urn_name"].items():
+            if v == member.name:
+                return k
+        raise ValueError(f"No URN for {member}")
+
+    def __str__(self) -> str:
+        return type(self).get_urn(self).partition("=")[2]
+
+    __repr__ = __str__
 
 
 class URNLookupEnum(URNLookupMixin, Enum):

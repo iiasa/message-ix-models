@@ -17,6 +17,7 @@ import genno
 import pandas as pd
 from genno import Computer, Key
 from genno.core.key import single_key
+from genno.operator import load_file
 from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
 
@@ -35,7 +36,7 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 
-from .util import EXTRAPOLATE
+from .util import EXTRAPOLATE, region_path_fallback
 
 if TYPE_CHECKING:
     import sdmx.message
@@ -59,6 +60,50 @@ IEA_EWEB_FLOW = [
     "WORLDAV",
     "WORLDMAR",
 ]
+
+
+class ActivityVehicle(ExoDataSource):
+    """Activity (distance) per vehicle per year."""
+
+    @dataclass
+    class Options(BaseOptions):
+        #: Transport configuration.
+        config: "Config | None" = None
+
+        #: ID of the node code list.
+        nodes: str = ""
+
+    options: Options
+
+    filename = "activity-vehicle.csv"
+    key = Key("activity:n-t-y:vehicle")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+
+        # Convert units
+        c.add(k[0], "convert_units", base_key, units="Mm/year")
+
+        # Broadcast to all scenarios and nodes
+        coords = ["scenario::all", "n::ex world"]
+        dim = ("scenario", "n")
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=dim)
+
+        # Select values for the current scenario; drop the 'scenario' dimension
+        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+
+        # Interpolate on "y" dimension
+        c.add(self.key, "interpolate", k[2], "y::coords", **EXTRAPOLATE)
+
+        # TODO Broadcast technology groups → individual technology IDs
+        return self.key
 
 
 class IEA_Future_of_Trucks(ExoDataSource):
@@ -94,8 +139,6 @@ class IEA_Future_of_Trucks(ExoDataSource):
         super().__init__()
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(self.path, dims=RENAME_DIMS)
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
@@ -140,6 +183,58 @@ class IEA_Future_of_Trucks(ExoDataSource):
             )
 
         return single_key(result)
+
+
+class Lifetime(ExoDataSource):
+    """Technical lifetime (maximum age) of vehicles.
+
+    Values are interpolated across the model horizon. In MESSAGE(V)-Transport, this
+    quantity had the additional dimension of driver_type, and values for t=LDV were 20
+    years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.
+    """
+
+    @dataclass
+    class Options(BaseOptions):
+        #: Transport configuration.
+        config: "Config | None" = None
+
+        #: ID of the node code list.
+        nodes: str = ""
+
+    options: Options
+
+    filename = "lifetime.csv"
+    key = Key("lifetime:nl-t-yv:exo")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+
+        # Interpolate on "y" dimension
+        c.add(k[0], "interpolate", base_key, "yv::coords", **EXTRAPOLATE)
+
+        # Broadcast to all scenarios and nodes
+        coords = ["scenario::all", "n::ex world"]
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "nl"))
+
+        # Select values for the current scenario; drop the 'scenario' dimension
+        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+
+        # Expand from "t" modes to all actual technologies
+        c.add(k[3], "call", "t::transport map", k[2])
+
+        # Convert to integer
+        # NB This is required because the MESSAGEix GAMS implementation cannot handle
+        #    non-integer values.
+        c.add(self.key, lambda qty: qty.astype(int), k[3])
+
+        return self.key
 
 
 class MaybeAdaptR11Source(ExoDataSource):
@@ -201,8 +296,6 @@ class MaybeAdaptR11Source(ExoDataSource):
                 raise NotImplementedError(msg)
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(self.path, dims=self.dims, name=self.options.measure)
 
     def __repr__(self) -> str:
@@ -273,8 +366,6 @@ class MultiFile(ExoDataSource):
             raise FileNotFoundError(msg)
 
     def get(self) -> "AnyQuantity":
-        from genno.operator import load_file
-
         return load_file(
             self.path, dims=RENAME_DIMS, name=self.key.name, units=self.units
         )
@@ -294,14 +385,12 @@ class LoadFactorLDV(MultiFile):
 
     This source locates data in files named, for instance,
     :file:`message_ix_models/data/transport/{nodes}/load-factor-ldv/{scenario}.csv`.
-
-    Units are implicitly passengers per vehicle.
     """
 
     key = Key("load factor ldv:n-y:exo")
 
     dirname = "load-factor-ldv"
-    units = "dimensionless"
+    units = "passenger / vehicle"
 
     @property
     def filename(self) -> str:
@@ -313,7 +402,10 @@ class LoadFactorLDV(MultiFile):
             ("^M ", ""),  # No distinction for materials scenarios
             ("^DIGSY-WORST-C", str(self.options.config.ssp)),  # Use the respective SSP
             ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED
-            (r"^(SSP_\d+)\.(\d)", r"\1_\2"),  # "SSP_2024.1" → "SSP_2024_1"
+            (  # "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1"
+                r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)",
+                r"SSP_\1_\2",
+            ),
             (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),  # Remove trailing suffix (" foo")
         ):
             label = re.sub(pattern, repl, label)
@@ -645,13 +737,7 @@ act_non_ldv = _input_dataflow(
 activity_freight = _input_dataflow(
     key="freight activity:n:exo",
     name="Freight transport activity",
-    units="Gt / km",
-)
-
-activity_ldv = _input_dataflow(
-    key="ldv activity:scenario-n-y:exo",
-    name="Activity (driving distance) per light duty vehicle",
-    units="km / year",
+    units="Gt km / a",
 )
 
 age_ldv = _input_dataflow(
@@ -829,19 +915,18 @@ input_share = _input_dataflow(
     units="dimensionless",
 )
 
-lifetime_ldv = _input_dataflow(
-    key="lifetime:scenario-nl-t-yv:ldv+exo",
-    path="lifetime-ldv",
-    name="Technical lifetime (maximum age) of LDVs",
-    description="""Values are interpolated across the model horizon. In MESSAGE(V)-
-Transport, this quantity had the additional dimension of driver_type, and values were 20
-years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.""",
-    units="year",
+
+load_factor_f = _input_dataflow(
+    key="load factor:t:F+exo",
+    name="Load factor of freight vehicles",
+    path="load-factor-f.csv",
+    units="tonne / vehicle",
 )
 
-load_factor_nonldv = _input_dataflow(
-    key="load factor nonldv:t:exo",
-    name="Load factor (occupancy) of non-LDV passenger vehicles",
+load_factor_p = _input_dataflow(
+    key="load factor:t:P+exo",
+    name="Load factor (occupancy) of passenger vehicles ex LDV",
+    path="load-factor-p.csv",
     units="passenger / vehicle",
 )
 
@@ -913,7 +998,7 @@ stock_cap = _input_dataflow(
     path="stock-cap",
     name="Vehicle stock per capita",
     description="",
-    units="vehicle/capita",
+    units="vehicle / passenger",
 )
 
 t_share_ldv = _input_dataflow(
@@ -952,7 +1037,7 @@ activity_passenger = _output_dataflow(
     key="pdt:n-y-t",
     units="dimensionless",
 )
-activity_vehicle = _output_dataflow(
+activity_vehicle_out = _output_dataflow(
     id="ACTIVITY_VEHICLE",
     name="Vehicle activity",
     description='Same as the IAMC ‘variable’ code "Energy Service|Transportation".',

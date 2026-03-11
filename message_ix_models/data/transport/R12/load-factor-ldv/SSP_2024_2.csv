@@ -3,8 +3,7 @@
 # Source: Duplicate of R11/load-factor-ldv.csv; R12_CHN and R12_RCPA values
 # filled from R11_CPA.
 #
-# Units: dimensionless
-# (Implicitly passengers per vehicle.)
+# Units: passenger / vehicle
 #
 node,     year, value
 R12_AFR,  2020, 2.10

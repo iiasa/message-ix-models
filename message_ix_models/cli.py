@@ -172,6 +172,7 @@ submodules = [
     "message_ix_models.testing.cli",
     "message_ix_models.util.pooch",
     "message_ix_models.util.slurm",
+    "message_ix_models.model.bmt.cli",
 ]
 
 try:
@@ -206,7 +207,9 @@ for name in submodules:
     try:
         __import__(name)
     except ImportError as e:
-        print(e)
+        print(f"{name} not available: {e}")
+        continue
+
     cmd = getattr(sys.modules[name], "cli")
 
     # Avoid replacing message-ix-models CLI with message_data CLI

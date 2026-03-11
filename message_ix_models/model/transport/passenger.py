@@ -92,7 +92,7 @@ def prepare_computer(c: Computer):
     #     keys.append(k + "emi")
 
     # Data for usage pseudo-technologies
-    collect("usage", usage_data, exo.load_factor_nonldv, t_modes, n, y)
+    collect("usage", usage_data, exo.load_factor_p, t_modes, n, y)
 
     #### NB lines below duplicated from .transport.base
     e_iea = Key("energy:n-y-product-flow:iea")

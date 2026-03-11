@@ -136,7 +136,7 @@ def test_debug(
 @pytest.mark.parametrize(
     "regions, years",
     (
-        param("R11", "A", marks=make_mark[2](ValueError)),
+        param("R11", "A", marks=make_mark[2](RuntimeError)),
         ("R12", "B"),
         param("R14", "A", marks=MARK[9]),
         param("ISR", "A", marks=MARK[3]),
@@ -179,6 +179,10 @@ def test_bare(
     # scenario.to_excel(dump_path)
 
     rep, key1 = prepare_reporter(test_context, scenario)
+
+    # commented: Generate 'full' task graphs for presentation materials
+    # rep.visualize("transport-report.svg", "transport all", rankdir="LR")
+    # rep.visualize("transport-build.svg", "add transport data", rankdir="LR")
 
     # Reporting `key` succeeds
     rep.get(key1)

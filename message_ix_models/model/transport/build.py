@@ -135,7 +135,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
-    # Ensure that the MERtoPPP data provider is available
     from . import data
 
     # Added keys
@@ -169,6 +168,12 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     for kw in source_kw:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
+
+    # Miscellaneous data
+    kw = dict(nodes=context.model.regions, config=config)
+    data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.Lifetime.add_tasks(c, **kw, **c_s)
+    data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
@@ -235,10 +240,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
-
-    data.LoadFactorLDV.add_tasks(
-        c, context=context, strict=False, nodes=context.model.regions, config=config
-    )
 
 
 #: :mod:`genno` tasks for model structure information that are 'static'—that is, do not
@@ -466,6 +467,28 @@ def add_structure(c: Computer) -> None:
         dims=("t",),
         on_missing="raise",
     )
+
+    # Identify the subset of periods up to and including y0
+    c.add(
+        key.y_.historical,
+        lambda periods, y0: list(filter(lambda y: y < y0, periods)),
+        "y",
+        "y0",
+    )
+    c.add(
+        key.y_.to_y0,
+        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
+        "y",
+        "y0",
+    )
+    # Convert duration_period to Quantity
+    c.add("duration_period:y", "duration_period", "info")
+    # Duration_period up to and including y0
+    c.add("duration_period:y:to y0", "select", "duration_period:y", key.y_.to_y0)
+    # Groups for aggregating annual to period data
+    c.add(key.y_.annual_agg, "groups_y_annual", "duration_period:y")
+    # Indexers
+    c.add(key.yv.historical_idx, lambda periods: dict(yv=periods), key.y_.historical)
 
 
 @minimum_version("genno 1.28")
