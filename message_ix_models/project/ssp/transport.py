@@ -84,7 +84,23 @@ K = Keys(
     fe_in=f"fe:c-n-t-y:{L}+in",
     fe_out=f"fe:c-n-t-y:{L}+out",
     units=f"units:e-UNIT:{L}",
+    y="y::model",
 )
+
+
+ROWS = [
+    # CO2 only
+    [-1.0, "Energy|Demand", "Transportation"],
+    # All species
+    [1.0, "Energy|Demand", "Bunkers|International Aviation"],
+    [1.0, "Energy|Demand", "Bunkers"],
+    # All except CO2
+    [1.0, "_T", "_T"],
+    [1.0, "Energy", "_T"],
+    [1.0, "Energy|Combustion", "_T"],
+    [1.0, "Energy|Demand", "_T"],
+    [1.0, "Fossil Fuels and Industry", "_T"],
+]
 
 
 class METHOD(Enum):
@@ -124,24 +140,11 @@ def aviation_emi_share(ref: "TQuantity") -> "TQuantity":
 
 def broadcast_est_emi(q_ref: "TQuantity") -> "TQuantity":
     """Quantity to re-add the :math:`(s, t)` dimensions for emission data."""
-    rows = [
-        # CO2 only
-        [-1.0, "Energy|Demand", "Transportation"],
-        # All species
-        [1.0, "Energy|Demand", "Bunkers"],
-        [1.0, "Energy|Demand", "Bunkers|International Aviation"],
-        # All except CO2
-        [1.0, "_T", "_T"],
-        [1.0, "Energy", "_T"],
-        [1.0, "Energy|Combustion", "_T"],
-        [1.0, "Energy|Demand", "_T"],
-        [1.0, "Fossil Fuels and Industry", "_T"],
-    ]
     data: list[list[Any]] = []
     for e in sorted(q_ref.coords["e"].data):
         # Add only the relevant rows
         idx = slice(3) if e == "CO2" else slice(1, 99)
-        data.extend([e] + row for row in rows[idx])
+        data.extend([e] + row for row in ROWS[idx])
 
     return type(q_ref)(
         pd.DataFrame(data, columns=["e", "value", "s", "t"]).set_index(["e", "s", "t"]),
@@ -315,6 +318,11 @@ def get_computer(
 
     # Create a Context instance. Only R12 is supported.
     context = Context(model=ModelConfig(regions="R12"))
+
+    # Only years=B is supported
+    y_all = get_codelist("year/B")
+    y_model = [y for y in map(lambda c: int(c.id), y_all) if y >= 2020]
+
     # Store in `c` for reference by other operations
     c.add("context", context)
     c.graph["config"].update(regions="R12")
@@ -385,8 +393,10 @@ def get_computer(
     method_func = {METHOD.A: method_A, METHOD.B: method_B, METHOD.C: method_C}[method]
     method_func(c)
 
+    # Offset/zero out certain values so these are replaced, not incremented
+    c.add(K.emi["offset"], offset, K.emi_in, y=y_model)
     # Adjust the original data by adding the (maybe negative) prepared values at K.emi
-    c.add(K.emi["adj"], "add", K.emi_in, K.emi)
+    c.add(K.emi["adj"], "add", K.emi_in, K.emi["offset"], K.emi)
     c.add(K.fe_out["adj"], "add", K.fe_in[1], K.fe_out)
 
     # Add a key "target" to:
@@ -739,6 +749,24 @@ def process_df(
 
     # Compute and return the result
     return c.get("target")
+
+
+def offset(qty: "TQuantity", *, y: list[int]) -> "TQuantity":
+    """Compute offset to reduce/“zero out” existing data."""
+    s_bcast = (
+        pd.DataFrame(ROWS[1:], columns=["value", "s", "t"])
+        .assign(n="World")
+        .set_index(["n", "s", "t"])
+    )
+
+    # - Select certain values from `qty`; drop the (s, t) dimensions.
+    # - Re-add these dimensions, broadcasting over various combinations per ROWS.
+    # - Take the negative.
+    return (
+        qty.sel(n=["World"], s="Energy|Demand", t="Bunkers|International Aviation", y=y)
+        * type(qty)(s_bcast, units="")
+        * -1.0
+    )
 
 
 def process_file(
