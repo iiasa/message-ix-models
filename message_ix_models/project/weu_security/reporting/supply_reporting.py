@@ -121,15 +121,11 @@ mp = ixmp.Platform()
 
 fuel_supply_out = pd.DataFrame()
 for mod, scen in [('weu_security', 'SSP2'),
-                  ('weu_security', 'SSP2_noRE'),
-                  #('weu_security', 'FSU2040'),
-                  #('weu_security', 'FSU2100'),
-                  #('weu_security', 'NAM500'),
-                  #('weu_security', 'NAM1000'),
-                  #('weu_security', 'FSU2040_NAM500'),
-                  #('weu_security', 'FSU2040_NAM1000'),
-                  #('weu_security', 'FSU2100_NAM500'),
-                  #('weu_security', 'FSU2100_NAM1000'),
+                  ('weu_security', 'FSU2040'),
+                  ('weu_security', 'FSU2100'),
+                  ('weu_security', 'NAM1000'),
+                  ('weu_security', 'FSU2040_NAM1000'),
+                  ('weu_security', 'FSU2100_NAM1000'),
                   #('weu_security', 'SSP2_reexport'),
                   #('weu_security', 'NAM1000_reexport'),
                   #('weu_security', 'FSU2100_NAM1000_reexport')

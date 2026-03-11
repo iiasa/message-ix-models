@@ -7,6 +7,7 @@ from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 from message_ix_models.project.weu_security.liquefaction_calibration import *
+from message_ix_models.project.weu_security.reexport import *
 
 import os
 from ixmp import Platform
@@ -107,7 +108,12 @@ for model_scen in models_scenarios.keys():
 
     with out_scenario.transact("add balance equality sets"):
         out_scenario.add_set("balance_equality", be_df)
-        
+
+    print("Adjust re-exports for lightoil and fueloil")
+    adjust_reexports(base_scenario = out_scenario,
+                     trade_commodity_list = ['lightoil', 'fueloil'],
+                     base_level = 'secondary')
+    
     print("Solve scenario")
     out_scenario.solve()
     mp.close_db()
