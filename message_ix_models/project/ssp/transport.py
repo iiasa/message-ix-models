@@ -5,8 +5,7 @@ import re
 from collections.abc import Hashable
 from enum import Enum, auto
 from functools import cache
-from itertools import product
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import genno
 import pandas as pd
@@ -77,8 +76,7 @@ L = "AIR emi"
 #: - :py:`.fe`: computed final energy data.
 #: - :py:`.fe_in`: input data for transport final energy, to be adjusted or overwritten.
 K = Keys(
-    bcast=f"broadcast:s-t:{L}",
-    bcast_other=f"broadcast:e-s-t:{L}+other",
+    bcast=f"broadcast:e-s-t:{L}",
     input=f"input:n-y-VARIABLE-UNIT:{L}",
     emi=f"emission:e-n-s-t-y-UNIT:{L}",
     emi_in=f"emission:e-n-s-t-y-UNIT:{L}+in",
@@ -123,85 +121,31 @@ def aviation_emi_share(ref: "TQuantity") -> "TQuantity":
     )
 
 
-def broadcast_st_emi(version: int, include_international: bool) -> "AnyQuantity":
-    """Quantity to re-add the :math:`(s, t)` dimensions for emission data.
-
-    Parameters
-    ----------
-    version :
-        Version of ‘variable’ names supported by the current module.
-    include_international :
-        If :any:`True` and :py`version == 1`, include
-        "Transportation|Aviation|International" with magnitude 1.0. Otherwise, omit.
-
-    Return
-    ------
-    genno.Quantity
-        with dimensions :math:`(s, t)`.
-
-        If :py:`version=1`, the :math:`t`: values include:
-
-        - +1.0 for t="Transportation|Aviation", a label with missing data.
-        - -1.0 for t="Transportation|Road Rail and Domestic Shipping", a label with
-          existing data from which the aviation total must be subtracted.
-
-        If :py:`version=2`, the values include:
-
-        - +1.0 for t="Bunkers" and t="Bunkers|International Aviation", labels with zeros
-          in the input data file.
-        - -1.0 for t="Transportation" and t="Transportation|Road Rail and Domestic
-          Shipping", labels with existing data from which the aviation total must be
-          subtracted.
-    """
-    if version == 1:  # pragma: no cover
-        value = [1, -1, 1]
-        t = [
-            "Transportation|Aviation",
-            "Transportation|Road Rail and Domestic Shipping",
-            "Transportation|Aviation|International",
-        ]
-        idx = slice(None) if include_international else slice(-1)
-    elif version in (2, 3):
-        value = [1, 1, -1, -1]
-        t = [
-            "Bunkers",
-            "Bunkers|International Aviation",
-            "Transportation",
-            "Transportation|Road Rail and Domestic Shipping",
-        ]
-        idx = slice(-1 if version == 3 else None)
-
-    return genno.Quantity(value[idx], coords={"t": t[idx]}).expand_dims(
-        {"s": ["Energy|Demand"]}
-    )
-
-
-def broadcast_est_emi_other(q_ref: "TQuantity") -> "TQuantity":
-    """Quantity to broadcast values for other :math:`(e, s, t)`.
-
-    - s = "Energy|Combustion" is included only for e in ("CH4", "CO2", "N2O"), because
-      these are the only species in the input data with existing values.
-    """
-    e, e_combustion = sorted(q_ref.coords["e"].data), ("CH4", "CO2", "N2O")
-    s = [
-        "_T",
-        "Energy",
-        "Energy and Industrial Processes",
-        "Energy|Combustion",
-        "Energy|Demand",
-        "Fossil Fuels and Industry",
+def broadcast_est_emi(q_ref: "TQuantity") -> "TQuantity":
+    """Quantity to re-add the :math:`(s, t)` dimensions for emission data."""
+    rows = [
+        # CO2 only
+        [-1.0, "Energy|Demand", "Transportation"],
+        # All species
+        [1.0, "Energy|Demand", "Bunkers"],
+        [1.0, "Energy|Demand", "Bunkers|International Aviation"],
+        # All except CO2
+        [1.0, "_T", "_T"],
+        [1.0, "Energy", "_T"],
+        [1.0, "Energy|Combustion", "_T"],
+        [1.0, "Energy|Demand", "_T"],
+        [1.0, "Fossil Fuels and Industry", "_T"],
     ]
-    dims = ["e", "s"]
-    df = (
-        pd.DataFrame([list(e_s) for e_s in product(e, s)], columns=dims)
-        .assign(value=1.0)
-        .query("not (s == @s[3] and e not in @e_combustion)")
-        .query("not (s == @s[2] and e != 'CO2')")
-        .set_index(dims)["value"]
-    )
-    del e_combustion
+    data: list[list[Any]] = []
+    for e in sorted(q_ref.coords["e"].data):
+        # Add only the relevant rows
+        idx = slice(3) if e == "CO2" else slice(1, 99)
+        data.extend([e] + row for row in rows[idx])
 
-    return type(q_ref)(df, units="").expand_dims({"t": ["_T"]})
+    return type(q_ref)(
+        pd.DataFrame(data, columns=["e", "value", "s", "t"]).set_index(["e", "s", "t"]),
+        units="",
+    )
 
 
 def broadcast_t_fe() -> "AnyQuantity":
@@ -416,9 +360,8 @@ def get_computer(
     log.info(f"method 'C' will use data from {url}")
 
     # Common structure and utility quantities used by method_[ABC]
-    c.add(K.bcast, broadcast_st_emi, version=3, include_international=method == "A")
+    c.add(K.bcast, broadcast_est_emi, K.units)
     c.add(K.units, e_UNIT, "e::codelist")
-    c.add(K.bcast_other, broadcast_est_emi_other, K.units)
 
     # Placeholder for data-loading task. This is filled in later by process_df() or
     # process_file().
@@ -656,14 +599,9 @@ def method_BC_common(
     # - Drop/partial sum over dimension "c".
     c.add(K.emi[2], "mul", k.emi0[1] / "c", K.units)
     # Re-add the (s, t) dimensions with +ve and -ve signs for certain labels
-    # - This also includes a -ve sign for the label "Transportation".
+    # - This also includes a -ve sign for (t="Transportation", e="CO2").
     c.add(K.emi[3], "mul", K.emi[2], K.bcast)
     to_concat = [K.emi[3]]
-
-    # Adjust total beyond transport for all modes
-    c.add(K.emi[4], "select", K.emi[3], indexers={"t": ["Transportation"]}, sums=True)
-    c.add(K.emi[5], "mul", K.emi[4] / ("s", "t"), K.bcast_other, -1.0)
-    to_concat.append(K.emi[5])
 
     if False:  # pragma:  no cover —previously used for METHOD.C if k_emi_share given
         # Adjust total transportation emissions: multiply k_fe_share by input data
