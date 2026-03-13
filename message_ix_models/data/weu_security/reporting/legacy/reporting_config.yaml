@@ -1,0 +1,128 @@
+global_pool:
+  biomass:
+    exports:
+      - biomass_exp
+    imports:
+      - biomass_imp
+    trade:
+      - biomass_trd
+  coal:
+    exports:
+      - coal_exp
+    imports:
+      - coal_imp
+    trade:
+      - coal_trd
+  fueloil:
+    exports:
+      - foil_exp
+    imports:
+      - foil_imp
+    trade:
+      - foil_trd
+  lightoil:
+    exports:
+      - loil_exp
+    imports:
+      - loil_imp
+    trade:
+      - loil_trd
+  gas:
+    exports:
+      - gas_exp_afr
+      - gas_exp_chn
+      - gas_exp_eeu
+      - gas_exp_fsu
+      - gas_exp_lam
+      - gas_exp_mea
+      - gas_exp_nam
+      - gas_exp_pao
+      - gas_exp_pas
+      - gas_exp_rcpa
+      - gas_exp_cpa
+      - gas_exp_sas
+      - gas_exp_weu
+    imports:
+      - gas_imp
+    trade:
+      - gas_trd
+  LNG:
+    exports:
+      - LNG_exp
+    imports:
+      - LNG_imp
+    trade:
+      - LNG_trd
+  oil:
+    exports:
+    - oil_exp
+    - oil_trd
+    trade:
+      - oil_trd
+  methanol:
+    exports:
+      - meth_exp
+    imports:
+      - meth_imp
+    trade:
+      - meth_trd
+  lh2:
+    exports:
+      - lh2_exp
+    imports:
+      - lh2_imp
+    trade:
+      - lh2_trd
+
+bilateral:
+  biomass:
+    exports:
+      - biomass_shipped_exp
+    imports:
+      - biomass_shipped_imp
+  coal:
+    exports:
+      - coal_shipped_exp
+    imports:
+      - coal_shipped_imp
+  fueloil:
+    exports:
+      - foil_shipped_exp
+      - foil_piped_exp
+    imports:
+      - foil_shipped_imp
+      - foil_piped_imp
+  lightoil:
+    exports:
+      - loil_shipped_exp
+      - loil_piped_exp
+    imports:
+      - loil_shipped_imp
+      - loil_piped_imp
+  gas:
+    exports:
+      - gas_piped_exp
+    imports:
+      - gas_piped_imp
+  LNG:
+    exports:
+      - LNG_shipped_exp
+    imports:
+      - LNG_shipped_imp
+  oil:
+    exports:
+      - crudeoil_shipped_exp
+      - crudeoil_piped_exp
+    imports:
+      - crudeoil_shipped_imp
+      - crudeoil_piped_imp
+  methanol:
+    exports:
+      - meth_shipped_exp
+    imports:
+      - meth_shipped_imp
+  lh2:
+    exports:
+      - lh2_shipped_exp
+    imports:
+      - lh2_shipped_imp
