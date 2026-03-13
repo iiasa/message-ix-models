@@ -109,8 +109,8 @@ def fuel_supply_reporting(rep: Reporter, scenario: message_ix.Scenario, config_n
     df['region'] = df['nl']
     df['variable'] = df['iamc_name']
     df['year'] = df['ya']
-    df['value'] = df['value'] * .03154
-    df['unit'] = 'EJ/yr'
+    #df['value'] = df['value'] * .03154
+    df['unit'] = 'GWa/yr'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
     df = df.drop_duplicates()
 
@@ -129,15 +129,15 @@ for mod, scen in [('weu_security', 'SSP2'),
                   ('weu_security', 'SSP2_MEACON'),
                   ('weu_security', 'FSU2040_MEACON'),
                   ('weu_security', 'FSU2100_MEACON'),
-                  ('weu_security_reexp', 'SSP2'),
-                  ('weu_security_reexp', 'FSU2040'),
-                  ('weu_security_reexp', 'FSU2100'),
-                  ('weu_security_reexp', 'SSP2_NAM1000'),
-                  ('weu_security_reexp', 'FSU2040_NAM1000'),
-                  ('weu_security_reexp', 'FSU2100_NAM1000'),
-                  ('weu_security_reexp', 'SSP2_MEACON'),
-                  ('weu_security_reexp', 'FSU2040_MEACON'),
-                  ('weu_security_reexp', 'FSU2100_MEACON'),
+                  #('weu_security_reexp', 'SSP2'),
+                  #('weu_security_reexp', 'FSU2040'),
+                  #('weu_security_reexp', 'FSU2100'),
+                  #('weu_security_reexp', 'SSP2_NAM1000'),
+                  #('weu_security_reexp', 'FSU2040_NAM1000'),
+                  #('weu_security_reexp', 'FSU2100_NAM1000'),
+                  #('weu_security_reexp', 'SSP2_MEACON'),
+                  #('weu_security_reexp', 'FSU2040_MEACON'),
+                  #('weu_security_reexp', 'FSU2100_MEACON'),
                   ]:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
