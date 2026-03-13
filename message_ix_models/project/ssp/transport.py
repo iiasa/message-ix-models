@@ -5,10 +5,10 @@ import re
 from collections.abc import Hashable
 from enum import Enum, auto
 from functools import cache
-from itertools import product
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any
 
 import genno
+import genno.operator
 import pandas as pd
 from genno import Key, quote
 
@@ -40,6 +40,7 @@ EXPR_EMI = re.compile(
       (\|
         (?P<s>
           Energy(\|(Combustion|Demand))?
+          | Energy.and.Industrial.Processes
           | Fossil.Fuels.and.Industry
         )
         (\|
@@ -77,15 +78,30 @@ L = "AIR emi"
 #: - :py:`.fe`: computed final energy data.
 #: - :py:`.fe_in`: input data for transport final energy, to be adjusted or overwritten.
 K = Keys(
-    bcast=f"broadcast:s-t:{L}",
-    bcast_other=f"broadcast:e-s-t:{L}+other",
+    bcast=f"broadcast:e-s-t:{L}",
     input=f"input:n-y-VARIABLE-UNIT:{L}",
     emi=f"emission:e-n-s-t-y-UNIT:{L}",
     emi_in=f"emission:e-n-s-t-y-UNIT:{L}+in",
     fe_in=f"fe:c-n-t-y:{L}+in",
     fe_out=f"fe:c-n-t-y:{L}+out",
     units=f"units:e-UNIT:{L}",
+    y="y::model",
 )
+
+
+ROWS = [
+    # CO2 only
+    [-1.0, "Energy|Demand", "Transportation"],
+    # All species
+    [1.0, "Energy|Demand", "Bunkers|International Aviation"],
+    [1.0, "Energy|Demand", "Bunkers"],
+    # All except CO2
+    [1.0, "_T", "_T"],
+    [1.0, "Energy", "_T"],
+    [1.0, "Energy|Combustion", "_T"],
+    [1.0, "Energy|Demand", "_T"],
+    [1.0, "Fossil Fuels and Industry", "_T"],
+]
 
 
 class METHOD(Enum):
@@ -123,85 +139,18 @@ def aviation_emi_share(ref: "TQuantity") -> "TQuantity":
     )
 
 
-def broadcast_st_emi(
-    version: Literal[1, 2], include_international: bool
-) -> "AnyQuantity":
-    """Quantity to re-add the :math:`(s, t)` dimensions for emission data.
+def broadcast_est_emi(q_ref: "TQuantity") -> "TQuantity":
+    """Quantity to re-add the :math:`(s, t)` dimensions for emission data."""
+    data: list[list[Any]] = []
+    for e in sorted(q_ref.coords["e"].data):
+        # Add only the relevant rows
+        idx = slice(3) if e == "CO2" else slice(1, 99)
+        data.extend([e] + row for row in ROWS[idx])
 
-    Parameters
-    ----------
-    version :
-        Version of ‘variable’ names supported by the current module.
-    include_international :
-        If :any:`True`, include "Transportation|Aviation|International" with magnitude
-        1.0. Otherwise, omit.
-
-    Return
-    ------
-    genno.Quantity
-        with dimensions :math:`(s, t)`.
-
-        If :py:`version=1`, the :math:`t`: values include:
-
-        - +1.0 for t="Transportation|Aviation", a label with missing data.
-        - -1.0 for t="Transportation|Road Rail and Domestic Shipping", a label with
-          existing data from which the aviation total must be subtracted.
-
-        If :py:`version=2`, the values include:
-
-        - +1.0 for t="Bunkers" and t="Bunkers|International Aviation", labels with zeros
-          in the input data file.
-        - -1.0 for t="Transportation" and t="Transportation|Road Rail and Domestic
-          Shipping", labels with existing data from which the aviation total must be
-          subtracted.
-    """
-    if version == 1:  # pragma: no cover
-        value = [1, -1, 1]
-        t = [
-            "Transportation|Aviation",
-            "Transportation|Road Rail and Domestic Shipping",
-            "Transportation|Aviation|International",
-        ]
-        idx = slice(None) if include_international else slice(-1)
-    elif version in (2, 3):
-        value = [1, 1, -1, -1]
-        t = [
-            "Bunkers",
-            "Bunkers|International Aviation",
-            "Transportation",
-            "Transportation|Road Rail and Domestic Shipping",
-        ]
-        idx = slice(-2 if version == 3 else None)
-
-    return genno.Quantity(value[idx], coords={"t": t[idx]}).expand_dims(
-        {"s": ["Energy|Demand"]}
+    return type(q_ref)(
+        pd.DataFrame(data, columns=["e", "value", "s", "t"]).set_index(["e", "s", "t"]),
+        units="",
     )
-
-
-def broadcast_est_emi_other(q_ref: "TQuantity") -> "TQuantity":
-    """Quantity to broadcast values for other :math:`(e, s, t)`.
-
-    - s = "Energy|Combustion" is included only for e in ("CH4", "CO2", "N2O"), because
-      these are the only species in the input data with existing values.
-    """
-    e, e_combustion = sorted(q_ref.coords["e"].data), ("CH4", "CO2", "N2O")
-    s = [
-        "_T",
-        "Energy",
-        "Energy|Combustion",
-        "Energy|Demand",
-        "Fossil Fuels and Industry",
-    ]
-    dims = ["e", "s"]
-    df = (
-        pd.DataFrame([list(e_s) for e_s in product(e, s)], columns=dims)
-        .assign(value=1.0)
-        .query("not (s == 'Energy|Combustion' and e not in @e_combustion)")
-        .set_index(dims)["value"]
-    )
-    del e_combustion
-
-    return type(q_ref)(df, units="").expand_dims({"t": ["_T"]})
 
 
 def broadcast_t_fe() -> "AnyQuantity":
@@ -371,6 +320,11 @@ def get_computer(
 
     # Create a Context instance. Only R12 is supported.
     context = Context(model=ModelConfig(regions="R12"))
+
+    # Only years=B is supported
+    y_all = get_codelist("year/B")
+    y_model = [y for y in map(lambda c: int(c.id), y_all) if y >= 2020]
+
     # Store in `c` for reference by other operations
     c.add("context", context)
     c.graph["config"].update(regions="R12")
@@ -416,9 +370,8 @@ def get_computer(
     log.info(f"method 'C' will use data from {url}")
 
     # Common structure and utility quantities used by method_[ABC]
-    c.add(K.bcast, broadcast_st_emi, version=3, include_international=method == "A")
+    c.add(K.bcast, broadcast_est_emi, K.units)
     c.add(K.units, e_UNIT, "e::codelist")
-    c.add(K.bcast_other, broadcast_est_emi_other, K.units)
 
     # Placeholder for data-loading task. This is filled in later by process_df() or
     # process_file().
@@ -443,8 +396,10 @@ def get_computer(
     method_func = {METHOD.A: method_A, METHOD.B: method_B, METHOD.C: method_C}[method]
     method_func(c)
 
+    # Offset/zero out certain values so these are replaced, not incremented
+    c.add(K.emi["offset"], offset, K.emi_in, y=y_model)
     # Adjust the original data by adding the (maybe negative) prepared values at K.emi
-    c.add(K.emi["adj"], "add", K.emi_in, K.emi)
+    c.add(K.emi["adj"], "add", K.emi_in, K.emi["offset"], K.emi)
     c.add(K.fe_out["adj"], "add", K.fe_in[1], K.fe_out)
 
     # Add a key "target" to:
@@ -630,9 +585,16 @@ def method_BC_common(
     # Select only total transport consumption of lightoil from K.fe_in
     indexers = {"t": "Transportation (w/ bunkers)"}
     c.add(k.fe[0], "select", K.fe_in, indexers=indexers, drop=True)
+    # Exclude data for n=World; totals to be recomputed later
+    c.add(k.fe[1], "select", k.fe[0], indexers={"n": ["World"]}, inverse=True)
 
     # Product of aviation share and FE of total transport → FE of aviation
-    c.add(k.fe, "mul", k.fe[0], k_fe_share)
+    c.add(k.fe[2], "mul", k.fe[1], k_fe_share)
+
+    # Add global sum
+    c.add(k.fe[3], "sum", k.fe[2], dimensions="n")
+    c.add(k.fe[4], "expand_dims", k.fe[3], dim={"n": ["World"]})
+    c.add(k.fe, "concat", k.fe[2], k.fe[4])
 
     # Convert exogenous emission intensity data to Mt / EJ
     c.add(k.ei["units"], "convert_units", k.ei, units="Mt / EJ")
@@ -655,10 +617,11 @@ def method_BC_common(
     # - Drop/partial sum over dimension "c".
     c.add(K.emi[2], "mul", k.emi0[1] / "c", K.units)
     # Re-add the (s, t) dimensions with +ve and -ve signs for certain labels
+    # - This also includes a -ve sign for (t="Transportation", e="CO2").
     c.add(K.emi[3], "mul", K.emi[2], K.bcast)
     to_concat = [K.emi[3]]
 
-    if k_emi_share:  # pragma: no cover  —only for METHOD.C
+    if False:  # pragma:  no cover —previously used for METHOD.C if k_emi_share given
         # Adjust total transportation emissions: multiply k_fe_share by input data
         # TODO Also try k_emi_share here
         c.add(K.emi_in["all"], "select", K.emi_in, indexers={"t": ["Transportation"]})
@@ -670,8 +633,6 @@ def method_BC_common(
         c.add(K.emi[6], "select", K.emi[5], indexers={"n": ["World"]})
         c.add(K.emi[7], "mul", K.emi[6], K.bcast_other)
         to_concat.append(K.emi[7])
-    else:
-        pass
 
     # Concatenate emissions values to be modified
     c.add(K.emi[8], "concat", *to_concat)
@@ -686,10 +647,7 @@ def method_BC_common(
     c.add(K.fe_out[2], "rename_dims", K.fe_out[1], name_dict={"c_new": "c"})
 
     # Restore labels: "R12_AFR" → "AFR" etc. "World" is not changed.
-    c.add(K.fe_out[3], "relabel", K.fe_out[2], labels=labels)
-
-    # Drop data for y0
-    c.add(K.fe_out, "select", K.fe_out[3], indexers=dict(y=[2020]), inverse=True)
+    c.add(K.fe_out, "relabel", K.fe_out[2], labels=labels)
 
 
 def method_C(c: "Computer") -> None:  # pragma: no cover
@@ -798,6 +756,24 @@ def process_df(
 
     # Compute and return the result
     return c.get("target")
+
+
+def offset(qty: "TQuantity", *, y: list[int]) -> "TQuantity":
+    """Compute offset to reduce/“zero out” existing data."""
+    s_bcast = (
+        pd.DataFrame(ROWS[1:], columns=["value", "s", "t"])
+        .assign(n="World")
+        .set_index(["n", "s", "t"])
+    )
+
+    # - Select certain values from `qty`; drop the (s, t) dimensions.
+    # - Re-add these dimensions, broadcasting over various combinations per ROWS.
+    # - Take the negative.
+    return (
+        qty.sel(n=["World"], s="Energy|Demand", t="Bunkers|International Aviation", y=y)
+        * type(qty)(s_bcast, units="")
+        * -1.0
+    )
 
 
 def process_file(
