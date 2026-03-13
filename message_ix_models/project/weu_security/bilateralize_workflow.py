@@ -7,7 +7,7 @@ from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 from message_ix_models.project.weu_security.liquefaction_calibration import *
-from message_ix_models.project.weu_security.reexport import *
+from message_ix_models.project.weu_security.adjust_reexports import *
 
 import os
 from ixmp import Platform

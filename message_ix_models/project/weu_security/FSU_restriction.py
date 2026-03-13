@@ -90,7 +90,7 @@ def run_friction_scenario(base_scenario_name: str,
                 target_scenario.remove_par(par, basepar)
                 
     if solve_scenario == True:
-        target_scenario.solve(quiet = False)
+        target_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
 
     mp.close_db()
     

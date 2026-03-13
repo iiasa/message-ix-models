@@ -27,17 +27,29 @@ def add_conflict(use_scenario:message_ix.Scenario):
     conf_j = config['mea_conflict']['MEA']['importers']
     conf_techs_in = config['mea_conflict']['MEA']['technologies']
 
-    con_years = [2030, 2035]
+    conf_years = [2030, 2035]
 
-    base_var = use_scenario.par('var_cost', filters = {"technology": conf_techs_in,
-                                                        "node_loc": conf_i})
+    base_input = use_scenario.par('input', filters = {'node_loc': conf_i})
+    base_input = base_input[base_input['technology'].str.contains('shipped_exp')]
+    conf_tec = base_input['technology'].unique()
 
-    use_var = base_var.copy()
-    use_var['value'] = use_var['value'] * 20 # Make it 20 times more expensive to ship from MEA to other regions
+    basedf = pd.DataFrame(product(conf_i, conf_tec,
+                         conf_years,
+                         ["M1"],
+                         ["year"]))
+    basedf.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time']
 
-    with use_scenario.transact("Add MEA conflict on tanker shipping"):
-        use_scenario.remove_par('var_cost', base_var)
-        use_scenario.add_par('var_cost', use_var)
+    bounddf = message_ix.make_df(
+                "bound_activity_up",
+                node_loc = basedf['node_loc'],
+                technology = basedf['technology'],
+                value = 0,
+                year_act = basedf['year_act'],
+                mode = basedf['mode'],
+                time = basedf['time'],
+                unit = '-')
+
+    return bounddf
 
 def run_friction_scenario(base_scenario_name: str):
     
@@ -52,12 +64,30 @@ def run_friction_scenario(base_scenario_name: str):
                                         keep_solution = False)
     use_scenario.set_as_default()
 
-    add_conflict(use_scenario)
+    conflict_df = add_conflict(use_scenario)
+    print(conflict_df)
+    
+    with use_scenario.transact("Add MEA conflict"):
+        use_scenario.add_par('bound_activity_up', conflict_df)
 
-    use_scenario.solve(quiet = False)
+    with use_scenario.transact("Remove constraints on shocked technologies"):
+        for par in ["growth_activity_lo", "growth_activity_up", "initial_activity_lo", "initial_activity_up"]:
+            basepar = use_scenario.par(par)
+            basepar_exp = basepar[(basepar['technology'].str.contains("_shipped_exp")) & (basepar['node_loc'] == 'R12_MEA')]
+            basepar_imp = basepar[basepar['technology'].str.contains("_shipped_imp")]
+            
+            if len(basepar) != 0:
+                print(f"...{par}")
+                use_scenario.remove_par(par, basepar_exp)
+                use_scenario.remove_par(par, basepar_imp)
+                
+    use_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
 
     mp.close_db()
 
 # Run scenarios
 run_friction_scenario('SSP2')
+run_friction_scenario('FSU2040')
+run_friction_scenario('FSU2100')
+
 

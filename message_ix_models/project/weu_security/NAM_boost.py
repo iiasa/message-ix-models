@@ -135,28 +135,19 @@ def run_nam_boost(base_scenario_name: str,
                  
     # Solve scenario             
     if solve_scenario == True:
-        out_scenario.solve(quiet = False)
+        out_scenario.solve(quiet = False,  solve_options={"scaind":"-1"})
 
     mp.close_db()
 
 # Run scenarios
 run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'NAM500',
-              bound_level = 500)
-run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'NAM1000',
+              out_scenario_name = 'SSP2_NAM1000',
               bound_level = 1000)
 
-run_nam_boost(base_scenario_name = 'FSU2040',
-              out_scenario_name = 'FSU2040_NAM500',
-              bound_level = 500)
 run_nam_boost(base_scenario_name = 'FSU2040',
               out_scenario_name = 'FSU2040_NAM1000',
               bound_level = 1000)
 
-run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAM500',
-              bound_level = 500)
 run_nam_boost(base_scenario_name = 'FSU2100',
               out_scenario_name = 'FSU2100_NAM1000',
               bound_level = 1000)
