@@ -8,6 +8,7 @@ from functools import cache
 from typing import TYPE_CHECKING, Any
 
 import genno
+import genno.operator
 import pandas as pd
 from genno import Key, quote
 
@@ -582,9 +583,16 @@ def method_BC_common(
     # Select only total transport consumption of lightoil from K.fe_in
     indexers = {"t": "Transportation (w/ bunkers)"}
     c.add(k.fe[0], "select", K.fe_in, indexers=indexers, drop=True)
+    # Exclude data for n=World; totals to be recomputed later
+    c.add(k.fe[1], "select", k.fe[0], indexers={"n": ["World"]}, inverse=True)
 
     # Product of aviation share and FE of total transport → FE of aviation
-    c.add(k.fe, "mul", k.fe[0], k_fe_share)
+    c.add(k.fe[2], "mul", k.fe[1], k_fe_share)
+
+    # Add global sum
+    c.add(k.fe[3], "sum", k.fe[2], dimensions="n")
+    c.add(k.fe[4], "expand_dims", k.fe[3], dim={"n": ["World"]})
+    c.add(k.fe, "concat", k.fe[2], k.fe[4])
 
     # Convert exogenous emission intensity data to Mt / EJ
     c.add(k.ei["units"], "convert_units", k.ei, units="Mt / EJ")
