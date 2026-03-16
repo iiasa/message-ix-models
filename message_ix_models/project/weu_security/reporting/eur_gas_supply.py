@@ -149,13 +149,16 @@ def plot_eur_supply(df:pd.DataFrame,
 
 plot_eur_supply(df = df,
                 plot_fuel = ["Gas"],
-                plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
-                plot_regions = ["R12_WEU", "R12_EEU"],
+                plot_scenarios = ["SSP2", "FSU2040", "FSU2100",
+                                  "SSP2_NAM1000", "FSU2040_NAM1000", "FSU2100_NAM1000",
+                                  "SSP2_MEACON", "FSU2040_MEACON", "FSU2100_MEACON"],
+                plot_regions = ["R12_EEU", "R12_WEU"],
                 plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060])
-
 
 plot_eur_supply(df = df,
                 plot_fuel = ["Light Oil"],
-                plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
-                plot_regions = ["R12_WEU", "R12_EEU"],
+                plot_scenarios = ["SSP2", "FSU2040", "FSU2100",
+                                  "SSP2_NAM1000", "FSU2040_NAM1000", "FSU2100_NAM1000",
+                                  "SSP2_MEACON", "FSU2040_MEACON", "FSU2100_MEACON"],
+                plot_regions = ["R12_EEU", "R12_WEU"],
                 plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060])
