@@ -141,13 +141,13 @@ def run_nam_boost(base_scenario_name: str,
 
 # Run scenarios
 run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'SSP2_NAM1000',
+              out_scenario_name = 'SSP2_NAMboost',
               bound_level = 1000)
 
 run_nam_boost(base_scenario_name = 'FSU2040',
-              out_scenario_name = 'FSU2040_NAM1000',
+              out_scenario_name = 'FSU2040_NAMboost',
               bound_level = 1000)
 
 run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAM1000',
+              out_scenario_name = 'FSU2100_NAMboost',
               bound_level = 1000)

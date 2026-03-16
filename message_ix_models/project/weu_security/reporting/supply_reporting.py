@@ -109,8 +109,8 @@ def fuel_supply_reporting(rep: Reporter, scenario: message_ix.Scenario, config_n
     df['region'] = df['nl']
     df['variable'] = df['iamc_name']
     df['year'] = df['ya']
-    #df['value'] = df['value'] * .03154
-    df['unit'] = 'GWa/yr'
+    df['value'] = df['value'] * .03154
+    df['unit'] = 'EJ/yr'
     df = df[['model', 'scenario', 'region', 'variable', 'unit', 'year', 'value']]
     df = df.drop_duplicates()
 
@@ -123,9 +123,9 @@ fuel_supply_out = pd.DataFrame()
 for mod, scen in [('weu_security', 'SSP2'),
                   ('weu_security', 'FSU2040'),
                   ('weu_security', 'FSU2100'),
-                  ('weu_security', 'SSP2_NAM1000'),
-                  ('weu_security', 'FSU2040_NAM1000'),
-                  ('weu_security', 'FSU2100_NAM1000'),
+                  ('weu_security', 'SSP2_NAMboost'),
+                  ('weu_security', 'FSU2040_NAMboost'),
+                  ('weu_security', 'FSU2100_NAMboost'),
                   ('weu_security', 'SSP2_MEACON'),
                   ('weu_security', 'FSU2040_MEACON'),
                   ('weu_security', 'FSU2100_MEACON'),
@@ -153,7 +153,14 @@ for mod, scen in [('weu_security', 'SSP2'),
     for fuel in ['biomass', 'coal', 'crude', 'ethanol', 'fueloil', 'gas', 'h2', 'lightoil', 'methanol']:
         fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
         fuel_supply = pd.concat([fuel_supply, fuel_supply_df])
-
+        
+        check = fuel_supply_df[fuel_supply_df['year'] == 2030]
+        check = check[check['variable'].str.contains("Imports")]
+        check = check[check['variable'].str.contains("R12_NAM")]
+        check = check[check['region'] == "R12_EEU"]
+        print(fuel)
+        print(check)
+        
     fuel_supply['fuel_type'] = fuel_supply['variable'].str.split('|').str[0]
     fuel_supply['fuel_type'] = fuel_supply['fuel_type'].str.replace(' Supply', '')
 
