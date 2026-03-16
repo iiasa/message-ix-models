@@ -27,7 +27,7 @@ def report(scenario:message_ix.Scenario,
            add_trade: bool = True):
     
     if add_legacy:
-        #run_legacy_reporting(scenario, mp)
+        run_legacy_reporting(scenario, mp)
         df_legacy = pd.read_excel(package_data_path("bilateralize", "reporting", "output", "legacy", scenario.model + '_' + scenario.scenario + '.xlsx'))
     if add_trade:
         trade_reporting(mp, scenario)
@@ -46,6 +46,3 @@ def report(scenario:message_ix.Scenario,
         raise ValueError("No reporting to add")
 
     df.to_csv(package_data_path("bilateralize", "reporting", "output", scenario.model + '_' + scenario.scenario + '.csv'))
-
-
-report(scenario = message_ix.Scenario(mp, model = "weu_security", scenario = "SSP2"))
