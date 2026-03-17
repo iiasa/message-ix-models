@@ -81,6 +81,8 @@ The basic **design pattern** of :mod:`message_ix_models.report` is:
   (and some extensions specific to :mod:`message_ix_models`)
   to handle the different sections of the file.
 
+.. _report-features:
+
 Features
 ========
 
