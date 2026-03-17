@@ -159,6 +159,17 @@ def callback(rep: Reporter, context: Context) -> None:
        reported is not solved, only a subset of plots are added.
     8. Invoke :func:`.transport.base.prepare_reporter`.
     9. :data:`key.report.all <.transport.key.report>` which includes all of the above.
+
+    See also
+    --------
+    aggregate
+    select_transport_techs
+    reapply_units
+    misc
+    convert_iamc
+    convert_sdmx
+    ~message_ix_models.report.add_plots
+    .base.prepare_reporter
     """
     from genno.operator import aggregate
 
