@@ -17,13 +17,13 @@ def adjust_reexports(base_scenario,
                                                           'level': base_level})
         dom_prod = dom_prod[dom_prod['technology'].str.contains('_imp') == False]
         dom_prod_base = dom_prod.copy()
-        dom_prod['level'] = 'primary' #base_level + '_1' # Update level
+        dom_prod['level'] = base_level + '_1' # Update level PRIMARY
         full_mode_list = dom_prod['mode'].unique()
     
         # Create fuel balancing to move level from base_level_1 to base_level
         fb_input = base_scenario.par('input', filters = {'technology': 'coal_bal'}) # use coal as basis
         fb_input['commodity'] = trade_commodity
-        fb_input['level'] = 'primary' #base_level + '_1'
+        fb_input['level'] = base_level + '_1' # PRIMARY
         fb_input['technology'] = trade_commodity + '_bal'
 
         fb_input_out = pd.DataFrame()
@@ -34,7 +34,7 @@ def adjust_reexports(base_scenario,
     
         fb_output = base_scenario.par('output', filters = {'technology': 'coal_bal'})
         fb_output['commodity'] = trade_commodity
-        fb_output['level'] = base_level
+        fb_output['level'] = base_level # SECONDARY
         fb_output['technology'] = trade_commodity + '_bal'
         fb_output['mode'] = 'M1'
     
@@ -47,7 +47,7 @@ def adjust_reexports(base_scenario,
                                                             'level': base_level})
         export_input = export_input[export_input['technology'].str.contains('_exp')]
         export_input_base = export_input.copy()
-        export_input['level'] = 'primary' #base_level + '_1'
+        export_input['level'] = base_level + '_1' # PRIMARY
     
         # Add all back to scenario
         with base_scenario.transact("Add fuel balancing level set"):
