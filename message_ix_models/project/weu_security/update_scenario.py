@@ -16,17 +16,17 @@ config, config_path = load_config(project_name = 'weu_security', config_name = '
 models_scenarios = config['models_scenarios']
 data_path = package_data_path("bilateralize")
 
-base_model = 'weu_security'
-base_scen = 'FSU2040_NAMboost'
+base_model = 'SSP_SSP2_v6.4'
+base_scen = 'baseline'
 
 mp = ixmp.Platform()
 base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-
-df = base_scenario.var("ACT", filters = {"technology": "LNG_shipped_exp_eeu",
-                                         "year_act": 2030})
-print(df)
+out_scenario = base_scenario.clone('weu_security', "SSP_SSP2_v6.4", keep_solution = False)
+#df = base_scenario.var("ACT", filters = {"technology": "LNG_shipped_exp_eeu",
+#                                         "year_act": 2030})
+#print(df)
 
 #base_vcost
 #print("Solve scenario")
-#out_scenario.solve()
+out_scenario.solve()
 mp.close_db()

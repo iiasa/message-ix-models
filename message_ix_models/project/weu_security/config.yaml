@@ -19,7 +19,7 @@ models_scenarios:
 #    model: SSP_SSP1_v6.2
 #    scenario: baseline
   SSP2:
-    model: SSP_SSP2_v6.2
+    model: SSP_SSP2_v6.4
     scenario: baseline
 #  SSP2_1000f:
 #    model: SSP_SSP2_v6.2
@@ -158,4 +158,5 @@ mea_conflict:
       - foil_shipped
       - loil_shipped
       - LNG_shipped
+      
            

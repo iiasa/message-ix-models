@@ -5,7 +5,7 @@ Add explicit re-exports
 from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
-from message_ix_models.project.weu_security.adjust_reexports
+from message_ix_models.project.weu_security.adjust_reexports import *
 
 def add_reexports(base_scenario_name:str,
                   covered_trade_technologies:list[str]):
@@ -72,7 +72,7 @@ covered_trade_technologies = ['biomass_shipped', 'coal_shipped',
                               'loil_shipped', 'loil_piped',]
 
 for scen in ['SSP2', 'FSU2040', 'FSU2100', 
-             'SSP2_NAM1000', 'FSU2040_NAM1000', 'FSU2100_NAM1000',
+             'SSP2_NAMboost', 'FSU2040_NAMboost', 'FSU2100_NAMboost',
              'SSP2_MEACON', 'FSU2040_MEACON', 'FSU2100_MEACON']:
     add_reexports(base_scenario_name = scen, 
                   covered_trade_technologies = covered_trade_technologies)
