@@ -96,6 +96,61 @@ CONVERT_IAMC = (
 )
 
 
+IAMC_ZERO_MUTE_BEFORE_YEAR = 2020
+
+
+def mask_iamc_zeros_before_year(
+    data: pd.DataFrame, year_cutoff: int = IAMC_ZERO_MUTE_BEFORE_YEAR
+) -> pd.DataFrame:
+    """Replace zeros with NaN for years before `year_cutoff` in IAMC-format data.
+
+    Used so that pre-calibration years (e.g. before 2020) show blank cells instead of
+    zeros in exported reports. Only affects rows where year < year_cutoff and
+    value == 0.
+    So that the transport reporting merges into the legacy reporting properly.
+    """
+    # Unwrap IamDataFrame or Quantity to get the underlying DataFrame
+    try:
+        df = getattr(data, "data", data)
+        if callable(df):
+            df = df()
+    except Exception:
+        df = data
+    if not isinstance(df, pd.DataFrame):
+        return data
+    # IAMC long format: accept both lowercase and capitalized column names
+    year_col = (
+        "year" if "year" in df.columns else ("Year" if "Year" in df.columns else None)
+    )
+    value_col = (
+        "value"
+        if "value" in df.columns
+        else ("Value" if "Value" in df.columns else None)
+    )
+    if year_col is None or value_col is None:
+        return data
+    out = df.copy()
+    mask = (out[year_col].astype(int) < year_cutoff) & (out[value_col] == 0)
+    out.loc[mask, value_col] = float("nan")
+    # Return same type so write_report/store_ts get the expected type
+    if not isinstance(data, pd.DataFrame):
+        if type(data).__name__ == "IamDataFrame":
+            try:
+                import pyam
+
+                return pyam.IamDataFrame(out)
+            except ImportError:
+                pass
+        if hasattr(data, "data"):
+            try:
+                import genno
+
+                return genno.Quantity(out, name=getattr(data, "name", None))
+            except Exception:
+                pass
+    return out
+
+
 #: Quantities in which to select transport technologies only. See
 #: :func:`select_transport_techs`.
 SELECT = [
@@ -315,9 +370,13 @@ def convert_iamc(c: "Computer") -> None:
         handle_iamc(c, deepcopy(info))
         keys.append(f"{info['variable']}::iamc")
 
-    # Concatenate IAMC-format tables
+    # Concatenate IAMC-format tables (use distinct key so mask can consume it)
+    k_raw = Key("transport raw", tag="iamc")
+    c.add(k_raw, "concat", *keys)
+
+    # Mask zeros for years before IAMC_ZERO_MUTE_BEFORE_YEAR (blank cells instead of 0)
     k = Key("transport", tag="iamc")
-    c.add(k, "concat", *keys)
+    c.add(k, mask_iamc_zeros_before_year, k_raw, year_cutoff=IAMC_ZERO_MUTE_BEFORE_YEAR)
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     c.apply(add_iamc_store_write, k)
