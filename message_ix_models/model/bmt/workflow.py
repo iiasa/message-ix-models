@@ -79,6 +79,8 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     )
 
     run_config = "materials_daccs_bmt_run_config.yaml"
+    # TODO: check if the scenario has transport tech, if it does not,
+    # then skip the transport reporting, and use another config
     # the building reporting is now embedded in the legacy reporting
 
     def _legacy_report(scen):
@@ -90,10 +92,10 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         )
 
     # 1. Transport reporting
-    # try:
-    #     _run_transport_report(context, scenario)
-    # except Exception as e:
-    #     log.warning("Transport reporting skipped: %s", e)
+    try:
+        _run_transport_report(context, scenario)
+    except Exception as e:
+        log.warning("Transport reporting skipped: %s", e)
 
     # message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
     # legacy report merges scenario ts into each table by root
@@ -176,37 +178,6 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     return scenario
 
 
-# def build_T(
-#     context: Context, scenario: message_ix.Scenario, **kwargs
-# ) -> message_ix.Scenario:
-#     """Build MESSAGEix-Transport with material module enabled.
-
-#     This wrapper function modifies the context to include the "material" module
-#     in the transport config, then calls the main transport build function.
-#     """
-#     from message_ix_models.model.transport.config import Config
-
-#     # Ensure transport config exists in context
-#     if "transport" not in context:
-#         # Create transport config from context if it doesn't exist
-#         context.transport = Config.from_context(context)
-
-#     if context.transport._code is None:
-#         # Get SSP from context if available, default to "SSP2"
-#         ssp = getattr(context, "ssp", "SSP2")
-#         # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in
-#         # CL_TRANSPORT_SCENARIO)
-#         if not ssp.startswith("SSP"):
-#             ssp = f"SSP{ssp}"
-#         context.transport.code = ssp
-
-#     # Add "material" module to the transport config
-#     context.transport.use_modules("material")
-
-#     # Call the main transport build function with modified context
-#     return transport_build(context, scenario, **kwargs)
-
-
 # Main BMT workflow
 
 
@@ -244,6 +215,12 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
+    wf.add_step(
+        "M reported",
+        "M cloned",
+        report,
+    )
+
     # Retrieve a 'Code' object with 'Annotations' that identify a particular
     # MESSAGEix-Transport configuration. For reference:
     # - .model.transport.config.CL_SCENARIO
@@ -263,7 +240,7 @@ def generate(context: Context) -> Workflow:
     # - .model.workflow.from_codelist, which makes a similar call
     #
     # `name` is the name of the final step
-    name = transport.add_steps(wf, "M cloned", scenario_code)
+    name = transport.add_steps(wf, "M reported", scenario_code)
 
     # Clone to the URL desired for this workflow, at a step named "MT built".
     # After cloning, set the scenario as default so it is the one used by later steps.
@@ -285,7 +262,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "MT reported",
         "MT solved",
-        _run_transport_report,
+        report,
     )
 
     wf.add_step(
@@ -317,7 +294,7 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "BMTX baseline reported",
+        "BMT reported",
         "BMT solved",
         report,
     )
