@@ -76,6 +76,8 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     )
 
     run_config = "materials_daccs_bmt_run_config.yaml"
+    # TODO: check if the scenario has transport tech, if it does not,
+    # then skip the transport reporting, and use another config
     # the building reporting is now embedded in the legacy reporting
 
     def _legacy_report(scen):
@@ -87,10 +89,10 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         )
 
     # 1. Transport reporting
-    # try:
-    #     _run_transport_report(context, scenario)
-    # except Exception as e:
-    #     log.warning("Transport reporting skipped: %s", e)
+    try:
+        _run_transport_report(context, scenario)
+    except Exception as e:
+        log.warning("Transport reporting skipped: %s", e)
 
     # message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
     # legacy report merges scenario ts into each table by root
@@ -218,6 +220,7 @@ def generate(context: Context) -> Workflow:
 
     name = wf.add_step("M", None, target=base_url)
     name = wf.add_step("M cloned", name, target=f"{url}M", clone=c)
+    name = wf.add_step("M reported", name, report)
 
     # Retrieve a 'Code' object with 'Annotations' that identify a particular
     # MESSAGEix-Transport configuration. For reference:
@@ -238,7 +241,7 @@ def generate(context: Context) -> Workflow:
     # - .model.workflow.from_codelist, which makes a similar call
     #
     # `name` is the name of the final step
-    name = transport.add_steps(wf, "M cloned", scenario_code)
+    name = transport.add_steps(wf, name, scenario_code)
 
     # Clone to the URL desired for this workflow, at a step named "MT built".
     # After cloning, set the scenario as default so it is the one used by later steps
@@ -252,12 +255,12 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step("MT solved", name, solve)
 
     # Transport report step (from .model.transport.workflow: callback + "transport all")
-    name = wf.add_step("MT reported", name, _run_transport_report)
+    name = wf.add_step("MT reported", name, report)
     name = wf.add_step("BMT built", name, build_B, target=f"{url}BMT", clone=c)
     name = wf.add_step("BMT solved", name, solve)
     name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=False)
     name = wf.add_step("BMTX baseline solved", name, solve)
-    name = wf.add_step("BMTX baseline reported", "BMT solved", report)
+    name = wf.add_step("BMT reported", "BMT solved", report)
 
     name = wf.add_step(
         "BMTX prep macro",
