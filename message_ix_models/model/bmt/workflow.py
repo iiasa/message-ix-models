@@ -307,7 +307,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "MT reported",
         "MT solved",
-        _run_transport_report,
+        report,
     )
 
     wf.add_step(
