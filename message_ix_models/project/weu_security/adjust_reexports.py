@@ -36,12 +36,7 @@ def adjust_reexports(base_scenario,
         fb_output['commodity'] = trade_commodity
         fb_output['level'] = base_level
         fb_output['technology'] = trade_commodity + '_bal'
-    
-        fb_output_out = pd.DataFrame()
-        for m in full_mode_list:
-            tdf = fb_output.copy()
-            tdf['mode'] = m
-            fb_output_out = pd.concat([fb_output_out, tdf])
+        fb_output['mode'] = 'M1'
     
         # Add capacity factor for fuel balancing
         fb_cap = base_scenario.par('capacity_factor', filters = {'technology': 'coal_bal'})
@@ -65,7 +60,7 @@ def adjust_reexports(base_scenario,
     
         with base_scenario.transact("Update fuel balancing"):
             base_scenario.add_par('input', fb_input_out)
-            base_scenario.add_par('output', fb_output_out)
+            base_scenario.add_par('output', fb_output)
             base_scenario.add_par('capacity_factor', fb_cap)
             
         with base_scenario.transact("Update export input"):
