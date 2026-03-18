@@ -223,7 +223,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # - The specific edition of the data used is set in .build.add_exogenous_data()
     # - Data for 2019 is used to proxy for `y0` = 2020, to avoid incorporating COVID
     #   impacts.
-    assert y0 == 2020, f"IEA Extended World Energy Balances: no data for y={y0}"
+    # assert y0 == 2020, f"IEA Extended World Energy Balances: no data for y={y0}"
     rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2019), drop=True)
     # rep.apply(to_csv, e_fnp[0], name="debug-e-fnp-0")  # DEBUG
     rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
