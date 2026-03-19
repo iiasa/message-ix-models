@@ -19,6 +19,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import workflow as model_workflow
 from message_ix_models.util import HAS_MESSAGE_DATA, broadcast, identify_nodes
 from message_ix_models.workflow import Workflow
+from message_ix_models.tools import remove_emission_bounds, add_emission_trajectory
 
 if TYPE_CHECKING:
     from typing import TypedDict
@@ -300,8 +301,8 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
     return scenario
 
-
-def retr_CO2_price(scen: Scenario):
+# TODO: each of them should have args such as type_emission and region
+def retr_CO2_price(scen: Scenario, regional_price=False):
     """Retrieve ``PRICE_EMISSION`` data and transform for use as ``tax_emission``.
 
     This is identical to :meth:`ScenarioRunner.retr_CO2_price`, except without the
@@ -309,13 +310,48 @@ def retr_CO2_price(scen: Scenario):
     :meth:`~.DataFrame.assign` or, to create data for multiple ``type_emission``, use
     :func:`message_ix_models.util.broadcast`.
     """
-    return (
-        scen.var("PRICE_EMISSION")
-        .assign(unit="USD/tC", type_emission=None)
+    df = scen.var("PRICE_EMISSION")
+    if regional_price:
+        df = df.loc[
+            (df["node"] != "World") & (~df["node"].str.contains("GLB"))
+        ]
+    df = (
+        df.assign(unit="USD/tC", type_emission=None)
         .rename(columns={"lvl": "value", "year": "type_year"})
         .drop("mrg", axis=1)
     )
+    return df
 
+def retr_CO2_trajectory(scen: Scenario, regional_emission_bound=True, emission="TCE_CO2"):
+    """Retrieves global CO2 emission trajectory.
+
+    Retrieves variable `EMISS` for `emission`: `TCE_CO2` or other types of emissions for
+    all regions.
+
+    Parameters
+    ----------
+    scen : :class:`message_ix.Scenario`
+        Scenario for which emission trajectory should be retrieved.
+    """
+    glb_nodes = ["World"] + [n for n in scen.set("node") if "GLB" in n]
+    if regional_emission_bound is True:
+        df = scen.var(
+            "EMISS",
+            filters={"emission": [emission], "type_tec": ["all"]},
+        )
+        df = df.loc[~df.node.isin(glb_nodes)]
+    else:
+        df = scen.var(
+            "EMISS",
+            filters={
+                "emission": [emission],
+                "type_tec": ["all"],
+                "node": glb_nodes,
+            },
+        )
+    df = df.pivot(index="node", values="lvl", columns="year")
+
+    return df
 
 def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 3 of the ENGAGE climate policy workflow."""
@@ -337,7 +373,7 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         )
 
     # Retrieve a data frame with CO₂ prices
-    price_df = retr_CO2_price(source)
+    price_df = retr_CO2_price(source, regional_price=True)
     
     # Debug: check what retr_CO2_price returns
     log.info(f"price_df columns after retr_CO2_price: {list(price_df.columns)}")
@@ -382,15 +418,15 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
     # Remove all emission bounds first
     # Otherwise remove_emission_bounds will remove the tax_emission we just added
-    with scenario.transact(message="Remove all emission bounds"):
-        log.info("Removing all emission bounds")
-        remove_emission_bounds.main(scenario, remove_all=True)
+    # with scenario.transact(message="Remove all emission bounds"):
+    #     log.info("Removing all emission bounds")
+    #     remove_emission_bounds.main(scenario, remove_all=True)
         
-        # As in step_2, remove the lower bound on global CO2 emissions. This is
-        # necessary if step_2 was not run (for instance, NAVIGATE T6.2 protocol)
-        name = "relation_lower"
-        filters = dict(relation=[context.model.relation_global_co2])
-        scenario.remove_par(name, scenario.par(name, filters=filters))
+    #     # As in step_2, remove the lower bound on global CO2 emissions. This is
+    #     # necessary if step_2 was not run (for instance, NAVIGATE T6.2 protocol)
+    #     name = "relation_lower"
+    #     filters = dict(relation=[context.model.relation_global_co2])
+    #     scenario.remove_par(name, scenario.par(name, filters=filters))
 
     # Now add tax_emission AFTER removing bounds
     with scenario.transact(message=f"Add price for {type_emission_list}"):
@@ -412,6 +448,29 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
     return scenario
 
+
+def step_4(context: Context, scenario: Scenario) -> Scenario:
+    """Step 4 of the ENGAGE climate policy workflow. 
+    Optional, locks in regional TCE emission path to deliver regional carbon prices.
+    
+    TODO: can introduce certificate trade in this step, also fix demand
+    """
+
+    df = retr_CO2_trajectory(scenario, regional_emission_bound=True, emission="TCE")
+    try:
+        scenario.remove_solution()
+    except ValueError:  
+        pass  
+
+    remove_emission_bounds.main(scenario, remove_all=True)
+    add_emission_trajectory.main(
+        scenario,
+        data=df,
+        type_emission="TCE",
+        remove_bounds_emission=False, # by default it only removes cumulative bounds
+    )
+
+    return scenario
 
 def add_steps(
     workflow: Workflow, base: str, config: PolicyConfig, name: str | None = None
