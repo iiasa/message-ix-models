@@ -6,8 +6,8 @@ buildings:
   data_paths:
       # Input file names under private_data_path("buildings")
       prices: "input_prices_R12.csv"
-      sturm_r: "report_MESSAGE_resid_SSP2_nopol_post.csv"
-      sturm_c: "report_MESSAGE_comm_SSP2_nopol_post.csv"
+      sturm_r: "report_MESSAGE_resid_SSP2_nopol_20250318.csv"
+      sturm_c: "report_MESSAGE_comm_SSP2_nopol_20250318.csv"
       demand_static: "static_20251227.csv"
   # Whether to include materials (steel, cement, aluminum) in the buildings spec
   with_materials: true
