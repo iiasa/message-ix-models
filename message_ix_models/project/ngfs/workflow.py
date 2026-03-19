@@ -61,36 +61,11 @@ def _get_ngfs_config(context):
 
 
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Report the scenario."""
-    from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
+    """Delegate reporting to the BMT workflow implementation."""
+    from message_ix_models.model.bmt.workflow import report as bmt_report
 
-    from message_ix_models.model.material.report.run_reporting import (
-        run as _materials_report,
-    )
-
-    run_config = "materials_daccs_run_config.yaml"
-    # run_config = "materials_daccs_bmt_run_config.yaml"
-    # TODO: replace with BMT config later.
-
-    def _legacy_report(scen):
-        iamc_report_hackathon.report(
-            mp=scen.platform,
-            scen=scen,
-            merge_hist=True,
-            run_config=run_config,
-        )
-
-    try:
-        scenario.check_out(timeseries_only=True)
-    except ValueError:
-        log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
-
-    _materials_report(scenario, region="R12_GLB", upload_ts=True)
-    scenario.commit("Add materials reporting")
-
-    _legacy_report(scenario)
-
-    return scenario
+    return bmt_report(context, scenario)
+    # TODO: it seems transport report cannot work alone without following after build
 
 
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
