@@ -51,20 +51,16 @@ def _generate_vetting_csv(
 
     # Calculate gap share (percentage) (avoid division by zero)
     vetting_data["gap_share"] = (
-        vetting_data["gap"]
-        / vetting_data["value_original"].replace(0, 1)
-        * 100
+        vetting_data["gap"] / vetting_data["value_original"].replace(0, 1) * 100
     )
 
     # Replace infinite values with 0 (when original was 0)
-    vetting_data["gap_share"] = vetting_data[
-        "gap_share"
-    ].replace([float("inf"), -float("inf")], 0)
+    vetting_data["gap_share"] = vetting_data["gap_share"].replace(
+        [float("inf"), -float("inf")], 0
+    )
 
     # Round to reasonable precision
-    vetting_data["gap_share"] = vetting_data[
-        "gap_share"
-    ].round(2)
+    vetting_data["gap_share"] = vetting_data["gap_share"].round(2)
 
     # Select and rename columns for clarity
     output_columns = [
@@ -258,21 +254,7 @@ def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
     **kwargs
         Additional keyword arguments (ignored, for workflow compatibility).
     """
-    # Check if power sector material data already exists
-    if scenario.has_par("input_cap_new"):
-        try:
-            existing_data = scenario.par("input_cap_new")
-            if (
-                not existing_data.empty
-                and "cement" in existing_data.get("commodity", pd.Series()).values
-            ):
-                log.info(
-                    "Power sector material intensity data already exists "
-                    "(found cement in input_cap_new). Skipping build_pm."
-                )
-                return scenario
-        except Exception as e:
-            log.warning(f"Could not check existing input_cap_new data: {e}")
+    # TODO: check if the power sector material data already exists
 
     log.info("Adding material intensity for power capacities...")
     scenario.check_out()
