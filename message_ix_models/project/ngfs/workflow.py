@@ -6,19 +6,23 @@
 import logging
 from pickle import TRUE
 
-import message_ix # type: ignore
+import message_ix  # type: ignore
+from message_ix import make_df
 
-from message_ix_models import Context
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.workflow import Workflow
 from message_ix_models.project.ngfs import interpolate_c_price
-from message_ix_models.project.engage.workflow import step_1, step_2, step_3, PolicyConfig
+from message_ix_models.project.engage.workflow import step_1, step_2, step_3, step_4, PolicyConfig
 from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.model.material.data_util import add_macro_materials
 # TODO: think about if it makes sense to integrate the interpolate_c_price function into the scenario runner
 
-from genno import Key # type: ignore
+from genno import Key  # type: ignore
 
 log = logging.getLogger(__name__)
+
+# Single source of truth for the NGFS model name (config key and scenario target prefix)
+NGFS_MODEL_NAME = "MESSAGEix-GLOBIOM 2.2-NGFS-R12-c1"
 
 # Functions for individual workflow steps
 
@@ -44,8 +48,8 @@ def _get_ngfs_config(context):
         
         config_file = private_data_path('projects', 'ngfs', 'config.yaml')
         with open(config_file) as f:
-            context.ngfs_config = yaml.safe_load(f)['MESSAGEix-GLOBIOM 2.2-NGFS-R12']
-    
+            context.ngfs_config = yaml.safe_load(f)[NGFS_MODEL_NAME]
+
     return context.ngfs_config
 
 def report(context: Context, scenario: message_ix.Scenario
@@ -116,19 +120,24 @@ def make_scenario_runner(context):
         biomass_trade=biomass_trade,
     )
 
-    # Pre-populate policy_baseline scenario if it does not exist
+    # Pre-populate baseline scenario(s) if they do not exist.
+    # Use baseline_DEFAULT to match the workflow target (base cloned → baseline_DEFAULT).
+    # policy_baseline is used by the runner's internal logic; baseline_DEFAULT is the
+    # prerequisite name passed to sr.add(..., start_scen="baseline_DEFAULT") by add_glasgow etc.
     if "policy_baseline" not in sr.scen:
-        sr.scen["policy_baseline"] = message_ix.Scenario(
+        base_scenario = message_ix.Scenario(
             mp=sr.mp,
             model=sr.model_name,
-            scenario="baseline",
+            scenario="baseline_DEFAULT",
             cache=False,
         )
+        sr.scen["policy_baseline"] = base_scenario
+        sr.scen["baseline_DEFAULT"] = base_scenario
 
     return sr
 
 def solve(
-    context: Context, scenario: message_ix.Scenario, model="MESSAGE-MACRO"
+    context: Context, scenario: message_ix.Scenario, model="MESSAGE"
 ) -> message_ix.Scenario:
     """Plain solve."""
     message_ix.models.DEFAULT_CPLEX_OPTIONS = {
@@ -146,29 +155,6 @@ def solve(
     scenario.set_as_default()
 
     return scenario
-
-# TODO: merge add_NPi2030 and add_NPi2025 into one function, args to config
-def add_NPi2025(
-    context: Context, scenario: message_ix.Scenario
-) -> message_ix.Scenario:
-    """Add NPi2025 to the scenario."""
-
-    sr = make_scenario_runner(context)
-    sr.add(
-        "NPi2025", 
-        "baseline_DEFAULT_2025",
-        # must start with this scenario name (hard-coded in the general scenario runner)
-        mk_INDC=True, 
-        slice_year=2020, 
-        policy_year=2025, 
-        target_kind="Target",
-        run_reporting = False,
-        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
-    )
-    
-    sr.run_all()
-    
-    return sr.scen["NPi2025"]
 
 def add_NPi2030(
     context: Context, scenario: message_ix.Scenario
@@ -200,6 +186,26 @@ def add_NPi2030(
     sr.run_all()
     
     return sr.scen["NPi2030"]
+
+def add_NPi_low_dem(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Add NPi2030 to the scenario."""
+
+    sr = make_scenario_runner(context)
+    
+    sr.add(
+        "npi_low_dem_scen", 
+        "NPi2030", 
+        slice_year=2025, 
+        tax_emission=150,
+        run_reporting = False,
+        solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
+    )
+
+    sr.run_all()
+    
+    return sr.scen["npi_low_dem_scen"]
 
 def add_NDC2035(context, scenario):
     """Add NDC policies to the scenario.
@@ -239,15 +245,6 @@ def add_NDC2030(context, scenario):
         solve_typ="MESSAGE-MACRO", # TODO: set to MESSAGE-MACRO when workflow test finished
     )    
     
-    # sr.add(
-    #     "indci_low_dem_scen", 
-    #     "INDC2030i_weak", 
-    #     slice_year=2030, 
-    #     tax_emission=250,
-    #     run_reporting = False,
-    #     solve_typ="MESSAGE", # TODO: set to MESSAGE-MACRO when workflow test finished
-    # )
-
     sr.run_all()
 
     return sr.scen["INDC2030i_weak"]
@@ -262,7 +259,7 @@ def add_glasgow(context, scenario, level, start_scen, target_scen, slice_yr):
         "mk_INDC": True,
         "slice_year": slice_yr,
         "run_reporting": False,
-        "solve_typ": "MESSAGE-MACRO",  # TODO: args go to config too?
+        "solve_typ": "MESSAGE",  # TODO: args go to config too?
     }
     if level.lower() == "full":
         add_kwargs["copy_demands"] = "baseline_low_dem_scen"
@@ -315,6 +312,74 @@ def add_NPiREF(context, scenario):
     scenario.set_as_default()
 
     return scenario
+
+
+# Constant carbon price (USD/tC) per region from 2030 to 2110 for h_cpol_c0
+NPiREF_C0_PRICE = {
+    "R12_AFR": 7.33,
+    "R12_CHN": 7.33,
+    "R12_EEU": 91.667,
+    "R12_FSU": 7.33,
+    "R12_LAM": 18.33,
+    "R12_MEA": 7.33,
+    "R12_NAM": 18.33,
+    "R12_PAO": 7.33,
+    "R12_PAS": 18.33,
+    "R12_RCPA": 7.33,
+    "R12_SAS": 7.33,
+    "R12_WEU": 14.667,
+}
+
+
+def add_NPiREF_c0(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply constant carbon price (tax_emission) per region from 2030 to 2110.
+
+    Uses NPiREF_C0_PRICE for each R12 region; model years in [2030, 2110]
+    are taken from the scenario.
+    """
+    info = ScenarioInfo(scenario)
+    model_years = [y for y in info.Y if 2030 <= y <= 2110]
+    regions = [n for n in info.N if n in NPiREF_C0_PRICE]
+
+    rows = []
+    for node in regions:
+        value = NPiREF_C0_PRICE[node]
+        for type_year in model_years:
+            rows.append(
+                {
+                    "node": node,
+                    "type_emission": "TCE",
+                    "type_tec": "all",
+                    "type_year": type_year,
+                    "unit": "USD/tC",
+                    "value": value,
+                }
+            )
+    df = make_df(
+        "tax_emission",
+        node=[r["node"] for r in rows],
+        type_emission="TCE",
+        type_tec="all",
+        type_year=[r["type_year"] for r in rows],
+        unit="USD/tC",
+        value=[r["value"] for r in rows],
+    )
+
+    with scenario.transact("applying constant cprice"):
+        bound_df = scenario.par("bound_emission")
+        if not bound_df.empty:
+            scenario.remove_par("bound_emission", bound_df)
+        scenario.add_par("tax_emission", df)
+
+    log.info(
+        f"Added constant carbon prices (2030–2110) to {scenario.model}/{scenario.scenario}"
+    )
+    solve(context, scenario)
+    scenario.set_as_default()
+    return scenario
+
 
 def add_NDC_forever(context, scenario):
     """Add NDC forever.
@@ -492,6 +557,19 @@ def step_3_and_solve(
     
     return scenario
 
+def step_4_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Lock in regional TCE emission path to deliver regional carbon prices. 
+    
+
+    """
+
+    step_4(context, scenario)
+    solve(context, scenario)
+    
+    return scenario
+
 def calibrate_macro(context, scenario):
     """Runs macro calibration process on a scenario."""
 
@@ -522,7 +600,6 @@ _scen_all = [
     "o_1p5c", 
     "o_2c", 
     "d_strain",
-    "d_strain_2025",
     ]
 
 _scen_en_steps = [
@@ -538,22 +615,16 @@ def generate(context: Context) -> Workflow:
     context.ssp = "SSP2"
     context.model.regions = "R12"
 
-    # Define model name
-    model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-NGFS-R12"
+    # Full scenario target prefix (platform + model name)
+    model_name = f"ixmp://ixmp-dev/{NGFS_MODEL_NAME}"
 
     wf.add_step(
         "base",
         None,
-        target="ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline",
+        target="ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline",
         # fmy of the whole workflow afterwards starts from 2030
         # TODO: replace with bmt baseline later
         # target = f"{model_name}/baseline",
-    )
-
-    wf.add_step(
-        "base_2025",
-        None,
-        target="ixmp://ixmp-dev/SSP_SSP2_v6.4/baseline_DEFAULT_step_14",
     )
 
     wf.add_step(
@@ -564,22 +635,9 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "base_2025 cloned",
-        "base_2025",
-        target=f"{model_name}/baseline_DEFAULT_2025",
-        clone=dict(keep_solution=True, shift_first_model_year=2025),
-    )
-
-    wf.add_step(
-        "base_2025 reported",
-        "base_2025 cloned",
-        report,
-    )
-
-    wf.add_step(
         "base reported",
         "base cloned",
-        placeholder,
+        report,
     )
 
     wf.add_step(
@@ -587,6 +645,20 @@ def generate(context: Context) -> Workflow:
         "base reported",
         add_NPi2030,
         target=f"{model_name}/NPi2030",
+    )
+
+    wf.add_step(
+        "h_cpol_c0 solved",
+        "NPi2030 solved",
+        add_NPiREF_c0,
+        target=f"{model_name}/h_cpol_c0",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "h_cpol_c0 reported",
+        "h_cpol_c0 solved",
+        report,
     )
 
     wf.add_step(
@@ -598,6 +670,14 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
+        "NPi_low_dem solved",
+        "NPi2030 solved",
+        add_NPi_low_dem,
+        target=f"{model_name}/npi_low_dem_scen",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
         "d_strain solved",
         "h_cpol solved",
         add_glasgow,
@@ -605,40 +685,6 @@ def generate(context: Context) -> Workflow:
         target_scen = "d_strain_2030_glasgow_partial",
         slice_yr = 2025,
         start_scen = "h_cpol",
-        level = "Partial",
-    )
-
-    wf.add_step( # Not working for now
-        "base_2025 macro solved",
-        "base_2025 reported",
-        calibrate_macro,
-        target=f"{model_name}/base_2025_macro",
-        clone=dict(keep_solution=True),
-    )
-
-    wf.add_step( # Not working for now
-        "NPi2025 solved",
-        "base_2025 macro solved",
-        add_NPi2025,
-        target=f"{model_name}/NPi2025",
-    )
-
-    wf.add_step(
-        "h_cpol_2025 solved",
-        "NPi2025 solved", 
-        add_NPiREF,
-        target=f"{model_name}/h_cpol_2025",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "d_strain_2025 solved",
-        "h_cpol_2025 solved",
-        add_glasgow,
-        target=f"{model_name}/d_strain_2025_glasgow_partial",
-        target_scen = "d_strain_2025_glasgow_partial",
-        slice_yr = 2025,
-        start_scen = "h_cpol_2025",
         level = "Partial",
     )
 
@@ -805,9 +851,29 @@ def generate(context: Context) -> Workflow:
         )
 
         wf.add_step(
-            f"{scen} solved",
+            f"{scen} EN2 reported",
+            f"{scen} EN2",
+            report,
+        )
+
+        wf.add_step(
+            f"{scen} EN3",
             f"{scen} EN2",
             step_3_and_solve,
+            target=f"{model_name}/{scen}_EN3",
+            clone=dict(keep_solution=True), # must have solution (to retrieve prices from)
+        )
+
+        wf.add_step(
+            f"{scen} EN3 reported",
+            f"{scen} EN3",
+            report,
+        )
+
+        wf.add_step(
+            f"{scen} solved",
+            f"{scen} EN3",
+            step_4_and_solve,
             target=f"{model_name}/{scen}",
             clone=dict(keep_solution=True), # must have solution (to retrieve prices from)
         )
