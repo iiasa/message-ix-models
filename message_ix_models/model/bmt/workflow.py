@@ -306,7 +306,7 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "BMT built",
-        "MT reported",
+        "MT solved",
         build_B,
         target=f"{model_name}/baseline_BMT",
         clone=dict(keep_solution=False),
@@ -330,6 +330,7 @@ def generate(context: Context) -> Workflow:
         prep_for_macro,
         target=f"{url}BMTX_message",
         clone=dict(shift_first_model_year=2030),
+        # make sure the scenario before this step is reported
     )
 
     # the add_macro generate another target scenario with the suffix _macro
