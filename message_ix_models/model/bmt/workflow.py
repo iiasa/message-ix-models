@@ -78,10 +78,15 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         run as _materials_report,
     )
 
-    run_config = "materials_daccs_bmt_run_config.yaml"
-    # TODO: check if the scenario has transport tech, if it does not,
-    # then skip the transport reporting, and use another config
-    # the building reporting is now embedded in the legacy reporting
+    report_config_check = scenario.par(
+        "demand", filters={"commodity": "transport pax UREAM"}
+    )
+    run_config = (
+        "materials_daccs_bmt_run_config.yaml"
+        if report_config_check is not None and len(report_config_check) > 0
+        else "materials_daccs_run_config.yaml"
+    )
+    log.info("Legacy report will use run_config=%s", run_config)
 
     def _legacy_report(scen):
         iamc_report_hackathon.report(
@@ -91,11 +96,14 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
             run_config=run_config,
         )
 
-    # 1. Transport reporting
-    try:
-        _run_transport_report(context, scenario)
-    except Exception as e:
-        log.warning("Transport reporting skipped: %s", e)
+    # 1. Transport reporting (only if transport is built)
+    if report_config_check is not None and len(report_config_check) > 0:
+        try:
+            _run_transport_report(context, scenario)
+        except Exception as e:
+            log.warning("Transport reporting skipped: %s", e)
+    else:
+        log.info("Transport reporting skipped (no transport pax demand).")
 
     # message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
     # legacy report merges scenario ts into each table by root
@@ -267,7 +275,7 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "BMT built",
-        "MT reported",
+        "MT solved",
         build_B,
         target=f"{model_name}/baseline_BMT",
         clone=dict(keep_solution=False),
@@ -284,7 +292,7 @@ def generate(context: Context) -> Workflow:
         "BMT solved",
         build_PM,
         target=f"{model_name}/baseline_BMTX",
-        clone=False,
+        clone=dict(keep_solution=False),
     )
 
     wf.add_step(
@@ -301,10 +309,12 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "BMTX prep macro",
-        "BMTX baseline solved",
+        # "BMTX baseline solved",
+        "BMT reported",
         prep_for_macro,
         target=f"{model_name}/baseline_BMTX_message",
         clone=dict(shift_first_model_year=2030),
+        # make sure the scenario before this step is reported
     )
     wf.add_step(
         "BMTX baseline macro",
@@ -312,6 +322,13 @@ def generate(context: Context) -> Workflow:
         add_macro,
         # the add_macro generate another target scenario with the suffix _macro
         # baseline_BMTX_message_macro
+        target=f"{model_name}/baseline_BMTX_message_macro",
+    )
+
+    wf.add_step(
+        "BMTX baseline macro reported",
+        "BMTX baseline macro",
+        report,
     )
 
     return wf
