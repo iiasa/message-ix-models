@@ -868,7 +868,9 @@ def gen_trade_tecs(s_info: ScenarioInfo, config) -> "ParameterData":
     trade_dict: "MutableParameterData" = {}
     merge_data(trade_dict, imp_dict, trd_dict)
     exp_dict = {
-        k: v.pipe(broadcast, year_act=modelyears, year_vtg=modelyears)
+        k: v.pipe(broadcast, year_act=modelyears, year_vtg=modelyears).query(
+            "year_act >= year_vtg"
+        )
         for k, v in exp_dict.items()
     }
     trade_dict = {
