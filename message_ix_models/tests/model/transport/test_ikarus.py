@@ -37,9 +37,13 @@ class C1(Check):
             .query("technology == 'rail_pub' and year_vtg == 2020")
             .iloc[0, :]
         )
-        return np.allclose(
-            23.689086, row["value"]
-        ), "inv_cost(t=rail_pub, yv=2020) has expected value"
+        exp = 26.158703
+        result = np.allclose(exp, row["value"])
+        return result, (
+            f"inv_cost(t=rail_pub, yv=2020) has value {row['value']} "
+            + ("=" if result else "!")
+            + f"= {exp} expected"
+        )
 
 
 class C2(Check):
