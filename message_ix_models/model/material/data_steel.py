@@ -962,6 +962,7 @@ def gen_bof_feedstock_input(s_info: ScenarioInfo) -> "ParameterData":
     return {
         "input": pd.concat(dfs)
         .pipe(broadcast, year_vtg=years)
+        .query("year_act >= year_vtg")
         .query("year_act - year_vtg <= 30")
         .pipe(same_node)
     }
@@ -1057,9 +1058,7 @@ def gen_manuf_steel_io(
     )
     df_out_steel = df_out_steel[df_out_steel["year_act"].le(df_out_steel["year_vtg"])]
     df_out_scrap = (
-        make_df(
-            "output", **df, **dimensions, level="new", commodity="steel_scrap"
-        )
+        make_df("output", **df, **dimensions, level="new", commodity="steel_scrap")
         .pipe(same_node)
         .pipe(broadcast, year_act=s_info.Y)
         .assign(year_vtg=lambda x: x["year_act"])
