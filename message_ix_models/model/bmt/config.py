@@ -7,14 +7,25 @@ keys:
 
    buildings:
       # ...
+   macro: "..."
    materials:
       # ...
    transport:
       # ...
 
-Of these, only the first is currently required; the latter two are omitted. The function
-:func:`_load_yaml` reads each section and passes it to the corresponding
-:class:`.Context` key, for instance :py:`Context.buildings`.
+Loads :file:`data/bmt/config.yaml` once into :attr:`context.bmt`, then sets:
+
+- :attr:`context.buildings` — ``SimpleNamespace`` of file stems for :func:`build_B`
+  (defaults merged with the ``buildings`` mapping).
+- :attr:`context.macro` — ``macro`` string (macro calibration workbook).
+- :attr:`context.transport` — full
+  :class:`message_ix_models.model.transport.config.Config` from
+  :meth:`~message_ix_models.model.transport.config.Config.from_context`, with the
+  YAML ``transport`` section passed as ``options`` (e.g. ``code: "M SSP2"``).
+
+The transport object must stay as that :class:`Config` class: the rest of
+MESSAGEix-Transport reads ``context.transport.spec``, ``.modules``, etc., not a raw
+dict.
 """
 
 from typing import TYPE_CHECKING
@@ -24,22 +35,33 @@ from message_ix_models.util import package_data_path
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from message_ix_models.model.buildings import Config
+    from message_ix_models.util.context import Context
 
 
-def load_buildings_config(path: "Path | None" = None) -> "Config":
-    """Load the ``buildings`` section from :file:`data/bmt/config.yaml` for
-    :attr:`context.buildings`.
+def apply_bmt_config(context: "Context", path: "Path | None" = None) -> None:
+    """Load BMT YAML into ``context`` (bmt, buildings, macro, transport)."""
+    import yaml
 
-    Missing keys in the ``buildings`` section are filled from
-    :data:`BUILDINGS_DEFAULTS`. If the section is missing, all defaults are used.
-    """
-    from message_ix_models.model.buildings.config import METHOD, Config
+    from message_ix_models.model.buildings.config import METHOD
+    from message_ix_models.model.buildings.config import Config as BuildingsConfig
+    from message_ix_models.model.transport.config import Config as TransportConfig
+
+    p = path or package_data_path("bmt", "config.yaml")
 
     # Create a buildings Config
-    result = Config(sturm_scenario="NONE", method=METHOD.B)
+    result = BuildingsConfig(sturm_scenario="NONE", method=METHOD.B)
 
     # Update from the "buildings:" key in the YAML file
-    result.read_file(path or package_data_path("bmt", "config.yaml"), key="buildings")
+    result.read_file(p, key="buildings")
 
-    return result
+    # Read the entire file
+    with open(p) as f:
+        data = yaml.safe_load(f) or {}
+
+    # Store data, MACRO data directly on `context`
+    context.bmt = data
+    context.macro = data.get("macro")
+
+    # Create a .transport.Config object, overriding defaults with values from the
+    # "transport:" key in the file
+    TransportConfig.from_context(context, options=data.get("transport", {}))
