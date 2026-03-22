@@ -4,8 +4,11 @@
 # mix-models ngfs run --from="base" "glasgow+" --dry-run
 
 import logging
+from pathlib import Path
 
+import ixmp
 import message_ix  # type: ignore
+import pandas as pd
 
 # TODO: think about integrating `interpolate_c_price` into the
 # scenario runner.
@@ -24,6 +27,7 @@ from message_ix_models.project.engage.workflow import (
 )
 from message_ix_models.project.ngfs import interpolate_c_price
 from message_ix_models.workflow import Workflow
+from message_ix_models.tools import add_CO2_emission_constraint
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +65,22 @@ def _get_ngfs_config(context):
 
 
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Delegate reporting to the BMT workflow implementation."""
+    """Report the scenario.
+
+    NGFS delegates to :func:`message_ix_models.model.bmt.workflow.report`, but
+    transport reporting requires ``context.transport.code`` to be set.
+    """
+    # Ensure MESSAGEix-Transport reporting can run: the reporter expects 
+    # context.transport.code (e.g. "SSP2") to be set on the transport.Config instance.
+    from message_ix_models.model.transport.config import CL_SCENARIO, Config
+
+    if "transport" not in context:
+        context.transport = Config.from_context(context)
+
+    if getattr(context.transport, "_code", None) is None:
+        context.transport.code = "SSP2" # M SSP2 for the one with materials
+        log.info("Transport reporting enabled with manually set codes.")
+
     from message_ix_models.model.bmt.workflow import report as bmt_report
 
     return bmt_report(context, scenario)
@@ -70,6 +89,54 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Placeholder function that does nothing, just for building workflow."""
+    return scenario
+
+
+def temp_borrow_par(
+    context: Context,
+    scenario: message_ix.Scenario,
+    target_model_name: str,
+    target_scen_name: str,
+    par_names: list[str],
+) -> message_ix.Scenario:
+    """Borrow parameter data from another scenario and copy to `scenario`."""
+    source = message_ix.Scenario(
+        mp=scenario.platform,
+        model=target_model_name,
+        scenario=target_scen_name,
+    )
+
+    with scenario.transact(
+        f"Borrow parameters from {target_model_name}/{target_scen_name}"
+    ):
+        for par_name in par_names:
+            df = source.par(par_name)
+            if df.empty:
+                log.info(
+                    "Skip borrowing '%s': no data in %s/%s",
+                    par_name,
+                    target_model_name,
+                    target_scen_name,
+                )
+                continue
+
+            existing = scenario.par(par_name)
+            if not existing.empty:
+                scenario.remove_par(par_name, existing)
+                log.info(f"Removed existing {par_name} from the original scenario")
+
+            scenario.add_par(par_name, df)
+            log.info(
+                "Borrowed '%s' from %s/%s (%d rows)",
+                par_name,
+                target_model_name,
+                target_scen_name,
+                len(df),
+            )
+
+    solve(context, scenario)
+    scenario.set_as_default()
+
     return scenario
 
 
@@ -129,7 +196,7 @@ def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
 ) -> message_ix.Scenario:
     """Plain solve."""
-    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
+    solve_options = {
         "advind": 0,
         "lpmethod": 4,
         "threads": 4,
@@ -140,7 +207,7 @@ def solve(
     }
 
     # scenario.solve(model, gams_args=["--cap_comm=0"])
-    scenario.solve(model)
+    scenario.solve(model, solve_options=solve_options)
     scenario.set_as_default()
 
     return scenario
@@ -234,8 +301,7 @@ def add_NDC2030(context, scenario):
         slice_year=2025,
         policy_year=2030,
         target_kind="Target",
-        # Replaced with npi_low_dem_scen after it is solved.
-        copy_demands="baseline_low_dem_scen",
+        copy_demands=False, # Turned off for bmt version
         run_reporting=False,
         # TODO: set to MESSAGE-MACRO when workflow test finished.
         solve_typ="MESSAGE-MACRO",
@@ -255,7 +321,7 @@ def add_glasgow(context, scenario, level, start_scen, target_scen, slice_yr):
         "mk_INDC": True,
         "slice_year": slice_yr,
         "run_reporting": False,
-        "solve_typ": "MESSAGE",  # TODO: args go to config too?
+        "solve_typ": "MESSAGE-MACRO",  # TODO: args go to config too?
     }
     if level.lower() == "full":
         add_kwargs["copy_demands"] = "baseline_low_dem_scen"
@@ -426,7 +492,6 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     # A step to get a scenario ready to enter the EN 3 steps
     # For now only add the lower bound of global CO2 emissions
     # to limit high penetration of negative emissions.
-    from message_ix_models.tools import add_CO2_emission_constraint
     from message_ix_models.util import identify_nodes
 
     context.model.regions = identify_nodes(scenario)
@@ -477,8 +542,82 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return scenario
 
 
-def step_1_and_solve(
+def call_low_macro_demand(
+    context: Context,
+    scenario: message_ix.Scenario,
+) -> message_ix.Scenario:
+
+    target_model_name = "MESSAGEix-GLOBIOM 2.2-NGFS-R12"
+    target_scen_name = "npi_low_dem_scen"
+    commodities = ("i_spec", "i_therm")
+
+    source = message_ix.Scenario(
+        mp=scenario.platform,
+        model=target_model_name,
+        scenario=target_scen_name,
+    )
+    src = source.par("demand")
+
+    borrowed = src[src["commodity"].isin(commodities)].copy()
+
+    with scenario.transact("Merge low macro demand"):
+        scenario.add_par("demand", borrowed)
+
+    log.info(
+        "Merged %d low-macro demand rows from %s/%s (commodities=%s)",
+        len(borrowed),
+        target_model_name,
+        target_scen_name,
+        commodities,
+    )
+    return scenario
+
+
+def call_buildings_demand(
     context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Prepare Buildings demand from message_buildings_dir and add to scenario."""
+    # Support both key spellings in local ixmp config.
+    message_buildings_dir = None
+    for key in ("message_buildings_dir", "message buildings dir"):
+        try:
+            value = ixmp.config.get(key)
+        except (AttributeError, KeyError):
+            continue
+        if value:
+            message_buildings_dir = value
+            break
+    if not message_buildings_dir:
+        raise ValueError(
+            "ixmp config key 'message_buildings_dir' (or 'message buildings dir') is "
+            "not set."
+        )
+
+    base_dir = Path(message_buildings_dir).expanduser().resolve()
+    temp_dir = base_dir.joinpath("message_ix_buildings", "sturm", "temp")
+    if not temp_dir.exists():
+        raise FileNotFoundError(
+            f"Buildings temp directory not found: {temp_dir}"
+        )
+
+    demand = pd.concat(
+        [pd.read_csv(temp_dir / name) for name in ("resid_sturm.csv", "comm_sturm.csv")],
+        ignore_index=True,
+    )
+    
+    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
+    demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
+    demand["level"] = "useful"
+
+    with scenario.transact("Add Buildings demand from message_buildings_dir/temp"):
+        scenario.add_par("demand", demand)
+
+    log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
+    return scenario
+
+def step_1_and_solve(
+    context: Context,
+    scenario: message_ix.Scenario,
 ) -> message_ix.Scenario:
     """Apply budget constraint (step_1 of the EN 3 steps) and solve the scenario.
 
@@ -501,6 +640,8 @@ def step_1_and_solve(
     policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
 
     step_1(context, scenario, policy_config)
+    call_low_macro_demand(context, scenario)
+    call_buildings_demand(context, scenario)
     solve(context, scenario)
 
     return scenario
@@ -529,15 +670,6 @@ def step_2_and_solve(
     policy_config = PolicyConfig()
 
     step_2(context, scenario, policy_config)
-    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-        "advind": 0,
-        "lpmethod": 4,
-        "threads": 4,
-        "epopt": 1e-6,
-        "scaind": -1,
-        # "predual": 1,
-        "barcrossalg": 0,
-    }
     scenario.solve(model="MESSAGE")
 
     return scenario
@@ -657,42 +789,47 @@ def generate(context: Context) -> Workflow:
         report,
     )
 
-    wf.add_step(
-        "NPi2030 solved",
-        "base reported",
-        add_NPi2030,
-        target=f"{model_name}/NPi2030",
-    )
+    # wf.add_step(
+    #     "NPi2030 solved",
+    #     "base reported",
+    #     add_NPi2030,
+    #     target=f"{model_name}/NPi2030",
+    # )
 
-    wf.add_step(
-        "h_cpol_c0 solved",
-        "NPi2030 solved",
-        add_NPiREF_c0,
-        target=f"{model_name}/h_cpol_c0",
-        clone=dict(keep_solution=False),
-    )
+    # wf.add_step(
+    #     "h_cpol_c0 solved",
+    #     "NPi2030 solved",
+    #     add_NPiREF_c0,
+    #     target=f"{model_name}/h_cpol_c0",
+    #     clone=dict(keep_solution=False),
+    # )
 
-    wf.add_step(
-        "h_cpol_c0 reported",
-        "h_cpol_c0 solved",
-        report,
-    )
+    # wf.add_step(
+    #     "h_cpol_c0 reported",
+    #     "h_cpol_c0 solved",
+    #     report,
+    # )
 
     wf.add_step(
         "h_cpol solved",
-        "NPi2030 solved",
-        add_NPiREF,
+        # "NPi2030 solved",
+        # add_NPiREF,
+        "base reported",
+        temp_borrow_par,
         target=f"{model_name}/h_cpol",
         clone=dict(keep_solution=False),
+        target_model_name="SSP_SSP2_v6.6",
+        target_scen_name="NPiREF",
+        par_names=["bound_emission","tax_emission"],
     )
 
-    wf.add_step(
-        "NPi_low_dem solved",
-        "NPi2030 solved",
-        add_NPi_low_dem,
-        target=f"{model_name}/npi_low_dem_scen",
-        clone=dict(keep_solution=False),
-    )
+    # wf.add_step(
+    #     "NPi_low_dem solved",
+    #     "NPi2030 solved",
+    #     add_NPi_low_dem,
+    #     target=f"{model_name}/npi_low_dem_scen",
+    #     clone=dict(keep_solution=False),
+    # )
 
     wf.add_step(
         "d_strain solved",
@@ -712,11 +849,26 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/INDC2030i_weak",
     )
 
-    wf.add_step(
-        "NDC2030 reported",
-        "NDC2030 solved",
-        report,
-    )
+    # wf.add_step(
+    #     "NDC2030 reported",
+    #     "NDC2030 solved",
+    #     report,
+    # )
+
+    # wf.add_step(
+    #     "h_ndc solved",
+    #     # "NDC2030 solved",
+    #     # add_NDC_forever,
+    #     "base reported",
+    #     temp_borrow_par,
+    #     target=f"{model_name}/h_ndc",
+    #     clone=dict(keep_solution=False),
+    #     target_model_name="SSP_SSP2_v6.6",
+    #     target_scen_name="INDC2030i_forever",
+    #     par_names=["bound_emission","tax_emission"], 
+    # Oliver prices too wierd... better not to borrow
+    # )
+
 
     wf.add_step(
         "h_ndc solved",
@@ -726,27 +878,27 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-    wf.add_step(
-        "NDC2035 solved",
-        "NDC2030 solved",
-        add_NDC2035,
-        target=f"{model_name}/INDC2035",
-        clone=dict(keep_solution=False, shift_first_model_year=2035),
-    )
+    # wf.add_step(
+    #     "NDC2035 solved",
+    #     "NDC2030 solved",
+    #     add_NDC2035,
+    #     target=f"{model_name}/INDC2035",
+    #     clone=dict(keep_solution=False, shift_first_model_year=2035),
+    # )
 
-    wf.add_step(
-        "NDC2035 reported",
-        "NDC2035 solved",
-        report,
-    )
+    # wf.add_step(
+    #     "NDC2035 reported",
+    #     "NDC2035 solved",
+    #     report,
+    # )
 
-    wf.add_step(
-        "h_ndc_2035 solved",
-        "NDC2035 reported",
-        add_NDC_forever,
-        target=f"{model_name}/h_ndc_2035",
-        clone=dict(keep_solution=False),
-    )
+    # wf.add_step(
+    #     "h_ndc_2035 solved",
+    #     "NDC2035 reported",
+    #     add_NDC_forever,
+    #     target=f"{model_name}/h_ndc_2035",
+    #     clone=dict(keep_solution=False),
+    # )
 
     wf.add_step(
         "glasgow_partial_2030 solved",
@@ -798,34 +950,34 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-    wf.add_step(
-        "d_delfrag_2030_2035 solved",
-        "h_cpol solved",
-        add_glasgow,
-        target=f"{model_name}/d_delfrag_2030_glasgow_partial",
-        target_scen="d_delfrag_2030_glasgow_partial",
-        slice_yr=2030,
-        start_scen="h_cpol",
-        level="Partial",
-        clone=dict(keep_solution=True, shift_first_model_year=2035),
-    )
+    # wf.add_step(
+    #     "d_delfrag_2030_2035 solved",
+    #     "h_cpol solved",
+    #     add_glasgow,
+    #     target=f"{model_name}/d_delfrag_2030_glasgow_partial",
+    #     target_scen="d_delfrag_2030_glasgow_partial",
+    #     slice_yr=2030,
+    #     start_scen="h_cpol",
+    #     level="Partial",
+    #     clone=dict(keep_solution=True, shift_first_model_year=2035),
+    # )
+
+    # wf.add_step(
+    #     "d_delfrag_2030_2035 reported",
+    #     "d_delfrag_2030_2035 solved",
+    #     report,
+    # )
+
+    # wf.add_step(
+    #     "d_delfrag base built",
+    #     "d_delfrag_2030_2035 reported",
+    #     step_0,
+    #     target=f"{model_name}/d_delfrag_base",
+    #     clone=dict(keep_solution=False),
+    # )
 
     wf.add_step(
-        "d_delfrag_2030_2035 reported",
-        "d_delfrag_2030_2035 solved",
-        report,
-    )
-
-    wf.add_step(
-        "d_delfrag base built",
-        "d_delfrag_2030_2035 reported",
-        step_0,
-        target=f"{model_name}/d_delfrag_base",
-        clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "d_delfrag_2035_2040 solved",
+        "d_delfrag_2035 solved",
         "h_cpol solved",
         add_glasgow,
         target=f"{model_name}/d_delfrag_2035_glasgow_partial",
@@ -837,16 +989,16 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "d_delfrag_2035_2040 reported",
-        "d_delfrag_2035_2040 solved",
+        "d_delfrag_2035 reported",
+        "d_delfrag_2035 solved",
         report,
     )
 
     wf.add_step(
-        "d_delfrag_2035 base built",
-        "d_delfrag_2035_2040 reported",
+        "d_delfrag base built",
+        "d_delfrag_2035 reported",
         step_0,
-        target=f"{model_name}/d_delfrag_2035_base",
+        target=f"{model_name}/d_delfrag_base",
         clone=dict(keep_solution=False),
     )
 
