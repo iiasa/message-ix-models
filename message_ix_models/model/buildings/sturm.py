@@ -5,8 +5,12 @@ import logging
 import re
 import subprocess
 from collections.abc import Mapping, MutableMapping
+from pathlib import Path
 
+import ixmp
+import numpy as np
 import pandas as pd
+from message_ix import Scenario
 
 from message_ix_models import Context
 
@@ -200,3 +204,133 @@ def scenario_name(name: str) -> str:
     return {
         "baseline": "SSP2",
     }.get(result, result)
+
+
+def _message_buildings_install_dir() -> Path:
+    """Return MESSAGEix-Buildings path from ixmp (``message_buildings_dir``)."""
+    message_buildings_dir = None
+    for key in ("message_buildings_dir", "message buildings dir"):
+        try:
+            value = ixmp.config.get(key)
+        except (AttributeError, KeyError):
+            continue
+        if value:
+            message_buildings_dir = value
+            break
+    if not message_buildings_dir:
+        raise ValueError(
+            "ixmp config key 'message_buildings_dir' (or 'message buildings dir') is "
+            "not set."
+        )
+    return Path(message_buildings_dir).expanduser().resolve()
+
+
+def call_sturm(context: Context, scenario: Scenario) -> Scenario:
+    """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM."""
+    buildings_root = _message_buildings_install_dir()
+    sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
+    price_dir = sturm_dir.joinpath("data")
+
+    # Duplicate the original energy price input file in STURM
+    original_price_input_file = price_dir.joinpath("input_prices_R12.csv")
+
+    if not original_price_input_file.exists():
+        raise FileNotFoundError(
+            f"Original price input file not found: {original_price_input_file}"
+        )
+
+    original_price_input_backup = price_dir.joinpath("input_prices_R12_ori.csv")
+    df_prices_ori = pd.read_csv(original_price_input_file)
+    df_prices_ori.to_csv(original_price_input_backup, index=False)
+    log.info("Saved copy of original STURM prices to %s", original_price_input_backup)
+
+    # Retrieve new energy commodity prices from the scenario
+    df_prices = scenario.var(
+        "PRICE_COMMODITY",
+        filters={
+            "level": "final",
+            "commodity": [
+                "biomass",
+                "coal",
+                "lightoil",
+                "gas",
+                "electr",
+                "d_heat",
+            ],
+        },
+    )
+
+    # Map R12 regions to R11 regions
+    # R12_CHN -> R11_CHN
+    # R12_RCPA -> R11_CPA
+    # Other R12_* -> R11_* (replace R12_ with R11_)
+    def map_r12_to_r11(node):
+        """Map R12 region codes to R11 region codes"""
+        if node == "R12_CHN":
+            return "R11_CHN"
+        elif node == "R12_RCPA":
+            return "R11_CPA"
+        elif node.startswith("R12_"):
+            return node.replace("R12_", "R11_")
+        else:
+            return node  # Keep as is if not R12
+
+    # Apply the mapping
+    df_prices["node"] = df_prices["node"].apply(map_r12_to_r11)
+
+    # Identify key columns for merging
+    key_cols = ["node", "commodity", "level", "year", "time"]
+    # Filter to only columns that exist in both dataframes
+    key_cols = [
+        col
+        for col in key_cols
+        if col in df_prices_ori.columns and col in df_prices.columns
+    ]
+
+    # Merge the original dataframe with price data
+    df_updated = pd.merge(
+        df_prices_ori,
+        df_prices[key_cols + ["lvl"]],
+        on=key_cols,
+        how="left",
+        suffixes=("", "_new"),
+    )
+
+    rows_updated = (
+        df_updated["lvl_new"].notna().sum() if "lvl_new" in df_updated.columns else 0
+    )
+
+    lvl_original = df_updated["lvl"].copy()
+    lvl_scenario = df_updated["lvl_new"].fillna(df_updated["lvl"])
+
+    # Calculate the factor (ratio) between scenario and original values for analysis
+    # Factor = scenario / original
+    # Factor < 1 means scenario is lower than original
+    factor = np.where(lvl_original != 0, lvl_scenario / lvl_original, np.nan)
+
+    # For rows where factor < 1 (scenario < original), use original value
+    # Otherwise, use scenario value
+    df_updated["lvl"] = np.where(
+        (factor < 1) & (df_updated["lvl_new"].notna()), lvl_original, lvl_scenario
+    )
+    df_updated = df_updated.drop(columns=["lvl_new"])
+
+    # Save the updated prices to the default price input file in STURM
+    df_updated.to_csv(original_price_input_file, index=False)
+    log.info("Updated prices saved to %s", original_price_input_file)
+    log.info("Total rows: %d", len(df_updated))
+    log.info("Rows with updated prices: %d", rows_updated)
+
+    # Run STURM (via Rscript)
+    for name in ("run_STURM_bmt_resid.R", "run_STURM_bmt_comm.R"):
+        script = sturm_dir.joinpath(name)
+        if not script.is_file():
+            raise FileNotFoundError(f"STURM BMT R script not found: {script}")
+        log.info("Running Rscript %s (cwd=%s)", name, sturm_dir)
+        subprocess.run(
+            ["Rscript", name],
+            cwd=sturm_dir,
+            check=True,
+        )
+
+    return scenario
