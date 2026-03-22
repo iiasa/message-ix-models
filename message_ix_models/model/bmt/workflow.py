@@ -24,21 +24,16 @@ def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
 ) -> message_ix.Scenario:
     """Plain solve."""
-    from message_ix.common import DEFAULT_CPLEX_OPTIONS
-
     # Use default CPLEX options and update with custom settings
-    solve_options = DEFAULT_CPLEX_OPTIONS.copy()
-    solve_options.update(
-        {
-            "advind": 0,
-            "lpmethod": 4,
-            "threads": 4,
-            "epopt": 1e-6,
-            "scaind": -1,
-            # "predual": 1,
-            "barcrossalg": 0,
-        }
-    )
+    solve_options = {
+        "advind": 0,
+        "lpmethod": 4,
+        "threads": 4,
+        "epopt": 1e-6,
+        "scaind": -1,
+        # "predual": 1,
+        "barcrossalg": 0,
+    }
 
     scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=1"])
     scenario.set_as_default()
@@ -168,8 +163,10 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     """Update macro calibration file, add MACRO to the scenario,
     and solve with MACRO.
     """
-    bmt = getattr(context, "bmt", None)
-    macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
+    macro_file = getattr(context, "macro", None)
+    if macro_file is None:
+        bmt = getattr(context, "bmt", None)
+        macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
     if macro_file is None:
         ssp = getattr(context, "ssp", "SSP2")
         macro_file = f"macro_calibration_input_{ssp}_bmt.xlsx"
@@ -191,23 +188,18 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
 
 def generate(context: Context) -> Workflow:
     """Create the BMT-run workflow."""
-    from message_ix_models.model.bmt.config import (
-        load_bmt_config,
-        load_buildings_config,
-    )
+    from message_ix_models.model.bmt.config import apply_bmt_config
     from message_ix_models.model.transport import workflow as transport
-    from message_ix_models.model.transport.config import CL_SCENARIO
 
     wf = Workflow(context)
     context.ssp = "SSP2"
     context.model.regions = "R12"
 
-    # Load BMT config (buildings, macro file for MACRO calibration, etc.) into context
-    context.bmt = load_bmt_config()
-    context.buildings = load_buildings_config(bmt_data=context.bmt)
+    apply_bmt_config(context)
+    print(repr(context.asdict()))
 
     # Define model name
-    model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-BMT-R12"
+    model_name = context.bmt["model_name"]
 
     wf.add_step(
         "M",
@@ -220,7 +212,7 @@ def generate(context: Context) -> Workflow:
         "M cloned",
         "M",
         target=f"{model_name}/baseline_M",
-        clone=dict(keep_solution=False),
+        clone=dict(keep_solution=True),
     )
 
     wf.add_step(
@@ -241,14 +233,14 @@ def generate(context: Context) -> Workflow:
     # scenario has two codes: id "SSP{n}" (extra_modules=[]) and
     # "M SSP{n}" (extra_modules=["material"]).
     # Use the code without "M " to build transport without the material module.
-    scenario_code = CL_SCENARIO.get()[context.ssp]
+    # scenario_code = CL_SCENARIO.get()[context.ssp]
 
     # Add step(s) on top of "M cloned" that build MESSAGEix-Transport. For reference:
     # - .model.transport.workflow.add_steps
     # - .model.workflow.from_codelist, which makes a similar call
     #
     # `name` is the name of the final step
-    name = transport.add_steps(wf, "M reported", scenario_code)
+    name = transport.add_steps(wf, "M reported", context.transport.code)
 
     # Clone to the URL desired for this workflow, at a step named "MT built".
     # After cloning, set the scenario as default so it is the one used by later steps.
@@ -323,6 +315,8 @@ def generate(context: Context) -> Workflow:
         # the add_macro generate another target scenario with the suffix _macro
         # baseline_BMTX_message_macro
         target=f"{model_name}/baseline_BMTX_message_macro",
+        # the scenario will not be cloned to the target,
+        # but the next step will report from the target in the previous step
     )
 
     wf.add_step(
