@@ -334,3 +334,33 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
         )
 
     return scenario
+
+
+def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
+    """Retrieve buildings demand from message_buildings_dir and add to scenario."""
+    # Support both key spellings in local ixmp config.
+    buildings_root = _message_buildings_install_dir()
+
+    temp_dir = buildings_root.joinpath("message_ix_buildings", "sturm", "temp")
+    if not temp_dir.exists():
+        raise FileNotFoundError(f"Buildings demand directory not found: {temp_dir}")
+
+    demand = pd.concat(
+        [
+            pd.read_csv(temp_dir / name)
+            for name in ("resid_sturm.csv", "comm_sturm.csv")
+        ],
+        ignore_index=True,
+    )
+
+    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
+    # TODO: do we need dynamic materials demand for CircEUlar too?
+    demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
+    demand["level"] = "useful"
+    # TODO: "useful" to match build; consider unifying demand levels to "final"
+
+    with scenario.transact("Add Buildings demand from message_ix_buildings/sturm/temp"):
+        scenario.add_par("demand", demand)
+
+    log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
+    return scenario
