@@ -19,17 +19,18 @@ from message_ix_models.tools.bilateralize.prepare_edit import prepare_edit_files
 project_name = None  # Name of the project (e.g., 'newpathways')
 config_name = None  # Name of the config file (e.g., 'config.yaml')
 
-# Prepare edit files for bilateralization
-prepare_edit_files(project_name=project_name, config_name=config_name)
+if __name__ == "__main__":
+    # Prepare edit files for bilateralization
+    prepare_edit_files(project_name=project_name, config_name=config_name)
 
-# Move data from bare files to a dictionary to update a MESSAGEix scenario
-trade_dict = bare_to_scenario(project_name=project_name, config_name=config_name)
+    # Move data from bare files to a dictionary to update a MESSAGEix scenario
+    trade_dict = bare_to_scenario(project_name=project_name, config_name=config_name)
 
-# Update MESSAGEix scenario(s) with bilateralized dictionary and solve scenario
-load_and_solve(
-    project_name=project_name,
-    config_name=config_name,
-    scenario=None,  # Specifies MESSAGEix scenario, or will use project yaml
-    trade_dict=trade_dict,
-    solve=True,
-)
+    # Update MESSAGEix scenario(s) with bilateralized dictionary and solve scenario
+    load_and_solve(
+        project_name=project_name,
+        config_name=config_name,
+        scenario=None,  # Specifies MESSAGEix scenario, or will use project yaml
+        trade_dict=trade_dict,
+        solve=True,
+    )
