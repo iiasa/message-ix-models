@@ -4,6 +4,7 @@
 # mix-models ngfs run --from="base" "glasgow+" --dry-run
 
 import logging
+import re
 from pathlib import Path
 
 import ixmp
@@ -26,8 +27,8 @@ from message_ix_models.project.engage.workflow import (
     step_4,
 )
 from message_ix_models.project.ngfs import interpolate_c_price
-from message_ix_models.workflow import Workflow
 from message_ix_models.tools import add_CO2_emission_constraint
+from message_ix_models.workflow import Workflow
 
 log = logging.getLogger(__name__)
 
@@ -64,21 +65,26 @@ def _get_ngfs_config(context):
     return context.ngfs_config
 
 
+def _ngfs_base_scenario_name(name: str) -> str:
+    """Strip trailing ``_EN1`` / ``_EN2`` / … suffix for :file:`config.yaml` keys."""
+    return re.sub(r"_EN\d+$", "", name)
+
+
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Report the scenario.
 
     NGFS delegates to :func:`message_ix_models.model.bmt.workflow.report`, but
     transport reporting requires ``context.transport.code`` to be set.
     """
-    # Ensure MESSAGEix-Transport reporting can run: the reporter expects 
+    # Ensure MESSAGEix-Transport reporting can run: the reporter expects
     # context.transport.code (e.g. "SSP2") to be set on the transport.Config instance.
-    from message_ix_models.model.transport.config import CL_SCENARIO, Config
+    from message_ix_models.model.transport.config import Config
 
     if "transport" not in context:
         context.transport = Config.from_context(context)
 
     if getattr(context.transport, "_code", None) is None:
-        context.transport.code = "SSP2" # M SSP2 for the one with materials
+        context.transport.code = "SSP2"  # M SSP2 for the one with materials
         log.info("Transport reporting enabled with manually set codes.")
 
     from message_ix_models.model.bmt.workflow import report as bmt_report
@@ -301,7 +307,7 @@ def add_NDC2030(context, scenario):
         slice_year=2025,
         policy_year=2030,
         target_kind="Target",
-        copy_demands=False, # Turned off for bmt version
+        copy_demands=False,  # Turned off for bmt version
         run_reporting=False,
         # TODO: set to MESSAGE-MACRO when workflow test finished.
         solve_typ="MESSAGE-MACRO",
@@ -546,7 +552,6 @@ def call_low_macro_demand(
     context: Context,
     scenario: message_ix.Scenario,
 ) -> message_ix.Scenario:
-
     target_model_name = "MESSAGEix-GLOBIOM 2.2-NGFS-R12"
     target_scen_name = "npi_low_dem_scen"
     commodities = ("i_spec", "i_therm")
@@ -596,15 +601,16 @@ def call_buildings_demand(
     base_dir = Path(message_buildings_dir).expanduser().resolve()
     temp_dir = base_dir.joinpath("message_ix_buildings", "sturm", "temp")
     if not temp_dir.exists():
-        raise FileNotFoundError(
-            f"Buildings temp directory not found: {temp_dir}"
-        )
+        raise FileNotFoundError(f"Buildings temp directory not found: {temp_dir}")
 
     demand = pd.concat(
-        [pd.read_csv(temp_dir / name) for name in ("resid_sturm.csv", "comm_sturm.csv")],
+        [
+            pd.read_csv(temp_dir / name)
+            for name in ("resid_sturm.csv", "comm_sturm.csv")
+        ],
         ignore_index=True,
     )
-    
+
     exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
     demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
     demand["level"] = "useful"
@@ -614,6 +620,7 @@ def call_buildings_demand(
 
     log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
     return scenario
+
 
 def step_1_and_solve(
     context: Context,
@@ -625,11 +632,9 @@ def step_1_and_solve(
     validates it, applies the budget constraint using step_1,
     and then solves the scenario.
     """
-    # Get scenario name from context and extract base name
-    # (remove _EN1 suffix if present).
-    scen = context.scenario_info.get("scenario", scenario.scenario)
-    if scen.endswith("_EN1"):
-        scen = scen[:-4]  # Remove "_EN1" suffix to get base scenario name
+    scen = _ngfs_base_scenario_name(
+        context.scenario_info.get("scenario", scenario.scenario)
+    )
 
     # Get budget from config
     budget_value = _get_ngfs_config(context).get(scen, {}).get("budget")
@@ -684,13 +689,9 @@ def step_3_and_solve(
     using the specified type_emission (TCE_non-CO2 by default),
     and then solves the scenario.
     """
-    # Get scenario name from context and extract base name
-    # (remove _EN2 suffix if present).
-    scen = context.scenario_info.get("scenario", scenario.scenario)
-    if scen.endswith("_EN2"):
-        scen = scen[:-4]  # Remove "_EN2" suffix to get base scenario name
-    elif scen.endswith("_EN3"):
-        scen = scen[:-4]  # Remove "_EN3" suffix to get base scenario name
+    scen = _ngfs_base_scenario_name(
+        context.scenario_info.get("scenario", scenario.scenario)
+    )
 
     # Get step_3_type_emission from config
     step_3_type_emission = (
@@ -820,7 +821,7 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
         target_model_name="SSP_SSP2_v6.6",
         target_scen_name="NPiREF",
-        par_names=["bound_emission","tax_emission"],
+        par_names=["bound_emission", "tax_emission"],
     )
 
     # wf.add_step(
@@ -865,10 +866,9 @@ def generate(context: Context) -> Workflow:
     #     clone=dict(keep_solution=False),
     #     target_model_name="SSP_SSP2_v6.6",
     #     target_scen_name="INDC2030i_forever",
-    #     par_names=["bound_emission","tax_emission"], 
+    #     par_names=["bound_emission","tax_emission"],
     # Oliver prices too wierd... better not to borrow
     # )
-
 
     wf.add_step(
         "h_ndc solved",
