@@ -5,11 +5,8 @@
 
 import logging
 import re
-from pathlib import Path
 
-import ixmp
 import message_ix  # type: ignore
-import pandas as pd
 
 # TODO: think about integrating `interpolate_c_price` into the
 # scenario runner.
@@ -17,6 +14,7 @@ from genno import Key  # type: ignore
 from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.buildings.sturm import call_buildings_demand, call_sturm
 from message_ix_models.model.material.data_util import add_macro_materials
 from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.project.engage.workflow import (
@@ -578,50 +576,6 @@ def call_low_macro_demand(
     return scenario
 
 
-def call_buildings_demand(
-    context: Context, scenario: message_ix.Scenario
-) -> message_ix.Scenario:
-    """Prepare Buildings demand from message_buildings_dir and add to scenario."""
-    # Support both key spellings in local ixmp config.
-    message_buildings_dir = None
-    for key in ("message_buildings_dir", "message buildings dir"):
-        try:
-            value = ixmp.config.get(key)
-        except (AttributeError, KeyError):
-            continue
-        if value:
-            message_buildings_dir = value
-            break
-    if not message_buildings_dir:
-        raise ValueError(
-            "ixmp config key 'message_buildings_dir' (or 'message buildings dir') is "
-            "not set."
-        )
-
-    base_dir = Path(message_buildings_dir).expanduser().resolve()
-    temp_dir = base_dir.joinpath("message_ix_buildings", "sturm", "temp")
-    if not temp_dir.exists():
-        raise FileNotFoundError(f"Buildings temp directory not found: {temp_dir}")
-
-    demand = pd.concat(
-        [
-            pd.read_csv(temp_dir / name)
-            for name in ("resid_sturm.csv", "comm_sturm.csv")
-        ],
-        ignore_index=True,
-    )
-
-    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
-    demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
-    demand["level"] = "useful"
-
-    with scenario.transact("Add Buildings demand from message_buildings_dir/temp"):
-        scenario.add_par("demand", demand)
-
-    log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
-    return scenario
-
-
 def step_1_and_solve(
     context: Context,
     scenario: message_ix.Scenario,
@@ -645,7 +599,12 @@ def step_1_and_solve(
     policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
 
     step_1(context, scenario, policy_config)
+
+    # Call the low macro demand from a high carbon price scenario
     call_low_macro_demand(context, scenario)
+
+    # Call a prepared default low demand as a starting point
+    # to avoid infeasibility before retrieving prices
     call_buildings_demand(context, scenario)
     solve(context, scenario)
 
@@ -675,6 +634,8 @@ def step_2_and_solve(
     policy_config = PolicyConfig()
 
     step_2(context, scenario, policy_config)
+    call_sturm(context, scenario)  # run message_ix_buildings
+    call_buildings_demand(context, scenario)  # pick the updated demand from the run
     scenario.solve(model="MESSAGE")
 
     return scenario
