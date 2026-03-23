@@ -329,7 +329,7 @@ def convert_trade(
             df["conversion (TJ/t)"],
         )
 
-    # Convert to energy units
+    # Convert to energy units or keep material units
     df["conversion (TJ/t)"] = df["conversion (TJ/t)"].astype(float)
 
     df = df.rename(
@@ -347,6 +347,7 @@ def convert_trade(
     df = df[~df["WEIGHT (t)"].str.contains("NA")]
     df["WEIGHT (t)"] = df["WEIGHT (t)"].astype(float)
     df["ENERGY (TJ)"] = df["WEIGHT (t)"] * df["conversion (TJ/t)"]
+    df["MATERIAL (t)"] = df["WEIGHT (t)"]
 
     df = df[
         [
@@ -356,6 +357,7 @@ def convert_trade(
             "HS",
             "MESSAGE COMMODITY",
             "ENERGY (TJ)",
+            "MATERIAL (t)",
             "VALUE (1000USD)",
         ]
     ]
@@ -488,6 +490,9 @@ def check_iea_balances(
 
     # LNG and pipe gas are directly from IEA
     indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
+    
+    # Material units should not be checked against IEA
+    indf = indf[~indf["MESSAGE COMMODITY"].str.contains('steel')].copy()
 
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
     with open(dict_dir, "r", encoding="utf8") as f:
@@ -585,22 +590,22 @@ def reformat_to_parameter(
         indf = (
             indf.groupby(
                 ["YEAR", "EXPORTER REGION", "IMPORTER REGION", "MESSAGE COMMODITY"]
-            )[["ENERGY (GWa)"]]
+            )[["PHYSICAL VALUE"]]
             .sum()
             .reset_index()
         )
-        metric_name = "ENERGY (GWa)"
+        metric_name = "PHYSICAL VALUE"
     elif parameter_name in ["var_cost", "inv_cost", "fix_cost"]:
         indf = (
             indf.groupby(["EXPORTER REGION", "IMPORTER REGION", "MESSAGE COMMODITY"])[
-                ["ENERGY (GWa)", "VALUE (MUSD)"]
+                ["PHYSICAL VALUE", "VALUE (MUSD)"]
             ]
             .sum()
             .reset_index()
         )
-        indf["PRICE (MUSD/GWa)"] = indf["VALUE (MUSD)"] / indf["ENERGY (GWa)"]
+        indf["PRICE (MUSD/unit)"] = indf["VALUE (MUSD)"] / indf["PHYSICAL VALUE"]
         indf["YEAR"] = "broadcast"
-        metric_name = "PRICE (MUSD/GWa)"
+        metric_name = "PRICE (MUSD/unit)"
 
     indf = indf[(indf["EXPORTER REGION"] != "") & (indf["IMPORTER REGION"] != "")]
     indf = indf[indf["EXPORTER REGION"] != indf["IMPORTER REGION"]]
@@ -732,13 +737,17 @@ def build_historical_activity(
     )
     tradedf["ENERGY (TJ)"] = tradedf["ENERGY (TJ)"].astype(float)
     tradedf = tradedf[
-        ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)"]
+        ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)", "MATERIAL (t)"]
     ].reset_index()
 
     check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
 
+    tradedf['PHYSICAL VALUE'] = tradedf['ENERGY (GWa)']
+    tradedf['PHYSICAL VALUE'] = np.where(tradedf['MESSAGE_COMMODITY'].str.contains('steel'),
+                                tradedf['MATERIAL (t)'], tradedf['PHYSICAL VALUE'])
+    
     outdf = reformat_to_parameter(
         indf=tradedf,
         message_regions=message_regions,
@@ -746,7 +755,9 @@ def build_historical_activity(
         project_name=project_name,
         config_name=config_name,
     )
+    
     outdf["unit"] = "GWa"
+    outdf["unit"] = np.where(outdf["MESSAGE COMMODITY"].str.contains('steel'), "t", "GWa")
 
     return outdf.drop_duplicates()
 
@@ -837,17 +848,22 @@ def build_historical_price(
     bacidf["ENERGY (GWa)"] = bacidf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
     bacidf["VALUE (MUSD)"] = bacidf["VALUE (1000USD)"] * 1e-3
     bacidf["PRICE (MUSD/GWa)"] = bacidf["VALUE (MUSD)"] / bacidf["ENERGY (GWa)"]
+    bacidf["PRICE (MUSD/t)"] = bacidf["VALUE (MUSD)"] / bacidf["MATERIAL (t)"]
 
-    bacidf = bacidf[bacidf["ENERGY (TJ)"] > 0.5]  # Keep linkages >0.5TJ
+    bacidf = bacidf[(bacidf["ENERGY (TJ)"] > 0.5) | (bacidf["MATERIAL (t)"] > 0.5)]  # Keep linkages >0.5TJ or >0.5t
 
     bacidf = (
         bacidf.groupby(["EXPORTER", "IMPORTER", "MESSAGE COMMODITY"])[
-            ["ENERGY (GWa)", "VALUE (MUSD)"]
+            ["ENERGY (GWa)", "VALUE (MUSD)", "MATERIAL (t)"]
         ]
         .sum()
         .reset_index()
     )
     bacidf["YEAR"] = "broadcast"
+
+    bacidf['PHYSICAL VALUE'] = bacidf['ENERGY (GWa)']
+    bacidf['PHYSICAL VALUE'] = np.where(bacidf['MESSAGE_COMMODITY'].str.contains('steel'),
+                                bacidf['MATERIAL (t)'], bacidf['PHYSICAL VALUE'])
 
     outdf = reformat_to_parameter(
         indf=bacidf,
@@ -857,7 +873,7 @@ def build_historical_price(
         config_name=config_name,
         exports_only=True,
     )
-    outdf["unit"] = "USD/GWa"
+    outdf["unit"] = np.where(outdf["MESSAGE COMMODITY"].str.contains('steel'), "USD/t", "USD/GWa")
 
     outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
