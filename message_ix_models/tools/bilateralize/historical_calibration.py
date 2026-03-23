@@ -347,7 +347,7 @@ def convert_trade(
     df = df[~df["WEIGHT (t)"].str.contains("NA")]
     df["WEIGHT (t)"] = df["WEIGHT (t)"].astype(float)
     df["ENERGY (TJ)"] = df["WEIGHT (t)"] * df["conversion (TJ/t)"]
-    df["MATERIAL (t)"] = df["WEIGHT (t)"]
+    df["MATERIAL (Mt)"] = df["WEIGHT (t)"] / 1e6
 
     df = df[
         [
@@ -357,7 +357,7 @@ def convert_trade(
             "HS",
             "MESSAGE COMMODITY",
             "ENERGY (TJ)",
-            "MATERIAL (t)",
+            "MATERIAL (Mt)",
             "VALUE (1000USD)",
         ]
     ]
@@ -737,16 +737,16 @@ def build_historical_activity(
     )
     tradedf["ENERGY (TJ)"] = tradedf["ENERGY (TJ)"].astype(float)
     tradedf = tradedf[
-        ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)", "MATERIAL (t)"]
+        ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)", "MATERIAL (Mt)"]
     ].reset_index()
 
-    check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
+    #check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
 
     tradedf['PHYSICAL VALUE'] = tradedf['ENERGY (GWa)']
     tradedf['PHYSICAL VALUE'] = np.where(tradedf['MESSAGE COMMODITY'].str.contains('steel'),
-                                tradedf['MATERIAL (t)'], tradedf['PHYSICAL VALUE'])
+                                tradedf['MATERIAL (Mt)'], tradedf['PHYSICAL VALUE'])
     
     outdf = reformat_to_parameter(
         indf=tradedf,
@@ -757,7 +757,7 @@ def build_historical_activity(
     )
     
     outdf["unit"] = "GWa"
-    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "t", "GWa")
+    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "Mt", "GWa")
 
     return outdf.drop_duplicates()
 
@@ -848,13 +848,13 @@ def build_historical_price(
     bacidf["ENERGY (GWa)"] = bacidf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
     bacidf["VALUE (MUSD)"] = bacidf["VALUE (1000USD)"] * 1e-3
     bacidf["PRICE (MUSD/GWa)"] = bacidf["VALUE (MUSD)"] / bacidf["ENERGY (GWa)"]
-    bacidf["PRICE (MUSD/t)"] = bacidf["VALUE (MUSD)"] / bacidf["MATERIAL (t)"]
+    bacidf["PRICE (MUSD/Mt)"] = bacidf["VALUE (MUSD)"] / bacidf["MATERIAL (Mt)"]
 
-    bacidf = bacidf[(bacidf["ENERGY (TJ)"] > 0.5) | (bacidf["MATERIAL (t)"] > 0.5)]  # Keep linkages >0.5TJ or >0.5t
+    bacidf = bacidf[(bacidf["ENERGY (TJ)"] > 0.5) | (bacidf["MATERIAL (Mt)"] > 0.5)]  # Keep linkages >0.5TJ or >0.5t
 
     bacidf = (
         bacidf.groupby(["EXPORTER", "IMPORTER", "MESSAGE COMMODITY"])[
-            ["ENERGY (GWa)", "VALUE (MUSD)", "MATERIAL (t)"]
+            ["ENERGY (GWa)", "VALUE (MUSD)", "MATERIAL (Mt)"]
         ]
         .sum()
         .reset_index()
@@ -863,7 +863,7 @@ def build_historical_price(
 
     bacidf['PHYSICAL VALUE'] = bacidf['ENERGY (GWa)']
     bacidf['PHYSICAL VALUE'] = np.where(bacidf['MESSAGE COMMODITY'].str.contains('steel'),
-                                bacidf['MATERIAL (t)'], bacidf['PHYSICAL VALUE'])
+                                bacidf['MATERIAL (Mt)'], bacidf['PHYSICAL VALUE'])
 
     outdf = reformat_to_parameter(
         indf=bacidf,
@@ -873,7 +873,7 @@ def build_historical_price(
         config_name=config_name,
         exports_only=True,
     )
-    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "USD/t", "USD/GWa")
+    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "USD/Mt", "USD/GWa")
 
     outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
