@@ -1,0 +1,50 @@
+#######################
+# Steel shipped trade #
+#######################
+steel_shipped_trade:
+  base_trade_technology:
+    - steel_trd # Is this in the model? Doesn't look like it
+  trade_technology:
+    steel_shipped
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    steel
+  trade_commodity_suffix:
+  trade_units:
+    Mt
+  trade_form:
+    shp
+  export_level:
+    useful_material
+  trade_level:
+    shipped
+  import_level:
+    useful_material
+  flow_technologies:
+    - material_bulk_carrier_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    material_bulk_carrier_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    material_bulk_carrier_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - finishing_steel
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    material_bulk_carrier_loil:
+      loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20
+      

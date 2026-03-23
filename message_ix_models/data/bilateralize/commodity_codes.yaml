@@ -141,4 +141,62 @@ LNG:
     - '271111' # LNG
   MESSAGE Commodity: lng
   IEA-WEB: 
-    -
+ 
+Steel:
+  HS:
+    - "7201" # Pig iron and spiegeleisen
+    - "7202" # Ferro-alloys
+    - "7203" # Ferrous products from direct reduction / sponge iron
+    - "7204" # Ferrous waste and scrap
+    - "7205" # Granules and powders of pig iron, iron or steel
+    - "7206" # Iron and non-alloy steel ingots / primary forms
+    - "7207" # Semi-finished products of iron or non-alloy steel
+    - "7208" # Flat-rolled, iron/non-alloy steel, ≥600mm wide, hot-rolled, not clad
+    - "7209" # Flat-rolled, iron/non-alloy steel, ≥600mm wide, cold-rolled
+    - "7210" # Flat-rolled, iron/non-alloy steel, ≥600mm wide, clad/coated
+    - "7211" # Flat-rolled, iron/non-alloy steel, <600mm wide, hot or cold-rolled
+    - "7212" # Flat-rolled, iron/non-alloy steel, <600mm wide, clad/coated
+    - "7213" # Wire rod, iron/non-alloy steel, hot-rolled coils
+    - "7214" # Other bars and rods, iron/non-alloy steel, not further worked than forged/hot-rolled
+    - "7215" # Other bars and rods, iron/non-alloy steel
+    - "7216" # Angles, shapes and sections, iron/non-alloy steel
+    - "7217" # Wire, iron/non-alloy steel
+    - "7218" # Stainless steel ingots / primary forms and semi-finished
+    - "7219" # Flat-rolled stainless steel, ≥600mm wide
+    - "7220" # Flat-rolled stainless steel, <600mm wide
+    - "7221" # Wire rod, stainless steel
+    - "7222" # Bars, rods, angles, shapes and sections of stainless steel
+    - "7223" # Wire of stainless steel
+    - "7224" # Other alloy steel ingots / primary forms and semi-finished
+    - "7225" # Flat-rolled other alloy steel, ≥600mm wide
+    - "7226" # Flat-rolled other alloy steel, <600mm wide
+    - "7227" # Wire rod, other alloy steel
+    - "7228" # Other bars, rods, angles, shapes and sections of other alloy steel
+    - "7229" # Wire of other alloy steel
+    - "7301" # Sheet piling; welded angles, shapes and sections
+    - "7302" # Railway/tramway track construction materials
+    - "7303" # Tubes, pipes and hollow profiles of cast iron
+    - "7304" # Seamless tubes and pipes of iron/steel
+    - "7305" # Other tubes and pipes (welded, riveted), OD >406.4mm
+    - "7306" # Other tubes and pipes, welded/seamed
+    - "7307" # Tube or pipe fittings (couplings, elbows, sleeves)
+    - "7308" # Structures and parts of structures (bridges, towers, doors, etc.)
+    - "7309" # Reservoirs, tanks, vats, >300L capacity
+    - "7310" # Tanks, casks, cans, ≤300L capacity
+    - "7311" # Containers for compressed/liquefied gas
+    - "7312" # Stranded wire, ropes, cables, plaited bands
+    - "7313" # Barbed wire; twisted fencing wire
+    - "7314" # Cloth, grill, netting of iron/steel wire; expanded metal
+    - "7315" # Chain and parts thereof
+    - "7316" # Anchors, grapnels and their parts
+    - "7317" # Nails, tacks, drawing pins, staples
+    - "7318" # Screws, bolts, nuts, washers and similar
+    - "7319" # Sewing needles, knitting needles, bodkins, hooks
+    - "7320" # Springs and leaves for springs
+    - "7321" # Stoves, ranges, cookers, grates (household)
+    - "7322" # Radiators for central heating (non-electric)
+    - "7323" # Table, kitchen or household articles of iron/steel
+    - "7324" # Sanitary ware and parts thereof
+    - "7325" # Other cast articles of iron or steel
+    - "7326" # Other articles of iron or steel
+  MESSAGE Commodity: steel
