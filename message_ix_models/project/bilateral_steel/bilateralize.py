@@ -30,5 +30,5 @@ for tec in config['covered_trade_technologies']:
 # Generate edit files
 prepare_edit_files(project_name = 'bilateral_steel', 
                    config_name = 'config.yaml',
-                   P_access = True,
-                   reimport_BACI = True)
+                   P_access = True,)
+                   #reimport_BACI = True)
