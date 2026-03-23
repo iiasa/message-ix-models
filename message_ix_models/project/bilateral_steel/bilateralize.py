@@ -32,3 +32,23 @@ prepare_edit_files(project_name = 'bilateral_steel',
                    config_name = 'config.yaml',
                    P_access = True,)
                    #reimport_BACI = True)
+
+# Generate scenario
+trade_dict = bare_to_scenario(project_name = 'bilateral_steel', 
+                              config_name = 'config.yaml',
+                              p_drive_access = True)
+
+print(trade_dict)
+
+print("Setting up scenario")
+mp = ixmp.Platform()
+mp.add_unit("USD/Mt")
+
+load_and_solve(trade_dict = trade_dict,
+               solve = False,
+               project_name = 'bilateral_steel', 
+               config_name = 'config.yaml', 
+               start_model = models_scenarios['SSP2']['model'],
+               start_scen = models_scenarios['SSP2']['scenario'],
+               target_model = 'steel_trade',
+               target_scen = 'only_steel')

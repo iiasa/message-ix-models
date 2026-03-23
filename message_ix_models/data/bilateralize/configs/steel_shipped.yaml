@@ -23,16 +23,16 @@ steel_shipped_trade:
   import_level:
     useful_material
   flow_technologies:
-    - material_bulk_carrier_loil
+    - energy_bulk_carrier_loil # RENAME to general bulk_carrier_loil
   flow_tech_suffix:
   flow_constraint:
     global
   flow_fuel_input:
-    material_bulk_carrier_loil:
+    energy_bulk_carrier_loil:
       - lightoil
   flow_material_input:
   flow_commodity_output:
-    material_bulk_carrier_capacity
+    energy_bulk_carrier_capacity
   flow_units:
     Mt-km
   supply_technologies:
