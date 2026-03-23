@@ -1386,7 +1386,8 @@ def prepare_edit_files(
             )
             add_df["value"] = round(add_df["value"] / 5, 0)
 
-            add_df["unit"] = "USD/GWa"
+            add_df["unit"] = np.where(add_df["technology"].str.contains("steel"),
+                                      "USD/Mt", "USD/GWa")
 
             add_df = add_df[col_list]
 

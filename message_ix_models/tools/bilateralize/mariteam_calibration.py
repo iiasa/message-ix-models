@@ -49,6 +49,10 @@ def calibrate_mariteam(
             "astd_ship_type": "Chemical tankers",
             "flow_technology": ["lh2_tanker_lh2", "lh2_tanker_loil"],
         },
+        "steel_shipped": {
+            "astd_ship_type": " Bulk carriers",
+            "flow_technology": ["energy_bulk_carrier_loil"],
+        },
     },
     mt_output="MariTEAM_output_2025-07-21.csv",
     project_name: str | None = None,

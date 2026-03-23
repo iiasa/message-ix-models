@@ -82,7 +82,6 @@ def add_trade_sets(scen: message_ix.Scenario, log, trade_dict: dict, tec: str):
                 else:
                     pass
 
-
 # %% Add parameters for bilateralized trade
 def add_trade_parameters(scen: message_ix.Scenario, log, trade_dict: dict, tec: str):
     """
