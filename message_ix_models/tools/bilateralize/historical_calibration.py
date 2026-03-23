@@ -810,6 +810,7 @@ def build_historical_price(
     message_regions="R12",
     project_name: str | None = None,
     config_name: str | None = None,
+    reimport_BACI=False,
 ):
     """
     Build historical price parameter dataframe.

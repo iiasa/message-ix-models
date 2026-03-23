@@ -1270,6 +1270,7 @@ def prepare_edit_files(
     project_name: str | None = None,
     config_name: str | None = None,
     P_access: bool = True,
+    reimport_BACI: bool = False,
 ):
     """
     Prepare edit files for bilateralize tool
@@ -1337,7 +1338,7 @@ def prepare_edit_files(
 
         # Add variable costs for shipped commodities
         costdf = build_historical_price(
-            message_regions, project_name=project_name, config_name=config_name
+            message_regions, project_name=project_name, config_name=config_name, reimport_BACI=reimport_BACI
         )
         costdf["technology"] = costdf["technology"].str.replace("ethanol_", "eth_")
         costdf["technology"] = costdf["technology"].str.replace("fueloil_", "foil_")
