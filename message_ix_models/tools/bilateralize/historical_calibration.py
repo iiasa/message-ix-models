@@ -745,7 +745,7 @@ def build_historical_activity(
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
 
     tradedf['PHYSICAL VALUE'] = tradedf['ENERGY (GWa)']
-    tradedf['PHYSICAL VALUE'] = np.where(tradedf['MESSAGE_COMMODITY'].str.contains('steel'),
+    tradedf['PHYSICAL VALUE'] = np.where(tradedf['MESSAGE COMMODITY'].str.contains('steel'),
                                 tradedf['MATERIAL (t)'], tradedf['PHYSICAL VALUE'])
     
     outdf = reformat_to_parameter(
@@ -757,7 +757,7 @@ def build_historical_activity(
     )
     
     outdf["unit"] = "GWa"
-    outdf["unit"] = np.where(outdf["MESSAGE COMMODITY"].str.contains('steel'), "t", "GWa")
+    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "t", "GWa")
 
     return outdf.drop_duplicates()
 
@@ -862,7 +862,7 @@ def build_historical_price(
     bacidf["YEAR"] = "broadcast"
 
     bacidf['PHYSICAL VALUE'] = bacidf['ENERGY (GWa)']
-    bacidf['PHYSICAL VALUE'] = np.where(bacidf['MESSAGE_COMMODITY'].str.contains('steel'),
+    bacidf['PHYSICAL VALUE'] = np.where(bacidf['MESSAGE COMMODITY'].str.contains('steel'),
                                 bacidf['MATERIAL (t)'], bacidf['PHYSICAL VALUE'])
 
     outdf = reformat_to_parameter(
@@ -873,7 +873,7 @@ def build_historical_price(
         config_name=config_name,
         exports_only=True,
     )
-    outdf["unit"] = np.where(outdf["MESSAGE COMMODITY"].str.contains('steel'), "USD/t", "USD/GWa")
+    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "USD/t", "USD/GWa")
 
     outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
