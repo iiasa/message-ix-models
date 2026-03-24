@@ -218,29 +218,22 @@ If working on forks, substitute your fork URL and add the upstream remote (``git
 Install packages
 ----------------
 
-With the virtual environment activated, install all packages as editable into the same environment.
+Install all packages as editable into the virtual environment.
+The ``-p`` flag targets the venv directly — no activation needed for installation.
 Install in dependency order — :mod:`ixmp` first, then :mod:`message_ix`, then :mod:`message_ix_models`, then :mod:`message_data`:
 
 .. code-block:: bash
 
-   uv pip install -e <workdir>/repos/ixmp[docs,tests,tutorial]
-   uv pip install -e <workdir>/repos/message_ix[docs,report,tests,tutorial]
-   uv pip install -e <workdir>/repos/message-ix-models[docs,tests]
-   uv pip install -e <workdir>/repos/message_data[tests]
+   uv pip install -p <workdir>/env/message -e <workdir>/repos/ixmp[docs,tests,tutorial]
+   uv pip install -p <workdir>/env/message -e <workdir>/repos/message_ix[docs,report,tests,tutorial]
+   uv pip install -p <workdir>/env/message -e <workdir>/repos/message-ix-models[docs,tests]
+   uv pip install -p <workdir>/env/message -e <workdir>/repos/message_data[tests]
 
-.. warning::
+To use the installed tools, activate the environment first:
 
-   ``uv run`` and ``uv pip install -e`` have different behaviour.
-   By default, ``uv run`` syncs the environment against the lockfile, which reinstalls packages from PyPI — overriding your editable installs.
+.. code-block:: bash
 
-   To preserve editable installs when using ``uv run``, **always** pass ``--no-sync``:
-
-   .. code-block:: bash
-
-      uv run --no-sync mix-models --help
-      uv run --no-sync python my_script.py
-
-   Alternatively, modify ``pyproject.toml`` to point dependency sources at your local clones.
+   source <workdir>/env/message/bin/activate
 
 Git LFS
 -------
