@@ -86,6 +86,13 @@ The directives explained:
    ``%J`` is replaced by the job ID.
    Create the output directory before first use: ``mkdir -p $HOME/slurm``.
 
+   To separate stderr into its own file, add ``--error``:
+
+   .. code-block:: bash
+
+      #SBATCH --output=$HOME/slurm/solve_%J.out
+      #SBATCH --error=$HOME/slurm/solve_%J.err
+
 .. admonition:: On IIASA UniCC
 
    The ``module purge`` / ``source`` / ``module load`` block is specific to UniCC's Lmod setup.
