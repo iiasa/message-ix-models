@@ -119,29 +119,39 @@ The output **should** end with ``Status: Normal completion``.
 Directory layout
 ================
 
-A recommended layout for a working MESSAGE environment:
+All paths **must** be on a filesystem visible to both the login node and compute nodes.
+Refer to your cluster's documentation for which filesystems are shared.
+
+On clusters where the home directory has limited quota, place repositories and the virtual environment on a larger network drive.
+Keep only job scripts and lightweight configuration in ``$HOME``.
+
+**Work drive** (network drive or project directory with adequate space):
 
 .. code-block:: text
 
    <workdir>/
    ├── env/
    │   └── message/           # virtual environment
-   ├── repos/
-   │   ├── ixmp/
-   │   ├── message_ix/
-   │   ├── message-ix-models/
-   │   └── message_data/
+   └── repos/
+       ├── ixmp/
+       ├── message_ix/
+       ├── message-ix-models/
+       └── message_data/
+
+**Home directory** (lightweight, always accessible):
+
+.. code-block:: text
+
    $HOME/
+   ├── .bash_profile           # shell configuration
+   ├── .local/share/ixmp/
+   │   └── config.json         # ixmp platform configuration
    └── job/
-       ├── solve.sh           # SLURM job scripts
-       ├── solve.py           # Python solve scripts
-       └── out/               # job output logs
+       ├── solve.sh            # SLURM job scripts
+       ├── solve.py            # Python solve scripts
+       └── out/                # job output logs
 
-All paths **must** be on a filesystem visible to both the login node and compute nodes.
-Refer to your cluster's documentation for which filesystems are shared.
-
-On clusters where the home directory has limited quota, place repositories and the virtual environment on a larger network drive.
-Keep only job scripts and lightweight configuration in ``$HOME``.
+If your home directory has sufficient space, ``<workdir>`` can be ``$HOME``.
 
 .. admonition:: On IIASA UniCC
 
