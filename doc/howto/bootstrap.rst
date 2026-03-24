@@ -7,9 +7,11 @@ Commands below are written for a Unix shell (Bash/Zsh on Linux, macOS, or WSL).
 .. admonition:: For Windows users
 
    The core workflow — clone, install with ``uv``, configure, verify — is the same on Windows.
+   We recommend ``uv`` over ``conda`` for environment management.
    The differences:
 
    - **uv installer**: ``powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`` instead of ``curl | sh``.
+   - **Java**: ``conda`` depends on a JDK, so Java is available implicitly in conda environments. With ``uv``, install a JDK separately — see :ref:`message-ix:install-java` for recommended providers (Temurin, Zulu, Corretto).
    - **venv activation**: ``<workdir>\env\message\Scripts\activate`` instead of ``source <workdir>/env/message/bin/activate``.
    - **Shell config**: Windows has no ``~/.bash_profile``. Set environment variables via System Properties or your PowerShell ``$PROFILE``.
    - **GAMS**: use the Windows installer from `gams.com <https://www.gams.com/download/>`_ and add the install directory to your ``PATH``.
@@ -57,7 +59,7 @@ System dependencies
 The MESSAGEix stack requires three system-level dependencies:
 
 - **Python** (3.10+)
-- **Java** (a JRE or JDK — required by the :mod:`ixmp` JDBC backend)
+- **Java** (a JRE or JDK — required by the :mod:`ixmp` JDBC backend; see :ref:`message-ix:install-java`)
 - **GAMS** (with a valid license that includes the CPLEX solver)
 
 On a personal machine, install these through your system package manager or their respective installers.
