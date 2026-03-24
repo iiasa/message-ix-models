@@ -11,13 +11,13 @@ from message_ix_models.tools.bilateralize.reporting.full_reporting import report
 
 # Call all scenarios for analysis
 mp = ixmp.Platform()
-for scen in ["SSP_SSP2_v6.4", "SSP2"]: #"FSU2040", "FSU2100",
+for scen in ["SSP2", "FSU2040", "FSU2100",
              #"SSP2_NAM10EJ", "FSU2040_NAM10EJ", "FSU2100_NAM10EJ",
              #"SSP2_NAM15EJ", "FSU2040_NAM15EJ", "FSU2100_NAM15EJ",
              #"SSP2_NAM20EJ", "FSU2040_NAM20EJ", "FSU2100_NAM20EJ",
              #"SSP2_NAM25EJ", "FSU2040_NAM25EJ", "FSU2100_NAM25EJ",
-             #"SSP2_NAM30EJ", "FSU2040_NAM30EJ", "FSU2100_NAM30EJ",
-             #"SSP2_MEACON_1.0", "FSU2040_MEACON_1.0", "FSU2100_MEACON_1.0",]:
+             "SSP2_NAM30EJ", "FSU2040_NAM30EJ", "FSU2100_NAM30EJ",
+             "SSP2_MEACON_1.0", "FSU2040_MEACON_1.0", "FSU2100_MEACON_1.0",]:
              #"SSP2_MEACON_0.9", "FSU2040_MEACON_0.9", "FSU2100_MEACON_0.9",
              #"SSP2_MEACON_0.8", "FSU2040_MEACON_0.8", "FSU2100_MEACON_0.8",
              #"SSP2_MEACON_0.75", "FSU2040_MEACON_0.75", "FSU2100_MEACON_0.75",

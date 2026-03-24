@@ -11,3 +11,33 @@ run_tables:
         active: True
         function: retr_pe
         args: {"units": "EJ/yr"}
+    Enrgy_FE:
+        root: Final Energy
+        active: True
+        function: retr_fe
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_elec:
+        root: Secondary Energy|Electricity
+        active: True
+        function: retr_SE_elecgen
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_heat:
+        root: Secondary Energy|Heat
+        active: True
+        function: retr_SE_district_heat
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_syn:
+        root: Secondary Energy
+        active: True
+        function: retr_SE_synfuels
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_gas:
+        root: Secondary Energy|Gases
+        active: True
+        function: retr_SE_gases
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_solid:
+        root: Secondary Energy|Solids
+        active: True
+        function: retr_SE_solids
+        args: {"units": "EJ/yr"}

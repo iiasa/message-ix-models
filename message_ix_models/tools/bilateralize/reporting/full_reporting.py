@@ -35,7 +35,7 @@ def report(scenario:message_ix.Scenario,
         run_legacy_reporting(scenario, mp, legacy_config, legacy_out_dir)
         df_legacy = pd.read_excel(os.path.join(legacy_out_dir, scenario.model + '_' + scenario.scenario + '.xlsx'))
     if add_trade:
-        trade_reporting(mp, scenario)
+        trade_reporting(mp, scenario, out_dir = trade_out_dir)
         df_trade = pd.read_csv(os.path.join(trade_out_dir, scenario.model + '_' + scenario.scenario + '.csv'))
     
     if add_legacy and add_trade:
