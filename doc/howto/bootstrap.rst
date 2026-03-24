@@ -56,7 +56,7 @@ System dependencies
 
 The MESSAGEix stack requires three system-level dependencies:
 
-- **Python** (3.12+)
+- **Python** (3.10+)
 - **Java** (a JRE or JDK — required by the :mod:`ixmp` JDBC backend)
 - **GAMS** (with a valid license that includes the CPLEX solver)
 
@@ -72,7 +72,7 @@ On a cluster with an `environment module system <https://modules.readthedocs.io/
 
       module purge
       source /opt/apps/lmod/8.7/init/bash
-      module load Python/3.12.3-GCCcore-13.3.0
+      module load Python/3.12.3-GCCcore-13.3.0  # or another 3.10+ version available on your cluster
       module load Java
       module load gams
       module load git-lfs
@@ -82,31 +82,16 @@ On a cluster with an `environment module system <https://modules.readthedocs.io/
 
 .. _bootstrap-shell-config:
 
-Shell configuration
--------------------
-
-On Unix, login shells read a startup file once per session: :file:`~/.bash_profile` for Bash, :file:`~/.zprofile` for Zsh.
-This is where environment variables, ``PATH`` additions, and module loads **should** go — they persist across terminal sessions and, critically, across batch jobs on a cluster.
-
-To edit:
-
-.. code-block:: bash
-
-   nano ~/.bash_profile
-
-After editing, apply changes to the current session:
-
-.. code-block:: bash
-
-   source ~/.bash_profile
-
 Verify that the dependencies are available:
 
 .. code-block:: bash
 
-   python3 --version   # 3.12+
+   python3 --version   # 3.10+
    java -version        # a JRE or JDK
    gams                 # GAMS version and license info
+
+On a cluster, these commands **should** work after the module loads in :file:`~/.bash_profile` (Bash) or :file:`~/.zprofile` (Zsh) take effect.
+Run ``source ~/.bash_profile`` to apply changes to the current session.
 
 GAMS license
 ------------
@@ -229,7 +214,7 @@ Install in dependency order — :mod:`ixmp` first, then :mod:`message_ix`, then 
 .. code-block:: bash
 
    uv pip install -e <workdir>/repos/ixmp[docs,tests,tutorial]
-   uv pip install -e <workdir>/repos/message_ix[docs,reporting,tests,tutorial]
+   uv pip install -e <workdir>/repos/message_ix[docs,report,tests,tutorial]
    uv pip install -e <workdir>/repos/message-ix-models[docs,tests]
    uv pip install -e <workdir>/repos/message_data[tests]
 
