@@ -16,7 +16,7 @@ def add_reexports(base_scenario_name:str,
     mp = ixmp.Platform()
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
     out_scenario_name = base_scenario_name
-    out_scenario = base_scenario.clone(model = 'weu_security_reexports', scenario = out_scenario_name, keep_solution = False)
+    out_scenario = base_scenario.clone(model = 'weu_security_reexp', scenario = out_scenario_name, keep_solution = False)
 
     import_technologies = [c + '_imp' for c in covered_trade_technologies]
     import_output = base_scenario.par('output', filters = {'technology': import_technologies})
@@ -71,8 +71,6 @@ covered_trade_technologies = ['biomass_shipped', 'coal_shipped',
                               'LNG_shipped', 'gas_piped',
                               'loil_shipped', 'loil_piped',]
 
-for scen in ['SSP2', 'FSU2040', 'FSU2100', 
-             'SSP2_NAMboost', 'FSU2040_NAMboost', 'FSU2100_NAMboost',
-             'SSP2_MEACON', 'FSU2040_MEACON', 'FSU2100_MEACON']:
+for scen in ["SSP2_NAM30EJ", "FSU2040_NAM30EJ", "FSU2100_NAM30EJ"]:
     add_reexports(base_scenario_name = scen, 
                   covered_trade_technologies = covered_trade_technologies)

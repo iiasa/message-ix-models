@@ -20,7 +20,24 @@ from message_ix_models.tools.bilateralize.load_and_solve import *
 
 import os
 
-def add_conflict(use_scenario:message_ix.Scenario):
+def collect_base_activity(base_scenario:message_ix.Scenario,
+                          conf_i: list[str],
+                          conf_tec: list[str],
+                          conf_years: list[int]):
+
+    base_act = base_scenario.var("ACT", filters = {'node_loc': conf_i,
+                                                   'technology': conf_tec,
+                                                   'year_act': conf_years})
+    
+    base_act = base_act.groupby(['node_loc', 'technology', 'year_act', 'mode', 'time'])['lvl'].sum().reset_index()
+    base_act = base_act.rename(columns = {'lvl': 'base_level'})
+
+    return base_act
+
+def add_conflict(use_scenario:message_ix.Scenario,
+                 base_scenario:message_ix.Scenario,
+                 conf_level: float = 1.0):
+
     config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
 
     conf_i = config['mea_conflict']['MEA']['exporters']
@@ -32,6 +49,8 @@ def add_conflict(use_scenario:message_ix.Scenario):
     base_input = use_scenario.par('input', filters = {'node_loc': conf_i})
     base_input = base_input[base_input['technology'].str.contains('shipped_exp')]
     conf_tec = base_input['technology'].unique()
+
+    base_levels = collect_base_activity(base_scenario, conf_i, conf_tec, conf_years)
 
     basedf = pd.DataFrame(product(conf_i, conf_tec,
                          conf_years,
@@ -49,9 +68,15 @@ def add_conflict(use_scenario:message_ix.Scenario):
                 time = basedf['time'],
                 unit = '-')
 
+    bounddf = bounddf.merge(base_levels, on = ['node_loc', 'technology', 'year_act', 'mode', 'time'], how = 'left')
+    bounddf['value'] = bounddf['base_level'] - bounddf['base_level'] * conf_level
+    bounddf = bounddf.drop(columns = ['base_level'])
+    print(bounddf)
+
     return bounddf
 
-def run_friction_scenario(base_scenario_name: str):
+def run_friction_scenario(base_scenario_name:str,
+                          conf_level: float = 1.0):
     
     # Import scenario and models
     config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
@@ -60,12 +85,11 @@ def run_friction_scenario(base_scenario_name: str):
 
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
     use_scenario = base_scenario.clone('weu_security',
-                                        base_scenario_name + "_MEACON", 
+                                        f"{base_scenario_name}_MEACON_{str(conf_level)}", 
                                         keep_solution = False)
     use_scenario.set_as_default()
 
-    conflict_df = add_conflict(use_scenario)
-    print(conflict_df)
+    conflict_df = add_conflict(use_scenario, base_scenario, conf_level)
     
     with use_scenario.transact("Add MEA conflict"):
         use_scenario.add_par('bound_activity_up', conflict_df)
@@ -86,8 +110,9 @@ def run_friction_scenario(base_scenario_name: str):
     mp.close_db()
 
 # Run scenarios
-run_friction_scenario('SSP2')
-run_friction_scenario('FSU2040')
-run_friction_scenario('FSU2100')
+for scen in ['SSP2', 'FSU2040', 'FSU2100']:
+    for conflict in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
+        print(f"Build and run: Base scenario = {scen}, Impact Level = {conflict}")
+        run_friction_scenario(scen, conf_level = conflict)
 
 

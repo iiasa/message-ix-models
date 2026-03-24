@@ -21,7 +21,13 @@ base_scen = 'baseline'
 
 mp = ixmp.Platform()
 base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-out_scenario = base_scenario.clone('weu_security', "SSP_SSP2_v6.4", keep_solution = False)
+out_scenario = base_scenario.clone('weu_security', "SSP_SSP2_v6.4_loosen", keep_solution = False)
+
+df = out_scenario.par("growth_activity_up", filters = {"technology":"oil_imp",
+                                                       "node_loc": "R12_WEU"})
+with out_scenario.transact("Loosen oil import constraint"):
+    out_scenario.remove_par("growth_activity_up", df)
+    
 #df = base_scenario.var("ACT", filters = {"technology": "LNG_shipped_exp_eeu",
 #                                         "year_act": 2030})
 #print(df)

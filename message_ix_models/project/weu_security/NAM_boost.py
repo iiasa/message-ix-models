@@ -140,14 +140,17 @@ def run_nam_boost(base_scenario_name: str,
     mp.close_db()
 
 # Run scenarios
-run_nam_boost(base_scenario_name = 'SSP2',
-              out_scenario_name = 'SSP2_NAMboost',
-              bound_level = 1000)
-
-run_nam_boost(base_scenario_name = 'FSU2040',
-              out_scenario_name = 'FSU2040_NAMboost',
-              bound_level = 1000)
-
-run_nam_boost(base_scenario_name = 'FSU2100',
-              out_scenario_name = 'FSU2100_NAMboost',
-              bound_level = 1000)
+for lev in [10, 15, 20, 25, 30]:
+    gwa_level = lev * 31.71 # approximation of EJ to GWa
+    
+    run_nam_boost(base_scenario_name = 'SSP2',
+                  out_scenario_name = f'SSP2_NAM{lev}EJ',
+                  bound_level = gwa_level)
+    
+    run_nam_boost(base_scenario_name = 'FSU2040',
+                  out_scenario_name = f'FSU2040_NAM{lev}EJ',
+                  bound_level = gwa_level)
+    
+    run_nam_boost(base_scenario_name = 'FSU2100',
+                  out_scenario_name = f'FSU2100_NAM{lev}EJ',
+                  bound_level = gwa_level)

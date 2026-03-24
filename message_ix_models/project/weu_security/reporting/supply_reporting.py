@@ -119,26 +119,25 @@ def fuel_supply_reporting(rep: Reporter, scenario: message_ix.Scenario, config_n
 # Call reporter
 mp = ixmp.Platform()
 
+model_scenarios = [('weu_security', 'SSP2'),
+                   ('weu_security', 'FSU2040'),
+                   ('weu_security', 'FSU2100')]
+for lev in [10, 15, 20, 25, 30]:
+    model_scenarios = model_scenarios + [('weu_security', f'SSP2_NAM{lev}EJ'),
+                       ('weu_security', f'FSU2040_NAM{lev}EJ'),
+                       ('weu_security', f'FSU2100_NAM{lev}EJ')]
+for conf in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
+    model_scenarios = model_scenarios + [('weu_security', f'SSP2_MEACON_{conf}'),
+                       ('weu_security', f'FSU2040_MEACON_{conf}'),
+                       ('weu_security', f'FSU2100_MEACON_{conf}')]
+
+model_scenarios = model_scenarios + [('weu_security_reexp', 'SSP2_NAM30EJ'),
+                                     ('weu_security_reexp', 'FSU2040_NAM30EJ'),
+                                     ('weu_security_reexp', 'FSU2100_NAM30EJ')]
+print(model_scenarios)
+
 fuel_supply_out = pd.DataFrame()
-for mod, scen in [('weu_security', 'SSP2'),
-                  #('weu_security', 'FSU2040'),
-                  #('weu_security', 'FSU2100'),
-                  #('weu_security', 'SSP2_NAMboost'),
-                  #('weu_security', 'FSU2040_NAMboost'),
-                  #('weu_security', 'FSU2100_NAMboost'),
-                  #('weu_security', 'SSP2_MEACON'),
-                  #('weu_security', 'FSU2040_MEACON'),
-                  #('weu_security', 'FSU2100_MEACON'),
-                  #('weu_security_reexp', 'SSP2'),
-                  #('weu_security_reexp', 'FSU2040'),
-                  #('weu_security_reexp', 'FSU2100'),
-                  #('weu_security_reexp', 'SSP2_NAM1000'),
-                  #('weu_security_reexp', 'FSU2040_NAM1000'),
-                  #('weu_security_reexp', 'FSU2100_NAM1000'),
-                  #('weu_security_reexp', 'SSP2_MEACON'),
-                  #('weu_security_reexp', 'FSU2040_MEACON'),
-                  #('weu_security_reexp', 'FSU2100_MEACON'),
-                  ]:
+for mod, scen in model_scenarios:
     print(f"COMPILING {mod}/{scen}")
     print(f"--------------------------------")
     scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
@@ -169,7 +168,6 @@ for mod, scen in [('weu_security', 'SSP2'),
                                        fuel_supply['variable'].str.split('|').str[-1], '')
     fuel_exports = fuel_supply.copy()
     fuel_exports = fuel_exports[['region', 'exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
-    #fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'year'])['value'].sum().reset_index()
     fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
     fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type'] + "|" + fuel_exports['region']
     fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'variable', 'unit', 'year'])['value'].sum().reset_index()
