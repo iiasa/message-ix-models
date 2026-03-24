@@ -19,6 +19,9 @@ Next release
 - Adjust :mod:`.project.ssp.transport` (:pull:`485`):
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
+- Replace :doc:`/howto/unicc` with two focused guides:
+  :doc:`/howto/bootstrap` (system-agnostic ecosystem setup) and
+  :doc:`/howto/slurm` (SLURM workflows for MESSAGE) (:pull:`483`).
 
 v2026.4.17
 ==========
