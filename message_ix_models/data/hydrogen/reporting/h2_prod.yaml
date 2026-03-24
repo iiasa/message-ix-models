@@ -91,3 +91,11 @@ vars:
       original_unit: GWa
       short:
         prod_h2_elec_legacy
+
+  # geological (white) hydrogen
+  Hydrogen|Geological:
+    filter:
+      {technology: white_hydrogen_dist, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      prod_h2_geological

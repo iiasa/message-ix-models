@@ -29,6 +29,5 @@ level_1:
 level_2:
   Hydrogen:
     short: prod_h2
-    # components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec, prod_h2_refinery ]
-    components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec ]
+    components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec, prod_h2_geological ]
 
