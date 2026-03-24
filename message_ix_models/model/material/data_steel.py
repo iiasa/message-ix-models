@@ -1296,10 +1296,10 @@ def calculate_scrap_demand_ratio(demand, scrap) -> "ParameterData":
     return {"output": df}
 
 
-def gen_trade_calib(s_info: ScenarioInfo) -> "ParameterData":
+def gen_trade_calib(s_info: ScenarioInfo, year) -> "ParameterData":
     df = pd.read_csv(
         package_data_path(
-            "material", "steel", "baseyear_calibration", "net_import_2020.csv"
+            "material", "steel", "baseyear_calibration", f"net_import_{year}.csv"
         )
     )
 
@@ -1340,14 +1340,14 @@ def gen_trade_calib(s_info: ScenarioInfo) -> "ParameterData":
         )
     )
     df = make_df(
-        "bound_activity_up", **df, mode="M1", time="year", unit="Mt", year_act=2020
+        "bound_activity_up", **df, mode="M1", time="year", unit="Mt", year_act=year
     )
     factorial = make_df(
         "bound_activity_up",
         mode="M1",
         time="year",
         unit="Mt",
-        year_act=2020,
+        year_act=year,
         technology=df["technology"].unique(),
     ).pipe(broadcast, node_loc=nodes_ex_world(s_info.N))
     zero = (
@@ -1376,11 +1376,36 @@ def gen_trade_scenario(trd_pars) -> "ParameterData":
         trd_pars["output"]
         .drop("value", axis=1)
         .query("~technology.str.contains('trade')")
-        .query("year_act > 2020")
+        .query("year_act > 2025")
     )
-    gro = make_df("growth_activity_up", **dim_df, value=0.05)
-    ini = make_df("initial_activity_up", **dim_df, value=1.0)
-    return {"growth_activity_up": gro, "initial_activity_up": ini}
+    # limit scrap export to simulate policies
+    zero_exp_growth = {
+        "R12_EEU": 0.0,
+        "R12_NAM": 0.0,
+        "R12_WEU": 0.0,
+        "R12_PAO": 0.0,
+        "R12_CHN": 0.0,
+    }
+    gro = make_df("growth_activity_up", **dim_df, value=0.07)
+    gro = gro.assign(
+        value=gro.apply(
+            lambda x: (
+                zero_exp_growth.get(x["node_loc"], 0.07)
+                if x["technology"] == "export_steel_scrap"
+                else 0.07
+            ),
+            axis=1,
+        )
+    )
+    ini = make_df("initial_activity_up", **dim_df, value=0.1)
+    gro_lo = make_df("growth_activity_lo", **dim_df, value=-0.05)
+    ini_lo = make_df("initial_activity_lo", **dim_df, value=0.15)
+    return {
+        "growth_activity_up": gro,
+        "initial_activity_up": ini,
+        "growth_activity_lo": gro_lo,
+        "initial_activity_lo": ini_lo,
+    }
 
 
 def gen_trade_pars(s_info) -> "ParameterData":
@@ -1393,7 +1418,8 @@ def gen_trade_pars(s_info) -> "ParameterData":
     ]:
         cfg = dict(name=name, commodity=comm, level=lvl, unit="Mt")
         merge_data(trd_pars, gen_trade_tecs(s_info, cfg))
-    bounds = gen_trade_calib(s_info)
+    bounds2020 = gen_trade_calib(s_info, 2020)
+    bounds2025 = gen_trade_calib(s_info, 2025)
     constraints = gen_trade_scenario(trd_pars)
-    merge_data(trd_pars, constraints, bounds)
+    merge_data(trd_pars, constraints, bounds2020, bounds2025)
     return trd_pars
