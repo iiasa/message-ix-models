@@ -66,6 +66,12 @@ The scheduler reads these directives, allocates resources, and runs the script b
    Use ``$HOME`` in ``#SBATCH`` directives, **not** ``~``.
    SLURM does not expand tilde in directives — it creates a literal directory named ``~`` under your home.
 
+.. admonition:: On IIASA UniCC
+
+   The ``module purge`` / ``source`` / ``module load`` block is specific to UniCC's Lmod setup.
+   On other clusters, replace with the equivalent module commands for your system.
+   See :ref:`bootstrap-shell-config` for details.
+
 The directives explained:
 
 ``--time=3:00:00``
@@ -93,11 +99,6 @@ The directives explained:
       #SBATCH --output=$HOME/slurm/solve_%J.out
       #SBATCH --error=$HOME/slurm/solve_%J.err
 
-.. admonition:: On IIASA UniCC
-
-   The ``module purge`` / ``source`` / ``module load`` block is specific to UniCC's Lmod setup.
-   On other clusters, replace with the equivalent module commands for your system.
-   The mail address pattern (``@iiasa.ac.at``) is also UniCC-specific.
 
 .. _slurm-solve-script:
 
@@ -131,6 +132,7 @@ Submit
 
    sbatch ~/job/solve.sh
 
+where ``solve.sh`` is the job script (see :ref:`bootstrap-layout` for the recommended location).
 On success, SLURM prints ``Submitted batch job <JOBID>``.
 
 Monitor
@@ -149,6 +151,7 @@ Cancel a job:
 .. code-block:: bash
 
    scancel <JOBID>
+   scancel -u $USER   # cancel all your jobs
 
 Inspect a specific job:
 
@@ -203,13 +206,14 @@ For a **single solve**, the following is a reasonable starting point:
      - 3:00:00
      - Most solves complete in under 1 hour. Adjust based on experience with your scenario.
 
-For **parallel solves** within a single job (multiple scenarios), divide available CPUs across solves:
+For **multiple scenarios**, use a SLURM `job array <https://slurm.schedmd.com/job_array.html>`_.
+Each array task is an independent job with its own ``--mem`` and ``--cpus-per-task`` allocation — there is no need to divide resources across scenarios.
+Append a throttle to limit concurrency: ``--array=0-9%4`` runs at most 4 tasks at a time.
 
-.. code-block:: bash
+.. warning::
 
-   Total CPUs / number of parallel solves = threads per solve
-
-For example, with ``--cpus-per-task=128`` and 8 scenarios, each solve gets 16 threads.
+   Array tasks that start simultaneously and all access the same database (e.g. to clone a base scenario) can cause lock errors.
+   Throttle concurrency with ``%N`` and consider staggering task startup in the script body if contention persists.
 
 .. admonition:: On IIASA UniCC
 
