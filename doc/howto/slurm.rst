@@ -201,7 +201,7 @@ For a **single solve**, the following is a reasonable starting point:
      - Only CPLEX's barrier method is parallel; everything else is single-threaded. Diminishing returns beyond 4 for typical MESSAGE problems.
    * - ``--mem``
      - 32G
-     - ~10 GB for a single solve. 64G+ if running :doc:`legacy reporting </api/report/legacy>` on multiple scenarios in sequence (memory accumulates).
+     - ~32 GB for a single solve (scenario loading, GAMS matrix generation, CPLEX, reporting). 64G+ if running :doc:`legacy reporting </api/report/legacy>` on multiple scenarios in sequence (memory accumulates).
    * - ``--time``
      - 3:00:00
      - Most solves complete in under 1 hour. Adjust based on experience with your scenario.
