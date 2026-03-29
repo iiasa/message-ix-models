@@ -230,7 +230,7 @@ jobs:
           --local-cache --jvmargs="-Xmx6G"
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}  # Required
 
