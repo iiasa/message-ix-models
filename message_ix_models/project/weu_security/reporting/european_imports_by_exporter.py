@@ -162,7 +162,7 @@ def make_paneled_figure(
     # ------------------------------------------------------------------
     # Build figure
     # ------------------------------------------------------------------
-    fig = plt.figure(figsize=(15, 7))
+    fig = plt.figure(figsize=(15, 5))
     gs = fig.add_gridspec(1, 5)
 
     ax_left  = fig.add_subplot(gs[0, 0:2])   # 40%
@@ -328,6 +328,18 @@ make_paneled_figure(df = indf[indf['model'] == 'weu_security'],
                     plot_regions = ['R12_EEU', 'R12_WEU'],
                     plot_scenarios = ['SSP2', 'FSU2040_MEACON_1.0', 'FSU2040_MEACON_0.9', 'FSU2040_MEACON_0.8', 'FSU2040_MEACON_0.75', 'FSU2040_MEACON_0.5', 'FSU2040_MEACON_0.25',
                                       'FSU2100_MEACON_1.0', 'FSU2100_MEACON_0.9', 'FSU2100_MEACON_0.8', 'FSU2100_MEACON_0.75', 'FSU2100_MEACON_0.5', 'FSU2100_MEACON_0.25'],
+                    plot_fuel_types = ['Gas', 'Coal', 'Crude', 'Fuel Oil', 'Light Oil', 'Ethanol'],
+                    region_labels = region_labels,
+                    region_colors = region_colors)
+
+make_paneled_figure(df = indf[indf['model'] == 'weu_security'],
+                    plot_year = 2030,
+                    plot_exporter = 'R12_MEA',
+                    plot_regions = ['R12_EEU', 'R12_WEU'],
+                    plot_scenarios = ['SSP2',
+                                      'SSP2_MEACON_1.0', 
+                                      'FSU2040_MEACON_1.0', 
+                                      'FSU2100_MEACON_1.0',],
                     plot_fuel_types = ['Gas', 'Coal', 'Crude', 'Fuel Oil', 'Light Oil', 'Ethanol'],
                     region_labels = region_labels,
                     region_colors = region_colors)

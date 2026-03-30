@@ -19,18 +19,17 @@ indf_total = indf.copy()
 indf_total = indf_total[indf_total['fuel_type'].isin(['Coal', 'Crude', 'Gas', 'Fuel Oil', 'Light Oil', 'Ethanol'])]
 indf_total['fuel_type'] = 'Total'
 
-def plot_reg_exports(df: pd.DataFrame,
-                     plot_fuel: str | list[str],
-                     plot_ref_scenario: str,
-                     plot_scenarios: list[str],
-                     plot_exporters: list[str],
-                     plot_years: list[int],
-                     plot_label_regions: list[str] | None = None,
-                     plot_by: str = "default",
-                     show_labels: bool = True,
-                     show_total_line: bool = True,
-                     chart_type: str = "line"):
-    """Plot FSU exports of a given fuel.
+def plot_reg_exports_line(df: pd.DataFrame,
+                          plot_fuel: str | list[str],
+                          plot_ref_scenario: str,
+                          plot_scenarios: list[str],
+                          plot_exporters: list[str],
+                          plot_years: list[int],
+                          plot_label_regions: list[str] | None = None,
+                          plot_by: str = "default",
+                          show_labels: bool = True,
+                          show_total_line: bool = True):
+    """Plot FSU exports as a line chart.
 
     Args:
         plot_fuel:            Single fuel string or list of fuels.
@@ -40,12 +39,9 @@ def plot_reg_exports(df: pd.DataFrame,
                               None = all, [] = none.
         show_labels:          Show/hide % change annotations at last year.
         show_total_line:      Show/hide the Total (all regions) line within each panel.
-        chart_type:           "line" or "area".
     """
     if plot_by not in ("default", "fuel"):
         raise ValueError("plot_by must be 'default' or 'fuel'")
-    if chart_type not in ("line", "area"):
-        raise ValueError("chart_type must be 'line' or 'area'")
 
     plot_fuels = [plot_fuel] if isinstance(plot_fuel, str) else plot_fuel
 
@@ -73,7 +69,7 @@ def plot_reg_exports(df: pd.DataFrame,
     plotdf["delta"] = plotdf["value"] - plotdf["ref_value"]
     plotdf["delta_pct"] = (plotdf["delta"] / plotdf["ref_value"].replace(0, np.nan)) * 100
 
-    # ── Total exporter rows: computed BEFORE exporter filter ─────────────────
+    # Total exporter rows: computed BEFORE exporter filter
     total_exporters_df = (plotdf
                           .groupby(["scenario", "year", "region", "fuel_type"], as_index=False)[["delta", "ref_value"]]
                           .sum()
@@ -86,10 +82,8 @@ def plot_reg_exports(df: pd.DataFrame,
     total_exporters_total_df["delta_total"] = total_exporters_total_df["delta"]
     total_exporters_total_df["pct_total"] = (total_exporters_total_df["delta"] / total_exporters_total_df["ref_value"].replace(0, np.nan)) * 100
 
-    # ── Now apply exporter filter for individual exporter panels ─────────────
     plotdf = plotdf[plotdf['exporter'].isin(plot_exporters)]
 
-    # Total across regions (within scenario + year + exporter + fuel_type)
     total_df = (plotdf
                 .groupby(["scenario", "year", "exporter", "fuel_type"], as_index=False)[["delta", "ref_value"]]
                 .sum())
@@ -101,12 +95,8 @@ def plot_reg_exports(df: pd.DataFrame,
     last_year = max(plot_years)
 
     # ── Layout ───────────────────────────────────────────────────────────────
-    if plot_by == "default":
-        row_items = exporters
-        col_items = plot_scenarios
-    else:
-        row_items = exporters
-        col_items = plot_fuels
+    row_items = exporters
+    col_items = plot_scenarios if plot_by == "default" else plot_fuels
 
     n_rows = len(row_items)
     n_cols = len(col_items)
@@ -126,19 +116,13 @@ def plot_reg_exports(df: pd.DataFrame,
 
     all_label_candidates = []
 
-    for i, row_item in enumerate(row_items):
+    for i, exporter in enumerate(row_items):
         for j, col_item in enumerate(col_items):
 
             ax = axes[i, j]
 
-            if plot_by == "default":
-                exporter = row_item
-                scenario = col_item
-                fuel     = plot_fuels[0]
-            else:
-                exporter = row_item
-                scenario = plot_scenarios[0]
-                fuel     = col_item
+            scenario = col_item if plot_by == "default" else plot_scenarios[0]
+            fuel     = plot_fuels[0] if plot_by == "default" else col_item
 
             if exporter == "Total":
                 panel_df       = total_exporters_df[
@@ -154,72 +138,27 @@ def plot_reg_exports(df: pd.DataFrame,
                 ]
                 panel_total_df = total_df
 
-            # ── Region series ─────────────────────────────────────────────────
-            if chart_type == "area":
-                pivot = (panel_df
-                         .pivot_table(index="year", columns="region", values="delta", aggfunc="sum")
-                         .reindex(sorted(plot_years))
-                         .fillna(0))
+            for region in regions:
+                sub = panel_df[panel_df["region"] == region].sort_values("year")
+                if len(sub) == 0:
+                    continue
 
-                pos = pivot.clip(lower=0)
-                neg = pivot.clip(upper=0)
+                color = region_colors.get(region, "gray")
+                ax.plot(sub["year"], sub["delta"], marker="o", color=color, label=region)
 
-                region_order = list(pivot.columns)
-                colors = [region_colors.get(r, "gray") for r in region_order]
+                if show_labels and (plot_label_regions is None or region in plot_label_regions):
+                    last = sub[sub["year"] == last_year]
+                    if len(last) > 0:
+                        pct_val = last["delta_pct"].iloc[0]
+                        if pd.notna(pct_val):
+                            all_label_candidates.append({
+                                "ax": ax,
+                                "x": last_year,
+                                "y": last["delta"].iloc[0],
+                                "text": f"{pct_val:+.1f}%",
+                                "color": color,
+                            })
 
-                ax.stackplot(pivot.index, pos.T, labels=region_order, colors=colors, alpha=0.7)
-                ax.stackplot(pivot.index, neg.T, colors=colors, alpha=0.7)
-
-                if show_labels:
-                    for region in region_order:
-                        if plot_label_regions is None or region in plot_label_regions:
-                            pct_row = panel_df[
-                                (panel_df["region"] == region) &
-                                (panel_df["year"] == last_year)
-                            ]
-                            if len(pct_row) > 0:
-                                pct_val = pct_row["delta_pct"].iloc[0]
-                                if pd.notna(pct_val):
-                                    idx = region_order.index(region)
-                                    y_pos = pos[region_order[:idx + 1]].loc[last_year].sum()
-                                    all_label_candidates.append({
-                                        "ax": ax,
-                                        "x": last_year,
-                                        "y": y_pos,
-                                        "text": f"{pct_val:+.1f}%",
-                                        "color": region_colors.get(region, "gray"),
-                                    })
-
-            else:
-                for region in regions:
-                    sub = panel_df[panel_df["region"] == region].sort_values("year")
-                    if len(sub) == 0:
-                        continue
-
-                    color = region_colors.get(region, "gray")
-
-                    ax.plot(
-                        sub["year"],
-                        sub["delta"],
-                        marker="o",
-                        color=color,
-                        label=region
-                    )
-
-                    if show_labels and (plot_label_regions is None or region in plot_label_regions):
-                        last = sub[sub["year"] == last_year]
-                        if len(last) > 0:
-                            pct_val = last["delta_pct"].iloc[0]
-                            if pd.notna(pct_val):
-                                all_label_candidates.append({
-                                    "ax": ax,
-                                    "x": last_year,
-                                    "y": last["delta"].iloc[0],
-                                    "text": f"{pct_val:+.1f}%",
-                                    "color": color,
-                                })
-
-            # ── Total (all regions) line ──────────────────────────────────────
             if show_total_line:
                 total_sub = panel_total_df[
                     (panel_total_df["scenario"] == scenario) &
@@ -228,14 +167,8 @@ def plot_reg_exports(df: pd.DataFrame,
                 ].sort_values("year")
 
                 if len(total_sub) > 0:
-                    ax.plot(
-                        total_sub["year"],
-                        total_sub["delta_total"],
-                        color="black",
-                        linewidth=1,
-                        marker="s" if chart_type == "line" else None,
-                        label="Total"
-                    )
+                    ax.plot(total_sub["year"], total_sub["delta_total"],
+                            color="black", linewidth=1, marker="s", label="Total")
 
                     if show_labels:
                         last_total = total_sub[total_sub["year"] == last_year]
@@ -273,25 +206,16 @@ def plot_reg_exports(df: pd.DataFrame,
     paired = sorted(zip(new_labels, handles), key=lambda x: (x[0] == "Total (All Regions)", x[0]))
     new_labels, handles = zip(*paired)
 
-    fig.legend(
-        handles,
-        new_labels,
-        title="Importing Region",
-        bbox_to_anchor=(1.02, 0.5),
-        loc="center left"
-    )
+    fig.legend(handles, new_labels, title="Importing Region",
+               bbox_to_anchor=(1.02, 0.5), loc="center left")
 
     title_fuel = plot_fuels[0] if len(plot_fuels) == 1 else ", ".join(plot_fuels)
     title_scen = plot_scenarios[0] if len(plot_scenarios) == 1 else ", ".join(plot_scenarios)
-    fig.suptitle(
-        f"{title_fuel} Exports — Change vs {plot_ref_scenario} ({title_scen})",
-        fontsize=14,
-        y=0.95
-    )
+    fig.suptitle(f"{title_fuel} Exports — Change vs {plot_ref_scenario} ({title_scen})",
+                 fontsize=14, y=0.95)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
 
-    # ── Annotations after layout is finalised ────────────────────────────────
     for cand in all_label_candidates:
         cand["ax"].annotate(
             cand["text"],
@@ -307,32 +231,14 @@ def plot_reg_exports(df: pd.DataFrame,
 
     plt.show()
 
+
 # Plot for gas
-plot_reg_exports(df = indf,
+plot_reg_exports_line(df = indf,
                  plot_fuel = 'Gas',
                  plot_ref_scenario = 'SSP2',
                  plot_scenarios = ['FSU2040', 'FSU2100'],
                  plot_exporters = ['R12_FSU', 'R12_MEA'],
                  plot_label_regions = ["Total (All Regions)", "R12_WEU", "R12_EEU", "R12_CHN"],
-                 plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060])
-
-# Plot for total
-plot_reg_exports(df = indf,
-                 plot_fuel = ['Crude', 'Gas', 'Light Oil'],
-                 plot_by = "fuel",
-                 plot_ref_scenario = 'FSU2040',
-                 plot_scenarios = ['FSU2040_MEACON_1.0'],
-                 plot_exporters = ['R12_MEA'],
-                 plot_label_regions = ["Total (All Regions)", "R12_WEU", "R12_EEU", "R12_CHN"],
                  plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060],
-                 chart_type = "area")    
-
-plot_reg_exports(df = indf,
-                 plot_fuel = ['Crude', 'Gas', 'Light Oil'],
-                 plot_by = "fuel",
-                 plot_ref_scenario = 'FSU2040',
-                 plot_scenarios = ['FSU2040_NAM30EJ'],
-                 plot_exporters = ['R12_NAM', 'R12_FSU','R12_MEA'],
-                 plot_label_regions = ["Total (All Regions)", "R12_WEU", "R12_EEU", "R12_CHN"],
-                 plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060],
-                 chart_type = "area")    
+                 show_labels = True,
+                 show_total_line = True)
