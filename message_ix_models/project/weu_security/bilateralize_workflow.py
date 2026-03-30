@@ -113,7 +113,18 @@ for model_scen in models_scenarios.keys():
     adjust_reexports(base_scenario = out_scenario,
                      trade_commodity_list = ['lightoil', 'fueloil'],
                      base_level = 'secondary')
-    
+
+    # For INDC scenario, remove trade growth constraints and costs
+    if "INDC" in model_scen:
+        print("Remove trade growth constraints and trade costs for INDC scenario")
+        for p in ["growth_activity_up", "growth_activity_lo",
+                  "fix_cost", "inv_cost", "var_cost"]:
+            remdf = out_scenario.par(p)
+            remdf = remdf[(remdf['technology'].str.contains("_shipped_"))|\
+                          (remdf['technology'].str.contains("_piped_"))]
+            with out_scenario.transact(f"remove {p} for indc scenario"):
+                out_scenario.remove_par(p, remdf)
+
     print("Solve scenario")
     out_scenario.solve()
     mp.close_db()
