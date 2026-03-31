@@ -116,16 +116,11 @@ for model_scen in models_scenarios.keys():
 
     # For INDC scenario, remove trade growth constraints and costs
     if "INDC" in model_scen:
-        print("Remove trade growth constraints and trade costs for INDC scenario")
-        for p in ["growth_activity_up", "growth_activity_lo",
-                  "fix_cost", "inv_cost", "var_cost"]:
-            remdf = out_scenario.par(p)
-            remdf = remdf[(remdf['technology'].str.contains("_shipped_"))|\
-                          (remdf['technology'].str.contains("_piped_"))|\
-                          (remdf['technology'].str.contains("bulk_carrier"))|\
-                          (remdf['technology'].str.contains("_tanker_"))]
-            with out_scenario.transact(f"remove {p} for indc scenario"):
-                out_scenario.remove_par(p, remdf)
+        print("Remove emissions constraints on non-WEU or EEU regions")
+        remdf = out_scenario.par("bound_emission")
+        remdf = remdf[remdf['node'].isin(['R12_WEU', 'R12_EEU', 'R12_GLB']) == False]
+        with out_scenario.transact(f"remove emission bound for indc scenario"):
+            out_scenario.remove_par("bound_emission", remdf)
 
     print("Solve scenario")
     out_scenario.solve()

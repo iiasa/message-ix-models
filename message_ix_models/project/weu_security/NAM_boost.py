@@ -154,3 +154,10 @@ for lev in [10, 15, 20, 25, 30]:
     run_nam_boost(base_scenario_name = 'FSU2100',
                   out_scenario_name = f'FSU2100_NAM{lev}EJ',
                   bound_level = gwa_level)
+
+# Run decarbonization sensitivity
+gwa_level = 30 * 31.71 # approximation of EJ to GWa
+for scen in ['INDC2030', 'INDC2030_FSU2040', 'INDC2030_FSU2100']:
+    run_nam_boost(base_scenario_name = scen,
+                  out_scenario_name = f'{scen}_NAM30EJ',
+                  bound_level = gwa_level)

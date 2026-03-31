@@ -15,10 +15,10 @@ scenario:
     R12
 
 models_scenarios:
-#  SSP2:
-#    model: SSP_SSP2_v6.4
-#    scenario: baseline
-  SSP2_INDC2030:
+  SSP2:
+    model: SSP_SSP2_v6.6
+    scenario: baseline
+  INDC2030:
     model: SSP_SSP2_v6.6
     scenario: INDC2030i_uncon
     

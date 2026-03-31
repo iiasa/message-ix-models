@@ -115,4 +115,7 @@ for scen in ['SSP2', 'FSU2040', 'FSU2100']:
         print(f"Build and run: Base scenario = {scen}, Impact Level = {conflict}")
         run_friction_scenario(scen, conf_level = conflict)
 
+# Add decarbonization sensitivities
+for scen in ["INDC2030", "INDC2030_FSU2040", "INDC2030_FSU2100"]:
+    run_friction_scenario(scen, conf_level = 1.0)
 

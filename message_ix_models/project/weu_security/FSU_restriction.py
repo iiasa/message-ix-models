@@ -97,3 +97,5 @@ def run_friction_scenario(base_scenario_name: str,
 # Run scenarios
 run_friction_scenario('SSP2', 'FSU', 2100)
 run_friction_scenario('SSP2', 'FSU', 2040)
+run_friction_scenario('INDC2030', 'FSU', 2100)
+run_friction_scenario('INDC2030', 'FSU', 2040)
