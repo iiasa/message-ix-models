@@ -49,6 +49,8 @@ loil_shipped_trade:
   specify_network:
     False
   tracked_emissions: # List of tracked emission types
+  emission_factor:
+    CO2: 0.631
   bunker_technology:
     oil_tanker_loil:
       loil_tobunker
