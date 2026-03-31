@@ -311,7 +311,8 @@ def calibrate_historical_shipping(
         "loil_shipped": hist_oil,
     }
     for tec in nc_dict.keys():
-        trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
+        if tec in covered_tec:
+            trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
 
     # Historical activity should only be added for technologies in input
     for tec in covered_tec:

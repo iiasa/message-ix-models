@@ -16,13 +16,17 @@ config, config_path = load_config(project_name = 'weu_security', config_name = '
 models_scenarios = config['models_scenarios']
 data_path = package_data_path("bilateralize")
 
-base_model = 'SSP_SSP2_v6.6'
-base_scen = 'INDC2030i'
+base_model = 'weu_security'
+base_scen = 'SSP2_INDC2030'
 
 mp = ixmp.Platform()
 base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-out_scenario = base_scenario.clone('weu_security', "INDC2030i", keep_solution = False)
+out_scenario = base_scenario.clone('weu_security', "SSP_INDC2030_dac", keep_solution = False)
 
+with out_scenario.transact("Remove bound activity on co2_trans1"):
+    remdf = out_scenario.par("bound_activity_up", filters = {'technology':['co2_trans1']})
+    out_scenario.remove_par('bound_activity_up', remdf)
+    
 print("Solve scenario")
 out_scenario.solve()
 mp.close_db()

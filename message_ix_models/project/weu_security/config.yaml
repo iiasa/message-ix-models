@@ -20,7 +20,7 @@ models_scenarios:
 #    scenario: baseline
   SSP2_INDC2030:
     model: SSP_SSP2_v6.6
-    scenario: INDC2030i
+    scenario: INDC2030i_uncon
     
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:

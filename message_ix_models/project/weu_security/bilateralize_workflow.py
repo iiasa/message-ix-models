@@ -121,7 +121,9 @@ for model_scen in models_scenarios.keys():
                   "fix_cost", "inv_cost", "var_cost"]:
             remdf = out_scenario.par(p)
             remdf = remdf[(remdf['technology'].str.contains("_shipped_"))|\
-                          (remdf['technology'].str.contains("_piped_"))]
+                          (remdf['technology'].str.contains("_piped_"))|\
+                          (remdf['technology'].str.contains("bulk_carrier"))|\
+                          (remdf['technology'].str.contains("_tanker_"))]
             with out_scenario.transact(f"remove {p} for indc scenario"):
                 out_scenario.remove_par(p, remdf)
 

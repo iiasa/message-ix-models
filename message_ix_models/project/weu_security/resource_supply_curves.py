@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import message_ix
 import numpy as np
-from message_ix_models.tools.data_paths import package_data_path
+from message_ix_models.util import package_data_path
 
 def plot_rsc(rsc_df:pd.DataFrame):
     """Plot resource supply curves"""
@@ -65,8 +65,8 @@ def plot_rsc(rsc_df:pd.DataFrame):
 
 
 def adjust_resource_supply_curves(base_scenario_name:str,
-                                  adjustment_factors:dict[str, float],
-                                  adjustment_regions:list(str),
+                                  adjustment_factors:dict,
+                                  adjustment_regions:list,
                                   scenario_addition:str):
     """Adjust resource supply (technology) curves"""
 
@@ -77,32 +77,34 @@ def adjust_resource_supply_curves(base_scenario_name:str,
     out_scenario = base_scenario.clone(model = 'weu_security', scenario = out_scenario_name, keep_solution = False)
 
     # Adjust resource supply curves
-    rsc_in = out_scenario.par('inv_cost', filters = {'technology': ['gas_extr_1', 'gas_extr_2', 'gas_extr_3',
-                                                                   'gas_extr_4', 'gas_extr_5', 'gas_extr_6',
-                                                                   'gas_extr_7', 'oil_extr_1', 'oil_extr_2', 'oil_extr_3',
-                                                                   'oil_extr_4', 'oil_extr_5', 'oil_extr_6', 'oil_extr_7'],
-                                                      'node_loc': adjustment_regions})
-    rsc_in = rsc_in[rsc_in['year_vtg'] >= 2030]
+    for p in ['var_cost', 'inv_cost']:
+        rsc_in = out_scenario.par(p, filters = {'technology': ['gas_extr_1', 'gas_extr_2', 'gas_extr_3',
+                                                                       'gas_extr_4', 'gas_extr_5', 'gas_extr_6',
+                                                                       'gas_extr_7', 'oil_extr_1', 'oil_extr_2', 'oil_extr_3',
+                                                                       'oil_extr_4', 'oil_extr_5', 'oil_extr_6', 'oil_extr_7'],
+                                                          'node_loc': adjustment_regions})
+        rsc_in = rsc_in[rsc_in['year_vtg'] >= 2030]
+    
+        rsc_out = rsc_in.copy()
+        rsc_out['value'] *= rsc_out['technology'].map(adjustment_factors).fillna(1)
+    
+        with out_scenario.transact("update resource supply curves"):
+            out_scenario.remove_par(p, rsc_in)
+            out_scenario.add_par(p, rsc_out)
 
-    rsc_out = rsc_in.copy()
-    rsc_out['value'] *= rsc_out['technology'].map(adjustment_factors).fillna(1)
-
-    with out_scenario.transact("update resource supply curves"):
-        out_scenario.remove_par('inv_cost', rsc_in)
-        out_scenario.add_par('inv_cost', rsc_out)
-
-    rsc_out['status'] = 'Adjusted'
-    rsc_in['status'] = 'Base'
-    rsc_full = pd.concat([rsc_in, rsc_out])
-    rsc_full['fuel'] = np.where(rsc_full['technology'].str.contains('gas'), 'Gas', 'Oil')
-    plot_rsc(rsc_full)
+    #rsc_out['status'] = 'Adjusted'
+    #rsc_in['status'] = 'Base'
+    #rsc_full = pd.concat([rsc_in, rsc_out])
+    #rsc_full['fuel'] = np.where(rsc_full['technology'].str.contains('gas'), 'Gas', 'Oil')
+    
+    #plot_rsc(rsc_full)
 
     out_scenario.solve()
 
     mp.close_db()
 
 # Run functions
-for scen_name in ["SSP2", "FSU2040", "FSU2040_NAM30EJ", "FSU2040_MEACON_1.0"]:
+for scen_name in ["SSP2"]: #, "FSU2040", "FSU2040_NAM30EJ", "FSU2040_MEACON_1.0"]:
     print(f"----------Adjusting resource supply curves for {scen_name}----------")
     adjust_resource_supply_curves(base_scenario_name = scen_name,
                                 adjustment_factors = {'gas_extr_1': 1.0, 'gas_extr_2': 0.7, 'gas_extr_3': 0.7, 
