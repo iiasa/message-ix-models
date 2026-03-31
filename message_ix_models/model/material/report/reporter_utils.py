@@ -1,5 +1,12 @@
+import numpy as np
 import message_ix
 from genno import Key
+
+def _safe_div(num, denom):
+    """Division that returns 0 where the denominator is zero."""
+    result = num / denom
+    return result.where(np.isfinite(result), 0).fillna(0)
+
 
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
@@ -183,7 +190,7 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
         )
         rep.add(
             f"share::{comm}methanol-final",
-            "div",
+            _safe_div,
             f"out::{comm}methanol-final",
             "in::methanol-final",
         )
