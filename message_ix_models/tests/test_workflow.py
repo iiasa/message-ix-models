@@ -113,7 +113,7 @@ def test_make_click_command(
         # Invoke the command with various parameters
         for params, output in (
             (["--go", "B"], "nothing returned, workflow will continue with"),
-            (["B"], "Workflow diagram written to"),
+            (["B"], "Write workflow diagram to"),
         ):
             # Command runs and exits with 0
             result = mix_models_cli.assert_exit_0(["_test", "run"] + params)
