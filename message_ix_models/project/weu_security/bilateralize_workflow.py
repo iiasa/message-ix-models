@@ -114,14 +114,6 @@ for model_scen in models_scenarios.keys():
                      trade_commodity_list = ['lightoil', 'fueloil'],
                      base_level = 'secondary')
 
-    # For INDC scenario, remove trade growth constraints and costs
-    if "INDC" in model_scen:
-        print("Remove emissions constraints on non-WEU or EEU regions")
-        remdf = out_scenario.par("bound_emission")
-        remdf = remdf[remdf['node'].isin(['R12_WEU', 'R12_EEU', 'R12_GLB']) == False]
-        with out_scenario.transact(f"remove emission bound for indc scenario"):
-            out_scenario.remove_par("bound_emission", remdf)
-
     print("Solve scenario")
     out_scenario.solve()
     mp.close_db()
