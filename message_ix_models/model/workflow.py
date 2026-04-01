@@ -121,7 +121,9 @@ def from_codelist(context: "Context", cl: type["StructureFactory"]) -> "Workflow
 
         # Report
         reported.append(f"{label} reported")
-        wf.add_step(reported[-1], f"{label} solved", report)
+        wf.add_step(
+            reported[-1], f"{label} solved", report, transport={"code": scenario_code}
+        )
 
     # Report all the scenarios
     wf.add("all reported", reported)
