@@ -14,7 +14,8 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report import STAGE, add_plots
 from message_ix_models.report.util import add_replacements
 
-from . import Config, key, plot
+from . import Config, plot
+from . import key as K
 
 if TYPE_CHECKING:
     from message_ix_models import Spec
@@ -221,7 +222,7 @@ def callback(rep: Reporter, context: Context) -> None:
     misc(rep)
     convert_iamc(rep)  # Adds to key.report.all
     convert_sdmx(rep)  # Adds to key.report.all
-    add_plots(rep, plot, key.report.plot)
+    add_plots(rep, plot, K.report.plot)
     base.prepare_reporter(rep)  # Tasks that prepare data to parametrize the base model
 
     log.info(f"Added {len(rep.graph) - N_keys} keys")
@@ -306,8 +307,6 @@ def convert_iamc(c: "Computer") -> None:
     from message_ix_models.report import iamc as handle_iamc
     from message_ix_models.report import util
 
-    from .key import report as k_report
-
     util.REPLACE_VARS.update({r"^CAP\|(Transport)": r"\1"})
 
     keys = []
@@ -322,12 +321,11 @@ def convert_iamc(c: "Computer") -> None:
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     c.apply(add_iamc_store_write, k)
 
-    c.graph[k_report.all].append(
-        # Use ths line to both store and write to file IAMC structured-data
-        k + "all"
-        # Use this line for "transport::iamc+file" instead of "transport::iamc+all"
-        # k + " file"
-    )
+    # Use this line to both store and write to file IAMC structured-data
+    c.graph[K.report.all] += (k + "all",)
+    # Use this line for "transport::iamc+file" instead of "transport::iamc+all", i.e. to
+    # write IAMC-structured data to file but *not* store on scenario
+    # c.graph[K.report.all] += (k + "file",)
 
 
 def convert_sdmx(c: "Computer") -> None:
@@ -336,7 +334,6 @@ def convert_sdmx(c: "Computer") -> None:
 
     from message_ix_models.util.sdmx import DATAFLOW, Dataflow
 
-    from .key import report as k_report
     from .operator import write_sdmx_data
 
     # Directory for SDMX output
@@ -354,10 +351,10 @@ def convert_sdmx(c: "Computer") -> None:
         c.add(keys[-1], write_sdmx_data, df.key, sm, "scenario", dir_, df_urn=df.df.urn)
 
     # Collect all the keys *then* write the collected structures to file
-    c.add(k_report.sdmx, "write_sdmx_structures", sm, dir_, *keys)
+    c.add(K.report.sdmx, "write_sdmx_structures", sm, dir_, *keys)
 
     # Connect to the main report key
-    c.graph[k_report.all].append(k_report.sdmx)
+    c.graph[K.report.all] += (K.report.sdmx,)
 
 
 def misc(c: "Computer") -> None:
@@ -377,7 +374,7 @@ def misc(c: "Computer") -> None:
     c.add("distance:nl:non-ldv", "distance_nonldv", "config")
 
     # Demand per capita
-    c.add("demand::capita", "divdemand:n-c-y", key.pop)
+    c.add("demand::capita", "divdemand:n-c-y", K.pop)
 
     # Adjustment factor for LDV calibration: fuel economy ratio
     k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
@@ -392,7 +389,7 @@ def misc(c: "Computer") -> None:
     )
 
     k_ratio = single_key(
-        c.add("fuel economy::ratio", "div", key.exo.input_ref_ldv, k_check + "sel")
+        c.add("fuel economy::ratio", "div", K.exo.input_ref_ldv, k_check + "sel")
     )
     c.add("calibrate fe path", "make_output_path", "config", name="calibrate-fe.csv")
     hc = "\n\n".join(
