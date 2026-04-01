@@ -271,7 +271,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:   See :func:`.nodes_world_agg`.
 STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("add transport data", []),
-    (key.report.all, []),
+    (key.report.all, "summarize"),
     ("info", lambda c: c.transport.base_model_info, "context"),
     (
         "transport info",
