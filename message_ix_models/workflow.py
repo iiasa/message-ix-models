@@ -206,7 +206,7 @@ class Workflow(Computer):
         """
         return self.get(name_or_names)
 
-    def truncate(self, name: str):
+    def truncate(self, name: str) -> None:
         """Truncate the workflow at the step `name`.
 
         The step `name` is replaced with a new :class:`WorkflowStep` that simply loads
@@ -336,9 +336,15 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
         except AttributeError:
             pass  # truncate_step is None
         else:
+            N_truncate = 0
             for step in filter(expr.fullmatch, wf.keys()):
-                log.info(f"Truncate workflow at {step!r}")
                 wf.truncate(step)
+                N_truncate += 1
+            log.info(
+                f"Truncate workflow at {N_truncate} point"
+                + ("s" if N_truncate != 1 else "")
+                + f" matching {truncate_step!r}"
+            )
 
         # Identify the target step
         if target_step:
