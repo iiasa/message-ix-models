@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 import pytest
 
 from message_ix_models import Context
@@ -39,8 +41,12 @@ SSP = (
 
 class TestConfig:
     @pytest.fixture
-    def c(self):
+    def c(self) -> Iterator[Config]:
         yield Config()
+
+    def test_fields(self, c: Config) -> None:
+        """Settable class property included in :meth:`.ConfigHelper._fields`."""
+        assert {"code"} & c._fields()
 
     @pytest.mark.parametrize("input, expected", SSP)
     def test_ssp0(self, input, expected):
