@@ -1098,6 +1098,7 @@ def export_edit_files(
             os.path.join(
                 "relation_activity_regional_exp.csv"
             ),  # necessary for legacy reporting
+            os.path.join("relation_activity_CO2_Emission.csv"),
             os.path.join("flow_technology", "capacity_factor.csv"),
             os.path.join("flow_technology", "input.csv"),
             os.path.join("flow_technology", "output.csv"),
