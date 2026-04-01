@@ -271,6 +271,9 @@ def report(context: Context, *args, **kwargs):
     if context.report.legacy["use"]:
         return _invoke_legacy_reporting(context)
 
+    # Update `context` using any remaining `kwargs`
+    context.update(kwargs)
+
     with (
         nullcontext()
         if context.core.verbose
