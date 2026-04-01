@@ -235,10 +235,18 @@ class Context:
     def setdefault(self, name, value):
         return self._values.setdefault(name, value)
 
-    def update(self, arg=None, **kwargs):
-        # Force update() to use set(), above
+    def update(self, arg: Any = None, **kwargs) -> None:
+        """Update the Context.
+
+        `arg` may be a :class:`dict` or nested :class:`dict`.
+        """
         for k, v in dict(*filter(None, [arg]), **kwargs).items():
-            self.set(k, v)
+            if k in self and hasattr(self[k], "update"):
+                # Use ConfigHelper.update(), e.g. .transport.Config.update()
+                self[k].update(v)
+            else:
+                # Force update() to use dealiasing via set(), above
+                self.set(k, v)
 
     def __deepcopy__(self, memo):
         result = Context()  # Create a new instance; this also updates _CONTEXTS
