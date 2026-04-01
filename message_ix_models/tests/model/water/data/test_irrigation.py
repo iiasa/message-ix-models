@@ -1,42 +1,26 @@
-from message_ix import Scenario
+import pytest
 
-from message_ix_models import ScenarioInfo
-from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.data.irrigation import add_irr_structure
+from message_ix_models.tests.model.water.conftest import water_params
 
 
-def test_add_irr_structure(test_context):
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
-    test_context.type_reg = "country"
-    test_context.regions = "ZMB"
-    nodes = get_codes(f"node/{test_context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
-    test_context.map_ISO_c = {test_context.regions: nodes[0]}
+@pytest.mark.parametrize(
+    "water_context",
+    [
+        water_params("ZMB"),
+        water_params("ZMB", reduced_basin=True),
+    ],
+    indirect=True,
+)
+def test_add_irr_structure(
+    water_context, water_scenario, assert_input_output_structure
+):
+    """Test add_irr_structure with country model configurations."""
+    result = add_irr_structure(water_context)
 
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": "test water model",
-        "scenario": "test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("node", ["loc1", "loc2"])
-    s.add_set("year", [2020, 2030, 2040])
-
-    # FIXME same as above
-    test_context["water build info"] = ScenarioInfo(s)
-
-    # Call the function to be tested
-    result = add_irr_structure(test_context)
-
-    # Assert the results
     assert isinstance(result, dict)
-    assert "input" in result
-    assert "output" in result
+    assert_input_output_structure(result)
+
     assert all(
         col in result["input"].columns
         for col in [

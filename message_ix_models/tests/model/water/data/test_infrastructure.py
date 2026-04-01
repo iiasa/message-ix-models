@@ -4,20 +4,19 @@ from message_ix_models.model.water.data.infrastructure import (
     add_desalination,
     add_infrastructure_techs,
 )
+from message_ix_models.tests.model.water.conftest import water_params
 
 
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11
-        {"regions": "R11", "type_reg": "global", "SDG": "baseline"},
-        {"regions": "R11", "type_reg": "global", "SDG": "not_baseline"},
-        # Global R12
-        {"regions": "R12", "type_reg": "global", "SDG": "baseline"},
-        {"regions": "R12", "type_reg": "global", "SDG": "not_baseline"},
-        # Country ZMB
-        {"regions": "ZMB", "type_reg": "country", "SDG": "baseline"},
-        {"regions": "ZMB", "type_reg": "country", "SDG": "not_baseline"},
+        water_params("R11", SDG="baseline"),
+        water_params("R11", SDG="not_baseline"),
+        water_params("R12", SDG="baseline"),
+        water_params("R12", SDG="not_baseline"),
+        water_params("ZMB", SDG="baseline"),
+        water_params("ZMB", SDG="not_baseline"),
+        water_params("R12", reduced_basin=True, SDG="baseline"),
     ],
     indirect=True,
 )
@@ -39,12 +38,10 @@ def test_add_infrastructure_techs(
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11 (has 6p0)
-        {"regions": "R11", "type_reg": "global", "RCP": "6p0"},
-        # Global R12 (no 6p0, use 7p0)
-        {"regions": "R12", "type_reg": "global", "RCP": "7p0"},
-        # Country ZMB (no 6p0, use 7p0)
-        {"regions": "ZMB", "type_reg": "country", "RCP": "7p0"},
+        water_params("R11", RCP="6p0"),
+        water_params("R12", RCP="7p0"),
+        water_params("ZMB", RCP="7p0"),
+        water_params("R12", reduced_basin=True, RCP="7p0"),
     ],
     indirect=True,
 )

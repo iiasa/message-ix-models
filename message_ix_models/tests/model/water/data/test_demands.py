@@ -6,18 +6,16 @@ from message_ix_models.model.water.data.demands import (
     add_sectoral_demands,
     add_water_availability,
 )
+from message_ix_models.tests.model.water.conftest import water_params
 
 
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11
-        {"regions": "R11", "type_reg": "global", "SDG": "baseline", "time": "year"},
-        # Global R12
-        {"regions": "R12", "type_reg": "global", "SDG": "baseline", "time": "year"},
-        # Country ZMB
-        {"regions": "ZMB", "type_reg": "country", "SDG": "baseline", "time": "year"},
-        # SDG="SDG" excluded: requires policy data files
+        water_params("R11", SDG="baseline", time="year"),
+        water_params("R12", SDG="baseline", time="year"),
+        water_params("ZMB", SDG="baseline", time="year"),
+        water_params("R12", reduced_basin=True, SDG="baseline", time="year"),
     ],
     indirect=True,
 )
@@ -55,44 +53,12 @@ def test_add_sectoral_demands(water_context, water_scenario, assert_message_para
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11 (no monthly data)
-        {
-            "regions": "R11",
-            "type_reg": "global",
-            "RCP": "2p6",
-            "REL": "low",
-            "time": "year",
-        },
-        # Global R12 (monthly exists for REL=low)
-        {
-            "regions": "R12",
-            "type_reg": "global",
-            "RCP": "2p6",
-            "REL": "low",
-            "time": "year",
-        },
-        {
-            "regions": "R12",
-            "type_reg": "global",
-            "RCP": "2p6",
-            "REL": "low",
-            "time": "month",
-        },
-        # Country ZMB (monthly exists for REL=low)
-        {
-            "regions": "ZMB",
-            "type_reg": "country",
-            "RCP": "2p6",
-            "REL": "low",
-            "time": "year",
-        },
-        {
-            "regions": "ZMB",
-            "type_reg": "country",
-            "RCP": "2p6",
-            "REL": "low",
-            "time": "month",
-        },
+        water_params("R11", RCP="2p6", REL="low", time="year"),
+        water_params("R12", RCP="2p6", REL="low", time="year"),
+        water_params("R12", RCP="2p6", REL="low", time="month"),
+        water_params("ZMB", RCP="2p6", REL="low", time="year"),
+        water_params("ZMB", RCP="2p6", REL="low", time="month"),
+        water_params("R12", reduced_basin=True, RCP="2p6", REL="low", time="year"),
     ],
     indirect=True,
 )
@@ -122,12 +88,10 @@ def test_add_water_availability(water_context, assert_message_params):
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11
-        {"regions": "R11", "type_reg": "global"},
-        # Global R12
-        {"regions": "R12", "type_reg": "global"},
-        # Country ZMB
-        {"regions": "ZMB", "type_reg": "country"},
+        water_params("R11"),
+        water_params("R12"),
+        water_params("ZMB"),
+        water_params("R12", reduced_basin=True),
     ],
     indirect=True,
 )
