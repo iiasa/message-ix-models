@@ -1,7 +1,7 @@
 import logging
 import os
 import pickle
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
@@ -67,13 +67,13 @@ class ConfigHelper:
     legible ways—e.g. "attribute name" or “attribute-name” instead of "attribute_name"—
     in configuration files and/or code.
 
-    It also add :meth:`hexdigest`.
+    It also adds :meth:`hexdigest`.
     """
 
     @classmethod
     def _fields(cls) -> set[str]:
         """Names of fields in `cls`."""
-        result = set(dir(cls))
+        result = set(filter(lambda n: not n.startswith("_"), dir(cls)))
         if is_dataclass(cls):
             result |= set(map(lambda f: f.name, fields(cls)))
         return result
@@ -85,20 +85,35 @@ class ConfigHelper:
         return _name if _name in cls._fields() else None
 
     @classmethod
-    def _munge_dict(cls, data: Mapping[Hashable, Any], fail: str, kind: str):
-        for key, value in data.items():
-            name = cls._canonical_name(key)
+    def _canonicalize(
+        cls,
+        data: Mapping[str, Any] | Mapping[Hashable, Any],
+        kind: str,
+        fail: type[Exception] | None = None,
+    ) -> Iterator[tuple[str, Any]]:
+        """Modify `data` by passing keys through :meth:`_canonical_name`.
 
-            if name:
+        Parameters
+        ----------
+        kind
+            Used to format exception or log message.
+        """
+        for key, value in data.items():
+            if name := cls._canonical_name(key):
                 yield name, value
             else:
                 msg = f"{cls.__name__} has no attribute for {kind} {key!r}"
-                if fail == "raise":
-                    raise ValueError(msg)
+                if fail is None:
+                    log.info(msg)
                 else:
-                    log.info(f"{msg}; ignored")
+                    raise fail(msg)
 
-    def read_file(self, path: Path, fail="raise") -> None:
+    def __iter__(self) -> Iterator[tuple[str, Any]]:
+        """Iterate over (field, value) pairs."""
+        for f in self._fields():
+            yield f, getattr(self, f)
+
+    def read_file(self, path: Path) -> None:
         """Update configuration from file.
 
         Parameters
@@ -110,11 +125,13 @@ class ConfigHelper:
             of the dataclass raise a ValueError. Otherwise, a message is logged.
         """
         if path.suffix == ".yaml":
+            # Read data from YAML
             import yaml
 
             with open(path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         elif path.suffix == ".json":
+            # Read data from JSON
             import json
 
             with open(path) as f:
@@ -122,7 +139,7 @@ class ConfigHelper:
         else:
             raise NotImplementedError(f"Read from {path.suffix}")
 
-        for key, value in self._munge_dict(data, fail, "file section"):
+        for key, value in self._canonicalize(data, "file section", ValueError):
             existing = getattr(self, key, None)
             if is_dataclass(existing) and not isinstance(existing, type):
                 # Attribute value is also a dataclass; update it recursively
@@ -138,11 +155,10 @@ class ConfigHelper:
     def replace(self, **kwargs):
         """Like :func:`dataclasses.replace` with name manipulation."""
         return replace(
-            self,
-            **{k: v for k, v in self._munge_dict(kwargs, "raise", "keyword argument")},
+            self, **dict(self._canonicalize(kwargs, "keyword argument", ValueError))
         )
 
-    def update(self, **kwargs):
+    def update(self, arg: Mapping | None = None, **kwargs) -> None:
         """Update attributes in-place.
 
         Raises
@@ -150,16 +166,15 @@ class ConfigHelper:
         AttributeError
             Any of the `kwargs` are not fields in the data class.
         """
-        # TODO use _munge_dict(); allow a positional argument
-        for k, v in kwargs.items():
-            if not hasattr(self, k):
-                raise AttributeError(k)
+        # Merge a positional argument and keyword arguments
+        data = dict(arg or {}) | kwargs
+        for k, v in self._canonicalize(data, "value", AttributeError):
             setattr(self, k, v)
 
     @classmethod
     def from_dict(cls, data: Mapping):
         """Construct an instance from `data` with name manipulation."""
-        return cls(**{k: v for k, v in cls._munge_dict(data, "raise", "mapping key")})
+        return cls(**dict(cls._canonicalize(data, "mapping key", ValueError)))
 
     def hexdigest(self, length: int = -1) -> str:
         """Return a hex digest that is unique for distinct settings on the instance.
