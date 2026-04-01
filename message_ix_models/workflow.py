@@ -306,8 +306,8 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
 
     help_arg = f"""Run the {name} workflow up to step TARGET.
 
-    Unless --go is given, the workflow is only displayed.
-    --from is interpreted as a regular expression.
+    Unless --go is given, the workflow is only displayed, and a visualization written
+    to a file. --from is interpreted as a regular expression.
     """
 
     @click.command(name="run", help=help_arg, **kwargs)
@@ -317,7 +317,7 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     )
     @click.argument("target_step", metavar="TARGET", required=False)
     @click.pass_obj
-    def _func(context, go, truncate_step, target_step, **kwargs):
+    def _func(context, go, truncate_step, target_step: str | None, **kwargs):
         from importlib import import_module
 
         from message_ix_models.util import show_versions
@@ -374,12 +374,9 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
 
         if not go:
             path = context.get_local_path(f"{slug}-workflow.svg")
-            wf.visualize(
-                str(path),
-                # key=target_step,  # DEBUG Uncomment to show only a subset of steps
-                rankdir="LR",
-            )
-            log.info(f"Workflow diagram written to {path}")
+            log.info(f"Write workflow diagram to {path}")
+            # If target_step is given, show only this step
+            wf.visualize(path, key=target_step, rankdir="LR")
             return
 
         wf.run(target_step)
