@@ -27,7 +27,9 @@ def read_file(path, **kwargs) -> pd.DataFrame:
 
 
 def read_industry_file(config: dict) -> pd.DataFrame:
-    path = private_data_path("projects", "digsy", config["industry_input"]["file_name"])
+    path = private_data_path(
+        "projects", "digsy", "industry", config["industry_input"]["file_name"]
+    )
     df = read_file(path, sheet_name=config["industry_input"]["sheet_name"])
     df.columns = [i.replace("TRModified_agg_", "") for i in df.columns]
     df.columns = [i if not i.isdigit() else int(i) for i in df.columns]
