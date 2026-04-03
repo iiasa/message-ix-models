@@ -7,6 +7,7 @@ from message_ix.util import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import get_ssp_from_context
+from message_ix_models.project.digsy.ict_new import generate_demand
 from message_ix_models.project.digsy.utils import (
     DIGSY_SCENS,
     adjust_act_calib,
@@ -26,8 +27,14 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
 
-def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3) -> pd.DataFrame:
-    read = {1: read_ict_v1, 2: read_ict_v2, 3: read_ict_v3, "prisma": read_ict_v3}
+def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3, s_info=None) -> pd.DataFrame:
+    read = {
+        1: read_ict_v1,
+        2: read_ict_v2,
+        3: read_ict_v3,
+        "prisma": read_ict_v3,
+        "prisma2": generate_demand,
+    }
     if version == 3:
         scen_map = {
             "BESTEST": {
@@ -72,13 +79,15 @@ def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3) -> pd.DataFrame:
         dc_scen = scen_map[scenario]["Data centre"]
         tele_scen = scen_map[scenario]["Telecom Network"]
         df = read[version](dc_scen, tele_scen, ssp)
+    elif version == "prisma2":
+        df = read[version](scenario, ssp, s_info)
     else:
         df = read[version](scenario, ssp)
     return df
 
 
 def read_ict_v1(scenario: DIGSY_SCENS, ssp):
-    path = private_data_path("projects", "digsy", "DIGSY-MESSAGE_ICTs.xls")
+    path = private_data_path("projects", "digsy", "ict", "DIGSY-MESSAGE_ICTs.xls")
     dfs = pd.read_excel(path, sheet_name=None)
 
     scen_map = {
@@ -119,7 +128,7 @@ def read_ict_v2(
     digsy_scenario: DIGSY_SCENS,
     ssp="SSP2",
 ) -> pd.DataFrame:
-    path = private_data_path("projects", "digsy", "R12_Clean Version v2.xlsx")
+    path = private_data_path("projects", "digsy", "ict", "R12_Clean Version v2.xlsx")
     scen_map = {
         "baseline": {
             "Data centre": "Scenario_Weighted_Demand (TWh)",
@@ -185,7 +194,7 @@ def read_ict_v2(
 
 def read_ict_v3(dc_scen, tele_scen, ssp="SSP2") -> pd.DataFrame:
     path = private_data_path(
-        "projects", "digsy", "R12 Clean MESSAGE version_Finalised.xlsx"
+        "projects", "digsy", "ict", "R12 Clean MESSAGE version_Finalised.xlsx"
     )
     comm_map = {
         dc_scen: "data_centre_elec",
@@ -320,11 +329,14 @@ def read_rc_elec(
     return rc_elec
 
 
-def gen_ict_demands(context, scenario, ict_scenario, ict_version) -> pd.DataFrame:
+def gen_ict_demands(
+    context, scenario, ict_scenario, ict_version, s_info
+) -> pd.DataFrame:
     ict_demand = read_ict_demand(
-        ict_scenario, get_ssp_from_context(context), ict_version
+        ict_scenario, get_ssp_from_context(context), ict_version, s_info
     )
-    ict_demand = extrapolate_post_2050(ict_demand, scenario)
+    if ict_version != "prisma2":
+        ict_demand = extrapolate_post_2050(ict_demand, scenario)
     ict_demand_ue = fe_to_ue(ict_demand, scenario)
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
     adjust_act_calib(ict_demand_ue, scenario)
@@ -347,7 +359,7 @@ def read_ict_r5(scenario, ssp):
         },
     }
     path = private_data_path(
-        "projects", "digsy", "R12_Clean IAM version_Finalised.xlsx"
+        "projects", "digsy", "ict", "R12_Clean IAM version_Finalised.xlsx"
     )
     df = pd.read_excel(path, sheet_name="R5 DC", index_col=[2, 1, 0])
     df_iea = df.loc["IEA (Base)"].loc[[2020, 2025]]["Central Estimate DC (TWh)"]
@@ -365,7 +377,3 @@ def read_ict_r5(scenario, ssp):
     )
     py_df = pyam.IamDataFrame(pd.concat([df_dc, df_tc])).convert_unit("GWa", "EJ")
     return py_df
-
-
-if __name__ == "__main__":
-    read_ict_r5("High", "SSP2")
