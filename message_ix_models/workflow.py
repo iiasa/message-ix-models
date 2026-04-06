@@ -108,6 +108,7 @@ class WorkflowStep:
                 else dict(keep_solution=False)
             )
             s = s.clone(**clone_kw)
+            s.set_as_default()
 
         if not self.action:
             return s
