@@ -530,18 +530,23 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
     """
 
     urn = "IIASA_ECE:CL_TRANSPORT_SCENARIO"
-    version = "1.3.0"
+    version = "1.4.0"
 
-    #: - Model name:
+    #: Base scenario URL, including model name and scenario name.
+    #:
+    #: - **Model name**:
+    #:
     #:   - 2024-11-25: use _v1.1 per a Microsoft Teams message.
     #:   - 2025-02-20: update to _v2.1 per discussion with OF. At this point _v2.3 is
     #:     the latest appearing in the database.
     #:   - 2025-05-05: update to _v5.0.
     #:   - 2025-06-24: update to _v6.1.
-    #: - The scenario names appear to form a sequence from "baseline_DEFAULT" to
+    #:   - 2026-04-07: update to _v6.5. See also _append_code() for a special override.
+    #:
+    #: - The **scenario names** appear to form a sequence from "baseline_DEFAULT" to
     #:   "baseline_DEFAULT_step_15" and finally "baseline". The one used below is the
     #:   latest in this sequence for which y₀=2020, rather than 2030.
-    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v6.1/baseline_DEFAULT_step_13"
+    base_url = "ixmp://ixmp-dev/SSP_SSP{}_v6.5/baseline_DEFAULT_step_13"
 
     @classmethod
     def create(cls) -> "common.Codelist":
@@ -557,6 +562,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
         cl_edits = message_ix_models.project.edits.structure.get_cl_scenario()
         cl_digsy = message_ix_models.project.digsy.structure.get_cl_scenario()
 
+        # Create an empty code list
         cl: "common.Codelist" = common.Codelist(
             id="CL_TRANSPORT_SCENARIO",
             maintainer=IIASA_ECE,
@@ -565,63 +571,71 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             is_final=True,
         )
 
-        def _append_code(
+        def _append_codes(
             id: str,
             name: str,
             ssp: str,
             led: bool = False,
             edits: str = "_Z",
             digsy: str = "_Z",
-            policy=None,
+            policy: "Policy | None" = None,
         ) -> None:
-            """Shorthand for creating a code."""
-            for modules, id_prefix, name_suffix in (
+            """Shorthand to append Codes to `cl` with the given setttings.
+
+            For each call, 2 codes are appended. One has the ID ``"M {id}"``, and
+            includes settings for using :mod:`.transport.material`.
+            """
+            # Construct an SCA instance to transform settings to SDMX Annotations
+            sca = ScenarioCodeAnnotations(
+                cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
+                led,
+                cl_digsy[digsy].urn,
+                cl_edits[edits].urn,
+                # Format base scenario URL
+                # - For SSP2 only, use v6.6 in the base model name
+                cls.base_url.format(ssp).replace(
+                    "v6.5", "v6.6" if ssp == "2" else "v6.5"
+                ),
+                policy,
+            )
+
+            for sca.extra_modules, id_prefix, name_suffix in (
                 ([], "", ""),
                 (["material"], "M ", " with materials"),
             ):
-                sca = ScenarioCodeAnnotations(
-                    cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
-                    led,
-                    cl_digsy[digsy].urn,
-                    cl_edits[edits].urn,
-                    cls.base_url.format(ssp),  # Format base scenario URL
-                    policy,
-                    modules,
-                )
-                code = common.Code(
-                    id=id_prefix + id,
-                    name=name + name_suffix,
-                    **sca.get_annotations(dict),
-                )
+                # Prepare annotations
+                anno = sca.get_annotations(dict)
+                # Construct and store a code
+                code = common.Code(id=id_prefix + id, name=name + name_suffix, **anno)
                 cl.append(code)
 
         # Baselines and policy scenarios for each SSP
         te = TaxEmission(1000.0)
         for ssp in "12345":
             id_ = name = f"SSP{ssp}"
-            _append_code(id_, name + " baseline", ssp)
+            _append_codes(id_, name + " baseline", ssp)
 
             # Simple carbon tax
-            _append_code(id_ + " tax", name + " with tax", ssp, policy=te)
+            _append_codes(id_ + " tax", name + " with tax", ssp, policy=te)
 
             # PRICE_EMISSION from exogenous data file
             for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
                 name += " with exogenous price"
-                _append_code(f"{id_} exo price {hash}", name, ssp, policy=eep)
+                _append_codes(f"{id_} exo price {hash}", name, ssp, policy=eep)
 
         # LED
         name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
         for ssp in "12":
-            _append_code(f"LED-SSP{ssp}", name.format(ssp), ssp, led=True)
+            _append_codes(f"LED-SSP{ssp}", name.format(ssp), ssp, led=True)
 
         # DIGSY
         ssp, name = "2", "DIGSY {!r} scenario with SSP2"
         for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
-            _append_code(f"DIGSY-{id_}", name.format(id_), ssp, digsy=id_)
+            _append_codes(f"DIGSY-{id_}", name.format(id_), ssp, digsy=id_)
 
             # PRICE_EMISSION from exogenous data file
             for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
-                _append_code(
+                _append_codes(
                     f"DIGSY-{id_} exo price {hash}",
                     name.format(id_) + " with exogenous price",
                     ssp,
@@ -631,7 +645,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
         # EDITS
         ssp, name = "2", "EDITS scenario with ITF PASTA {!r} activity"
         for id_ in ("CA", "HA"):
-            _append_code(f"EDITS-{id_}", name.format(id_), ssp, edits=id_)
+            _append_codes(f"EDITS-{id_}", name.format(id_), ssp, edits=id_)
 
         return cl
 
