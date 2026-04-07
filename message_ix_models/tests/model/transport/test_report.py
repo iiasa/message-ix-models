@@ -226,7 +226,7 @@ def test_simulated(
     rep.get(k)
 
     # A quantity for message_ix_models.model.transport can be computed
-    k = "transport stock::iamc"
+    k = "T stock::iamc"
     result = rep.get(k)
     assert 0 < len(result)
 
@@ -287,14 +287,18 @@ def test_simulated_iamc(
 
     # Retrieve time series data stored on the scenario object
     ts = s.timeseries()
-    # print(ts, ts["variable"].unique(), sep="\n")  # DEBUG
+    # print(  # DEBUG
+    #     ts.head().to_string(),
+    #     ts.tail().to_string(),
+    #     "\n".join(sorted(ts["variable"].unique())),
+    #     sep="\n",
+    # )
 
     # The reported data was stored on the scenario, and has expected variable names
-    # print("\n".join(sorted(ts["variable"].unique())))  # DEBUG
     assert {
         "Energy Service|Transportation|Domestic Aviation",
         "Final Energy|Transportation|Bus",
-        "Transport|Stock|Road|Passenger|LDV|BEV",
+        "Stocks|Transportation|Light-Duty Vehicle|Battery-Electric",
     } <= set(ts["variable"].unique())
 
     del result
