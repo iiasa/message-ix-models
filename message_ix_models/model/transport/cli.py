@@ -8,6 +8,7 @@ point, see :ref:`transport-usage`.
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 
@@ -15,6 +16,9 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util._logging import silence_log
 from message_ix_models.util.click import PARAMS, common_params, exec_cb
 from message_ix_models.workflow import make_click_command
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -107,6 +111,50 @@ def export_emissions_factors(context, path_stem):
         )
         # Write data
         df.to_csv(path, mode="a", index=False)
+
+
+@cli.command("export-price")
+@click.pass_obj
+def export_price_emission(context: "Context") -> None:  # pragma: no cover
+    """Export PRICE_EMISSION values from base model scenarios.
+
+    The --url option MUST be given. Values are exported to a CSV file at a path like:
+
+      message_ix_models/data/transport/{nodes}/price-emission/{B}.csv
+
+    …where {nodes} is the ID of the node codelist, and {B} is derived from the --url.
+    """
+    # TODO Add a test; requires a solved scenario on the platform used by the
+    #      mix_models_cli fixture
+    from datetime import datetime
+
+    from message_ix_models.util import identify_nodes, package_data_path
+
+    # Load the targeted scenario
+    scenario = context.get_scenario()
+
+    # Identify the node codelist
+    nodes = identify_nodes(scenario)
+
+    # Output path.
+    # NB Cannot use .with_suffix() here, as this replaces from the first "." in the file
+    #    name, not the last.
+    info = ScenarioInfo.from_url(scenario.url)
+    path = package_data_path("transport", nodes, "price-emission", f"{info.path}.csv")
+    path.parent.mkdir(exist_ok=True, parents=True)
+
+    df = scenario.var("PRICE_EMISSION")
+    log.info(f"Write {len(df)} rows to {path}")
+
+    # Write header
+    path.write_text(f"""# Exported using:
+#   mix-models --url="{context.url}" transport export-price
+# at {datetime.today().isoformat()}
+#
+""")
+
+    # Write data
+    df.to_csv(path, mode="a", index=False)
 
 
 @cli.command()
