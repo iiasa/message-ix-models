@@ -33,20 +33,20 @@ CONVERT_IAMC = (
     #    NGFS project
     dict(
         variable="transport activity",
-        base="out:nl-t-ya-c:transport+units",
+        base="out:nl-t-ya-c:transport all+units",
         var=["Energy Service|Transportation", "t", "c"],
         sums=["c", "t", "c-t"],
     ),
     dict(
-        variable="transport stock",
-        base="CAP:nl-t-ya:ldv+units",
-        var=["Transport|Stock|Road|Passenger|LDV", "t"],
+        variable="T stock",
+        base="CAP:nl-t-ya:transport all+units",
+        var=["Stocks|Transportation", "t"],
         unit="Mvehicle",
     ),
     dict(
-        variable="transport sales",
-        base="CAP_NEW:nl-t-yv:ldv+units",
-        var=["Transport|Sales|Road|Passenger|LDV", "t"],
+        variable="T sales",
+        base="CAP_NEW:nl-t-yv:transport all+units",
+        var=["Sales|Transportation", "t"],
         unit="Mvehicle",
     ),
     # Final energy
@@ -55,7 +55,7 @@ CONVERT_IAMC = (
     # individual technologies are already aggregated to modes
     dict(
         variable="transport fe",
-        base="in:nl-t-ya-c:transport+units",
+        base="in:nl-t-ya-c:transport all+units",
         var=["Final Energy|Transportation", "t", "c"],
         sums=["c", "t", "c-t"],
         unit=_FE_UNIT,
@@ -63,7 +63,7 @@ CONVERT_IAMC = (
     dict(
         variable="transport fe ldv",
         base="in:nl-t-ya-c:ldv+units",
-        var=["Final Energy|Transportation|Road|Passenger|LDV", "t", "c"],
+        var=["Final Energy|Transportation", "t", "c"],
         unit="EJ/yr",
     ),
     # Emissions using MESSAGEix emission_factor parameter
