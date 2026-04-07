@@ -212,9 +212,6 @@ def callback(rep: Reporter, context: Context) -> None:
 
         rep.set_filters(t=sorted(t_filter))
 
-    # Configure replacements for conversion to IAMC data structure
-    add_replacements("t", context.transport.spec.add.set["technology"])
-
     # Apply some functions that prepare further tasks. Order matters here.
     aggregate(rep)
     select_transport_techs(rep)
@@ -307,7 +304,14 @@ def convert_iamc(c: "Computer") -> None:
     from message_ix_models.report import iamc as handle_iamc
     from message_ix_models.report import util
 
-    util.REPLACE_VARS.update({r"^CAP\|(Transport)": r"\1"})
+    # Configure replacements for technology IDs in conversion to IAMC data structure
+    cfg: Config = c.graph["context"].transport
+    add_replacements("t", cfg.spec.add.set["technology"])
+
+    # Update replacements for fully-constructed IAMC variable codes
+    # - Quantity.name is prepended automatically; this occurs with quantities derived
+    #   from CAP and CAP_NEW. Remove the prefix.
+    util.REPLACE_VARS.update({r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2"})
 
     keys = []
     for info in CONVERT_IAMC:
