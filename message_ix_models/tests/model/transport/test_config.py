@@ -144,11 +144,11 @@ class TestCL_SCENARIO:
 @pytest.mark.parametrize(
     "ssp_or_led, N_exp",
     (
-        ("SSP1", 7),
-        ("SSP2", 22),
-        ("SSP3", 1),
-        ("SSP4", 5),
-        ("SSP5", 7),
+        ("SSP1", 10),
+        ("SSP2", 27),
+        ("SSP3", 3),
+        ("SSP4", 7),
+        ("SSP5", 10),
     ),
 )
 def test_iter_price_emission(ssp_or_led: str, N_exp: int, regions="R12") -> None:

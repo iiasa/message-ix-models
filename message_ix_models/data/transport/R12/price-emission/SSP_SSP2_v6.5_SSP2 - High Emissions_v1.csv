@@ -1,0 +1,8 @@
+# Exported using:
+#   mix-models --url="ixmp://ixmp-dev/SSP_SSP2_v6.5/SSP2 - High Emissions" transport export-price
+# at 2026-04-07T19:29:46.255758
+#
+node,type_emission,type_tec,year,lvl,mrg
+R12_GLB,CO2_shipping_IMO,bunkers,2090,4537.274658706932,0.0
+R12_GLB,CO2_shipping_IMO,bunkers,2100,384.621641518828,0.0
+R12_GLB,CO2_shipping_IMO,bunkers,2110,390.60386370178253,0.0

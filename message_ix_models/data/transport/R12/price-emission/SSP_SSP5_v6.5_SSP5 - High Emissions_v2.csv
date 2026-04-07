@@ -1,0 +1,5 @@
+# Exported using:
+#   mix-models --url="ixmp://ixmp-dev/SSP_SSP5_v6.5/SSP5 - High Emissions" transport export-price
+# at 2026-04-07T19:37:23.616510
+#
+node,type_emission,type_tec,year,lvl,mrg
