@@ -102,7 +102,7 @@ class TestCL_SCENARIO:
         result = CL_SCENARIO.get(force=True)
 
         # Code list has the expected length
-        assert 296 == len(result)
+        assert 366 == len(result)
 
         # Code list contains codes with the expected IDs
         assert {
