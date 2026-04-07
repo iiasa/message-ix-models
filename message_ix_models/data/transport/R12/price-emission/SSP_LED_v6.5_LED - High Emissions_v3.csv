@@ -1,0 +1,10 @@
+# Exported using:
+#   mix-models --url="ixmp://ixmp-dev/SSP_LED_v6.5/LED - High Emissions" transport export-price
+# at 2026-04-07T19:24:22.872482
+#
+node,type_emission,type_tec,year,lvl,mrg
+R12_GLB,CO2_shipping_IMO,bunkers,2060,5492.357908799743,0.0
+R12_GLB,CO2_shipping_IMO,bunkers,2070,269.0486426257295,0.0
+R12_GLB,CO2_shipping_IMO,bunkers,2080,313.2632000474355,0.0
+R12_GLB,CO2_shipping_IMO,bunkers,2090,490.8628883500824,0.0
+R12_GLB,CO2_shipping_IMO,bunkers,2110,219.3127211855239,0.0

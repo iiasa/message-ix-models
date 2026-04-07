@@ -1,0 +1,10 @@
+# Exported using:
+#   mix-models --url="ixmp://ixmp-dev/SSP_SSP5_v6.5/SSP5 - Medium-Low Emissions_a" transport export-price
+# at 2026-04-07T19:39:06.461627
+#
+node,type_emission,type_tec,year,lvl,mrg
+World,TCE,all,2070,157.05140601954372,0.0
+World,TCE,all,2080,255.8201913930772,0.0
+World,TCE,all,2090,416.7041351813603,0.0
+World,TCE,all,2100,678.7671267528586,0.0
+World,TCE,all,2110,1105.6401256008944,0.0
