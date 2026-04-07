@@ -470,7 +470,9 @@ def reapply_units(c: "Computer") -> None:
         # FIXME should not need the extra [vehicle] in the numerator
         "CAP:nl-t-ya:non-ldv": ("apply", "v**2 Tm / a"),
         "CAP:*:ldv": ("apply", "Mv"),
+        "CAP:*:transport all": ("apply", "Mv"),
         "CAP_NEW:*:ldv": ("apply", "Mv"),
+        "CAP_NEW:*:transport all": ("apply", "Mv"),
         # NB these units are correct for final energy only
         "in:*:transport": ("apply", "GWa / a"),
         "in:*:ldv": ("apply", "GWa / a"),
