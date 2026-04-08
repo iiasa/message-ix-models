@@ -21,7 +21,7 @@
 #
 # - 'input': same as in message-ix-models: mapping including 'commodity' and/or
 #   'level' keys indicating the technology's inputs.
-# - 'message-v-report': these appeared in the US-TIMES–MA³T input data, but were
+# - 'message-v-id': these appeared in the US-TIMES–MA³T input data, but were
 #   apparently not used in MESSAGE-(V)-Transport.
 # - 'report': are picked up by add_replacements() for reporting.
 
@@ -30,187 +30,220 @@ ELC_100:
   description: >-
     Battery-electric light-duty vehicle using electricity only
     (100-mile all-electric range)
-  report: BEV
   input: {commodity: electr}
-  message-v-report: LDV_ELE
+  report: Light-Duty Vehicle|Battery-Electric
+  message-v-id: LDV_ELE
   ntnu-vmi-technology: BEV
   gfei-2017-technology: Electric
 
 HFC_ptrp:
-  report: FCEV
+  name: Hydrogen fuel cell LDV
   description: Hybridized fuel cell light-duty vehicle using hydrogen
   input: {commodity: hydrogen}
-  message-v-report: LDV_HFC
+  report: Light-Duty Vehicle|Fuel-Cell-Electric
+  message-v-id: LDV_HFC
   ntnu-vmi-technology: ICE
   gfei-2017-technology: Hydrogen
 
 IAHe_ptrp:
-  report: Biofuel hybrid
+  name: Biofuel hybrid LDV
   description: >-
     Hybridized internal combustion engine light-duty vehicle using biofuels
   input: {commodity: ethanol}
-  message-v-report: LDV_EHYB
+  report: Light-Duty Vehicle|Biofuel hybrid
+  message-v-id: LDV_EHYB
   ntnu-vmi-technology: ICE
 
 IAHm_ptrp:
-  report: Methanol hybrid
+  name: Methanol hybrid LDV
   description: >-
     Hybridized internal combustion engine light-duty vehicle using methanol/
     synthetic fossil liquids
   input: {commodity: methanol}
-  message-v-report: LDV_MHYB
+  report: Light-Duty Vehicle|Methanol hybrid
+  message-v-id: LDV_MHYB
   ntnu-vmi-technology: ICE
 
 ICAe_ffv:
-  report: Biofuel ICEV
+  name: Biofuel ICE LDV
   description: >-
     Internal combustion engine light-duty vehicle using biofuels.
 
     Although real-world flex-fuel vehicles are run on varying mix of
     ethanol and lightoil, this technology uses only ethanol.
   input: {commodity: ethanol}
-  message-v-report: LDV_ffv
+  report: Light-Duty Vehicle|Biofuel
+  message-v-id: LDV_ffv
   ntnu-vmi-technology: ICE
   gfei-2017-technology: Diesel
 
 ICAm_ptrp:
-  report: Synfuel ICEV
+  name: Synfuel ICE LDV
   description: >-
     Internal combustion engine light-duty vehicle using methanol/synthetic
     fossil liquids
   input: {commodity: methanol}
-  message-v-report: LDV_meth
+  report: Light-Duty Vehicle|Synfuel
+  message-v-id: LDV_meth
   ntnu-vmi-technology: ICE
   gfei-2017-technology: Flexfuel
 
 ICE_conv:
-  report: ICEV
+  report: ICE LDV
   description: >-
     Future (2005 and after) medium/high-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
   input: {commodity: lightoil}
-  message-v-report: LDV_conv
+  report: Light-Duty Vehicle|Light oil combustion
+  message-v-id: LDV_conv
   ntnu-vmi-technology: ICE
   gfei-2017-technology: Petrol
 
 ICE_L_ptrp:
-  report: ICEV (pre-2005)
+  name: ICE LDV (pre-2005)
   description: >-
     Historical (2005 and before) Low-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
   input: {commodity: lightoil}
+  report: Light-Duty Vehicle|Light oil combustion (2005 and before)
   historical-only: True
-  message-v-report: LDV_ICE_L
+  message-v-id: LDV_ICE_L
   ntnu-vmi-technology: ICE
 
 ICE_nga:
-  report: Gas ICEV
+  name: Gas ICE LDVV
   description: >-
     Internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
-  message-v-report: LDV_NGA
+  report: Light-Duty Vehicle|Gas combustion
+  message-v-id: LDV_NGA
   gfei-2017-technology: [CNG, LPG]
   ntnu-vmi-technology: ICE
 
 ICH_chyb:
-  report: Hybrid
+  name: Hybrid LDV
   description: >-
     Hybridized internal combustion engine light-duty vehicle using
     gasoline/diesel
   input: {commodity: lightoil}
-  message-v-report: LDV_CHYB
+  report: Light-Duty Vehicle|Light-oil hybrid
+  message-v-id: LDV_CHYB
   ntnu-vmi-technology: ICE
   gfei-2017-technology: Hybrid
 
 IGH_ghyb:
-  report: Gas hybrid
+  name: Gas hybrid LDV
   description: >-
     Hybridized internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
-  message-v-report: LDV_GHYB
+  report: Light-Duty Vehicle|Gas hybrid
+  message-v-id: LDV_GHYB
   ntnu-vmi-technology: ICE
 
 PHEV_ptrp:
-  report: PHEV
+  report: PHE LDV
   description: >-
     Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
     all-electric range)
   input: {commodity: [electr, lightoil]}
-  message-v-report: LDV_PHEV
+  report: Light-Duty Vehicle|Plug-in Hybrid
+  message-v-id: LDV_PHEV
   ntnu-vmi-technology: PHEV
   gfei-2017-technology: Plug-in
 
 ICE_H_moto:
-  report: ICEV
+  name: ICE 2- and 3-wheeler
   description: >-
     High-efficiency internal combustion engine two-wheeler/motorcycle using
     gasoline/diesel
   input: {commodity: lightoil}
-  report: 2W_ICE_H
+  report: 2W|Combustion
+  message-v-id: 2W_ICE_H
 
 ELE_moto:
-  report: BEV
+  name: Battery-electric 2- and 3-wheeler
   description: >-
     Battery-electric two-wheeler/motorcycle using electricity-only
   input: {commodity: electr}
-  report: 2W_ELE
+  report: 2W|Battery-electric
+  message-v-id: 2W_ELE
 
 ICE_H_bus:
+  name: High-efficiency internal combustion bus
   description:
     High-efficiency internal combustion engine bus using gasoline/diesel
   input: {commodity: lightoil}
-  report: BUS_ICE_H
+  report: Bus|Combustion light oil high efficiency
+  message-v-id: BUS_ICE_H
 
 ICE_M_bus:
+  name: Medium-efficiency internal combustion bus
   description: >-
     Medium-efficiency internal combustion engine bus using gasoline/diesel
   input: {commodity: lightoil}
-  report: BUS_ICE_M
+  report: Bus|Combustion light oil
+  message-v-id: BUS_ICE_M
 
 ICG_bus:
+  name: Natural gas bus
   description: Internal combustion engine bus using natural gas
   input: {commodity: gas}
-  report: BUS_ICG
+  report: Bus|Combustion gas
+  message-v-id: BUS_ICG
 
 ICAe_bus:
+  name: Biofuel bus
   description: Internal combustion engine bus using biofuels
   input: {commodity: ethanol}
-  report: BUS_ICAe
+  report: Bus|Combustion biofuel
+  message-v-id: BUS_ICAe
 
 ICH_bus:
+  name: Hybridized internal combustion bus
   description: >-
     Hybridized internal combustion engine bus using gasoline/diesel
   input: {commodity: lightoil}  # hybridized, but not plug-in, so only oil input
-  report: BUS_ICH
+  report: Bus|Hybrid combustion
+  message-v-id: BUS_ICH
 
 FC_bus:
+  name: Hybridized hydrogen fuel cell bus
   description: Hybridized fuel cell bus using hydrogen
   input: {commodity: hydrogen}
-  report: BUS_HFC
+  report: Bus|Hybrid fuel cell hydrogen
+  message-v-id: BUS_HFC
 
 FCg_bus:
+  name: Hybridized natural gas fuel cell bus
   description: >-
     Hybridized fuel cell bus using natural gas via steam reformation
   input: {commodity: gas}
-  report: BUS_GFC
+  report: Bus|Hybrid fuel cell gas
+  message-v-id: BUS_GFC
 
 FCm_bus:
+  name: Hybridized synfuel cell bus
   description: >-
     Hybridized fuel cell bus using methanol/synthetic fossil liquids via steam
     reformation
   input: {commodity: methanol}
-  report: BUS_MFC
+  report: Bus|Hybrid fuel cell synfuel
+  message-v-id: BUS_MFC
 
 Trolley_bus:
+  name: Electric trolley-bus
   description: Electric trolleybus connected to power cables
   input: {commodity: electr}
-  report: BUS_ELEtr
+  report: Bus|Trolley
+  message-v-id: BUS_ELEtr
 
 PHEV_bus:
+  name: Plug-in hybrid-electric bus
   description: Plug-in hybrid-electric bus using gasoline/diesel
   input:
     commodity: [electr, lightoil]
-  report: BUS_PHEV
+  report: Bus|Plug-in Hybrid
+  message-v-id: BUS_PHEV
 
 # BEV_bus:
 #   description: Battery-electric bus using electricity only
@@ -218,102 +251,126 @@ PHEV_bus:
 #   report: BUS_BEV
 
 con_ar:
+  name: Kerosene aircraft
   description: >-
     Conventional jet engine passenger aircraft using light oil petroleum
     products (kerosene jet fuel)
   input: {commodity: lightoil}
-  report: AIRp_JF
+  report: Air|Kerosene
+  message-v-id: AIRp_JF
 
 conh_ar:
+  name: Hydrogen aircraft
   description: Conventional jet engine passenger aircraft using hydrogen
   input: {commodity: hydrogen}
-  report: AIRp_H2
+  report: Air|Hydrogen
+  message-v-id: AIRp_H2
 
 conm_ar:
+  name: Synfuel aircraft
   description: >-
     Conventional jet engine passenger aircraft using methanol/synthetic fossil
     liquids
   input: {commodity: methanol}
-  report: AIRp_MET
+  report: Air|Synfuel
+  message-v-id: AIRp_MET
 
 conE_ar:
+  name: Biofuel aircraft
   description: Conventional jet engine passenger aircraft using biofuels
   input: {commodity: ethanol}
-  report: AIRp_BIO
+  report: Air|Biofuel
+  message-v-id: AIRp_BIO
 
 FR_ICE_H:
+  name: High-efficiency light oil truck
   description: >-
     High-efficiency internal combustion engine freight truck using
     gasoline/diesel
   input: {commodity: lightoil, level: final}
-  report: FRT_ICE_H
+  report: Truck|Combustion light oil high efficiency
+  message-v-id: FRT_ICE_H
 
 FR_ICE_M:
+  name: Medium-efficiency light oil truck
   description: >-
     Medium-efficiency internal combustion engine freight truck using
     gasoline/diesel
   input: {commodity: lightoil}
-  report: FRT_ICE_M
+  report: Truck|Combustion light oil medium efficiency
+  message-v-id: FRT_ICE_M
 
 FR_ICE_L:
+  name: Low-efficiency light oil truck
   description: >-
     Low-efficiency internal combustion engine freight truck using
     gasoline/diesel
   input: {commodity: lightoil}
-  report: FRT_ICE_L
+  report: Truck|Combustion light oil low efficiency
+  message-v-id: FRT_ICE_L
 
 FR_ICAe:
+  name: Biofuel truck
   description: Internal combustion engine freight truck using biofuels
   input: {commodity: ethanol}
-  report: FRT_ICAe
+  report: Truck|Biofuel
+  message-v-id: FRT_ICAe
 
 FR_ICH:
+  name: Hybrid ICE truck
   description: >-
     Hybridized internal combustion engine freight truck using gasoline/diesel
   input: {commodity: lightoil}
-  report: FRT_ICH
+  report: Truck|Hybrid combustion
+  message-v-id: FRT_ICH
 
 FR_FCH:
+  name: Fuel cell truck
   description: Hybridized fuel cell freight truck using hydrogen
   input: {commodity: hydrogen}
-  report: FRT_HFC
+  report: Truck|Fuel cell hydrogen
+  message-v-id: FRT_HFC
 
 f road electr:
   name: Freight road vehicle powered by electricity
   input: {commodity: electr}
+  report: Truck|Battery-Electric
 
 f road gas fc:
+  name: Gas fuel cell truck
   description: >-
     Hybridized fuel cell freight truck using natural gas via steam reformation.
 
     Previous ID: FR_FCg.
   input: {commodity: gas}
-  report: FRT_GFC
+  report: Truck|Fuel cell gas
+  message-v-id: FRT_GFC
 
 f road gas ic:
-  description: >-
-    Internal combustion engine freight truck using natural gas.
-
-    Previous ID: FR_ICG.
+  name: Gas combustion truck
+  description: Internal combustion engine freight truck using natural gas.
   input: {commodity: gas}
-  report: FRT_ICG
+  report: Truck|Gas combustion
+  message-v-id: [FR_ICG, FRT_ICG]
 
 f road methanol:
+  name: Synfuel truck
   description: >-
     Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
     via steam reformation.
-
-    Previous ID: FR_FCm
   input: {commodity: methanol}
-  report: FRT_MFC
+  report: Truck|Fuel cell synfuel
+  message-v-id: [FR_FCm, FRT_MFC]
 
 f rail electr:
   name: Freight rail powered by electricity
   input: {commodity: electr}
+  report: Rail|Freight|Electric
 
 f rail lightoil:
   name: Freight rail powered by light oil
   input: {commodity: lightoil}
+  report: Rail|Freight|Combustion
 
 F RAIL:
   name: Freight rail
@@ -322,40 +379,47 @@ F RAIL:
   - f rail lightoil
   units: Gv km
   output: {commodity: transport F RAIL vehicle, level: useful}
+  report: Rail|Freight
   iea-eweb-flow: [RAIL]
 
 crail_pub:
+  name: Coal train
   description: >-
     Coal-powered urban public rail transport: aggregate of metro/underground,
     streetcars/trams, commuter trains, and regional trains
-  report: RAIL_urban_COAL
+  name: Passenger|Rail|Coal
 
 dMspeed_rai:
+  name: Diesel train
   description: Diesel-powered long-distance medium-speed rail transport
   input: {commodity: lightoil}
-  report: RAIL_ldm_DSL
+  report: Passenger|Rail|Diesel
 
 drail_pub:
+  name: Diesel urban train
   description: Diesel-powered urban public rail transport
   input: {commodity: lightoil}
-  report: RAIL_urban_DSL
+  report: Passenger|Rail|Diesel urban
 
 Hspeed_rai:
+  name: Electric high-speed train
   description: Electrically-powered long-distance high-speed rail transport
   input: {commodity: electr}
-  report: RAIL_ldh_ELE
+  report: Passenger|Rail|Electric high-speed
 
 Mspeed_rai:
+  name: Electric train
   description: Electrically-powered long-distance medium-speed rail transport
   input: {commodity: electr}
-  report: RAIL_ldm_ELE
+  report: Passenger|Rail|Electric
 
 rail_pub:
+  name: Electric urban train
   description: >-
     Electrically-powered urban public rail transport: aggregate of metro/
     underground, streetcars/trams, commuter trains, and regional trains
   input: {commodity: electr}
-  report: RAIL_urban_ELE
+  report: Passenger|Rail|Electric urban
 
 transport F RAIL usage:
   description: >-
@@ -500,6 +564,7 @@ AIR:
 
 BUS:
   name: Urban public transit
+  report: Bus
   description: >-
     Buses and other forms of urban public transit.
 
