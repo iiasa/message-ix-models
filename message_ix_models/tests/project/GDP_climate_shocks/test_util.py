@@ -66,20 +66,22 @@ def test_maybe_shift_year(first_year, shift_year, expected):
 def test_apply_growth_rates():
     """Minimal scenario-like object to test apply_growth_rates logic."""
     sc = SimpleNamespace(
-        par=lambda name: pd.DataFrame(
-            {
-                "node": ["R1", "R1", "R1", "R1"],
-                "year": [2010, 2020, 2100, 2110],
-                "value": [100, 200, 300, 400],
-            }
-        )
-        if name == "gdp_calibrate"
-        else pd.DataFrame(
-            {
-                "node": ["R1", "R1", "R1", "R1"],
-                "year": [2025, 2030, 2100, 2110],
-                "value": [0.01, 0.02, 0.03, 0.04],
-            }
+        par=lambda name: (
+            pd.DataFrame(
+                {
+                    "node": ["R1", "R1", "R1", "R1"],
+                    "year": [2010, 2020, 2100, 2110],
+                    "value": [100, 200, 300, 400],
+                }
+            )
+            if name == "gdp_calibrate"
+            else pd.DataFrame(
+                {
+                    "node": ["R1", "R1", "R1", "R1"],
+                    "year": [2025, 2030, 2100, 2110],
+                    "value": [0.01, 0.02, 0.03, 0.04],
+                }
+            )
         ),
         check_out=lambda: None,
         add_par=lambda *a, **k: None,
@@ -103,7 +105,7 @@ def test_apply_growth_rates():
 @pytest.mark.parametrize(
     "damage_model, expected_var",
     [
-        ("Waidelich", "RIME|All indicators|mean"),
+        ("Waidelich", "RIME|pct.diff"),
         ("Burke", "RIME|pct.diff"),
         ("Kotz", "RIME|pct.diff"),
     ],
