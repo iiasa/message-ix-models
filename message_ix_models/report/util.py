@@ -10,7 +10,7 @@ from genno import Key, Keys
 from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
 from message_ix import Reporter
-from sdmx.model.v21 import Code
+from sdmx.model.common import Code
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -334,13 +334,20 @@ def add_replacements(dim: str, codes: Iterable[Code]) -> None:
 
        qux: {}  # No "report" annotation → no mapping
 
-    …results in entries :py:`{"foo": "fOO", "bar": "Baz"}` added to :data:`REPLACE_DIMS`
+    …results in entries :py:`{"Foo": "fOO", "Bar": "Baz"}` added to :data:`REPLACE_DIMS`
     and used by :func:`collapse`.
     """
     for code in codes:
+        # List of candidates
+        candidates = [code.id, code.name]
         try:
-            label = str(code.get_annotation(id="report").text)
+            # Append the value of the "report" annotation, if any
+            candidates.append(code.get_annotation(id="report").text)
         except KeyError:
             pass
-        else:
+
+        # Final entry in the list with a non-empty string representation
+        label = next(filter(None, map(str, reversed(candidates))))
+
+        if label != code.id:
             REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
