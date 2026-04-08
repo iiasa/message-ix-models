@@ -219,6 +219,7 @@ def load_and_override_config(
     shift_year,
     regions,
 ):
+    """Load and override config file values with CLI arguments if provided."""
     cfg = load_config_from_path(config)
     model_name = model_name or cfg["model_name"]
     model_name_clone = model_name_clone or cfg["model_name_clone"]
@@ -294,6 +295,7 @@ def run_full(
     3. Runs full reporting (based on legacy reporting setup on message_data).
 
     Parameters:
+    (optional manually inserted parameters will override config file values if provided)
     ----------
     model_name : str
         Original model name (e.g., 'ENGAGE_SSP2').

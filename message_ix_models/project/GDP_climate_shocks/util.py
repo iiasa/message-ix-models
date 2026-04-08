@@ -141,7 +141,7 @@ def run_legacy_reporting(sc=False, mp=False):
         scen=sc,
         merge_hist=True,
         merge_ts=False,
-        run_config="GDP_shock_run_config.yaml",
+        run_config="materials_daccs_run_config.yaml",
     )
 
 
@@ -368,7 +368,7 @@ def apply_growth_rates(sc, gdp_change_df):
     grow_par = sc.par("grow").copy()
     merge_grow = grow_par.merge(growth_diff_df, on=["node", "year"], how="left")
     merge_grow["value"] = merge_grow["value"] + merge_grow["growth_diff"]
-    merge_grow = merge_grow[merge_grow["year"] >= 2025]
+    merge_grow = merge_grow[merge_grow["year"] > 2025]
     merge_grow = merge_grow.drop(["growth_diff"], axis=1)
     # add the paramenter back to the scenario
     sc.check_out()
