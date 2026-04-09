@@ -62,7 +62,8 @@ def friction_dictionary(sensitivity_scenario: str,
 def run_friction_scenario(base_scenario_name: str,
                           sensitivity_scenario: str,
                           friction_endyear = 2110,
-                          solve_scenario = True):
+                          solve_scenario = True,
+                          scenario_name_adder = None):
     
     # Import scenario and models
     config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
@@ -73,8 +74,12 @@ def run_friction_scenario(base_scenario_name: str,
     mp = ixmp.Platform()
 
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
+    if scenario_name_adder is not None:
+        target_scenario_name = scenario_name_adder + sensitivity_scenario + str(friction_endyear)
+    else:
+        target_scenario_name = sensitivity_scenario + str(friction_endyear)
     target_scenario = base_scenario.clone('weu_security',
-                                          sensitivity_scenario + str(friction_endyear), 
+                                          target_scenario_name, 
                                           keep_solution = False)
     target_scenario.set_as_default()
 
@@ -95,7 +100,7 @@ def run_friction_scenario(base_scenario_name: str,
     mp.close_db()
     
 # Run scenarios
-run_friction_scenario('SSP2', 'FSU', 2100)
-run_friction_scenario('SSP2', 'FSU', 2040)
-run_friction_scenario('INDC2030', 'FSU', 2100)
-run_friction_scenario('INDC2030', 'FSU', 2040)
+#run_friction_scenario('SSP2', 'FSU', 2100)
+#run_friction_scenario('SSP2', 'FSU', 2040)
+run_friction_scenario('INDC2030', 'FSU', 2100, scenario_name_adder = "INDC2030_")
+run_friction_scenario('INDC2030', 'FSU', 2040, scenario_name_adder = "INDC2030_")

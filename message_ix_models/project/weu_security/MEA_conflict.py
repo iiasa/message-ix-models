@@ -104,18 +104,26 @@ def run_friction_scenario(base_scenario_name:str,
                 print(f"...{par}")
                 use_scenario.remove_par(par, basepar_exp)
                 use_scenario.remove_par(par, basepar_imp)
-                
+
+    if "INDC" in base_scenario_name:
+        print("loosen emission bounds on non-Europe")
+        with use_scenario.transact("Loosen emission bounds on non-Europe"):
+            remdf = use_scenario.par("bound_emission")
+            remdf = remdf[remdf['node'].isin(['R12_WEU', 'R12_EEU', 'R12_GLB']) == False]
+            use_scenario.remove_par("bound_emission", remdf)
+            
     use_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
 
     mp.close_db()
 
 # Run scenarios
-for scen in ['SSP2', 'FSU2040', 'FSU2100']:
-    for conflict in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
-        print(f"Build and run: Base scenario = {scen}, Impact Level = {conflict}")
-        run_friction_scenario(scen, conf_level = conflict)
+#for scen in ['FSU2100', 'FSU2040']: # Add back SSP2
+#    for conflict in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
+#        print(f"Build and run: Base scenario = {scen}, Impact Level = {conflict}")
+#        run_friction_scenario(scen, conf_level = conflict)
 
 # Add decarbonization sensitivities
 for scen in ["INDC2030", "INDC2030_FSU2040", "INDC2030_FSU2100"]:
+    print(f"Build and run: Base scenario = {scen}, Impact Level = 1.0")
     run_friction_scenario(scen, conf_level = 1.0)
 

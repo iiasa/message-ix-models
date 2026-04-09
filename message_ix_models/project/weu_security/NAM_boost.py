@@ -142,22 +142,25 @@ def run_nam_boost(base_scenario_name: str,
 # Run scenarios
 for lev in [10, 15, 20, 25, 30]:
     gwa_level = lev * 31.71 # approximation of EJ to GWa
-    
-    run_nam_boost(base_scenario_name = 'SSP2',
-                  out_scenario_name = f'SSP2_NAM{lev}EJ',
-                  bound_level = gwa_level)
-    
-    run_nam_boost(base_scenario_name = 'FSU2040',
-                  out_scenario_name = f'FSU2040_NAM{lev}EJ',
-                  bound_level = gwa_level)
-    
+    #print(f"Build and run: Base scenario = SSP2, Boost level = {lev}EJ")
+    #run_nam_boost(base_scenario_name = 'SSP2',
+    #              out_scenario_name = f'SSP2_NAM{lev}EJ',
+    #              bound_level = gwa_level)
+
+    print(f"Build and run: Base scenario = FSU2100, Boost level = {lev}EJ")
     run_nam_boost(base_scenario_name = 'FSU2100',
                   out_scenario_name = f'FSU2100_NAM{lev}EJ',
+                  bound_level = gwa_level)
+
+    print(f"Build and run: Base scenario = FSU2040, Boost level = {lev}EJ")
+    run_nam_boost(base_scenario_name = 'FSU2040',
+                  out_scenario_name = f'FSU2040_NAM{lev}EJ',
                   bound_level = gwa_level)
 
 # Run decarbonization sensitivity
 gwa_level = 30 * 31.71 # approximation of EJ to GWa
 for scen in ['INDC2030', 'INDC2030_FSU2040', 'INDC2030_FSU2100']:
+    print(f"Build and run: Base scenario = {scen}, Boost level = 30EJ")
     run_nam_boost(base_scenario_name = scen,
                   out_scenario_name = f'{scen}_NAM30EJ',
                   bound_level = gwa_level)
