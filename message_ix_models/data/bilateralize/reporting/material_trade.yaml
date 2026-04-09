@@ -1,0 +1,30 @@
+var:
+  out
+
+iamc_prefix:
+  Trade|Material|
+
+unit: EJ/yr
+
+vars:
+
+# Shipped steel imports
+  Trade|Material|Steel Volume|Shipped:
+    filter:
+      { technology: [steel_shipped_exp], mode: M1, commodity: steel, level: [shipped] }
+    short:
+      steel_shipped_exp
+
+# Shipped steel imports (global pool)
+  Trade|Material|Steel Volume|Shipped (Global Pool)|Imports:
+    filter:
+      { technology: [import_steel], mode: M1, commodity: steel, level: [useful_material] }
+    short:
+      steel_shipped_imp
+
+# Shipped steel imports (global pool)
+  Trade|Material|Steel Volume|Shipped (Global Pool)|Exports:
+    filter:
+      { technology: [export_steel], mode: M1, commodity: steel, level: [export] }
+    short:
+      steel_shipped_exp
