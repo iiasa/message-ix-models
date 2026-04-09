@@ -7,23 +7,10 @@ p_drive_location:
 
 # SCENARIO INFORMATION
 scenario:
-  start_model: 
-    SSP_SSP2_v6.2
-  start_scen:
-    baseline_DEFAULT
-  target_model:
-    bilat_default
-  target_scen:
-    SSP2_v6.2_bilat
-  first_model_year:
-    2030
   regions:
     R12
 
 models_scenarios:
-#  SSP1:
-#    model: SSP_SSP1_v6.2
-#    scenario: baseline
   SSP2:
     model: SSP_SSP2_v6.4
     scenario: baseline
