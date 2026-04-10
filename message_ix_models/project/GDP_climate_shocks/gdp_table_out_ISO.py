@@ -19,7 +19,10 @@ from message_ix_models.util import private_data_path
 
 # from rime.utils import *
 def run_rime_pre(sc_string, dam_mod, it, wdir, pp=50):
-    if dam_mod == "ensemble":
+    if isinstance(dam_mod, str):
+        dam_mod = [dam_mod]
+    print(f"damage model(s) {dam_mod}")
+    if "ensemble" in dam_mod:
         safe_models_ensemble = ["Waidelich", "Burke", "Nath", "Nath-pers"]
         run_rime(sc_string, safe_models_ensemble, it, wdir, pp)
 
@@ -114,8 +117,6 @@ def run_rime(
     # for local debuggin TEMP
     # wdir = f"C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
     # prefixes = ["Waidelich", "Burke"]
-    if isinstance(dam_mod, str):
-        dam_mod = [dam_mod]
 
     # do we need it? or does ti get it from process_config?
     temp_variable = (
