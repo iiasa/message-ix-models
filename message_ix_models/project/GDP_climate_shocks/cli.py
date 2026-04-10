@@ -23,7 +23,7 @@ from message_ix_models.project.GDP_climate_shocks.call_climate_processor import 
     run_climate_processor,
     run_climate_processor_from_file,
 )
-from message_ix_models.project.GDP_climate_shocks.gdp_table_out_ISO import run_rime
+from message_ix_models.project.GDP_climate_shocks.gdp_table_out_ISO import run_rime_pre
 from message_ix_models.project.GDP_climate_shocks.util import (
     add_slack_ix,
     apply_growth_rates,
@@ -195,7 +195,7 @@ def iterate_with_climate_impacts(
         log.info("Reporting completed, ready to run MAGICC")
         run_climate_processor(scs)
         log.info("Run RIME")
-        run_rime(sc_str_rime, damage_model, it, rime_path, percentile)
+        run_rime_pre(sc_str_rime, damage_model, it, rime_path, percentile)
 
         sc_str1 = f"{scs.model}_{scs.scenario}"
         meanT.append(read_magicc_output(sc_str1, percentile))
@@ -371,7 +371,7 @@ def run_full(
 
         # run RIME on sc0_magicc
         for pp in percentiles:
-            run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+            run_rime_pre(sc_str_rime, damage_model, 0, rime_path, pp)
             logging.info(
                 f"Iteraction 0 for {sc_str}_{pp} completed. Now apply climate impacts."
             )
@@ -426,7 +426,7 @@ def run_from_single_input(
 
         # run RIME on sc0_magicc
         for pp in percentiles:
-            run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+            run_rime_pre(sc_str_rime, damage_model, 0, rime_path, pp)
             logging.info(f"Iteraction 0 with RIME for {sc_str_rime}_{pp} completed.")
 
 
@@ -452,7 +452,7 @@ def run_from_input_list(
             logging.info("MAGICC done")
             sc_str_rime = f"{m}_{s}"
             for pp in percentiles:
-                run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+                run_rime_pre(sc_str_rime, damage_model, 0, rime_path, pp)
                 logging.info(
                     f"Iteraction 0 with RIME for {sc_str_rime}_{pp} completed."
                 )
@@ -483,7 +483,7 @@ def run_from_messageix_scenarios(
         )
         # run RIME on sc0_magicc
         for pp in percentiles:
-            run_rime(sc_str_rime, damage_model, 0, rime_path, pp)
+            run_rime_pre(sc_str_rime, damage_model, 0, rime_path, pp)
             logging.info(f"Iteraction 0 with RIME for {sc_str}_{pp} completed.")
 
         mp.close_db()
