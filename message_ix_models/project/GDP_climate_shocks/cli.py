@@ -98,9 +98,9 @@ def run_initial_scenario_if_needed(
             **kwargs,
         )
         # specific to the ENGAGE scenario
-        if "INDC2030" in scenario:
-            log.info("Adding slack to scenario with INDC2030")
-            add_slack_ix(sc0)
+        # if "INDC2030" in scenario:
+        #     log.info("Adding slack to scenario with INDC2030")
+        #     add_slack_ix(sc0)
         sc0.solve(solve_options={"lpmethod": "4"}, model="MESSAGE")
         sc0.set_as_default()
         run_emi_reporting(sc0, mp)
@@ -181,9 +181,9 @@ def iterate_with_climate_impacts(
         )
         apply_growth_rates(scs, gdp_change_df)
         # specific to the ENGAGE scenario
-        if "INDC2030" in scenario_name:
-            log.info("Adding slack to scenario with INDC2030")
-            add_slack_ix(scs)
+        # if "INDC2030" in scenario_name:
+        #     log.info("Adding slack to scenario with INDC2030")
+        #     add_slack_ix(scs)
 
         scs.solve(
             solve_options={"lpmethod": "4", "barcrossalg": "2"},
