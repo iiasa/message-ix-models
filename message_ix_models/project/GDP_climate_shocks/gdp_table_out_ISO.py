@@ -6,10 +6,8 @@ import numpy as np
 import pandas as pd
 import pyam
 import xarray as xr
-from rime.core import (
-    GMTPathway,
-    RegionArray,  # -*- coding: utf-8 -*-
-)
+from rime.core import RegionArray  # -*- coding: utf-8 -*-
+from rime.core import GMTPathway
 
 # from rime.process_config import *
 from rime.rime_functions import table_impacts_gwl
@@ -24,7 +22,7 @@ def run_rime_pre(sc_string, dam_mod, it, wdir, pp=50):
     print(f"damage model(s) {dam_mod}")
     if "ensemble" in dam_mod:
         safe_models_ensemble = ["Waidelich", "Burke", "Nath", "Nath-pers"]
-        run_rime(sc_string, safe_models_ensemble, it, wdir, pp)
+        run_rime(sc_string, safe_models_ensemble, it, wdir, pp, ensemble=True)
 
         out_file_path = private_data_path().parent / "reporting_output" / "rime_output"
         region = "COUNTRIES"
@@ -84,7 +82,7 @@ def run_rime_pre(sc_string, dam_mod, it, wdir, pp=50):
         avg_df.to_csv(ensemble_filename, encoding="utf-8", index=False)
         print(f"Saved ensemble average output: {ensemble_filename}")
     else:
-        run_rime(sc_string, dam_mod, it, wdir, pp)
+        run_rime(sc_string, dam_mod, it, wdir, pp, ensemble=False)
 
 
 def run_rime(
@@ -93,6 +91,7 @@ def run_rime(
     it,
     wdir,
     pp=50,
+    ensemble=False,
 ):
     """
     Run RIME for a given scenario
@@ -135,11 +134,15 @@ def run_rime(
 
     for prefix in dam_mod:
         print(prefix)
+        if ensemble:
+            dam_mod_magicc = "ensemble"
+        else:
+            dam_mod_magicc = prefix
         # %% Import scenarios data
         # Exchange for MESSAGE-MAGICC runs
         input_path = private_data_path().parent / "reporting_output" / "magicc_output"
         if it != 0:
-            fname_input = f"{sc_string}_{pp}_{prefix}_{it}_magicc.xlsx"
+            fname_input = f"{sc_string}_{pp}_{dam_mod_magicc}_{it}_magicc.xlsx"
         else:
             fname_input = f"{sc_string}_{it}_magicc.xlsx"
 
