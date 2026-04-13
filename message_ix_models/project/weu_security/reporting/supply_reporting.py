@@ -133,10 +133,7 @@ for conf in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
                        ('weu_security', f'FSU2040_MEACON_{conf}'),
                        ('weu_security', f'FSU2100_MEACON_{conf}')]
 
-model_scenarios = model_scenarios + [('weu_security', 'SSP2_RSC_NAM'),
-                                     ('weu_security', 'FSU2040_RSC_NAM'),
-                                     ('weu_security', 'FSU2040_NAM30EJ_RSC_NAM'),
-                                     ('weu_security', 'FSU2040_MEACON_1.0_RSC_NAM'),
+model_scenarios = model_scenarios + [('weu_security', 'SSP2_NAM30EJ_RSC_NAM'),
                                      ('weu_security', 'INDC2030'),
                                      ('weu_security', 'INDC2030_FSU2040'),
                                      ('weu_security', 'INDC2030_FSU2100'),

@@ -104,7 +104,7 @@ def adjust_resource_supply_curves(base_scenario_name:str,
     mp.close_db()
 
 # Run functions
-for scen_name in ["SSP2"]: #, "FSU2040", "FSU2040_NAM30EJ", "FSU2040_MEACON_1.0"]:
+for scen_name in ["SSP2_NAM30EJ"]:
     print(f"----------Adjusting resource supply curves for {scen_name}----------")
     adjust_resource_supply_curves(base_scenario_name = scen_name,
                                 adjustment_factors = {'gas_extr_1': 1.0, 'gas_extr_2': 0.7, 'gas_extr_3': 0.7, 
