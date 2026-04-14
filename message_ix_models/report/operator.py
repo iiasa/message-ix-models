@@ -436,7 +436,8 @@ def nodes_world_agg(
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
     This mapping should be used with :func:`.genno.operator.aggregate`, giving the
-    argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
+    argument :py:`keep=False`, because it includes 1:1 mapping from each region name to
+    itself.
     """
     from message_ix_models.model.structure import get_codelist
 
