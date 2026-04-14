@@ -17,8 +17,9 @@ with open(package_data_path('weu_security', 'reporting', 'plot_config.yaml'), 'r
 
 # Import and combine legacy report outputs
 tracked_scenarios = ['SSP2', 'SSP2_NAM30EJ', 'SSP2_MEACON_1.0',
-                     'FSU2040', 'FSU2040_MEACON_1.0', 'FSU2040_NAM30EJ',
-                     'FSU2100', 'FSU2100_MEACON_1.0', 'FSU2100_NAM30EJ']
+                     'FSU2100', 'FSU2100_MEACON_1.0', 'FSU2100_NAM30EJ',
+                     'INDC2030', 'INDC2030_NAM30EJ', 'INDC2030_MEACON_1.0',
+                     'INDC2030_FSU2100', 'INDC2030_FSU2100_MEACON_1.0', 'INDC2030_FSU2100_NAM30EJ']
 
 base_df = pd.DataFrame()
 for scenario in tracked_scenarios:
@@ -228,7 +229,7 @@ plot_heat_matrix(
     indicators = matrix_indicators,
     scenario_order = tracked_scenarios,
     title = "Fuel Security Indicators — 2060",
-    cmap = "YlOrRd",
+    cmap = "coolwarm",
     figsize = (15, 6),
     fmt = ".2f",
     annot = True,

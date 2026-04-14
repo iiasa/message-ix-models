@@ -242,3 +242,13 @@ plot_reg_exports_line(df = indf,
                  plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060],
                  show_labels = True,
                  show_total_line = True)
+
+# Plot for resource supply curve update
+plot_reg_exports_line(df = indf,
+                 plot_fuel = ['Gas', 'Fuel Oil', 'Light Oil'],
+                 plot_ref_scenario = 'SSP2',
+                 plot_scenarios = ['SSP2_NAM30EJ', 'SSP2_NAM30EJ_RSC_NAM'],
+                 plot_exporters = ['R12_NAM', 'R12_FSU', 'R12_MEA'],
+                 plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060],
+                 show_labels = True,
+                 show_total_line = True)
