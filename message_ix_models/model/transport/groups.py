@@ -1,4 +1,4 @@
-"""Consumer groups data."""
+"""Consumer groups."""
 
 import logging
 from copy import deepcopy
