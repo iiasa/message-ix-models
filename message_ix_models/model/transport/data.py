@@ -36,6 +36,7 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.sdmx import DATAFLOW, STORE, Dataflow
 
+from . import key as K
 from .util import EXTRAPOLATE, region_path_fallback
 
 if TYPE_CHECKING:
@@ -440,13 +441,11 @@ class PDT_CAP(MultiFile):
         return re.sub("^(LED)-SSP.$", r"\1", self.options.config.label) + ".csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
-        from .key import pdt_nyt, pop
-
         # This is the key used by subsequent steps in demand.py
-        target = pdt_nyt[0]
+        target = K.pdt_nyt[0]
 
         # Multiply by population for the total
-        c.add(target, "mul", base_key, pop)
+        c.add(target, "mul", base_key, K.pop)
 
         return target
 
@@ -687,12 +686,11 @@ def navigate_ele(
 def prepare_computer(c: Computer):
     """Add miscellaneous transport data."""
     # Data-generating calculations
-    n, y = "n::ex world", "y::model"
     for comp in (
-        (conversion, n, y, "config"),
-        (misc, "info", n, y),
-        (dummy_supply, "t::transport", "info", "config"),
-        (navigate_ele, n, "t::transport", "t::transport agg", y, "config"),
+        (conversion, K.n, K.y, "config"),
+        (misc, "info", K.n, K.y),
+        (dummy_supply, K.t, "info", "config"),
+        (navigate_ele, K.n, K.t, K.agg.t, K.y, "config"),
     ):
         # Add 2 computations: one to generate the data
         name = getattr(comp[0], "__name__")

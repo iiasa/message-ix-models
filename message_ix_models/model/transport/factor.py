@@ -462,14 +462,10 @@ def insert(c: Computer, key, *, name: str, target: Key, dims: str = "ny"):
 
     Use via :meth:`genno.Computer.apply`.
     """
-    k_target = Key(target)
+    from . import key as K
 
-    dim_coord = {
-        "n": "n::ex world",
-        "t": "t::transport",
-        "y": "y::model",
-    }
-    coords = [dim_coord[d] for d in dims]
+    k_target = Key(target)
+    coords = [{"n": K.n, "t": K.t, "y": K.y}[d] for d in dims]
     se = "config['transport'].ssp"
 
     # Quantify the factor

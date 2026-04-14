@@ -21,10 +21,10 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.genno import Collector
 
+from . import key as K
 from . import util
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .key import bcast_tcl, bcast_y, exo
 from .util import COMMON, wildcard
 
 if TYPE_CHECKING:
@@ -100,11 +100,10 @@ def prepare_computer(c: Computer):
 
     # Some keys/shorthand
     k = Keys(
-        fe=Key("fuel economy:n-t-y:LDV"),
-        eff=Key("efficiency:t-y-n:LDV"),
-        factor_input=Key("input:t-y:LDV+factor"),
+        fe="fuel economy:n-t-y:LDV",
+        eff="efficiency:t-y-n:LDV",
+        factor_input="input:t-y:LDV+factor",
     )
-    t_ldv = "t::transport LDV"
 
     # Use .tools.exo_data.prepare_computer() to add tasks that load, adapt, and select
     # the appropriate data
@@ -114,7 +113,7 @@ def prepare_computer(c: Computer):
 
     # Insert a scaling factor that varies according to SSP
     c.apply(
-        factor.insert, k.fe + "exo", name="ldv fuel economy", target=k.fe, dims="nty"
+        factor.insert, k.fe["exo"], name="ldv fuel economy", target=k.fe, dims="nty"
     )
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
@@ -122,27 +121,18 @@ def prepare_computer(c: Computer):
 
     # Compute the input efficiency adjustment factor for the NAVIGATE project
     # TODO Move this to project-specific code
-    c.add(
-        k.factor_input,
-        "factor_input",
-        "y",
-        "t::transport",
-        "t::transport agg",
-        "config",
-    )
+    c.add(k.factor_input, "factor_input", "y", K.t, K.agg.t, "config")
 
     # Product of NAVIGATE input efficiency factor and LDV efficiency
     c.add(k.eff[1], "mul", k.factor_input, k.eff[0])
 
     # Multiply by values from ldv-input-adj.csv. See file comment. Drop the 'scenario'
     # dimension; there is only one value in the file per 'n'.
-    c.add("input:n:LDV+adj", "sum", exo.input_adj_ldv, dimensions=["scenario"])
+    c.add("input:n:LDV+adj", "sum", K.exo.input_adj_ldv, dimensions=["scenario"])
     c.add(k.eff[2], "mul", k.eff[1], "input:n:LDV+adj")
 
     # Apply the function usage_data() for further processing
-    collect(
-        "usage", usage_data, exo.load_factor_ldv, "cg", "n::ex world", t_ldv, "y::model"
-    )
+    collect("usage", usage_data, K.exo.load_factor_ldv, "cg", K.n, K.t["LDV"], K.y)
 
     # Add further keys for MESSAGE-structured data
     # Techno-economic attributes
@@ -186,24 +176,23 @@ def prepare_tech_econ(
     c.add(k[0], wildcard(1.0, "Gv km", k.dims))
 
     # Broadcast over (n, t, y) dimensions
-    coords = ["n::ex world", "t::LDV", "y::model"]
-    c.add(k[1], "broadcast_wildcard", k[0], *coords, dim=k.dims)
+    c.add(k[1], "broadcast_wildcard", k[0], K.n, K.t["LDV"], K.y, dim=k.dims)
 
     # Broadcast `exo.input_share` over (c, t) dimensions. This produces a large Quantity
     # with 1.0 everywhere except explicit entries in the input data file.
     # NB Order matters here
-    k = exo.input_share
-    coords = ["t::LDV", "c::transport+base", "y"]  # NB include historical periods
+    k = K.exo.input_share
+    coords = [K.t["LDV"], "c::transport+base", "y"]  # NB include historical periods
     c.add(k[0], "broadcast_wildcard", k, *coords, dim=k.dims)
 
     # Multiply by `bcast_tcl.input` to keep only the entries that correspond to actual
     # input commodities of particular technologies.
-    input_bcast = c.add("input broadcast::LDV", "mul", k[0], bcast_tcl.input)
+    input_bcast = c.add("input broadcast::LDV", "mul", k[0], K.bcast_tcl.input)
 
     ### Convert input and output to MESSAGE data structure
     for par_name, base, bcast in (
         ("input", efficiency, input_bcast),
-        ("output", output_base[1], bcast_tcl.output),
+        ("output", output_base[1], K.bcast_tcl.output),
     ):
         k = Key(par_name, base.dims, "LDV")
 
@@ -212,7 +201,7 @@ def prepare_tech_econ(
 
         # Broadcast from (y) to (yv, ya) dims to produce the full quantity for
         # input/output efficiency
-        prev = c.add(k[1], "mul", k[0], bcast, bcast_y.all)
+        prev = c.add(k[1], "mul", k[0], bcast, K.bcast_y.all)
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
         c.add(k[2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
@@ -224,7 +213,7 @@ def prepare_tech_econ(
     kw = dict(fill_value="extrapolate")
     for name, base in (("fix_cost", fix_cost), ("inv_cost", inv_cost)):
         prev = c.add(f"{name}::LDV+0", "interpolate", base, "y::coords", kwargs=kw)
-        prev = c.add(f"{name}::LDV+1", "mul", prev, bcast_y.all)
+        prev = c.add(f"{name}::LDV+1", "mul", prev, K.bcast_y.all)
         collect(name, "as_message_df", prev, name=name, dims=DIMS, common=COMMON)
 
     ### Compute CO₂ emissions factors
@@ -282,7 +271,7 @@ def usage_data(
     load_factor: "AnyQuantity",
     cg: list["Code"],
     nodes: list[str],
-    t_ldv: Mapping[str, list],
+    technologies: list["Code"],
     years: list,
 ) -> "ParameterData":
     """Generate data for LDV “usage pseudo-technologies”.
@@ -299,7 +288,7 @@ def usage_data(
     info = ScenarioInfo(set={"node": nodes, "year": years})
 
     # Regenerate the Spec for the disutility formulation
-    spec = disutility.get_spec(groups=cg, technologies=t_ldv["t"], template=TEMPLATE)
+    spec = disutility.get_spec(groups=cg, technologies=technologies, template=TEMPLATE)
 
     data = disutility.data_conversion(info, spec)
 
