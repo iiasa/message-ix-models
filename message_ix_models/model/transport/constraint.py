@@ -41,24 +41,24 @@ def prepare_computer(c: "Computer") -> None:
 
     from message_ix_models.util.genno import Collector
 
-    from .key import bcast_tcl, exo
+    from . import key as K
 
     collect = Collector(TARGET, "{}::constraint+ixmp".format)
     collect.computer = c
     c.add("transport_data", __name__, key=TARGET)
 
-    k = Keys(a=Key("constraints", exo.constraint_dynamic.dims, "transport"))
+    k = Keys(a=Key("constraints", K.exo.constraint_dynamic.dims, "transport"))
     k.b = k.a * tuple("lny")
 
     # 't'echnology dimension: broadcast labels like "F ROAD" to full lists of techs
-    c.add(k.a[0], "call", "t::transport map", exo.constraint_dynamic)
+    c.add(k.a[0], "call", "t::transport map", K.exo.constraint_dynamic)
 
     # 'c'ommodity dimension: broadcast "*" values to full lists of transport commodities
     c.add(k.a[1], "call", "c::transport wildcard", k.a[0])
 
     # Keep only the (t, c) combinations which are actual inputs to specific transport
     # techs
-    c.add(k.a[2] * "l", "mul", k.a[1], bcast_tcl.input)
+    c.add(k.a[2] * "l", "mul", k.a[1], K.bcast_tcl.input)
 
     # Add and broadcast over:
     # - 'n'ode dimension including all nodes

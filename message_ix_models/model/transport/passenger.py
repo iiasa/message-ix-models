@@ -21,7 +21,7 @@ from message_ix_models.util import (
 )
 from message_ix_models.util.genno import Collector
 
-from .key import exo
+from . import key as K
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -63,8 +63,6 @@ collect = Collector(TARGET, "{}::P+ixmp".format)
 
 
 def prepare_computer(c: Computer):
-    from .key import n, t_modes, y
-
     context: "Context" = c.graph["context"]
 
     # Collect data in `TARGET` and connect to the "add transport data" key
@@ -92,7 +90,7 @@ def prepare_computer(c: Computer):
     #     keys.append(k + "emi")
 
     # Data for usage pseudo-technologies
-    collect("usage", usage_data, exo.load_factor_p, t_modes, n, y)
+    collect("usage", usage_data, K.exo.load_factor_p, K.t_modes, K.n, K.y)
 
     #### NB lines below duplicated from .transport.base
     e_iea = Key("energy:n-y-product-flow:iea")
@@ -171,7 +169,7 @@ def get_2w_dummies(context) -> "ParameterData":
 
 def bound_activity(c: "Computer") -> None:
     """Constrain activity of non-LDV technologies based on :file:`act-non_ldv.csv`."""
-    base = exo.act_non_ldv
+    base = K.exo.act_non_ldv
 
     # Produce MESSAGE parameters bound_activity_{lo,up}:nl-t-ya-m-h
     kw = dict(
@@ -220,7 +218,7 @@ def bound_activity_lo(c: Computer) -> None:
         )
 
     k = Key("bound_activity_lo:n-t-y:transport minimum")
-    c.add(next(k), _, "n::ex world", "t::transport", "y0", "config")
+    c.add(next(k), _, K.n, K.t, "y0", "config")
 
     # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
     kw = dict(

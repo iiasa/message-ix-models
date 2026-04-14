@@ -10,7 +10,7 @@ from iam_units import registry
 from message_ix_models.model.workflow import STAGE
 from message_ix_models.report.plot import COMMON, LabelFirst, Plot, PlotFromIAMC
 
-from . import key
+from . import key as K
 
 #: Common, static settings
 STATIC = [
@@ -403,7 +403,7 @@ class DemandCap(Plot):
     """Transport demand per capita [km / a]."""
 
     basename = "demand-capita"
-    inputs = ["demand:n-c-y:capita", "c::transport", "cg"]
+    inputs = ["demand:n-c-y:capita", K.c, "cg"]
     static = STATIC + [
         p9.aes(x="y", y="value", fill="c"),
         p9.geom_bar(stat="identity", width=4),
@@ -434,7 +434,7 @@ class DemandExo(Plot):
 
     basename = "demand-exo"
     stage = STAGE.BUILD
-    inputs = [key.pdt_nyt]
+    inputs = [K.pdt_nyt]
     static = STATIC + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
@@ -456,7 +456,7 @@ class DemandExoCap0(Plot):
 
     basename = "demand-exo-capita"
     stage = STAGE.BUILD
-    inputs = [key.pdt_nyt + "capita+post"]
+    inputs = [K.pdt_nyt + "capita+post"]
     static = STATIC + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
@@ -481,7 +481,7 @@ class DemandExoCap1(DemandExoCap0):
 
     basename = "demand-exo-capita-gdp"
     stage = STAGE.BUILD
-    inputs = [key.pdt_nyt + "capita+post", key.gdp_cap]
+    inputs = [K.pdt_nyt + "capita+post", K.gdp_cap]
     static = PDT_CAP_GDP_STATIC
 
     def generate(self, df_pdt, df_gdp):

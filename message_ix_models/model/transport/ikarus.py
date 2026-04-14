@@ -22,7 +22,7 @@ from message_ix_models.util import (
     same_time,
 )
 
-from .key import bcast_tcl, bcast_y
+from . import key as K
 from .passenger import UNITS
 
 if TYPE_CHECKING:
@@ -245,7 +245,7 @@ def prepare_computer(c: Computer):
     # NB this (harmlessly) duplicates an addition in .ldv.prepare_computer()
     # TODO deduplicate
     k_fi = Key("transport input factor:t-y")
-    c.add(k_fi, "factor_input", "y", "t::transport", "t::transport agg", "config")
+    c.add(k_fi, "factor_input", "y", K.t, K.agg.t, "config")
 
     parameters = ["fix_cost", "input", "inv_cost", "technical_lifetime", "var_cost"]
 
@@ -296,7 +296,7 @@ def prepare_computer(c: Computer):
             # Drop existing "c" dimension
             prev = c.add(prev / "c", "drop_vars", prev, quote("c"))
             # Fill (c, l) dimensions based on t
-            prev = c.add(k[6], "mul", prev, bcast_tcl.input)
+            prev = c.add(k[6], "mul", prev, K.bcast_tcl.input)
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
@@ -307,7 +307,7 @@ def prepare_computer(c: Computer):
 
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            prev = c.add(k[8], "mul", prev, bcast_y.model)
+            prev = c.add(k[8], "mul", prev, K.bcast_y.model)
 
         # Convert to target units
         try:
@@ -344,9 +344,7 @@ def prepare_computer(c: Computer):
 
     # Derive "output" data from "input"
     prev = "transport nonldv output::ixmp"
-    final["output"] = c.add(
-        prev, make_output, "transport nonldv input::ixmp", "t::transport"
-    )
+    final["output"] = c.add(prev, make_output, "transport nonldv input::ixmp", K.t)
 
     # Merge all data together
     c.add(TARGET, "merge_data", *final.values())
