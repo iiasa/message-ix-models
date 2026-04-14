@@ -1039,13 +1039,13 @@ activity_vehicle_out = _output_dataflow(
     id="ACTIVITY_VEHICLE",
     name="Vehicle activity",
     description='Same as the IAMC ‘variable’ code "Energy Service|Transportation".',
-    key="out:nl-t-ya-c:transport+units",
+    key="out:nl-t-ya-c:T",
 )
 fe_transport = _output_dataflow(
     id="FE_TRANSPORT",
     name="Final energy",
     description='Same as the IAMC ‘variable’ code "Final Energy|Transportation".',
-    key="in:nl-t-ya-c:transport+units",
+    key="in:nl-t-ya-c:T",
 )
 gdp_in = _output_dataflow(
     id="GDP_IN",

@@ -213,7 +213,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     e_iea = Key("energy:n-y-product-flow:iea")
     e_fnp = Key(e_iea.drop("y"))
     e_cnlt = Key("energy:c-nl-t:iea+0")
-    k = Key("in:nl-t-ya-c-l-h:transport+units")  # MESSAGE solution values
+    k = Key("in:nl-t-ya-c-l-h:T")  # MESSAGE solution values
 
     # First period
     y0 = rep.get("y0")
