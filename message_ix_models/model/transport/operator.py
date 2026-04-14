@@ -1121,7 +1121,10 @@ def transport_data(*args):
 
 
 def transport_check(scenario: "Scenario", ACT: "AnyQuantity") -> pd.Series:
-    """Reporting operator for :func:`.check`."""
+    """Reporting operator for :func:`.check`.
+
+    .. todo:: Replace with use of :mod:`.testing.check`.
+    """
     info = ScenarioInfo(scenario)
 
     # Mapping from check name → bool
