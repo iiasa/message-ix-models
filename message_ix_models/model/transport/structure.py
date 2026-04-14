@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Sequence
 from copy import deepcopy
 from typing import Any
@@ -39,6 +40,63 @@ TEMPLATE = Code(
 )
 
 
+def _code_list(
+    key: str, data: Spec | ScenarioInfo | Sequence["Code"]
+) -> Sequence["Code"]:
+    """Handle input for :func:`get_commodity_groups`, :func:`get_technology_groups`."""
+    match data:
+        case Spec():
+            return data.add.set[key]
+        case ScenarioInfo():
+            return data.set[key]
+        case _:
+            return data
+
+
+def get_commodity_groups(
+    commodities: Spec | ScenarioInfo | Sequence["Code"],
+) -> dict[str, list[str]]:
+    """Subsets of transport commodities for aggregation, mapping, and filtering.
+
+    Returns
+    -------
+    dict
+        Values are lists of transport commodities (|c|) that appear in the model.
+        Keys include:
+
+        - "activity F": commodities measuring freight activity.
+        - "activity P": commodities measuring passenger activity.
+        - "disutility": the disutility commodity.
+        - "vehicle activity": commodities measuring vehicle activity
+        - "_T": total or all; union of the above 4 groups.
+    """
+    result: dict[str, list[str]] = defaultdict(list)
+
+    for c in _code_list("commodity", commodities):
+        result["_T"].append(c.id)
+        if c.id == "disutility":
+            result["disutility"].append(c.id)
+            continue
+
+        match c.id.split()[1:]:
+            case ("vehicle", *_) | (*_, "vehicle"):
+                result["vehicle activity"].append(c.id)
+            case ("pax", *_):
+                result["activity P"].append(c.id)
+            case ("F", *_):
+                result["activity F"].append(c.id)
+            case _:
+                raise ValueError(c)
+
+    # Check consistency
+    assert {"activity F", "activity P", "disutility", "vehicle activity", "_T"} == set(
+        result
+    )
+
+    # Convert to a non-defaultdict, so incorrect lookups fail
+    return dict(result)
+
+
 def get_technology_groups(
     technologies: Spec | ScenarioInfo | Sequence["Code"],
 ) -> dict[str, list[str]]:
@@ -50,34 +108,37 @@ def get_technology_groups(
         Values are lists of transport technologies (|t|) that appear in the model.
         Keys include:
 
-          - Codes from :file:`transport/technology.yaml` with children. These can be
-            modes, services, groups of either, or other groups of technologies. Children
-            are processed recursively to obtain |t| elements.
-          - "historical-only": includes technologies where this annotation exists and
-            is set to :any:`True`.
-          - "LDV usage": includes the technologies generated using :data:`TEMPLATE`.
-            See :func:`make_spec`.
+        - Codes from :file:`transport/technology.yaml` with children. These can be
+          modes, services, groups of either, or other groups of technologies. Children
+          are processed recursively to obtain |t| elements.
+        - "historical-only": includes technologies where this annotation exists and is
+          set to :any:`True`.
+        - "usage": all 'usage' pseudo-technologies that transform vehicle activity into
+          freight or passenger activity.
+        - "usage LDV": includes the technologies generated using :data:`TEMPLATE`. See
+          :func:`make_spec`.
+        - "vehicle": all vehicle technologies that transform energy inputs into vehicle
+          activity.
+        - "_T": total or all; the list of all technologies.
     """
-    if isinstance(technologies, Spec):
-        t_list: Sequence["Code"] = technologies.add.set["technology"]
-    elif isinstance(technologies, ScenarioInfo):
-        t_list = technologies.set["technology"]
-    else:
-        t_list = technologies
+    result: dict[str, list[str]] = defaultdict(list)
 
-    result: dict[str, list[str]] = {"historical-only": [], "LDV usage": []}
-
-    for tech in t_list:
-        if len(tech.child):
+    for t in _code_list("technology", technologies):
+        if len(t.child):
             # Code with child codes → a group of technologies → store all the leaf IDs
-            result[tech.id] = leaf_ids(tech)
-        elif tech.eval_annotation(id="historical-only") is True:
+            techs = result[t.id] = leaf_ids(t)
+            # Add to either "usage" or "vehicle" group
+            result["usage" if "usage" in t.id else "vehicle"].extend(techs)
+            # Add to catch-all group
+            result["_T"].extend(techs)
+        elif t.eval_annotation(id="historical-only") is True:
             # Code without children = an individual technology → add to certain groups
-            result["historical-only"].append(tech.id)
-        elif tech.eval_annotation(id="is-disutility") is True:
-            result["LDV usage"].append(tech.id)
+            result["historical-only"].append(t.id)
+        elif t.eval_annotation(id="is-disutility") is True:
+            result["usage LDV"].append(t.id)
 
-    return result
+    # Convert to a non-defaultdict, so incorrect lookups fail
+    return dict(result)
 
 
 def make_spec(regions: str) -> Spec:
