@@ -10,7 +10,10 @@ from message_ix_models.util.genno import Keys
 from .data import ActivityVehicle, Lifetime, LoadFactorLDV, iter_files
 
 __all__ = [
+    "agg",
+    "c",
     "cg",
+    "coord",
     "cost",
     "exo",
     "fv_cny",
@@ -32,6 +35,7 @@ __all__ = [
     "pop",
     "price",
     "sw",
+    "t",
     "t_modes",
     "y",
 ]
@@ -41,6 +45,15 @@ gdp_exo = Key("gdp", "ny")
 mer_to_ppp = Key("MERtoPPP", "ny")
 
 # Keys for new quantities
+
+#: Structures for aggregation. Each refers to a :py:`dict[str, dict[str, list[str]]]`.
+#: Top-level keys are dimension IDs. Second-level keys are coordinates along the
+#: respective dimension to be created by aggregation. Second-level values are lists of
+#: coordinates to be aggregated.
+agg = Keys(
+    c="agg:c:T",
+    t="agg:t:T",
+)
 
 #: Quantities for broadcasting (t) to (t, c, l). See :func:`.broadcast_t_c_l`.
 #:
@@ -66,8 +79,20 @@ bcast_y = Keys(
     no_vintage="broadcast:y-yv-ya:no vintage",
 )
 
+#: List of all transport commodities.
+c = Key("c::T")
+
 #: Shares of population with consumer group (`cg`) dimension.
 cg = Key("cg share:n-y-cg")
+
+#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, list[str]`.
+#: Keys are dimension IDs. Values are lists of coordinates along the respective
+#: dimension to index or select.
+coord = Keys(
+    c="coords:c:T",
+    t="coords:t:T",
+    yv_hist="coords:yv:T+historical",
+)
 
 cost = Key("cost", "nyct")
 
@@ -125,8 +150,11 @@ sw = Key("share weight", "nty")
 
 # Keys for (partial or full) sets or indexers
 
-#: List of nodes excepting "World" or "*_GLB".
+#: List of nodes, excepting "World" or "*_GLB".
 n = "n::ex world"
+
+#: List of all transport technologies.
+t = Key("t::T")
 
 #: List of transport modes.
 t_modes = "t::transport modes"
