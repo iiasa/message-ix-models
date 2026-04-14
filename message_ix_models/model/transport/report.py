@@ -112,49 +112,6 @@ SELECT = [
 ]
 
 
-# TODO Type c as (string) "Computer" once genno supports this
-def add_iamc_store_write(c: Computer, base_key) -> "Key":
-    """Write `base_key` to CSV, XLSX, and/or both; and/or store on "scenario".
-
-    If `base_key` is, for instance, "foo::iamc", this function adds the following keys:
-
-    - "foo::iamc+all": both of:
-
-      - "foo::iamc+file": both of:
-
-        - "foo::iamc+csv": write the data in `base_key` to a file named :file:`foo.csv`.
-        - "foo::iamc+xlsx": write the data in `base_key` to a file named
-          :file:`foo.xlsx`.
-
-        The files are created in a subdirectory using :func:`make_output_path`—that is,
-        including a path component given by the scenario URL.
-
-      - "foo::iamc+store" store the data in `base_key` as time series data on the
-        scenario identified by the key "scenario".
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-    """
-    k = Key(base_key)
-
-    file_keys = []
-    for suffix in ("csv", "xlsx"):
-        # Create the path
-        path = c.add(
-            k[f"{suffix} path"], "make_output_path", "config", name=f"{k.name}.{suffix}"
-        )
-        # Write `key` to the path
-        file_keys.append(c.add(k[suffix], "write_report", base_key, path))
-
-    # Write all files
-    c.add(k["file"], file_keys)
-
-    # Store data on "scenario"
-    c.add(k["store"], "store_ts", "scenario", base_key)
-
-    # Both write and store
-    return single_key(c.add(k["all"], [k["file"], k["store"]]))
-
-
 def aggregate(c: "Computer") -> None:
     """Aggregate individual transport technologies to modes."""
     from genno.operator import aggregate as func
@@ -323,7 +280,7 @@ def convert_iamc(c: "Computer") -> None:
     c.add(k, "concat", *keys)
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
-    c.apply(add_iamc_store_write, k)
+    c.apply(util.store_write_ts, k)
 
     # Use this line to both store and write to file IAMC structured-data
     c.graph[K.report.all] += (k + "all",)
