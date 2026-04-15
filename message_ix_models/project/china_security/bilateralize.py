@@ -16,22 +16,35 @@ models_scenarios = config['models_scenarios']
 data_path = package_data_path("bilateralize")
 
 # Clear bare files
-print("Clearing bare files")
-for tec in config['covered_trade_technologies']:
-    if os.path.exists(os.path.join(data_path, tec, "bare_files")):
-       for file in os.listdir(os.path.join(data_path, tec, "bare_files")):
-            if os.path.isfile(os.path.join(data_path, tec, "bare_files", file)):
-               os.remove(os.path.join(data_path, tec, "bare_files", file))
-    if os.path.exists(os.path.join(data_path, tec, "bare_files", "flow_technology")):
-        for file in os.listdir(os.path.join(data_path, tec, "bare_files", "flow_technology")):
-            if os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", file)):
-                os.remove(os.path.join(data_path, tec, "bare_files", "flow_technology", file))
+print("Clearing edit and bare files")
+for type in ["edit", "bare"]:
+    for tec in config['covered_trade_technologies']:
+        if os.path.exists(os.path.join(data_path, tec, f"{type}_files")):
+           for file in os.listdir(os.path.join(data_path, tec, f"{type}_files")):
+                if os.path.isfile(os.path.join(data_path, tec, f"{type}_files", file)):
+                   os.remove(os.path.join(data_path, tec, f"{type}_files", file))
+        if os.path.exists(os.path.join(data_path, tec, f"{type}_files", "flow_technology")):
+            for file in os.listdir(os.path.join(data_path, tec, f"{type}_files", "flow_technology")):
+                if os.path.isfile(os.path.join(data_path, tec, f"{type}_files", "flow_technology", file)):
+                    os.remove(os.path.join(data_path, tec, f"{type}_files", "flow_technology", file))
         
 # Generate edit files
 prepare_edit_files(project_name = 'china_security', 
                    config_name = 'config.yaml',
                    P_access = True)
 
+# Add scenario updates for project
+print("Add scenario updates for project")
+for tec in config['constrained_tec']:
+    print(f"...{tec}")
+    if os.path.exists(package_data_path("china_security", "scenario_updates", tec)):
+        for file in os.listdir(package_data_path("china_security", "scenario_updates", tec)):
+            base_file = package_data_path("china_security", "scenario_updates", tec, file)
+            if ".csv" in str(base_file):
+                dest_file = os.path.join(data_path, tec, "bare_files", file)
+                shutil.copy2(base_file, dest_file)
+                print(f"Copied file from scenario_updates to bare: {file}")
+                
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'china_security', 
                               config_name = 'config.yaml',

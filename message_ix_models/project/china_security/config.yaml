@@ -2,8 +2,8 @@
 # DIRECTORY SETUP #
 ###################
 p_drive_location:
-  #/pdrive/projects/ene.model3
-  P:/ene.model
+  /pdrive/projects/ene.model3
+  #P:/ene.model
 
 ###############
 # MODELS USED #
@@ -16,21 +16,21 @@ models_scenarios:
   SSP2_Baseline:
     model: SSP_SSP2_v6.6
     scenario: baseline
-#  SSP2_2C:
-#    model: SSP_SSP2_v6.6
-#    scenario: baseline_1000f
-#  SSP2_Commitments:
-#    model: SSP_SSP2_v6.6
-#    scenario: INDC2030i_uncon
-#  LED_Baseline:
-#    model: SSP_LED_v6.5
-#    scenario: baseline
-#  LED_2C:
-#    model: SSP_LED_v6.5
-#    scenario: baseline_1000f
-#  LED_Commitments:
-#    model: SSP_LED_v6.5
-#    scenario: INDC2030i_uncon
+  SSP2_2C:
+    model: SSP_SSP2_v6.6
+    scenario: baseline_1000f
+  SSP2_Commitments:
+    model: SSP_SSP2_v6.6
+    scenario: INDC2030i_uncon
+  LED_Baseline:
+    model: SSP_LED_v6.5
+    scenario: baseline
+  LED_2C:
+    model: SSP_LED_v6.5
+    scenario: baseline_1000f
+  LED_Commitments:
+    model: SSP_LED_v6.5
+    scenario: INDC2030i_uncon
 
 ##############################
 # COVERED TRADE TECHNOLOGIES #
