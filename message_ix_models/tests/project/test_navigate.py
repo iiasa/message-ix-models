@@ -48,7 +48,7 @@ def test_generate_workflow(test_context: "Context") -> None:
 # displays "MT solved" and its subtree may vary.
 _context = r"'context' \(above\)"
 BLOCKS = [
-    "Truncate workflow at 'M T3.5 built'",
+    "Truncate workflow at 1 point matching 'M T3.5 built'",
     rf"""
 (\s+)- 'MT NPi-ref solved':
   \1- <Step solve\(\)>

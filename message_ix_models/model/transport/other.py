@@ -7,8 +7,8 @@ import genno
 import pandas as pd
 from genno import Key, quote
 
+from . import key as K
 from . import util
-from .key import exo, fv
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -34,7 +34,7 @@ TARGET = "transport::O+ixmp"
 def prepare_computer(c: "Computer") -> None:
     """Generate MESSAGE parameter data for ``transport other *`` technologies."""
     # Keys
-    base = exo.energy_other
+    base = K.exo.energy_other
     assert {"c", "n"} == set(base.dims)
     bcast = Key("broadcast:c-t:other transport")
     k_cnt = (base + "0") * "t"  # with added dimension "t"
@@ -61,11 +61,11 @@ def prepare_computer(c: "Computer") -> None:
             pd.DataFrame(rows, columns=cols).set_index(cols[:-1])[cols[-1]]
         )
 
-    c.add(bcast, broadcast_other_transport, "t::transport")
+    c.add(bcast, broadcast_other_transport, K.t)
     c.add(k_cnt, "mul", base, bcast)
 
     # Project values across y using same trajectory as road freight activity
-    c.add(k_cnty[0], "mul", k_cnt, fv["F ROAD index"])
+    c.add(k_cnty[0], "mul", k_cnt, K.fv["F ROAD index"])
     # Convert units to GWa
     c.add(k_cnty[1], "convert_units", k_cnty[0], units="GWa")
 

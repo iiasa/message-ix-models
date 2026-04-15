@@ -206,7 +206,7 @@ class Workflow(Computer):
         """
         return self.get(name_or_names)
 
-    def truncate(self, name: str):
+    def truncate(self, name: str) -> None:
         """Truncate the workflow at the step `name`.
 
         The step `name` is replaced with a new :class:`WorkflowStep` that simply loads
@@ -306,8 +306,8 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
 
     help_arg = f"""Run the {name} workflow up to step TARGET.
 
-    Unless --go is given, the workflow is only displayed.
-    --from is interpreted as a regular expression.
+    Unless --go is given, the workflow is only displayed, and a visualization written
+    to a file. --from is interpreted as a regular expression.
     """
 
     @click.command(name="run", help=help_arg, **kwargs)
@@ -317,7 +317,7 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     )
     @click.argument("target_step", metavar="TARGET", required=False)
     @click.pass_obj
-    def _func(context, go, truncate_step, target_step, **kwargs):
+    def _func(context, go, truncate_step, target_step: str | None, **kwargs):
         from importlib import import_module
 
         from message_ix_models.util import show_versions
@@ -336,9 +336,15 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
         except AttributeError:
             pass  # truncate_step is None
         else:
+            N_truncate = 0
             for step in filter(expr.fullmatch, wf.keys()):
-                log.info(f"Truncate workflow at {step!r}")
                 wf.truncate(step)
+                N_truncate += 1
+            log.info(
+                f"Truncate workflow at {N_truncate} point"
+                + ("s" if N_truncate != 1 else "")
+                + f" matching {truncate_step!r}"
+            )
 
         # Identify the target step
         if target_step:
@@ -368,12 +374,9 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
 
         if not go:
             path = context.get_local_path(f"{slug}-workflow.svg")
-            wf.visualize(
-                str(path),
-                # key=target_step,  # DEBUG Uncomment to show only a subset of steps
-                rankdir="LR",
-            )
-            log.info(f"Workflow diagram written to {path}")
+            log.info(f"Write workflow diagram to {path}")
+            # If target_step is given, show only this step
+            wf.visualize(path, key=target_step, rankdir="LR")
             return
 
         wf.run(target_step)

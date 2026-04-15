@@ -24,7 +24,12 @@ from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.util import MappingAdapter, add_par_data, nodes_ex_world
+from message_ix_models.util import (
+    MappingAdapter,
+    WildcardAdapter,
+    add_par_data,
+    nodes_ex_world,
+)
 from message_ix_models.util.sdmx import leaf_ids
 
 if TYPE_CHECKING:
@@ -47,6 +52,7 @@ log = logging.getLogger(__name__)
 __all__ = [
     "add_par_data",
     "broadcast_wildcard",
+    "broadcast_wildcard2",
     "call",
     "codelist_to_groups",
     "compound_growth",
@@ -116,6 +122,26 @@ def broadcast_wildcard(
 
     # Construct a MappingAdapter and apply to `qty`
     return MappingAdapter(mapping)(qty)
+
+
+def broadcast_wildcard2(
+    qty: "TQuantity", *coords: Sequence[str], dim: Hashable | Sequence[Hashable] = "n"
+) -> "TQuantity":
+    """Like :func:`broadcast_wildcard`, but using :class:`.WildcardAdapter`."""
+    if isinstance(dim, Hashable) and not isinstance(dim, tuple):
+        dim = (dim,)
+    if len(dim) != len(coords):
+        raise ValueError(
+            f"Must provide same number of dim (got |{dim}| = {len(dim)}) as coords "
+            f"(got {len(coords)})"
+        )
+
+    # Iterate over dimensions `d` and respective coords `c`
+    result = qty
+    for d, c in zip(dim, coords):
+        result = WildcardAdapter(d, c)(result)
+
+    return result
 
 
 def call(callable, *args, **kwargs):
@@ -410,7 +436,8 @@ def nodes_world_agg(
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
     This mapping should be used with :func:`.genno.operator.aggregate`, giving the
-    argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
+    argument :py:`keep=False`, because it includes 1:1 mapping from each region name to
+    itself.
     """
     from message_ix_models.model.structure import get_codelist
 

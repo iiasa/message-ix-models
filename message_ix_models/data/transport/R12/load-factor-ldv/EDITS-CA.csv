@@ -5,8 +5,7 @@
 #   > PASTA data-20250822T114700Z-1-001 > PASTA data
 #   > load-factor-ldv.csv, rows with scenario="EDITS_BAU"
 #
-# Units: dimensionless
-# (Implicitly passengers per vehicle.)
+# Units: passenger / vehicle
 #
 node,     year, value
 R12_AFR,  2015, 2.206028607

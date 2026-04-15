@@ -7,11 +7,13 @@ from genno import Key
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 from message_ix_models.util.genno import Keys
 
-from .data import LoadFactorLDV, iter_files
+from .data import ActivityVehicle, Lifetime, LoadFactorLDV, iter_files
 
 __all__ = [
-    "activity_ldv_full",
+    "agg",
+    "c",
     "cg",
+    "coord",
     "cost",
     "exo",
     "fv_cny",
@@ -33,6 +35,7 @@ __all__ = [
     "pop",
     "price",
     "sw",
+    "t",
     "t_modes",
     "y",
 ]
@@ -42,6 +45,15 @@ gdp_exo = Key("gdp", "ny")
 mer_to_ppp = Key("MERtoPPP", "ny")
 
 # Keys for new quantities
+
+#: Structures for aggregation. Each refers to a :py:`dict[str, dict[str, list[str]]]`.
+#: Top-level keys are dimension IDs. Second-level keys are coordinates along the
+#: respective dimension to be created by aggregation. Second-level values are lists of
+#: coordinates to be aggregated.
+agg = Keys(
+    c="agg:c:T",
+    t="agg:t:T",
+)
 
 #: Quantities for broadcasting (t) to (t, c, l). See :func:`.broadcast_t_c_l`.
 #:
@@ -67,8 +79,20 @@ bcast_y = Keys(
     no_vintage="broadcast:y-yv-ya:no vintage",
 )
 
+#: List of all transport commodities.
+c = Key("c::T")
+
 #: Shares of population with consumer group (`cg`) dimension.
 cg = Key("cg share:n-y-cg")
+
+#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, list[str]`.
+#: Keys are dimension IDs. Values are lists of coordinates along the respective
+#: dimension to index or select.
+coord = Keys(
+    c="coords:c:T",
+    t="coords:t:T",
+    yv_hist="coords:yv:T+historical",
+)
 
 cost = Key("cost", "nyct")
 
@@ -126,14 +150,23 @@ sw = Key("share weight", "nty")
 
 # Keys for (partial or full) sets or indexers
 
-#: List of nodes excepting "World" or "*_GLB".
+#: List of nodes, excepting "World" or "*_GLB".
 n = "n::ex world"
+
+#: List of all transport technologies.
+t = Key("t::T")
 
 #: List of transport modes.
 t_modes = "t::transport modes"
 
 #: Model periods.
 y = "y::model"
+
+y_ = Keys(
+    annual_agg="y::annual agg",
+    historical="y::historical",
+    to_y0="y::to y0",
+)
 
 #: Keys referring to loaded input data flows (exogenous data loaded from files).
 #: Attributes correspond to the members of :mod:`.transport.data`; see
@@ -144,9 +177,11 @@ y = "y::model"
 #:    >>> from message_ix_models.model.transport.key import exo
 #:    >>> exo.act_non_ldv
 #:    <activity:n-t-y:non-ldv+exo>
-exo = Keys(load_factor_ldv=LoadFactorLDV.key)
+exo = Keys(
+    activity_vehicle=ActivityVehicle.key,
+    lifetime=Lifetime.key,
+    load_factor_ldv=LoadFactorLDV.key,
+)
 
 for name, df in iter_files():
     setattr(exo, name, df.key)
-
-activity_ldv_full = exo.activity_ldv / "scenario" + "full"

@@ -49,8 +49,8 @@ ICE_L_ptrp,      *,         growth_new_capacity_up,    0.0192
 #      mode.
 LDV,             *,         initial_new_capacity_up,  10.0
 
-LDV usage,       *,         growth_activity_up,        0.0539
-LDV usage,       *,         initial_activity_up,       1000000
+usage LDV,       *,         growth_activity_up,        0.0539
+usage LDV,       *,         initial_activity_up,       1000000
 
 P ex LDV,        *,         growth_activity_lo,       -0.0192
 P ex LDV,        electr,    growth_activity_lo,        0.0

@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 import pytest
 
 from message_ix_models import Context
@@ -39,8 +41,12 @@ SSP = (
 
 class TestConfig:
     @pytest.fixture
-    def c(self):
+    def c(self) -> Iterator[Config]:
         yield Config()
+
+    def test_fields(self, c: Config) -> None:
+        """Settable class property included in :meth:`.ConfigHelper._fields`."""
+        assert {"code"} & c._fields()
 
     @pytest.mark.parametrize("input, expected", SSP)
     def test_ssp0(self, input, expected):
@@ -96,7 +102,7 @@ class TestCL_SCENARIO:
         result = CL_SCENARIO.get(force=True)
 
         # Code list has the expected length
-        assert 296 == len(result)
+        assert 366 == len(result)
 
         # Code list contains codes with the expected IDs
         assert {
@@ -138,11 +144,11 @@ class TestCL_SCENARIO:
 @pytest.mark.parametrize(
     "ssp_or_led, N_exp",
     (
-        ("SSP1", 7),
-        ("SSP2", 22),
-        ("SSP3", 1),
-        ("SSP4", 5),
-        ("SSP5", 7),
+        ("SSP1", 10),
+        ("SSP2", 27),
+        ("SSP3", 3),
+        ("SSP4", 7),
+        ("SSP5", 10),
     ),
 )
 def test_iter_price_emission(ssp_or_led: str, N_exp: int, regions="R12") -> None:

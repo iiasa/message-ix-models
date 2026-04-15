@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from genno import Computer, Key, Keys, MissingKeyError
+from genno import Computer, Key, Keys
 from genno.core.key import single_key
 from message_ix import Reporter
 
@@ -14,9 +14,12 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report import STAGE, add_plots
 from message_ix_models.report.util import add_replacements
 
-from . import Config, key, plot
+from . import Config, plot
+from . import key as K
 
 if TYPE_CHECKING:
+    from message_ix import Scenario
+
     from message_ix_models import Spec
 
 log = logging.getLogger(__name__)
@@ -26,26 +29,26 @@ log = logging.getLogger(__name__)
 #: the legacy reporting to properly handle the result.
 _FE_UNIT = "EJ/yr"
 
-
+#: Quantities to convert to IAMC. See :func:`convert_iamc`.
 CONVERT_IAMC = (
     # NB these are currently tailored to produce the variable names expected for the
     #    NGFS project
     dict(
-        variable="transport activity",
-        base="out:nl-t-ya-c:transport+units",
+        variable="T activity",
+        base="out:nl-t-ya-c:T",
         var=["Energy Service|Transportation", "t", "c"],
-        sums=["c", "t", "c-t"],
+        sums=["c"],
     ),
     dict(
-        variable="transport stock",
-        base="CAP:nl-t-ya:ldv+units",
-        var=["Transport|Stock|Road|Passenger|LDV", "t"],
+        variable="T stock",
+        base="CAP:nl-t-ya:T",
+        var=["Stocks|Transportation", "t"],
         unit="Mvehicle",
     ),
     dict(
-        variable="transport sales",
-        base="CAP_NEW:nl-t-yv:ldv+units",
-        var=["Transport|Sales|Road|Passenger|LDV", "t"],
+        variable="T sales",
+        base="CAP_NEW:nl-t-yv:T",
+        var=["Sales|Transportation", "t"],
         unit="Mvehicle",
     ),
     # Final energy
@@ -53,17 +56,11 @@ CONVERT_IAMC = (
     # The following are 4 different partial sums of in::transport, in which
     # individual technologies are already aggregated to modes
     dict(
-        variable="transport fe",
-        base="in:nl-t-ya-c:transport+units",
+        variable="T final energy",
+        base="in:nl-t-ya-c:T",
         var=["Final Energy|Transportation", "t", "c"],
-        sums=["c", "t", "c-t"],
+        sums=["c"],
         unit=_FE_UNIT,
-    ),
-    dict(
-        variable="transport fe ldv",
-        base="in:nl-t-ya-c:ldv+units",
-        var=["Final Energy|Transportation|Road|Passenger|LDV", "t", "c"],
-        unit="EJ/yr",
     ),
     # Emissions using MESSAGEix emission_factor parameter
     # base: auto-sum over dimensions yv, m, h
@@ -96,11 +93,11 @@ CONVERT_IAMC = (
 )
 
 
-#: Quantities in which to select transport technologies only. See
-#: :func:`select_transport_techs`.
-SELECT = [
+#: Quantities in which to select transport technologies only. See :func:`callback`.
+QUANTITY = [
     "CAP_NEW",
     "CAP",
+    "emi",
     "fix_cost",
     "historical_new_capacity",
     "in",
@@ -110,122 +107,108 @@ SELECT = [
     "var_cost",
 ]
 
-
-# TODO Type c as (string) "Computer" once genno supports this
-def add_iamc_store_write(c: Computer, base_key) -> "Key":
-    """Write `base_key` to CSV, XLSX, and/or both; and/or store on "scenario".
-
-    If `base_key` is, for instance, "foo::iamc", this function adds the following keys:
-
-    - "foo::iamc+all": both of:
-
-      - "foo::iamc+file": both of:
-
-        - "foo::iamc+csv": write the data in `base_key` to a file named :file:`foo.csv`.
-        - "foo::iamc+xlsx": write the data in `base_key` to a file named
-          :file:`foo.xlsx`.
-
-        The files are created in a subdirectory using :func:`make_output_path`—that is,
-        including a path component given by the scenario URL.
-
-      - "foo::iamc+store" store the data in `base_key` as time series data on the
-        scenario identified by the key "scenario".
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-    """
-    k = Key(base_key)
-
-    file_keys = []
-    for suffix in ("csv", "xlsx"):
-        # Create the path
-        path = c.add(
-            k[f"{suffix} path"], "make_output_path", "config", name=f"{k.name}.{suffix}"
-        )
-        # Write `key` to the path
-        file_keys.append(c.add(k[suffix], "write_report", base_key, path))
-
-    # Write all files
-    c.add(k["file"], file_keys)
-
-    # Store data on "scenario"
-    c.add(k["store"], "store_ts", "scenario", base_key)
-
-    # Both write and store
-    return single_key(c.add(k["all"], [k["file"], k["store"]]))
-
-
-def aggregate(c: "Computer") -> None:
-    """Aggregate individual transport technologies to modes."""
-    from genno.operator import aggregate as func
-
-    config: Config = c.graph["config"]["transport"]
-
-    for k in map(lambda s: Key(c.infer_keys(s)), "emi in out".split()):
-        try:
-            # Reference the function to avoid the genno magic which would treat as sum()
-            # NB aggregation on the nl dimension *could* come first, but this can use a
-            #    lot of memory when applied to e.g. out:*: for a full global model.
-            c.add(k[0], func, k, "t::transport agg", keep=False)
-            c.add(k[1], func, k[0], "nl::world agg", keep=False)
-            c.add(k["transport"], "select", k[1], "t::transport modes 1", sums=True)
-        except MissingKeyError:
-            if config.with_solution:
-                raise
+#: Units to apply or assign to specific quantities. See :func:`callback`.
+#:
+#: - Previously ``CAP:nl-t-ya:non-ldv`` was converted to "v**2 Tm / a".
+#: - For ``emi``, units of ``ACT`` are not carried, so a correction is needed:
+#:
+#:   - Add [time]: -1
+#:   - Remove [vehicle]: -1, [distance]: -1
+#:
+#:   When run together with global.yaml reporting, emi:* is assigned units of
+#:   "Mt / year". Using apply_units() causes these to be *converted* to  kt/a, i.e.
+#:   increasing the magnitude; so use assign_units() instead.
+UNITS = {
+    "CAP": ("apply", "Mv"),
+    "CAP_NEW": ("apply", "Mv"),
+    "emi": ("assign", "kt / a"),
+    "in": ("apply", "GWa / a"),
+    "out": ("apply", "Tm / a"),
+}
 
 
 def callback(rep: Reporter, context: Context) -> None:
     """:meth:`.prepare_reporter` callback for MESSAGEix-Transport.
 
-    Among others, adds:
+    `rep` is extended with tasks for transport reporting. Among others, these include:
 
-    - ``{in,out}::transport``: with outputs aggregated by technology group or
-      "mode".
-    - ``transport plots``: the plots from :mod:`.transport.plot`.
+    1. Select subsets of transport technologies. For each input quantity in
+       :data:`SELECT`, for example ``CAP_NEW:*``, tasks are added to compute:
 
-      If the scenario to be reported is not solved, only a subset of plots are added.
-    - :data:`.key.report.all`: all of the above.
+       - ``CAP_NEW:*:transport all`` —selects only the technologies in
+         ``t::transport all``.
+       - ``CAP_NEW:*:ldv`` —selects only the technologies in ``t::transport LDV``.
+       - ``CAP_NEW:*:non-ldv`` —selects only the technologies in
+         ``t::transport P ex LDV``.
+
+    2. (Re) apply units. :func:`.ixmp.report.operator.data_for_quantity` drops units for
+       most data extracted from a MESSAGEix-GLOBIOM :class:`.Scenario`, because the data
+       contain a mix of inconsistent units.
+
+       For every item in :data:`UNITS`, add a task to apply or assign units to selected
+       subsets of data that are guaranteed to have those units.
+
+    3. Aggregate in 3 stages, using :data:`key.agg.t <.transport.key.agg>` and
+       ``nl::world agg``, ``t::transport modes 1``, producing keys like ``emi:*:T``.
+       These values are aggregated by technology group and/or mode.
+    4. Invoke :func:`misc`.
+    5. Invoke :func:`convert_iamc`.
+    6. Invoke :func:`convert_sdmx`.
+    7. Add plots from :mod:`.transport.plot` using :func:`.report.add_plots`. These
+       appear at :data:`key.report.plot <.transport.key.report>`. If the scenario to be
+       reported is not solved, only a subset of plots are added.
+    8. Invoke :func:`.transport.base.prepare_reporter`.
+    9. :data:`key.report.all <.transport.key.report>` which includes all of the above.
     """
+    from genno.operator import aggregate
+
     from . import base, build
 
-    N_keys = len(rep.graph)
+    N_keys = len(rep.graph)  # Number of keys prior to additions
 
-    # - Configure MESSAGEix-Transport.
-    # - Add structure and other information.
+    # - Configure MESSAGEix-Transport, if not already configured.
+    # - Add structure and other information from `scenario`.
     # - Call, inter alia:
     #   - demand.prepare_computer() for ex-post mode and demand calculations.
-    check = build.get_computer(
-        context, obj=rep, visualize=False, scenario=rep.graph.get("scenario")
-    )
+    # - Check that the same Reporter object is returned.
+    s: "Scenario | None" = rep.graph.get("scenario")
+    assert build.get_computer(context, obj=rep, visualize=False, scenario=s) is rep
 
-    assert check is rep  # Same `rep` was returned
+    # Apply common steps for each of QUANTITY
+    # - Infer the full dimensionality of each key to be selected
+    for k_base in rep.infer_keys(QUANTITY):
+        k = k_base["T"]  # Target key
 
-    if False:
-        log.info("Filter out non-transport technologies")
+        # 1. Select all transport technologies
+        rep.add(k[0], "select", k_base, K.coord.t, sums=True)
 
-        # Plain "transport" from the base model, for e.g. prices
-        t_filter = {"transport"}
-        # MESSAGEix-Transport -specific technologies
-        t_filter.update(map(str, rep.get("t::transport").copy()))
-        # # Required commodities (e.g. fuel) from the base model
-        # t_filter.update(spec.require.set["commodity"])
+        # 2. Apply units
+        if k.name in UNITS:
+            op, units = UNITS[k.name]
+            rep.add(k[1], f"{op}_units", k[0], units=units, sums=True)
+        else:
+            rep.add(k[1], k[0])  # Simple alias / no-op
 
-        rep.set_filters(t=sorted(t_filter))
+        # 1. Select further subsets of transport technologies.
+        rep.add(k["ldv"], "select", k[1], K.coord.t["LDV"], sums=True)
+        rep.add(k["non-ldv"], "select", k[1], K.coord.t["P ex LDV"], sums=True)
 
-    # Configure replacements for conversion to IAMC data structure
-    add_replacements("t", context.transport.spec.add.set["technology"])
+        # 3. Aggregate according to groups
+        # Reference the function to avoid the genno magic which would treat as sum()
+        # NB aggregation on the nl dimension *could* come first, but this can use a
+        #    lot of memory when applied to e.g. out:*: for a full global model.
+        rep.add(k[2], aggregate, k[1], K.agg.t, keep=True)
+        rep.add(k, aggregate, k[2], "nl::world agg", keep=False, sums=True)
+        rep.add(k["modes"], "select", k, "t::transport modes 1", sums=True)
 
     # Apply some functions that prepare further tasks. Order matters here.
-    aggregate(rep)
-    select_transport_techs(rep)
-    reapply_units(rep)
     misc(rep)
     convert_iamc(rep)  # Adds to key.report.all
     convert_sdmx(rep)  # Adds to key.report.all
-    add_plots(rep, plot, key.report.plot)
+    add_plots(rep, plot, K.report.plot)
     base.prepare_reporter(rep)  # Tasks that prepare data to parametrize the base model
 
     log.info(f"Added {len(rep.graph) - N_keys} keys")
-    # TODO Write an SVG visualization of reporting calculations
 
 
 def check(scenario):
@@ -306,9 +289,14 @@ def convert_iamc(c: "Computer") -> None:
     from message_ix_models.report import iamc as handle_iamc
     from message_ix_models.report import util
 
-    from .key import report as k_report
+    # Configure replacements for technology IDs in conversion to IAMC data structure
+    cfg: Config = c.graph["context"].transport
+    add_replacements("t", cfg.spec.add.set["technology"])
 
-    util.REPLACE_VARS.update({r"^CAP\|(Transport)": r"\1"})
+    # Update replacements for fully-constructed IAMC variable codes
+    # - Quantity.name is prepended automatically; this occurs with quantities derived
+    #   from CAP and CAP_NEW. Remove the prefix.
+    util.REPLACE_VARS.update({r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2"})
 
     keys = []
     for info in CONVERT_IAMC:
@@ -320,14 +308,13 @@ def convert_iamc(c: "Computer") -> None:
     c.add(k, "concat", *keys)
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
-    c.apply(add_iamc_store_write, k)
+    c.apply(util.store_write_ts, k)
 
-    c.graph[k_report.all].append(
-        # Use ths line to both store and write to file IAMC structured-data
-        k + "all"
-        # Use this line for "transport::iamc+file" instead of "transport::iamc+all"
-        # k + " file"
-    )
+    # Use this line to both store and write to file IAMC structured-data
+    c.graph[K.report.all] += (k + "all",)
+    # Use this line for "transport::iamc+file" instead of "transport::iamc+all", i.e. to
+    # write IAMC-structured data to file but *not* store on scenario
+    # c.graph[K.report.all] += (k + "file",)
 
 
 def convert_sdmx(c: "Computer") -> None:
@@ -336,7 +323,6 @@ def convert_sdmx(c: "Computer") -> None:
 
     from message_ix_models.util.sdmx import DATAFLOW, Dataflow
 
-    from .key import report as k_report
     from .operator import write_sdmx_data
 
     # Directory for SDMX output
@@ -354,10 +340,10 @@ def convert_sdmx(c: "Computer") -> None:
         c.add(keys[-1], write_sdmx_data, df.key, sm, "scenario", dir_, df_urn=df.df.urn)
 
     # Collect all the keys *then* write the collected structures to file
-    c.add(k_report.sdmx, "write_sdmx_structures", sm, dir_, *keys)
+    c.add(K.report.sdmx, "write_sdmx_structures", sm, dir_, *keys)
 
     # Connect to the main report key
-    c.graph[k_report.all].append(k_report.sdmx)
+    c.graph[K.report.all] += (K.report.sdmx,)
 
 
 def misc(c: "Computer") -> None:
@@ -371,17 +357,18 @@ def misc(c: "Computer") -> None:
 
     # Configuration for :func:`check`. Adds a single key, 'transport check', that
     # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
+    # TODO Replace with use of message_ix_models.testing.check
     c.add("transport check", "transport_check", "scenario", "ACT:nl-t-yv-va-m-h")
 
     # Exogenous data
     c.add("distance:nl:non-ldv", "distance_nonldv", "config")
 
     # Demand per capita
-    c.add("demand::capita", "divdemand:n-c-y", key.pop)
+    c.add("demand::capita", "divdemand:n-c-y", K.pop)
 
     # Adjustment factor for LDV calibration: fuel economy ratio
-    k_num = Key("in:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
-    k_denom = Key("out:nl-t-ya-c:transport+units") / "c"  # As in CONVERT_IAMC
+    k_num = Key("in:nl-t-ya-c:T") / "c"  # As in CONVERT_IAMC
+    k_denom = Key("out:nl-t-ya-c:T") / "c"  # As in CONVERT_IAMC
     k_check = single_key(c.add("fuel economy::check", "div", k_num, k_denom))
     c.add(
         k_check + "sel",
@@ -392,7 +379,7 @@ def misc(c: "Computer") -> None:
     )
 
     k_ratio = single_key(
-        c.add("fuel economy::ratio", "div", key.exo.input_ref_ldv, k_check + "sel")
+        c.add("fuel economy::ratio", "div", K.exo.input_ref_ldv, k_check + "sel")
     )
     c.add("calibrate fe path", "make_output_path", "config", name="calibrate-fe.csv")
     hc = "\n\n".join(
@@ -455,50 +442,3 @@ def multi(context: Context, targets: list[str], *, use_platform: bool = False) -
     add_plots(c, plot, "multi", stage=STAGE.REPORT, single=False)
 
     return c.get("multi")
-
-
-def reapply_units(c: "Computer") -> None:
-    """Apply units to transport quantities.
-
-    :func:`.ixmp.report.operator.data_for_quantity` drops units for most data extracted
-    from a MESSAGEix-GLOBIOM :class:`.Scenario`, because the data contain a mix of
-    inconsistent units.
-
-    Here, add tasks to reapply units to selected subsets of data that are guaranteed to
-    have certain units.
-    """
-    # TODO Infer these values from technology.yaml etc.
-    for base, (op, units) in {
-        # Vehicle stocks
-        # FIXME should not need the extra [vehicle] in the numerator
-        "CAP:nl-t-ya:non-ldv": ("apply", "v**2 Tm / a"),
-        "CAP:*:ldv": ("apply", "Mv"),
-        "CAP_NEW:*:ldv": ("apply", "Mv"),
-        # NB these units are correct for final energy only
-        "in:*:transport": ("apply", "GWa / a"),
-        "in:*:ldv": ("apply", "GWa / a"),
-        "out:*:transport": ("apply", "Tm / a"),
-        "out:*:ldv": ("apply", "Tm / a"),
-        # Units of ACT are not carried, so must correct here:
-        # - Add [time]: -1
-        # - Remove [vehicle]: -1, [distance]: -1
-        #
-        # When run together with global.yaml reporting, emi:* is assigned units of
-        # "Mt / year". Using apply_units() causes these to be *converted* to  kt/a, i.e.
-        # increasing the magnitude; so use assign_units() instead.
-        "emi:*:transport": ("assign", "kt / a"),
-    }.items():
-        key = c.infer_keys(base)
-        c.add(key + "units", f"{op}_units", key, units=units, sums=True)
-
-
-def select_transport_techs(c: "Computer") -> None:
-    """Select subsets of transport technologies.
-
-    Applied to the quantities in :data:`SELECT`.
-    """
-    # Infer the full dimensionality of each key to be selected
-    for k in map(lambda name: c.infer_keys(f"{name}:*"), SELECT):
-        c.add(k + "transport all", "select", k, "t::transport all", sums=True)
-        c.add(k + "ldv", "select", k, "t::transport LDV", sums=True)
-        c.add(k + "non-ldv", "select", k, "t::transport P ex LDV", sums=True)

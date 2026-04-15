@@ -81,7 +81,7 @@ def scenario_code() -> Iterator["Code"]:
             False,
             "IKARUS",
             False,
-            marks=[mark.slow, make_mark[2](genno.ComputationError)],
+            marks=[mark.slow, make_mark[2](RuntimeError)],
         ),
         # Pending iiasa/message_data#190
         param("ISR", "A", True, None, False, marks=MARK[3]),
@@ -144,10 +144,7 @@ def test_bare_res(
         ("R12", "B", dict(code="EDITS-CA")),
         ("R12", "B", dict(code="DIGSY-BEST-C")),
         pytest.param(
-            "R12",
-            "B",
-            dict(code="SSP2", extra_modules=["material"]),
-            marks=pytest.mark.xfail(raises=NotImplementedError),
+            "R12", "B", dict(code="SSP2", extra_modules=["material"]), marks=MARK[12]
         ),
         # param("R14", "B", {}, marks=MARK[9]),
         # param("ISR", "A", {}, marks=MARK[3]),
@@ -180,10 +177,9 @@ def test_debug(
         Passed to :func:`.verbose_check`.
     """
     # Get a Computer prepared to build the model with the given options
-    c, _ = configure_build(test_context, regions, years, tmp_path, options=options)
-
-    # Fixture: a scenario
-    c.add("scenario", bare_res(request, test_context))
+    c, _ = configure_build(
+        test_context, regions, years, tmp_path, with_base=request, options=options
+    )
 
     # Insert key-specific and common checks
     result = check.insert(c, N_node, verbosity, tmp_path)

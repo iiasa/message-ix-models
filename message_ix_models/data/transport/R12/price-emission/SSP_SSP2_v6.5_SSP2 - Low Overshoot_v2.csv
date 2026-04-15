@@ -1,0 +1,15 @@
+# Exported using:
+#   mix-models --url="ixmp://ixmp-dev/SSP_SSP2_v6.5/SSP2 - Low Overshoot" transport export-price
+# at 2026-04-07T19:30:36.614016
+#
+node,type_emission,type_tec,year,lvl,mrg
+World,TCE,all,2040,217.81660994945733,0.0
+World,TCE,all,2045,277.9953232847465,0.0
+World,TCE,all,2050,354.8003055695489,0.0
+World,TCE,all,2055,452.82508836778146,0.0
+World,TCE,all,2060,577.9323113212328,0.0
+World,TCE,all,2070,827.1303972767862,0.0
+World,TCE,all,2080,1347.3082597684481,0.0
+World,TCE,all,2090,2194.6231849496917,0.0
+World,TCE,all,2100,3574.809913765749,0.0
+World,TCE,all,2110,5822.98866028376,0.0

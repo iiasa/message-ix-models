@@ -1,4 +1,4 @@
-"""Consumer groups data."""
+"""Consumer groups."""
 
 import logging
 from copy import deepcopy
@@ -16,19 +16,19 @@ log = logging.getLogger(__name__)
 
 def prepare_computer(c: "Computer") -> None:
     """Prepare `rep` for calculating transport consumer groups."""
-    from .key import cg, exo, pop, pop_at
+    from . import key as K
 
     c.add("indexers:n-cd", "indexers_n_cd", "config")
     # Population shares by area_type
-    c.add(pop_at, urban_rural_shares, pop, "config")
+    c.add(K.pop_at, urban_rural_shares, K.pop, "config")
     # Exogenous data for consumer group sizes
     keys = [
-        exo.population_suburb_share,
-        exo.pop_share_attitude,
-        exo.pop_share_driver,
-        exo.pop_share_cd_at,
+        K.exo.population_suburb_share,
+        K.exo.pop_share_attitude,
+        K.exo.pop_share_driver,
+        K.exo.pop_share_cd_at,
     ]
-    c.add(cg, cg_shares, pop_at, *keys, "indexers:n-cd", "indexers:cg")
+    c.add(K.cg, cg_shares, K.pop_at, *keys, "indexers:n-cd", "indexers:cg")
 
 
 def cg_shares(

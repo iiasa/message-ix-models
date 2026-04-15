@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 
 from genno import Key, Quantity, quote
 
+from . import key as K
 from . import util
-from .key import activity_ldv_full, exo
 from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
@@ -29,12 +29,12 @@ def prepare_computer(c: "Computer") -> None:
     # Interpolate to ensure all y::model are covered
     # NB "y::coords" is not equivalent here; includes all y, not just y::model
     c.add("y::model+coords", lambda years: dict(y=years), "y::model")
-    c.add(k[1], "interpolate", exo.disutility, "y::model+coords", **EXTRAPOLATE)
+    c.add(k[1], "interpolate", K.exo.disutility, "y::model+coords", **EXTRAPOLATE)
 
     # Divide disutility per vehicle by annual driving distance per vehicle → disutility
     # per vehicle-km; convert to preferred units
     # TODO add "cg" dimension to ldv activity
-    k2 = c.add(k[2], "div", k[1], activity_ldv_full)
+    k2 = c.add(k[2], "div", k[1], (K.exo.activity_vehicle + "LDV") / "t")
     k3 = c.add(k[3], "mul", k2, Quantity(1.0, units="vehicle / year"))
     k4 = c.add(k[4], "convert_units", k3, units="USD / km")
 

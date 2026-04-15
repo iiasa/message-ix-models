@@ -13,9 +13,11 @@ key, so that existing data for the MESSAGE ``demand`` parameter can be adjusted.
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from genno import Keys
+import genno
+from genno import Key, Keys
 from genno.core.key import single_key
 
+from message_ix_models.util import minimum_version
 from message_ix_models.util.genno import Collector
 
 from . import key, util
@@ -23,11 +25,13 @@ from . import key, util
 if TYPE_CHECKING:
     from genno import Computer
 
+    from .config import Config
+
 
 #: Target key that collects all data generated in this module.
-TARGET = "transport::material+ixmp"
+TARGET = "transport::MT+ixmp"
 
-collect = Collector(TARGET, "{}::material+ixmp".format)
+collect = Collector(TARGET, "{}::MT+ixmp".format)
 
 # FIXME Do not hard-code this. Instead, use 1 or more of:
 # - Labels in input_cap_new.csv that align with .model.materials.
@@ -50,22 +54,6 @@ COMMODITY_INFO = {
     # "zinc": "",  # Missing
 }
 
-# FIXME Do not hard code this
-TECHNOLOGY = {
-    "BEV": {"ELC_100"},
-    "ICE": {
-        "IAHe_ptrp",
-        "IAHm_ptrp",
-        "ICAe_ptrp",
-        "ICE_conv",
-        "ICE_nga",
-        "ICEm_ptrp",
-        "ICH_chyb",
-        "IGH_ghyb",
-    },
-    "PHEV": {"PHEV_ptrp"},
-}
-
 DIMS = dict(
     commodity="c",
     node_loc="n",
@@ -75,18 +63,60 @@ DIMS = dict(
     technology="t",
 )
 
+#: Portion of the ``input_cap_new`` that is available as ``output_cap_ret`` at the end
+#: of lifetime of a technology. Dimensionless.
+#:
+#: .. todo:: Retrieve from a file.
+OUTPUT_SHARE = 0.8
+
 # Keyword arguments for as_message_df() for different parameters
-_DEMAND_KW = dict(name="demand", dims=DIMS, common=dict())
+_DEMAND_KW = dict(name="demand", dims=util.DIMS, common=util.COMMON)
 _ICN_KW = dict(
     name="input_cap_new", dims=DIMS, common=util.COMMON | dict(level="demand")
 )
 _OCR_KW = dict(
-    name="output_cap_ret", dims=DIMS, common=util.COMMON | dict(level="scrap")
+    name="output_cap_ret", dims=DIMS, common=util.COMMON | dict(level="end_of_life")
 )
 
 
+def get_groups(config: "Config") -> dict[str, dict[str, list[str]]]:
+    """Return groups for a :func:`~genno.operator.aggregate` operation on NTNU VMI data.
+
+    These include:
+
+    - ``c`` (commodity) dimension: 1 or more original (NTNU VMI) commodity IDs
+      aggregated to :mod:`.model.material` commodity IDs.
+    - ``t`` (technology) dimension: 1:1 from original (NTNU VMI) technology IDs to
+      :mod:`.model.transport` technology IDs. This effects rename and broadcast
+      operations simultaneously.
+    """
+
+    # Aggregate ≥1 original commodity IDs into .model.material commodity IDs
+    c_groups = defaultdict(list)
+    for c_original, c_model in COMMODITY_INFO.items():
+        c_groups[c_model].append(c_original)
+
+    # Retrieve all codes for LDV technologies
+    t_all = config.spec.add.set["technology"]
+    t_LDV = t_all[t_all.index("LDV")].child
+
+    # Aggregate each original technology ID into 1 or more 'groups' of length 1
+    # (this is equivalent to a broadcast operation)
+    t_groups = {}
+    for t_model in t_LDV:
+        t_groups[t_model.id] = [
+            str(t_model.get_annotation(id="ntnu-vmi-technology").text)
+        ]
+
+    return dict(c=c_groups, t=t_groups)
+
+
+@minimum_version("message_ix 3.11.2.dev0")  # NB Actually 3.12
 def prepare_computer(c: "Computer") -> None:
     """Prepare `c` to calculate and add data for materiality of transport."""
+    # Retrieve transport configuration
+    config = c.graph["context"].transport
+
     # Collect data in `TARGET` and connect to the "add transport data" key
     collect.computer = c
     c.add("transport_data", __name__, key=TARGET)
@@ -96,7 +126,7 @@ def prepare_computer(c: "Computer") -> None:
         # Same key as used in .transport.ldv.stock
         # TODO Move to .key
         sales="sales:n-t-y:LDV",
-        demand=key.demand_base + "MT",
+        demand=Key("demand", key.demand_base.dims, "MT"),
     )
 
     # From input_cap_new.csv, select:
@@ -105,26 +135,20 @@ def prepare_computer(c: "Computer") -> None:
     indexers = dict(scenario="_CT_C_D_D")
     c.add(k.exo[0], "select", key.exo.input_cap_new, indexers=indexers)
 
-    # Aggregate ≥1 original commodity IDs into .model.material commodity IDs
-    c_groups = defaultdict(list)
-    for c_original, c_model in COMMODITY_INFO.items():
-        c_groups[c_model].append(c_original)
-    # Aggregate each original technology ID into 1 or more 'groups' of length 1
-    # (this is equivalent to a broadcast operation)
-    t_groups = {}
-    for t_original, t_model in TECHNOLOGY.items():
-        t_groups.update({t: [t_original] for t in t_model})
-
-    c.add(
-        k.exo[1], "aggregate", k.exo[0], groups=dict(c=c_groups, t=t_groups), keep=False
-    )
+    # Transform VMI data labels to MESSAGE -MT- labels
+    c.add(k.exo[1], "aggregate", k.exo[0], groups=get_groups(config), keep=False)
 
     # Convert units: (material commodities [Mt]) / (transport CAP/CAP_NEW [Mvehicle])
     c.add(k.exo[2], "convert_units", k.exo[1], units="Mt / Mvehicle")
 
-    # Convert data to MESSAGE-format data frames
+    # Convert to MESSAGE-format data frame
     collect("input_cap_new", "as_message_df", k.exo[2], **_ICN_KW)
-    collect("output_cap_ret", "as_message_df", k.exo[2], **_OCR_KW)
+
+    # Reduce share available for recycling
+    c.add(k.exo[3], "mul", k.exo[2], OUTPUT_SHARE)
+
+    # Convert to MESSAGE-format data frame
+    collect("output_cap_ret", "as_message_df", k.exo[3], **_OCR_KW)
 
     # Multiply base-period LDV sales by material intensity
     tmp = single_key(c.add("demand::MT+0", "mul", k.exo[2], k.sales, sums=True))
@@ -135,11 +159,24 @@ def prepare_computer(c: "Computer") -> None:
     # Convert units: material commodities demand [Mt/year]
     c.add(k.demand[1], "convert_units", k.demand[0], units="Mt / year")
 
+    # Force units for existing model data
+    # FIXME Adjust to trust the base model's units
+    c.add(k.demand[2], "apply_units", key.demand_base, units="Mt / year")
+
     # Share of this transport total in existing material demand as of y₀
-    c.add(k.demand["share"], "div", key.demand_base, k.demand[1])
+    c.add(k.demand[3], "div", k.demand[1], k.demand[2])
+
+    # Clip values to be in (0, 0.8)
+    c.add(k.demand[4], lambda q: q.clip(0.0, 0.8), k.demand[3])
+
+    # Difference with 1.0: should be in range (0.2, 1.0)
+    c.add(k.demand[5], "sub", genno.Quantity(1.0, units=""), k.demand[4])
+
+    # Select only values for y0
+    c.add(k.demand["share"], "select", k.demand[5], "y0::coord")
 
     # Multiply existing material demand by this share
-    c.add(k.demand["adj"], "mul", key.demand_base, k.demand["share"])
+    c.add(k.demand["adj"], "mul", k.demand[2], k.demand["share"])
 
     # Convert data to MESSAGE-format data frame
     collect("demand", "as_message_df", k.demand["adj"], **_DEMAND_KW)

@@ -27,9 +27,10 @@ from message_ix_models.util import (
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
-from . import Config, key, plot
+from . import Config, plot
+from . import key as K
 from .operator import indexer_scenario
-from .structure import get_technology_groups
+from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
     from typing import TypedDict
@@ -72,13 +73,13 @@ def add_debug(c: Computer) -> None:
     c.add(e.cnlt, "rename_dims", e.fnp[1], quote(dict(flow="t", n="nl", product="c")))
 
     # Write some intermediate calculations from the build process to file
-    k_debug = copy(key.debug)  # Make a copy so the original does not collect .generated
+    k_debug = copy(K.debug)  # Make a copy so the original does not collect .generated
     for i, (k, stem) in enumerate(
         (
-            (key.gdp_cap, "gdp-ppp-cap"),
-            (key.pdt_nyt, "pdt"),
-            (key.pdt_nyt + "capita+post", "pdt-cap"),
-            (key.ms, "mode-share"),
+            (K.gdp_cap, "gdp-ppp-cap"),
+            (K.pdt_nyt, "pdt"),
+            (K.pdt_nyt + "capita+post", "pdt-cap"),
+            (K.ms, "mode-share"),
             (e.fnp[0], "energy-iea-0"),
             (e.cnlt, "energy-iea-1"),
         )
@@ -135,7 +136,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
-    # Ensure that the MERtoPPP data provider is available
     from . import data
 
     # Added keys
@@ -169,6 +169,12 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     for kw in source_kw:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
+
+    # Miscellaneous data
+    kw = dict(nodes=context.model.regions, config=config)
+    data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.Lifetime.add_tasks(c, **kw, **c_s)
+    data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
@@ -205,10 +211,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     if False:
         pass  # Solved scenario that already has this key
     else:
-        c.add(key.GDP, keys["GDP"][0])
+        c.add(K.GDP, keys["GDP"][0])
 
     # Ensure correct units
-    c.add(key.pop, "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
+    c.add(K.pop, "mul", "pop:n-y", genno.Quantity(1.0, units="passenger"))
 
     # FIXME Adjust to derive PRICE_COMMODITY c=transport from solved scenario with
     #       MESSAGEix-Transport detail, then uncomment the following line
@@ -216,10 +222,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     if False:
         # Alias PRICE_COMMODITY:… to PRICE_COMMODITY:*:transport, e.g. solved scenario
         # that already has this key
-        c.add(key.price[0], key.price.base - "transport")
+        c.add(K.price[0], K.price.base - "transport")
     else:
         # Not solved scenario → dummy prices
-        c.add(key.price[0], "dummy_prices", keys["GDP"][0], sums=True)
+        c.add(K.price[0], "dummy_prices", keys["GDP"][0], sums=True)
 
     # Data from files
 
@@ -235,10 +241,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     for _, f in filter(lambda x: x[1].intent & Dataflow.FLAG.IN, data.iter_files()):
         c.add("", f, context=context)
-
-    data.LoadFactorLDV.add_tasks(
-        c, context=context, strict=False, nodes=context.model.regions, config=config
-    )
 
 
 #: :mod:`genno` tasks for model structure information that are 'static'—that is, do not
@@ -270,7 +272,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:   See :func:`.nodes_world_agg`.
 STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("add transport data", []),
-    (key.report.all, []),
+    (K.report.all, "summarize"),
     ("info", lambda c: c.transport.base_model_info, "context"),
     (
         "transport info",
@@ -278,26 +280,22 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
         "context",
     ),
     (
-        key.demand_base,
+        K.demand_base,
         partial(data_for_quantity, "par", "demand", "value"),
         "scenario",
         "config",
     ),
     ("dry_run", lambda c: c.core.dry_run, "context"),
     ("e::codelist", partial(get_codelist, "emission")),
-    ("groups::iea eweb", "groups_iea_eweb", "t::transport"),
+    ("groups::iea eweb", "groups_iea_eweb", K.t),
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
     ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
     ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
-    ("indexers::usage", "indexers_usage", "t::transport"),
-    ("n::ex world", "nodes_ex_world", "n"),
-    (
-        "n:n:ex world",
-        lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}),
-        "n::ex world",
-    ),
+    ("indexers::usage", "indexers_usage", K.t),
+    (K.n, "nodes_ex_world", "n"),
+    ("n:n:ex world", lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}), K.n),
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
     ("scenario::all", "scenario_codes"),
@@ -359,6 +357,7 @@ def add_structure(c: Computer) -> None:
     config: "Config" = c.graph["context"].transport  # .model.transport.Config object
     info = config.base_model_info  # ScenarioInfo describing the base scenario
     spec = config.spec  # Specification for MESSAGEix-Transport structure to be built
+    c_groups = get_commodity_groups(spec)  # Commodity groups/hierarchy
     t_groups = get_technology_groups(spec)  # Technology groups/hierarchy
 
     # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
@@ -384,7 +383,7 @@ def add_structure(c: Computer) -> None:
             "cat_year",
             pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
         ),
-        (key.y, "model_periods", "y", "cat_year"),
+        (K.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
         ("y::y0", lambda v: dict(y=v[0]), "y::model"),
     ):
@@ -394,12 +393,38 @@ def add_structure(c: Computer) -> None:
             # log.debug(f"Use existing {c.describe(task[0])}")
             pass
 
-    # Assemble a queue of tasks
-    # - `Static` tasks
-    # - Single 'dynamic' tasks based on config, info, spec, and/or t_groups
-    # - Multiple static and dynamic tasks generated in loops etc.
-    tasks: list[tuple] = list(STRUCTURE_STATIC) + [
-        ("c::transport", quote(spec.add.set["commodity"])),
+    # Assemble a queue of tasks; first, `static` tasks
+    tasks: list[tuple] = list(STRUCTURE_STATIC)
+
+    # Commodity and technology coordinates
+    for name, groups in ("commodity", c_groups), ("technology", t_groups):
+        dim = name[0]  # Dimension short ID ← first letter of set name
+        # Reference existing keys from .key module
+        k0 = Keys(
+            list=getattr(K, dim), agg=getattr(K.agg, dim), coord=getattr(K.coord, dim)
+        )
+
+        # 1. Flat list of all Codes.
+        # 2. Coordinates: dimension ID as the top-level key, then list of str.
+        # 3. Aggregator: dimension ID as the top-level key, then all groups.
+        # 4. Groups as top-level keys.
+        tasks += [
+            (k0.list, quote(spec.add.set[name])),
+            (k0.coord, quote({dim: groups["_T"]})),
+            (k0.agg, quote({dim: groups})),
+            (f"groups:{dim}:T", quote(groups)),
+        ]
+
+        # Each group individually
+        for group_id, members in groups.items():
+            # Flat list of members as Codes
+            codes = sorted(filter(members.__contains__, spec.add.set[name]))
+            tasks.append((k0.list[group_id], quote(codes)))
+            # Coordinates
+            tasks.append((k0.coord[group_id], quote({dim: members})))
+
+    # Single 'dynamic' tasks based on config, info, spec, and/or t_groups
+    tasks += [
         # Convert to str to avoid TypeError in broadcast_wildcard → sorted()
         # TODO Remove once sdmx.model.common.Code is sortable with str
         (
@@ -414,10 +439,7 @@ def add_structure(c: Computer) -> None:
         ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", spec.add.set["consumer_group indexers"]),
         ("nodes", quote(info.set["node"])),
-        ("t::transport", quote(spec.add.set["technology"])),
-        ("t::transport agg", quote(dict(t=t_groups))),
-        ("t::transport all", quote(dict(t=spec.add.set["technology"]))),
-        (key.t_modes, quote(config.demand_modes)),
+        (K.t_modes, quote(config.demand_modes)),
         ("t::transport modes 0", quote(dict(t=list(t_groups.keys())))),
         (
             "t::transport modes 1",
@@ -425,34 +447,25 @@ def add_structure(c: Computer) -> None:
         ),
     ]
 
+    # Multiple static and dynamic tasks generated in loops etc.
     # Quantities for broadcasting (t,) to (t, c, l) dimensions
     tasks.extend(
         (
-            getattr(key.bcast_tcl, kind),
+            getattr(K.bcast_tcl, kind),
             partial(broadcast_t_c_l, kind=kind, default_level="final"),
-            "t::transport",
+            K.t,
             "c::transport+base",
         )
         for kind in ("input", "output")
     )
 
     # Quantities for broadcasting y to (yv, ya)
-    for k, base, method in (
-        (key.bcast_y.all, "y", "product"),  # All periods
-        (key.bcast_y.model, "y::model", "product"),  # Model periods only
-        (key.bcast_y.no_vintage, "y::model", "zip"),  # Model periods with no vintaging
+    for k1, base, method in (
+        (K.bcast_y.all, "y", "product"),  # All periods
+        (K.bcast_y.model, K.y, "product"),  # Model periods only
+        (K.bcast_y.no_vintage, K.y, "zip"),  # Model periods with no vintaging
     ):
-        tasks.append((k, partial(broadcast_y_yv_ya, method=method), base, base))
-
-    # Groups of technologies and indexers
-    tasks.append(("t::transport groups", quote(t_groups)))
-
-    # FIXME Combine or disambiguate these keys
-    for id, techs in t_groups.items():
-        # Indexer-form of technology groups
-        tasks.append((f"t::transport {id}", quote(dict(t=techs))))
-        # List form of technology groups
-        tasks.append((f"t::{id}", quote(techs)))
+        tasks.append((k1, partial(broadcast_y_yv_ya, method=method), base, base))
 
     # - Change each task from single-tuple form to (args, kwargs) with strict=True.
     # - Add all to the Computer, making 2 passes.
@@ -462,10 +475,32 @@ def add_structure(c: Computer) -> None:
     c.add(
         "t::transport map",
         MappingAdapter.from_dicts,
-        "t::transport groups",
+        "groups:t:T",
         dims=("t",),
         on_missing="raise",
     )
+
+    # Identify the subset of periods up to and including y0
+    c.add(
+        K.y_.historical,
+        lambda periods, y0: list(filter(lambda y: y < y0, periods)),
+        "y",
+        "y0",
+    )
+    c.add(
+        K.y_.to_y0,
+        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
+        "y",
+        "y0",
+    )
+    # Convert duration_period to Quantity
+    c.add("duration_period:y", "duration_period", "info")
+    # Duration_period up to and including y0
+    c.add("duration_period:y:to y0", "select", "duration_period:y", K.y_.to_y0)
+    # Groups for aggregating annual to period data
+    c.add(K.y_.annual_agg, "groups_y_annual", "duration_period:y")
+    # Indexers
+    c.add(K.coord.yv_hist, lambda periods: dict(yv=periods), K.y_.historical)
 
 
 @minimum_version("genno 1.28")
@@ -634,7 +669,7 @@ def main(
         log.info(f"Added {sum_numeric(result)} total obs")
 
     if context.core.dry_run:
-        return c.get(key.debug)
+        return c.get(K.debug)
 
     # First strip existing emissions data
     strip_emissions_data(scenario, context)

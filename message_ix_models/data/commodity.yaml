@@ -112,7 +112,8 @@ fueloil:
   iea-eweb-product: [BITUMEN, PARWAX, PETCOKE, RESFUEL]
 
 gas:
-  name: Natural Gas
+  name: Natural gas
+  report: Gas
   units: GWa
   ipcc-1996-name: "Natural Gas (Dry)"
   iea-eweb-product: [NATGAS]

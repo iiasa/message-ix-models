@@ -13,8 +13,7 @@ from genno.core.key import single_key
 
 from message_ix_models.util import minimum_version
 
-from .key import gdp_exo
-from .key import report as k_report
+from . import key as K
 from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
@@ -203,7 +202,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # below added to the list
     rep.add(TARGET, [])
     # Add this result key to the list of all reporting keys
-    rep.graph[k_report.all].append(TARGET)
+    rep.graph[K.report.all] += (TARGET,)
 
     # Create output subdirectory for base model files
     rep.graph["config"]["output_dir"].joinpath("base").mkdir(
@@ -214,7 +213,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     e_iea = Key("energy:n-y-product-flow:iea")
     e_fnp = Key(e_iea.drop("y"))
     e_cnlt = Key("energy:c-nl-t:iea+0")
-    k = Key("in:nl-t-ya-c-l-h:transport+units")  # MESSAGE solution values
+    k = Key("in:nl-t-ya-c-l-h:T")  # MESSAGE solution values
 
     # First period
     y0 = rep.get("y0")
@@ -302,7 +301,9 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     )
 
     # Compute for file and plot: transport final energy intensity of GDP PPP
-    k_gdp = rep.add("gdp:nl-ya", "rename_dims", gdp_exo, quote({"n": "nl", "y": "ya"}))
+    k_gdp = rep.add(
+        "gdp:nl-ya", "rename_dims", K.gdp_exo, name_dict={"n": "nl", "y": "ya"}
+    )
     k_fei = single_key(rep.add("fe intensity", "div", k["s2"] / tuple("chlt"), k_gdp))
     rep.add(k_fei + "units", "convert_units", k_fei, units="MJ / USD")
     rep.apply(to_csv, k_fei + "units", name="fe intensity")

@@ -2,18 +2,14 @@ import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
-from typing import TYPE_CHECKING
 
 import pandas as pd
 from dask.core import quote
-from genno import Key, Keys
+from genno import Computer, Key, Keys
 from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
 from message_ix import Reporter
-from sdmx.model.v21 import Code
-
-if TYPE_CHECKING:
-    from genno import Computer
+from sdmx.model.common import Code
 
 log = logging.getLogger(__name__)
 
@@ -334,13 +330,87 @@ def add_replacements(dim: str, codes: Iterable[Code]) -> None:
 
        qux: {}  # No "report" annotation → no mapping
 
-    …results in entries :py:`{"foo": "fOO", "bar": "Baz"}` added to :data:`REPLACE_DIMS`
+    …results in entries :py:`{"Foo": "fOO", "Bar": "Baz"}` added to :data:`REPLACE_DIMS`
     and used by :func:`collapse`.
     """
     for code in codes:
+        # List of candidates
+        candidates = [code.id, code.name]
         try:
-            label = str(code.get_annotation(id="report").text)
+            # Append the value of the "report" annotation, if any
+            candidates.append(code.get_annotation(id="report").text)
         except KeyError:
             pass
-        else:
+
+        # Final entry in the list with a non-empty string representation
+        label = next(filter(None, map(str, reversed(candidates))))
+
+        if label != code.id:
             REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
+
+
+# FIXME Type as "Computer" str alias, when supported by genno.Computer.apply()
+def store_write_ts(c: Computer, base_key: Key) -> Key:
+    """Add tasks to store and write files with time-series data from `base_key`.
+
+    `base_key` **should** refer to a task that returns time-series data in the IAMC
+    structure; that is, the format used by :meth:`ixmp.TimeSeries.add_timeseries`.
+
+    If `base_key` is for instance "foo::iamc", this function adds the following keys:
+
+    "foo::iamc+all"
+       Both of:
+
+       "foo::iamc+file"
+          Both of:
+
+          "foo::iamc+csv"
+             Write data in `base_key` to a file named :file:`foo.csv` in CSV format,
+             wherein the file stem is the same as the :attr:`.Key.name` of `base_key`.
+          "foo::iamc+xlsx"
+             Write the data in `base_key` to a file named :file:`foo.xlsx` in Excel
+             format.
+
+          The two files are created in a subdirectory created with
+          :func:`make_output_path`, including a path component constructed from the
+          scenario URL.
+
+       "foo::iamc+store"
+          Store the data in `base_key` as time series data on the
+          :class:`.Scenario` identified by the key "scenario", using
+          :func:`ixmp.report.operator.store_ts`.
+
+    Other code **may** then :meth:`~.Reporter.get` one of the 3 keys, as needed, to
+    perform some or all of these tasks.
+
+    Returns
+    -------
+    Key
+        the "+all" key described above.
+
+    Example
+    -------
+    >>> rep = Reporter(...)
+    >>> result = rep.apply(store_write_ts, "foo::iamc")
+    >>> result
+    <foo::iamc+all>
+    """
+    k = Key(base_key)
+
+    file_keys = []
+    for suffix in ("csv", "xlsx"):
+        # Create the path
+        name = f"{k.name}.{suffix}"
+        path = c.add(k[f"{suffix} path"], "make_output_path", "config", name=name)
+        # Write `key` to the path
+        file_keys.append(c.add(k[suffix], "write_report", base_key, path))
+
+    # Write all files
+    c.add(k["file"], "summarize", *file_keys)
+
+    # Store data on "scenario"
+    c.add(k["store"], "store_ts", "scenario", base_key)
+
+    # Both write and store
+    c.add(k["all"], "summarize", k["store"], *file_keys)
+    return k["all"]
