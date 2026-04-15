@@ -506,9 +506,9 @@ def build_accounting_relations(
             df_rel_exports["value"] = 0
             df_rel_imports["value"] = 0
 
-    df_rel = pd.concat([df_rel_exports, df_rel_imports])
+        df_rel = pd.concat([df_rel_exports, df_rel_imports])
 
-    parameter_outputs[tec]["trade"]["relation_activity_CO2_Emission"] = df_rel.drop_duplicates()
+        parameter_outputs[tec]["trade"]["relation_activity_CO2_Emission"] = df_rel.drop_duplicates()
 
     # Primary energy total
     df_rel = message_ix.make_df(
@@ -871,7 +871,7 @@ def build_flow_Vcosts(
         df_vcost_base = message_ix.make_df(
             "var_cost",
             node_loc=network_setup[tec]["exporter"],
-            mode=mode_use,
+            mode="M1",
             technology=flow_tec,
             unit="USD/" + config_dict["flow_units"][tec],
             time="year",
@@ -880,7 +880,7 @@ def build_flow_Vcosts(
     if "shipped" in tec:
         df_vcost_base["value"] = 0.002  # Default is 0.002 USD/Mt-km
 
-    vcost_out = pd.concat([parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base])
+    vcost_out = pd.concat([parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base]).drop_duplicates()
     parameter_outputs[tec]["flow"]["var_cost"] = vcost_out
 
     return parameter_outputs
@@ -1106,10 +1106,11 @@ def export_edit_files(
         ]
         for reqpar in reqpar_list:
             if not os.path.isfile(os.path.join(data_path, tec, "bare_files", reqpar)):
-                base_file = os.path.join(data_path, tec, "edit_files", reqpar)
-                dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
-                shutil.copy2(base_file, dest_file)
-                log.info(f"Copied file from edit to bare: {reqpar}")
+                if os.path.isfile(os.path.join(data_path, tec, "edit_files", reqpar)):
+                    base_file = os.path.join(data_path, tec, "edit_files", reqpar)
+                    dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
+                    shutil.copy2(base_file, dest_file)
+                    log.info(f"Copied file from edit to bare: {reqpar}")
     ## Transfer cost parameters for flow technologies using shipping from edit to bare
     for tec in covered_tec:
         if "shipped" in tec:
@@ -1121,10 +1122,11 @@ def export_edit_files(
                 if not os.path.isfile(
                     os.path.join(data_path, tec, "bare_files", reqpar)
                 ):
-                    base_file = os.path.join(data_path, tec, "edit_files", reqpar)
-                    dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
-                    shutil.copy2(base_file, dest_file)
-                    log.info(f"Copied file from edit to bare: {reqpar}")
+                    if os.path.isfile(os.path.join(data_path, tec, "edit_files", reqpar)):
+                        base_file = os.path.join(data_path, tec, "edit_files", reqpar)
+                        dest_file = os.path.join(data_path, tec, "bare_files", reqpar)
+                        shutil.copy2(base_file, dest_file)
+                        log.info(f"Copied file from edit to bare: {reqpar}")
 
 
 # %% Main function to generate bare sheets
