@@ -4,18 +4,89 @@ What's new
 Next release
 ============
 
-- :mod:`message_ix_models` supports and is tested against `Pandas 3.0.0 <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v3.0.0.html>`_,
+- :mod:`message_ix_models` supports and is tested against
+  `Pandas 3.0.0 <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v3.0.0.html>`_,
   released 2026-01-21 (:pull:`470`).
-- New module :mod:`tools.bilateralize <message_ix_models.tools.bilateralize>`
+- New module :mod:`.tools.bilateralize`
   to change scenarios to a bilateral representation of trade (:pull:`438`).
+- New function :func:`.workflow.from_codelist` (:pull:`471`)
+  to generate a :class:`.Workflow` from a list of SDMX codes
+  by inspection of their IDs and annotations.
+- Improve :mod:`~message_ix_models.report` (:pull:`471`):
 
-- Add reduced basin filtering for water module with ``--reduced-basin`` and
-  demand/supply stress-based selection via ``--basin-selection stress``
-  (:pull:`432`, :issue:`414`).
+  - :func:`~.report.report` updates the :class:`.Context`
+    with additional keyword arguments.
+  - New reporting operator :func:`.broadcast_wildcard2`.
+  - New utility :func:`.report.util.store_write_ts`,
+    generalized from :py:`transport.report.add_iamc_store_write()`.
 
-- Fix water module parameter bugs and refactor cooling (:pull:`405`):
-  infrastructure M1/Mf mode fixes, regional average shares for cooling allocation,
-  water supply level hierarchy corrections, and test suite improvements.
+- New class :class:`.testing.check.InRange` (:pull:`471`).
+- :meth:`.ConfigHelper.update` canonicalizes arguments;
+  accepts an optional ConfigHelper or dict as first positional argument (:pull:`471`).
+- :meth:`.Context.update` invokes :meth:`.ConfigHelper.update` on sub-instances (:pull:`471`).
+- Improve :doc:`/transport/index` (:pull:`471`):
+
+  - Update data flows:
+
+    - :class:`.ActivityVehicle`: new :class:`.ExoDataSource` class
+      inclusive of all modes and technologies;
+      replaces :py:`ldv_activity` that was specific to LDVs.
+    - :data:`.activity_vehicle_out`: rename from :py:`activity_vehicle`.
+    - :class:`.Lifetime`: new :class:`.ExoDataSource` class,
+      replaces :py:`lifetime_Ldv` that was specific to LDVs.
+    - :data:`.load_factor_f`: new.
+      This data flow is kept separate from :data:`.load_factor_p` because the units
+      of activity/service differ (tonne- vs. passenger-kilometre).
+    - :class:`.LoadFactorLDV`: add units "passenger / vehicle".
+    - :data:`.load_factor_p`: rename from :py:`load_factor_non_ldv`.
+    - :data:`.freight_activity`: change units Gt km → Gt km / year.
+
+  - Expand transport technology code list:
+
+    - Distinguish names and reporting aliases for all vehicle technologies.
+    - Add ``ntnu-vmi-technology`` annotations for :mod:`.transport.material`.
+
+  - New functions and methods:
+
+    :meth:`.transport.config.Config.get_target_url`
+    replacing :py:`transport.workflow.scenario_url()`,
+    
+    :func:`.transport.material.get_groups`, and
+    
+    :func:`~.transport.structure.get_commodity_groups`.
+
+  - Harmonize :mod:`genno` keys used for structural information,
+    coordinates, etc. during build and reporting in :mod:`.transport.key`.
+  - New CLI command :program:`mix-models transport export-price`.
+  - Bump Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO to version 1.4.0.
+
+    - Add additional exogenous price trajectories.
+    - Bump :attr:`.CL_SCENARIO.base_url` to v6.5 of the ScenarioMIP scenarios.
+
+  - Add and apply :data:`.transport.material.OUTPUT_SHARE`.
+  - Improve reporting output (:mod:`.transport.report`):
+    align IAMC ‘variable’ codes with common definitions.
+  - New module :mod:`.transport.vehicle` for operational parameters
+    (capacity factor, technical lifetime) and stock of vehicles,
+    both passenger and freight.
+
+    - Transfer and generalize stock-related calculations from :mod:`.transport.ldv`.
+    - Remove module :py:`transport.stock`.
+  
+  - New function :func:`.transport.workflow.add_steps` adds
+    transport-related steps to any Workflow
+    given a Code with :class:`.ScenarioCodeAnnotations`.
+
+- Improve :doc:`/water/index`:
+ 
+  - Add reduced basin filtering with :program:`--reduced-basin`
+    and demand/supply stress-based selection via :program:`--basin-selection stress`
+    (:pull:`432`, :issue:`414`).
+  - Fix parameter bugs and refactor cooling (:pull:`405`):
+    infrastructure M1/Mf mode fixes,
+    regional average shares for cooling allocation,
+    water supply level hierarchy corrections,
+    and test suite improvements.
 
 v2026.1.15
 ==========
@@ -75,7 +146,7 @@ Projects and model variants
 ---------------------------
 
 - Add :doc:`/project/circeular` code list :class:`~.circeular.structure.CL_TRANSPORT_SCENARIO` (:pull:`447`).
-- Improve :mod:`.model.transport` (:pull:`447`).
+- Improve :doc:`/transport/index` (:pull:`447`).
 
   - Add :meth:`Config.use_modules <.transport.config.Config.use_modules>`.
   - Bump Codelist=IIASA_ECE:CL_TRANSPORT_SCENARIO to version 1.3.0.
@@ -119,7 +190,7 @@ v2025.10.31
     to read input data from distinct files according to scenario label.
   - New :class:`LoadFactorLDV`, replacing :py:`load_factor_ldv`
     and allowing a distinct file according to scenario label.
-  - New submodule :mod:`~.transport.stock` and input data flow :data:`.stock_cap`.
+  - New submodule :py:`transport.stock` and input data flow :data:`.stock_cap`.
   - Add technology dimension to :data:`.elasticity_f`.
   - Document :class:`.ScenarioCodeAnnotations`.
 
