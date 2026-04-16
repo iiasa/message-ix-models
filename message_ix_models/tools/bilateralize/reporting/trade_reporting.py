@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pyam
 import ixmp
+import os
 
 from message_ix.report import Reporter
 from message_ix_models.util import broadcast, package_data_path
@@ -101,7 +102,7 @@ def pyam_df_from_rep(
 # Full reporting output for gas supply
 def bilat_trade_reporting(rep: Reporter,
                           scenario: message_ix.Scenario,
-                          config_name: str) -> pd.DataFrame:
+                          config_name: str,) -> pd.DataFrame:
     supply_config = load_config(config_name)
     full_df = pd.DataFrame()
     for var in ['out']:
@@ -129,7 +130,8 @@ def bilat_trade_reporting(rep: Reporter,
 
 # Call reporter
 def trade_reporting(mp: ixmp.Platform,
-                    scenario: message_ix.Scenario):
+                    scenario: message_ix.Scenario,
+                    out_dir:str,):
 
     mp = ixmp.Platform()
 
@@ -142,6 +144,6 @@ def trade_reporting(mp: ixmp.Platform,
     secondarydf = bilat_trade_reporting(rep, scenario, 'secondary_energy_trade')
     df = pd.concat([primarydf, secondarydf])
 
-    df.to_csv(package_data_path('bilateralize', 'reporting', 'output', 'trade', scenario.model + '_' + scenario.scenario + '.csv'))
+    df.to_csv(os.path.join(out_dir, scenario.model + '_' + scenario.scenario + '.csv'))
 
     mp.close_db()
