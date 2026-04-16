@@ -6,6 +6,8 @@ Bilateralize base scenarios for Chinese energy security analysis
 from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
+from message_ix_models.project.china_security.adjust_reexports import *
+
 
 import os
 from ixmp import Platform
@@ -35,7 +37,7 @@ prepare_edit_files(project_name = 'china_security',
 
 # Add scenario updates for project
 print("Add scenario updates for project")
-for tec in config['constrained_tec']:
+for tec in config['update_tec']:
     print(f"...{tec}")
     if os.path.exists(package_data_path("china_security", "scenario_updates", tec)):
         for file in os.listdir(package_data_path("china_security", "scenario_updates", tec)):
@@ -73,12 +75,20 @@ for model_scen in models_scenarios.keys():
     base_scenario = message_ix.Scenario(mp, model='china_security', scenario=model_scen)
     out_scenario = base_scenario.clone('china_security', model_scen)
     out_scenario.set_as_default()
-
+            
     print("Add balance equality sets")
     be_df = out_scenario.par("output", filters = {"technology": config['covered_trade_technologies']})
     be_df = be_df[be_df['level'].isin(['piped', 'shipped'])]
     be_df = be_df[['commodity', 'level']].drop_duplicates()
 
+    with out_scenario.transact("add balance equality sets"):
+        out_scenario.add_set("balance_equality", be_df)
+
+    print("Adjust re-exports for lightoil and fueloil")
+    adjust_reexports(base_scenario = out_scenario,
+                     trade_commodity_list = ['lightoil', 'fueloil'],
+                     base_level = 'secondary')
+    
     print("Solve scenario")
-    out_scenario.solve()
+    out_scenario.solve(solve_options={'barcrossalg':'2'})
     mp.close_db()

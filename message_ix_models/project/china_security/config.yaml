@@ -13,15 +13,15 @@ scenario:
   first_model_year: 2030
 
 models_scenarios:
-  SSP2_Baseline:
-    model: SSP_SSP2_v6.6
-    scenario: baseline
-  SSP2_2C:
-    model: SSP_SSP2_v6.6
-    scenario: baseline_1000f
-  SSP2_Commitments:
-    model: SSP_SSP2_v6.6
-    scenario: INDC2030i_uncon
+  #SSP2_Baseline:
+  #  model: SSP_SSP2_v6.6
+  #  scenario: baseline
+  #SSP2_2C:
+  #  model: SSP_SSP2_v6.6
+  #  scenario: baseline_1000f
+  #SSP2_Commitments:
+  #  model: SSP_SSP2_v6.6
+  #  scenario: INDC2030i
   LED_Baseline:
     model: SSP_LED_v6.5
     scenario: baseline
@@ -30,7 +30,7 @@ models_scenarios:
     scenario: baseline_1000f
   LED_Commitments:
     model: SSP_LED_v6.5
-    scenario: INDC2030i_uncon
+    scenario: INDC2030i
 
 ##############################
 # COVERED TRADE TECHNOLOGIES #
@@ -49,6 +49,20 @@ covered_trade_technologies:
   - biomass_shipped
   - lh2_shipped
 
+# Technologies that have project-specific updates
+update_tec:
+  - biomass_shipped
+  - coal_shipped
+  - crudeoil_piped
+  - crudeoil_shipped
+  - eth_shipped
+  - foil_piped
+  - foil_shipped
+  - gas_piped
+  - LNG_shipped
+  - loil_piped
+  - loil_shipped
+  
 ################
 # SHIPPING FUELS
 # How much of each shipping technology is propelled by each fuel
