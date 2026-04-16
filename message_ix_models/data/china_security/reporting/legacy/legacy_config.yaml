@@ -1,0 +1,13 @@
+report_config:
+    table_def: "message_data.tools.post_processing.materials_dac_tables"
+    aggr_def: "materials_dac_aggregates.csv"
+    var_def: "materials_dac_variable_definitions.csv"
+    unit_yaml: 'materials_dac_units.yaml'
+    kyoto_hist: False
+    lu_hist: False
+run_tables:
+    Enrgy_PE:
+        root: Primary Energy
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr"}
