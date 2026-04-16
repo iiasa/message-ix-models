@@ -102,8 +102,7 @@ def pyam_df_from_rep(
 # Full reporting output for gas supply
 def bilat_trade_reporting(rep: Reporter,
                           scenario: message_ix.Scenario,
-                          config_name: str,
-                          out_dir:str = package_data_path('bilateralize', 'reporting', 'output', 'trade')) -> pd.DataFrame:
+                          config_name: str,) -> pd.DataFrame:
     supply_config = load_config(config_name)
     full_df = pd.DataFrame()
     for var in ['out']:
@@ -141,8 +140,8 @@ def trade_reporting(mp: ixmp.Platform,
 
     rep = Reporter.from_scenario(scenario)
     
-    primarydf = bilat_trade_reporting(rep, scenario, 'primary_energy_trade', out_dir)
-    secondarydf = bilat_trade_reporting(rep, scenario, 'secondary_energy_trade', out_dir)
+    primarydf = bilat_trade_reporting(rep, scenario, 'primary_energy_trade')
+    secondarydf = bilat_trade_reporting(rep, scenario, 'secondary_energy_trade')
     df = pd.concat([primarydf, secondarydf])
 
     df.to_csv(os.path.join(out_dir, scenario.model + '_' + scenario.scenario + '.csv'))

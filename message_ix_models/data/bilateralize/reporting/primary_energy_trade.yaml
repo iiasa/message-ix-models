@@ -25,16 +25,17 @@ vars:
 # Piped crude imports
   Trade|Primary Energy|Oil Volume|Shipped:
     filter:
-      { technology: [crudeoil_piped_exp, loil_piped_exp, foil_piped_exp], mode: M1, commodity: [crudeoil, lightoil, fueloil], level: [piped] }
+      { technology: [crudeoil_piped_exp, foil_piped_exp, loil_piped_exp], mode: M1, commodity: crudeoil, level: [piped] }
     short:
-      crudeoil_piped_exp
+      oil_piped_exp
 
 # Shipped crude imports
   Trade|Primary Energy|Oil Volume|Piped:
     filter:
-      { technology: [crudeoil_shipped_exp, loil_shipped_exp, foil_shipped_exp], mode: M1, commodity: [crudeoil, lightoil, fueloil], level: [shipped] }
+      { technology: [crudeoil_shipped_exp, foil_shipped_exp, loil_shipped_exp], mode: M1, commodity: crudeoil, level: [shipped] }
     short:
-      crudeoil_shipped_exp
+      oil_shipped_exp
+
 
 # Piped gas imports
   Trade|Primary Energy|Gas Volume|Piped:
