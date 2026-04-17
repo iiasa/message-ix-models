@@ -90,5 +90,5 @@ for model_scen in models_scenarios.keys():
                      base_level = 'secondary')
     
     print("Solve scenario")
-    out_scenario.solve(solve_options={'barcrossalg':'2'})
+    out_scenario.solve()
     mp.close_db()
