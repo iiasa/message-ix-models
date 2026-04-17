@@ -1,7 +1,7 @@
 """Utilities for using :doc:`Pooch <pooch:about>`."""
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +47,7 @@ class UnpackSnapshot:
 GH_MAIN = "https://github.com/iiasa/message-ix-models/raw/main/message_ix_models/data"
 
 #: Supported remote sources of data.
-SOURCE: Mapping[str, Mapping[str, Any]] = {
+SOURCE: MutableMapping[str, Mapping[str, Any]] = {
     "CEPII_BACI": dict(
         pooch_args=dict(
             base_url="https://www.cepii.fr/DATA_DOWNLOAD/baci/data/",
