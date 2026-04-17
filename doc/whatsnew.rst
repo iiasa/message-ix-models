@@ -5,6 +5,7 @@ Next release
 ============
 
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
+- New module :ref:`tools-newclimate` (:pull:`499`).
 - Add :doc:`/api/model-bmt` (:pull:`433`).
 
   - Add

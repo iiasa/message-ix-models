@@ -180,3 +180,11 @@ These files were characterized by:
    .. [1] the column is sometimes labelled "UNIT", but the contents appear to be the same.
 
 This source is discontinued and will not publish subsequent editions of the data.
+
+.. _tools-newclimate:
+
+NewClimate Institute (:mod:`.tools.newclimate`)
+===============================================
+
+.. automodule:: message_ix_models.tools.newclimate
+   :members:
