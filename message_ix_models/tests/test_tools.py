@@ -6,7 +6,7 @@ import pytest
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.testing import MARK, bare_res
+from message_ix_models.testing import bare_res
 from message_ix_models.tools import (
     add_AFOLU_CO2_accounting,
     add_alternative_TCE_accounting,
@@ -239,7 +239,7 @@ def test_add_emission_trajectory(scenario: "Scenario") -> None:
     add_emission_trajectory.main(scenario, pd.DataFrame())
 
 
-@MARK[2]  # Migrated with this test module prior to the code itself
+@pytest.mark.needs_message_data  # Migrated with this test module prior to the code
 def test_add_missing_years(request, test_context):
     from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
 
@@ -295,7 +295,7 @@ def test_add_tax_emission(scenario: "Scenario") -> None:
     # TODO Add assertions about modified structure & data
 
 
-@MARK[2]  # Migrated with this test module prior to the code itself
+@pytest.mark.needs_message_data  # Migrated with this test module prior to the code
 def test_co2_td_cost(request, test_context):
     from message_data.tools.utilities import update_CO2_td_cost
 
@@ -313,7 +313,7 @@ def test_co2_td_cost(request, test_context):
     assert all(df["value"] == 150)
 
 
-@MARK[2]  # Migrated with this test module prior to the code itself
+@pytest.mark.needs_message_data  # Migrated with this test module prior to the code
 def test_adjust_curtailment_cap_to_act(request, test_context):
     from message_data.tools.utilities import adjust_curtailment_cap_to_act
 

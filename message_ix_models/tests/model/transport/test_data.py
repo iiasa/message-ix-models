@@ -30,7 +30,7 @@ class TestLoadFactorLDV:
         assert result.endswith(".csv")
 
 
-@MARK["sdmx#230"]
+@pytest.mark.sdmx_230
 def test_collect_structures():
     sm1 = collect_structures()
 
