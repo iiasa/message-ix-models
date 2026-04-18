@@ -131,6 +131,7 @@ def test_debug(
     del tmp
 
 
+@pytest.mark.ci_linux_only
 @MARK[10]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
@@ -195,6 +196,7 @@ def test_multi(test_context: "Context") -> None:
         multi(test_context, [])
 
 
+@pytest.mark.ci_linux_only
 @build.get_computer.minimum_version
 @MARK[10]
 @mark.usefixtures("quiet_genno")
