@@ -19,8 +19,8 @@ from message_ix_models.model.transport import (
     report,
     structure,
 )
-from message_ix_models.model.transport.testing import MARK, configure_build, make_mark
-from message_ix_models.testing import bare_res
+from message_ix_models.model.transport.testing import configure_build, make_mark
+from message_ix_models.testing import MARK, bare_res
 
 if TYPE_CHECKING:
     from sdmx.model.common import Code
@@ -146,7 +146,10 @@ def test_bare_res(
         ("R12", "B", dict(code="EDITS-CA")),
         ("R12", "B", dict(code="DIGSY-BEST-C")),
         pytest.param(
-            "R12", "B", dict(code="SSP2", extra_modules=["material"]), marks=MARK[12]
+            "R12",
+            "B",
+            dict(code="SSP2", extra_modules=["material"]),
+            marks=MARK["message_ix_cap_comm"],
         ),
         # param("R14", "B", {}, marks=MARK[9]),
         # param("ISR", "A", {}, marks=MARK[3]),
