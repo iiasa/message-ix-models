@@ -1,7 +1,6 @@
 """Utilities for testing :mod:`~message_ix_models.model.transport`."""
 
 import logging
-from collections import ChainMap
 from collections.abc import Callable, Hashable, Mapping
 from contextlib import nullcontext
 from functools import cache
@@ -12,9 +11,8 @@ import pytest
 from message_ix import Reporter, Scenario
 
 import message_ix_models.report
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import ScenarioInfo
 from message_ix_models.report.sim import add_simulated_solution
-from message_ix_models.testing import GHA, SOLVE_OPTIONS, bare_res
 from message_ix_models.util import package_data_path, silence_log
 
 from . import build, key
@@ -32,26 +30,23 @@ log = logging.getLogger(__name__)
 
 # Common marks for transport code. Do not reuse keys that are less than the highest key
 # appearing in the dict.
-MARK: Mapping[Hashable, pytest.MarkDecorator] = ChainMap(
-    {
-        0: pytest.mark.xfail(
-            reason="Missing R14 input data/config", raises=FileNotFoundError
-        ),
-        1: pytest.mark.skip(
-            reason="Currently only possible with regions=R12 input data/config",
-        ),
-        3: pytest.mark.xfail(
-            raises=FileNotFoundError,
-            reason="Missing ISR/mer-to-ppp.csv + not supported by MaybeAdaptR11Source",
-        ),
-        4: pytest.mark.xfail(reason="Currently unsupported"),
-        9: pytest.mark.xfail(reason="Missing R14 input data/config"),
-        10: pytest.mark.usefixtures(
-            "advance_test_data", "iea_eweb_test_data", "ssp_user_data"
-        ),
-    },
-    testing.MARK,
-)
+MARK: dict[Hashable, pytest.MarkDecorator] = {
+    0: pytest.mark.xfail(
+        reason="Missing R14 input data/config", raises=FileNotFoundError
+    ),
+    1: pytest.mark.skip(
+        reason="Currently only possible with regions=R12 input data/config",
+    ),
+    3: pytest.mark.xfail(
+        raises=FileNotFoundError,
+        reason="Missing ISR/mer-to-ppp.csv + not supported by MaybeAdaptR11Source",
+    ),
+    4: pytest.mark.xfail(reason="Currently unsupported"),
+    9: pytest.mark.xfail(reason="Missing R14 input data/config"),
+    10: pytest.mark.usefixtures(
+        "advance_test_data", "iea_eweb_test_data", "ssp_user_data"
+    ),
+}
 
 make_mark: dict[Hashable, Callable[..., pytest.MarkDecorator]] = {
     2: lambda t: pytest.mark.xfail(
@@ -59,10 +54,6 @@ make_mark: dict[Hashable, Callable[..., pytest.MarkDecorator]] = {
     ),
     5: lambda f: pytest.mark.xfail(
         raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
-    ),
-    "gh": lambda f: pytest.mark.xfail(
-        condition=GHA,
-        reason=f"Temporary, for https://github.com/iiasa/message-ix-models/pull/{f}",
     ),
 }
 
@@ -98,6 +89,8 @@ def configure_build(
     **kwargs,
 ) -> tuple["Computer", ScenarioInfo]:
     """:func:`.transport.build.get_computer` wrapper for testing."""
+    from message_ix_models.testing import bare_res
+
     context.update(regions=regions, years=years, output_path=tmp_path)
 
     # Fixture: a base scenario with the given `regions` and `years`
@@ -131,6 +124,8 @@ def built_transport(
     quiet: bool = True,
 ) -> Scenario:
     """Analogous to :func:`.testing.bare_res`, with transport detail added."""
+    from message_ix_models.testing import SOLVE_OPTIONS, bare_res
+
     # Retrieve (generate if necessary) a bare scenario with the same settings
     res = bare_res(request, context, solved)
 

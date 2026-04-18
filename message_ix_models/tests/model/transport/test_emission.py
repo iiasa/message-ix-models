@@ -5,7 +5,7 @@ from message_ix import make_df
 
 from message_ix_models.model.transport import Config, DataSourceConfig, build, testing
 from message_ix_models.model.transport.emission import ef_for_input, get_emissions_data
-from message_ix_models.model.transport.testing import MARK
+from message_ix_models.testing import MARK
 from message_ix_models.util import broadcast, same_node
 
 

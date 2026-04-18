@@ -8,12 +8,9 @@ from iam_units import registry
 from pytest import param
 
 from message_ix_models.model.transport import build, ldv
-from message_ix_models.model.transport.testing import (
-    MARK,
-    assert_units,
-    configure_build,
-)
+from message_ix_models.model.transport.testing import assert_units, configure_build
 from message_ix_models.project.navigate import T35_POLICY
+from message_ix_models.testing import MARK
 
 log = logging.getLogger(__name__)
 

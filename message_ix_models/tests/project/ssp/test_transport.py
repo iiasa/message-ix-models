@@ -10,7 +10,6 @@ from genno import Computer
 from message_ix import Scenario
 from pytest import mark
 
-from message_ix_models.model.transport.testing import MARK as MARK_TRANSPORT
 from message_ix_models.project.ssp.transport import (
     METHOD,
     get_computer,
@@ -268,7 +267,7 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
 
 
 @pytest.mark.gh_375
-@MARK_TRANSPORT[10]
+@MARK[10]
 @get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
@@ -306,7 +305,7 @@ def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
 
 
 @get_computer.minimum_version
-@MARK_TRANSPORT[10]
+@MARK[10]
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""
