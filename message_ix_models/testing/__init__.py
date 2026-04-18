@@ -25,6 +25,7 @@ from packaging.version import Version
 
 from message_ix_models import util
 from message_ix_models.model import snapshot
+from message_ix_models.model.transport import testing as transport
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
 
@@ -118,7 +119,7 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
     ),
-}
+} | transport.MARK
 
 #: Shorthand for marking a parametrized test case that is expected to fail because it is
 #: not implemented.
