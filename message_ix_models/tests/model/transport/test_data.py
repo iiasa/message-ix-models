@@ -10,8 +10,9 @@ from message_ix_models.model.transport.data import (
     read_structures,
 )
 from message_ix_models.model.transport.roadmap import get_roadmap_data
-from message_ix_models.model.transport.testing import MARK, make_mark
+from message_ix_models.model.transport.testing import make_mark
 from message_ix_models.project.navigate import T35_POLICY
+from message_ix_models.testing import MARK
 
 
 class TestMultiFile:
