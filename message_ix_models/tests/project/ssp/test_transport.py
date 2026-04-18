@@ -208,7 +208,7 @@ def insert_nans(
     )
 
 
-@MARK_TRANSPORT[10]
+@MARK_TRANSPORT["transport_build_data"]
 @get_computer.minimum_version
 def test_cli(
     tmp_path: Path, mix_models_cli, test_context: Context, input_xlsx_path: Path
@@ -272,7 +272,7 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
 
 
 @pytest.mark.gh_375
-@MARK[10]
+@pytest.mark.transport_build_data
 @get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
@@ -310,7 +310,7 @@ def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
 
 
 @get_computer.minimum_version
-@MARK[10]
+@pytest.mark.transport_build_data
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""
