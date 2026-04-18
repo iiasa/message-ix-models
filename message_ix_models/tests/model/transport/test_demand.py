@@ -11,10 +11,11 @@ from pytest import param
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import Config, build, demand, testing, workflow
 from message_ix_models.model.transport import plot as plots
-from message_ix_models.model.transport.testing import MARK, make_mark
+from message_ix_models.model.transport.testing import make_mark
 from message_ix_models.model.workflow import STAGE
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.report import plot
+from message_ix_models.testing import MARK
 
 log = logging.getLogger(__name__)
 
