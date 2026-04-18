@@ -61,55 +61,62 @@ EXPORT_OMIT = [
 #: :data:`True` if tests occur on GitHub Actions.
 GHA = "GITHUB_ACTIONS" in os.environ
 
-#: Common marks for tests. Use either short, informative :class:`str` keys or
-#: :class:`int`; in the latter case, do not reuse keys lower than the highest key in the
-#: collection.
+#: Common marks for tests. Use short, informative keys that are valid identifiers; these
+#: can then be applied using, for instance, :py:`@pytest.mark.ci_db_access`.
 MARK: dict[Hashable, pytest.MarkDecorator] = {
-    0: pytest.mark.xfail(
+    "ci_db_access": pytest.mark.xfail(
         condition=GHA,
         reason="GitHub-hosted runner has no access to IIASA-internal databases",
-    ),
-    2: pytest.mark.xfail(
-        condition=not util.HAS_MESSAGE_DATA,
-        reason="Not yet migrated from message_data",
-    ),
-    # Used in .material.test_{build,data_steel}; .transport.test_report
-    11: pytest.mark.skipif(GHA, reason="Stalls or times out on GitHub Actions"),
-    # Alternate version: don't allow tests to run more than 5 minutes. This appears to
-    # interact badly with pytest-xdist, so skip is used instead.
-    # 11: pytest.mark.timeout(
-    #     600, method="thread" if platform.system() == "Windows" else "thread"
-    # ),
-    12: pytest.mark.xfail(
-        Version(version("message_ix")) < Version("3.12"),
-        reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
-        ">=3.12",
     ),
     "ci_linux_only": pytest.mark.skipif(
         condition=GHA and platform.system() != "Linux",
         reason="Skip on non-Linux GitHub Actions runners, for performance",
     ),
-    "#375": pytest.mark.flaky(
+    # Used in .material.test_{build,data_steel}; .transport.test_report
+    "ci_timeout": pytest.mark.skipif(
+        GHA, reason="Stalls or times out on GitHub Actions"
+    ),
+    # Alternate version: don't allow tests to run more than 5 minutes. This appears to
+    # interact badly with pytest-xdist, so skip is used instead.
+    # "ci_timeout": pytest.mark.timeout(
+    #     600, method="thread" if platform.system() == "Windows" else "thread"
+    # ),
+    "needs_message_data": pytest.mark.xfail(
+        condition=not util.HAS_MESSAGE_DATA,
+        reason="Not yet migrated from message_data",
+    ),
+    # References to GitHub issues and PRs in the same repository
+    "gh_375": pytest.mark.flaky(
         reruns=3,
         rerun_delay=2,
         condition=GHA,
         reason="https://github.com/iiasa/message-ix-models/issues/375",
     ),
-    "ixmp#595": pytest.mark.xfail(
+    "gh_471": pytest.mark.xfail(
+        condition=GHA,
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/471",
+    ),
+    # References to issues and PRs in other packages' repositories
+    "ixmp_595": pytest.mark.xfail(
         condition=version("ixmp") > "3.11.0"
         and find_spec("ixmp4") is not None
         and version("ixmp4") >= "0.11.0",
         reason="https://github.com/iiasa/ixmp#595",
         # raises=ixmp4.core.exceptions.RunLockRequired,
     ),
-    "sdmx#230": pytest.mark.xfail(
+    "ixmp_600": pytest.mark.xfail(
+        condition=version("ixmp") == "3.11.0" and find_spec("ixmp4") is not None,
+        reason="https://github.com/iiasa/ixmp/issues/600",
+    ),
+    "message_ix_cap_comm": pytest.mark.xfail(
+        Version(version("message_ix")) < Version("3.12"),
+        reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
+        ">=3.12",
+    ),
+    "sdmx_230": pytest.mark.xfail(
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
-    ),
-    "ixmp#600": pytest.mark.xfail(
-        condition=version("ixmp") == "3.11.0" and find_spec("ixmp4") is not None,
-        reason="https://github.com/iiasa/ixmp/issues/600",
     ),
 }
 
