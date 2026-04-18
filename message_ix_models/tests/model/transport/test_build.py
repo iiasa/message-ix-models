@@ -47,6 +47,7 @@ def scenario_code() -> Iterator["Code"]:
     return CL_SCENARIO.get()["SSP2"]
 
 
+@pytest.mark.ci_linux_only
 @MARK[10]
 @build.get_computer.minimum_version
 @pytest.mark.parametrize(
@@ -126,6 +127,7 @@ def test_bare_res(
         # assert result.all(), f"\n{result}"
 
 
+@pytest.mark.ci_linux_only
 @build.get_computer.minimum_version
 @MARK[10]
 @pytest.mark.parametrize(
