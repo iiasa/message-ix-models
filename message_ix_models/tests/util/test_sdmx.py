@@ -70,7 +70,7 @@ class TestDataflow:
         assert () == result
 
     @build.get_computer.minimum_version
-    @testing.MARK[10]
+    @pytest.mark.transport_build_data
     @pytest.mark.parametrize(
         "file",
         [f for f in DATAFLOW.values() if f.intent & Dataflow.FLAG.IN],
