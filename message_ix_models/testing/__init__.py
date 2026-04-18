@@ -149,6 +149,46 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_collection_modifyitems(
+    session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Substitute or add marks from :data:`MARK`."""
+    for item in items:
+        # Iterate over markers of `item` whose names appear as keys of MARK
+        for existing in filter(lambda m: m.name in MARK, item.iter_markers()):
+            # Retrieve the MarkDecorator from MARK
+            new_mark = MARK[existing.name].mark
+
+            try:
+                # Position of `existing` in the markers of `item`
+                idx = item.own_markers.index(existing)
+            except ValueError:
+                item.own_markers.insert(0, new_mark)  # Doesn't exist → insert
+            else:
+                item.own_markers[idx] = new_mark  # Replace `existing`
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register markers for keys in :data:`MARK`."""
+    # Iterate over keys of MARK that are valid Python identifiers. Others cannot be
+    # used, e.g. @pytest.mark.#123 is not valid syntax.
+    for name in filter(str.isidentifier, map(str, MARK)):
+        mark_decorator = MARK[name]
+        if mark_decorator.name == "usefixtures":
+            # "usefixtures" marks are handled *before* tests reach
+            # pytest_collection_modifyitems() above, so substituting from MARK at that
+            # stage does not work. Instead, set this decorator directly as an attribute
+            # of pytest.mark.
+            setattr(pytest.mark, name, mark_decorator)
+        else:
+            desc = mark_decorator.kwargs.get(
+                "reason",  # Use the MarkDecorator's 'reason' kwarg as description
+                f"message_ix_models.testing.MARK[{name!r}]",  # Default if no 'reason'
+            )
+            # Create a configuration line to register the marker
+            config.addinivalue_line("markers", f"{name}: {desc}")
+
+
 def pytest_sessionstart(session: pytest.Session) -> None:
     """Identify the path to be used for cached local data.
 
