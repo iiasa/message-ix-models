@@ -6,6 +6,7 @@ try:
     from base64 import b32hexencode as b32encode
 except ImportError:
     from base64 import b32encode
+import platform
 from collections.abc import Generator, Hashable
 from copy import deepcopy
 from importlib.metadata import version
@@ -83,6 +84,10 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
         Version(version("message_ix")) < Version("3.12"),
         reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
         ">=3.12",
+    ),
+    "ci_linux_only": pytest.mark.skipif(
+        condition=GHA and platform.system() != "Linux",
+        reason="Skip on non-Linux GitHub Actions runners, for performance",
     ),
     "#375": pytest.mark.flaky(
         reruns=3,
