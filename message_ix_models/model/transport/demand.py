@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from genno import Computer
     from genno.types import AnyQuantity
 
+    from message_ix_models.types import MutableParameterData
+
     from .config import Config
 
 log = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ log = logging.getLogger(__name__)
 
 def dummy(
     commodities: list, nodes: list[str], y: list[int], config: dict
-) -> dict[str, pd.DataFrame]:
+) -> "MutableParameterData":
     """Dummy demands.
 
 
