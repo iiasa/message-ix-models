@@ -20,7 +20,7 @@ from message_ix_models.model.transport import (
     structure,
 )
 from message_ix_models.model.transport.testing import configure_build, make_mark
-from message_ix_models.testing import MARK, bare_res
+from message_ix_models.testing import bare_res
 
 if TYPE_CHECKING:
     from sdmx.model.common import Code
@@ -47,13 +47,13 @@ def scenario_code() -> Iterator["Code"]:
     return CL_SCENARIO.get()["SSP2"]
 
 
-@pytest.mark.ci_linux_only
-@MARK[10]
+@mark.ci_linux_only
+@mark.transport_build_data
 @build.get_computer.minimum_version
-@pytest.mark.parametrize(
+@mark.parametrize(
     "regions, years, dummy_LDV, nonldv, solve",
     [
-        param("R11", "B", True, None, False, marks=MARK[1]),
+        param("R11", "B", True, None, False, marks=mark.R12_only),
         param(  # 44s; 31 s with solve=False
             "R11",
             "A",
@@ -61,18 +61,20 @@ def scenario_code() -> Iterator["Code"]:
             None,
             True,
             marks=[
-                MARK[1],
+                mark.R12_only,
                 pytest.mark.xfail(
                     raises=ixmp.ModelError,
                     reason="No supply of non-LDV commodities w/o IKARUS data",
                 ),
             ],
         ),
-        param("R11", "A", False, "IKARUS", False, marks=MARK[1]),  # 43 s
-        param("R11", "A", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),  # 74 s
+        param("R11", "A", False, "IKARUS", False, marks=mark.R12_only),  # 43 s
+        param(
+            "R11", "A", False, "IKARUS", True, marks=[mark.slow, mark.R12_only]
+        ),  # 74 s
         # R11, B
-        param("R11", "B", False, "IKARUS", False, marks=[mark.slow, MARK[1]]),
-        param("R11", "B", False, "IKARUS", True, marks=[mark.slow, MARK[1]]),
+        param("R11", "B", False, "IKARUS", False, marks=[mark.slow, mark.R12_only]),
+        param("R11", "B", False, "IKARUS", True, marks=[mark.slow, mark.R12_only]),
         # R12, B
         ("R12", "B", False, "IKARUS", True),
         # R14, A
@@ -85,7 +87,7 @@ def scenario_code() -> Iterator["Code"]:
             marks=[mark.slow, make_mark[2](RuntimeError)],
         ),
         # Pending iiasa/message_data#190
-        param("ISR", "A", True, None, False, marks=MARK[3]),
+        param("ISR", "A", True, None, False, marks=mark.ISR_no_data),
     ],
 )
 def test_bare_res(
@@ -127,10 +129,10 @@ def test_bare_res(
         # assert result.all(), f"\n{result}"
 
 
-@pytest.mark.ci_linux_only
+@mark.ci_linux_only
 @build.get_computer.minimum_version
-@MARK[10]
-@pytest.mark.parametrize(
+@mark.transport_build_data
+@mark.parametrize(
     "regions, years, options",
     (
         # commented: Reduce runtimes of GitHub Actions jobs
@@ -149,10 +151,10 @@ def test_bare_res(
             "R12",
             "B",
             dict(code="SSP2", extra_modules=["material"]),
-            marks=MARK["message_ix_cap_comm"],
+            marks=mark.message_ix_cap_comm,
         ),
-        # param("R14", "B", {}, marks=MARK[9]),
-        # param("ISR", "A", {}, marks=MARK[3]),
+        # param("R14", "B", {}, marks=mark.R14_no_data),
+        # param("ISR", "A", {}, marks=mark.ISR_not_implemented),
     ),
 )
 def test_debug(
@@ -225,8 +227,8 @@ def test_debug_multi(test_mp: ixmp.Platform, test_context: Context) -> None:
         build.debug_multi(test_context, s)  # type: ignore [arg-type]
 
 
-@pytest.mark.ece_db
-@pytest.mark.parametrize(
+@mark.ece_db
+@mark.parametrize(
     "url",
     (
         "ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline",
@@ -283,8 +285,8 @@ def test_existing(tmp_path, test_context, url, solve=False):
     del mp
 
 
-@pytest.mark.parametrize("years", [None, "A", "B"])
-@pytest.mark.parametrize(
+@mark.parametrize("years", [None, "A", "B"])
+@mark.parametrize(
     "regions_arg, regions_exp",
     [
         ("R11", "R11"),

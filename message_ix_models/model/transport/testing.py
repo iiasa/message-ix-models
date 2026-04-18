@@ -28,22 +28,25 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-# Common marks for transport code. Do not reuse keys that are less than the highest key
-# appearing in the dict.
+#: Common marks for :mod:`.transport` tests. These are automatically merged with and
+#: made available in the same manner as :data:`message_ix_models.testing.MARK`, for
+#: instance :py:`@pytest.mark.R12_only`.
 MARK: dict[Hashable, pytest.MarkDecorator] = {
-    0: pytest.mark.xfail(
-        reason="Missing R14 input data/config", raises=FileNotFoundError
+    "GEA_not_implemented": pytest.mark.xfail(
+        reason="Not implemented with GEA input data"
     ),
-    1: pytest.mark.skip(
-        reason="Currently only possible with regions=R12 input data/config",
-    ),
-    3: pytest.mark.xfail(
+    "ISR_no_data": pytest.mark.xfail(
         raises=FileNotFoundError,
         reason="Missing ISR/mer-to-ppp.csv + not supported by MaybeAdaptR11Source",
     ),
-    4: pytest.mark.xfail(reason="Currently unsupported"),
-    9: pytest.mark.xfail(reason="Missing R14 input data/config"),
-    10: pytest.mark.usefixtures(
+    "R12_only": pytest.mark.skip(
+        reason="Currently only possible with node=R12 input data/config",
+    ),
+    "R14_no_data": pytest.mark.xfail(reason="Missing R14 input data/config"),
+    "SHAPE_not_implemented": pytest.mark.xfail(
+        reason="Not implemented with SHAPE input data"
+    ),
+    "transport_build_data": pytest.mark.usefixtures(
         "advance_test_data", "iea_eweb_test_data", "ssp_user_data"
     ),
 }

@@ -2,8 +2,8 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import numpy as np
-import pytest
 from iam_units import registry
+from pytest import mark, param
 
 from message_ix_models.model.transport import build, testing
 from message_ix_models.model.transport.ikarus import TARGET
@@ -73,18 +73,18 @@ CHECKS: dict["KeyLike", list[Check]] = {
 
 
 @build.get_computer.minimum_version
-@testing.MARK[10]
-@pytest.mark.parametrize("years", ["A", "B"])
-@pytest.mark.parametrize(
+@mark.transport_build_data
+@mark.parametrize("years", ["A", "B"])
+@mark.parametrize(
     "regions, N_node",
     [
-        pytest.param("ISR", 1, marks=testing.MARK[3]),
+        param("ISR", 1, marks=mark.ISR_no_data),
         ("R11", 11),
         ("R12", 12),
         ("R14", 14),
     ],
 )
-@pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.TEC)])
+@mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.TEC)])
 def test_get_ikarus_data(
     tmp_path,
     test_context,

@@ -3,24 +3,24 @@ from collections.abc import Mapping
 from itertools import product
 
 import pandas as pd
-import pytest
 from iam_units import registry
-from pytest import param
+from pytest import mark, param
 
 from message_ix_models.model.transport import build, ldv
 from message_ix_models.model.transport.testing import assert_units, configure_build
 from message_ix_models.project.navigate import T35_POLICY
-from message_ix_models.testing import MARK
 
 log = logging.getLogger(__name__)
 
-pytestmark = MARK[10]
+pytestmark = mark.transport_build_data
 
 
 @build.get_computer.minimum_version
-@pytest.mark.parametrize("dummy_LDV", [False, True])
-@pytest.mark.parametrize("years", ["A", "B"])
-@pytest.mark.parametrize("regions", [param("ISR", marks=MARK[3]), "R11", "R12", "R14"])
+@mark.parametrize("dummy_LDV", [False, True])
+@mark.parametrize("years", ["A", "B"])
+@mark.parametrize(
+    "regions", [param("ISR", marks=mark.ISR_no_data), "R11", "R12", "R14"]
+)
 def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None:
     # Info about the corresponding RES
     ctx = test_context
@@ -156,7 +156,7 @@ def test_get_ldv_data(tmp_path, test_context, dummy_LDV, regions, years) -> None
 
 
 @build.get_computer.minimum_version
-@pytest.mark.parametrize(
+@mark.parametrize(
     "regions, N_node_loc",
     [
         ("R11", 11),
@@ -176,8 +176,8 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
 
 
 @build.get_computer.minimum_version
-@pytest.mark.skip(reason="TODO Integrate assertions into test_debug")
-@pytest.mark.parametrize(
+@mark.skip(reason="TODO Integrate assertions into test_debug")
+@mark.parametrize(
     "dummy_LDV, regions, years",
     [
         (True, "R11", "A"),
@@ -186,7 +186,7 @@ def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
         (False, "R12", "B"),
         (False, "R14", "A"),
         # Not implemented
-        param(False, "ISR", "A", marks=MARK[3]),
+        param(False, "ISR", "A", marks=mark.ISR_no_data),
     ],
 )
 def test_ldv_constraint_data(test_context, dummy_LDV, regions, years):
