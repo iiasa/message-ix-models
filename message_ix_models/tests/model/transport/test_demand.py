@@ -2,7 +2,6 @@ import logging
 import re
 from pathlib import Path
 
-import genno
 from genno import ComputationError, Key
 from genno.testing import assert_units
 from pytest import mark, param
@@ -11,7 +10,6 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import Config, build, demand, testing, workflow
 from message_ix_models.model.transport import plot as plots
-from message_ix_models.model.transport.testing import make_mark
 from message_ix_models.model.workflow import STAGE
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.report import plot
@@ -55,7 +53,7 @@ def test_demand_dummy(test_context: Context, regions: str, years: str) -> None:
 @mark.parametrize(
     "ssp",
     [
-        param(SSP_2017["2"], marks=make_mark[2](genno.ComputationError)),
+        SSP_2017["2"],
         SSP_2024["1"],
         SSP_2024["2"],
         SSP_2024["3"],
@@ -141,7 +139,9 @@ def test_exo_report(test_context: Context, tmp_path: Path) -> None:
         param("ISR", marks=mark.ISR_no_data),
         "R11",
         "R12",
-        param("R14", marks=make_mark[2]((AttributeError, ComputationError))),
+        param(
+            "R14", marks=mark.no_data("node=R14", (AttributeError, ComputationError))
+        ),
     ],
 )
 @mark.parametrize("years", ["B"])
@@ -255,7 +255,7 @@ def test_urban_rural_shares(
         ("R12", "SSP2"),
         ("R12", "SSP5"),
         ("R14", "SSP2"),
-        param("R14", "SSP5", marks=make_mark[2](RuntimeError)),
+        param("R14", "SSP5", marks=mark.no_data("node=R14, ssp=SSP5", RuntimeError)),
         param("R11", "SHAPE innovation", marks=mark.SHAPE_not_implemented),
     ],
 )
