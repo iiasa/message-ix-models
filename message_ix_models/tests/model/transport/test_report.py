@@ -15,7 +15,6 @@ from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting, multi
 from message_ix_models.model.transport.testing import (
     built_transport,
-    make_mark,
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter
@@ -136,7 +135,7 @@ def test_debug(
 @mark.parametrize(
     "regions, years",
     (
-        param("R11", "A", marks=make_mark[2](RuntimeError)),
+        param("R11", "A", marks=mark.no_data("R11", RuntimeError)),
         ("R12", "B"),
         param("R14", "A", marks=mark.R14_no_data),
         param("ISR", "A", marks=mark.ISR_no_data),
