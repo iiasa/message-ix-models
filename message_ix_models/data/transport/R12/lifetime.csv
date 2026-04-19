@@ -12,8 +12,8 @@ scenario, technology, node_loc, year_vtg, value
 *,        LDV,        R12_AFR,  2110,     25
 *,        LDV,        R12_CHN,  1990,     18
 *,        LDV,        R12_CHN,  2110,     18
-*,        LDV,        R12_EEU,  1990,     28
-*,        LDV,        R12_EEU,  2110,     28
+*,        LDV,        R12_EEU,  1990,     22
+*,        LDV,        R12_EEU,  2110,     22
 *,        LDV,        R12_FSU,  1990,     15
 *,        LDV,        R12_FSU,  2110,     15
 *,        LDV,        R12_LAM,  1990,     25
