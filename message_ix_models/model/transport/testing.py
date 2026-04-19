@@ -1,7 +1,7 @@
 """Utilities for testing :mod:`~message_ix_models.model.transport`."""
 
 import logging
-from collections.abc import Callable, Hashable, Mapping
+from collections.abc import Mapping
 from contextlib import nullcontext
 from functools import cache
 from pathlib import Path
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 #: Common marks for :mod:`.transport` tests. These are automatically merged with and
 #: made available in the same manner as :data:`message_ix_models.testing.MARK`, for
 #: instance :py:`@pytest.mark.R12_only`.
-MARK: dict[Hashable, pytest.MarkDecorator] = {
+MARK: dict[str, pytest.MarkDecorator] = {
     "GEA_not_implemented": pytest.mark.xfail(
         reason="Not implemented with GEA input data"
     ),
@@ -48,15 +48,6 @@ MARK: dict[Hashable, pytest.MarkDecorator] = {
     ),
     "transport_build_data": pytest.mark.usefixtures(
         "advance_test_data", "iea_eweb_test_data", "ssp_user_data"
-    ),
-}
-
-make_mark: dict[Hashable, Callable[..., pytest.MarkDecorator]] = {
-    2: lambda t: pytest.mark.xfail(
-        reason="Missing input data/assumptions for this node codelist", raises=t
-    ),
-    5: lambda f: pytest.mark.xfail(
-        raises=FileNotFoundError, reason=f"Requires non-public data ({f})"
     ),
 }
 
