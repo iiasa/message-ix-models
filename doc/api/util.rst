@@ -16,6 +16,7 @@ Submodules:
    node
    pooch
    pycountry
+   pytest
    scenarioinfo
    sdmx
    zipfile
@@ -206,6 +207,14 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.pycountry
 
 .. automodule:: message_ix_models.util.pycountry
+   :members:
+
+:mod:`.util.pytest`
+===================
+
+.. currentmodule:: message_ix_models.util.pytest
+
+.. automodule:: message_ix_models.util.pytest
    :members:
 
 :mod:`.util.scenarioinfo`
