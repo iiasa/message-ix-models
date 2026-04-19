@@ -12,7 +12,6 @@ from message_ix_models.model.transport.data import (
     read_structures,
 )
 from message_ix_models.model.transport.roadmap import get_roadmap_data
-from message_ix_models.model.transport.testing import make_mark
 from message_ix_models.project.navigate import T35_POLICY
 
 
@@ -44,7 +43,7 @@ def test_collect_structures():
     assert 30 <= len(sm1.dataflow) == len(sm2.dataflow)
 
 
-@make_mark[5]("RoadmapResults_2017.xlsx")
+@mark.non_public_data("RoadmapResults_2017.xlsx")
 @mark.parametrize(
     "region, length",
     [
