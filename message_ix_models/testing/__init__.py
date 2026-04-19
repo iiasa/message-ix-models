@@ -28,6 +28,7 @@ from message_ix_models.model import snapshot
 from message_ix_models.model.transport import testing as transport
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
+from message_ix_models.util.pytest import MarkFactory
 
 if TYPE_CHECKING:
     from importlib.resources.abc import Traversable
@@ -64,7 +65,7 @@ GHA = "GITHUB_ACTIONS" in os.environ
 
 #: Common marks for tests. Use short, informative keys that are valid identifiers; these
 #: can then be applied using, for instance, :py:`@pytest.mark.ci_db_access`.
-MARK: dict[Hashable, pytest.MarkDecorator] = {
+MARK: dict[Hashable, pytest.MarkDecorator | MarkFactory] = {
     "ci_db_access": pytest.mark.xfail(
         condition=GHA,
         reason="GitHub-hosted runner has no access to IIASA-internal databases",
@@ -170,7 +171,12 @@ def pytest_collection_modifyitems(
         # Iterate over markers of `item` whose names appear as keys of MARK
         for existing in filter(lambda m: m.name in MARK, item.iter_markers()):
             # Retrieve the MarkDecorator from MARK
-            new_mark = MARK[existing.name].mark
+            mark_decorator_or_factory = MARK[existing.name]
+            if isinstance(mark_decorator_or_factory, MarkFactory):
+                # Call the factory to generate a new mark
+                new_mark = mark_decorator_or_factory(existing.args, existing.kwargs)
+            else:
+                new_mark = mark_decorator_or_factory.mark
 
             try:
                 # Position of `existing` in the markers of `item`
@@ -186,15 +192,19 @@ def pytest_configure(config: pytest.Config) -> None:
     # Iterate over keys of MARK that are valid Python identifiers. Others cannot be
     # used, e.g. @pytest.mark.#123 is not valid syntax.
     for name in filter(str.isidentifier, map(str, MARK)):
-        mark_decorator = MARK[name]
-        if mark_decorator.name == "usefixtures":
+        mark_decorator_or_factory = MARK[name]
+        if isinstance(mark_decorator_or_factory, MarkFactory):
+            config.addinivalue_line(
+                "markers", mark_decorator_or_factory.get_inivalue_line(name)
+            )
+        elif mark_decorator_or_factory.name == "usefixtures":
             # "usefixtures" marks are handled *before* tests reach
             # pytest_collection_modifyitems() above, so substituting from MARK at that
             # stage does not work. Instead, set this decorator directly as an attribute
             # of pytest.mark.
-            setattr(pytest.mark, name, mark_decorator)
+            setattr(pytest.mark, name, mark_decorator_or_factory)
         else:
-            desc = mark_decorator.kwargs.get(
+            desc = mark_decorator_or_factory.kwargs.get(
                 "reason",  # Use the MarkDecorator's 'reason' kwarg as description
                 f"message_ix_models.testing.MARK[{name!r}]",  # Default if no 'reason'
             )
