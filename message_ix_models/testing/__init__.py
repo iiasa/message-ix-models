@@ -7,7 +7,7 @@ try:
 except ImportError:
     from base64 import b32encode
 import platform
-from collections.abc import Generator, Hashable
+from collections.abc import Generator
 from copy import deepcopy
 from importlib.metadata import version
 from importlib.util import find_spec
@@ -65,7 +65,7 @@ GHA = "GITHUB_ACTIONS" in os.environ
 
 #: Common marks for tests. Use short, informative keys that are valid identifiers; these
 #: can then be applied using, for instance, :py:`@pytest.mark.ci_db_access`.
-MARK: dict[Hashable, pytest.MarkDecorator | MarkFactory] = {
+MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
     "ci_db_access": pytest.mark.xfail(
         condition=GHA,
         reason="GitHub-hosted runner has no access to IIASA-internal databases",
@@ -87,6 +87,10 @@ MARK: dict[Hashable, pytest.MarkDecorator | MarkFactory] = {
         condition=not util.HAS_MESSAGE_DATA,
         reason="Not yet migrated from message_data",
     ),
+    "no_data": MarkFactory(
+        "xfail", reason="No input data/config for {0}", raises=lambda args: args[1]
+    ),
+    "non_public_data": MarkFactory("xfail", reason="Requires non-public data ({0})"),
     # References to GitHub issues and PRs in the same repository
     "gh_375": pytest.mark.flaky(
         reruns=3,
@@ -120,7 +124,8 @@ MARK: dict[Hashable, pytest.MarkDecorator | MarkFactory] = {
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
     ),
-} | transport.MARK
+}
+MARK.update(transport.MARK)
 
 #: Shorthand for marking a parametrized test case that is expected to fail because it is
 #: not implemented.

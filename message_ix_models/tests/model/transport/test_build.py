@@ -19,7 +19,7 @@ from message_ix_models.model.transport import (
     report,
     structure,
 )
-from message_ix_models.model.transport.testing import configure_build, make_mark
+from message_ix_models.model.transport.testing import configure_build
 from message_ix_models.testing import bare_res
 
 if TYPE_CHECKING:
@@ -84,7 +84,9 @@ def scenario_code() -> Iterator["Code"]:
             False,
             "IKARUS",
             False,
-            marks=[mark.slow, make_mark[2](RuntimeError)],
+            # NB dask executes tasks in a non-deterministic order, so either of these
+            #    exceptions may occur first.
+            marks=[mark.slow, mark.no_data("node=R14", (RuntimeError, TypeError))],
         ),
         # Pending iiasa/message_data#190
         param("ISR", "A", True, None, False, marks=mark.ISR_no_data),
