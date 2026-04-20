@@ -184,6 +184,39 @@ class IEA_Future_of_Trucks(ExoDataSource):
         return k[5]
 
 
+class InputVehicle(ExoDataSource):
+    """Input energy intensity of vehicle activity.
+
+    The following transformations are applied:
+
+    - ``node`` dimension → :func:`broadcast_wildcard2`.
+
+    Currently this is used only for technologies in the ``F RAIL`` mode.
+    """
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    filename = "input-vehicle.csv"
+    key = Key("input:n-t:vehicle+exo")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS)
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+        # Broadcast to all nodes
+        c.add(k[0], "broadcast_wildcard2", base_key, K.n, dim=("n",))
+        # Convert units
+        c.add(k[1], "convert_units", k[0], units="GWa / (Gv km)")
+
+        return k[1]
+
+
 class Lifetime(ExoDataSource):
     """Technical lifetime (maximum age) of vehicles.
 
@@ -910,7 +943,6 @@ input_share = _input_dataflow(
     name="Share of input of LDV technologies from each commodity",
     units="dimensionless",
 )
-
 
 load_factor_f = _input_dataflow(
     key="load factor:t:F+exo",
