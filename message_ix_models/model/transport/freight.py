@@ -118,20 +118,26 @@ def prepare_computer(c: "Computer") -> None:
 
 
 def tech_econ(c: "Computer") -> None:
-    """Prepare calculation of technoeconomic parameters for freight technologies."""
+    """Prepare calculation of technoeconomic parameters for freight technologies.
+
+    For the ``input`` parameter, this uses data from:
+
+    - :class:`.InputVehicle` for "F RAIL" technologies.
+    - :class:`.IEA_Future_of_Trucks` for "F ROAD" technologies.
+    """
+    from .data import InputVehicle
 
     ### `input`
     k = Key("input", NTY, "F")
 
-    # Add a technology dimension with certain labels to the energy intensity of VDT
-    # NB "energy intensity of VDT" actually has dimension (n,) only
-    c.add(k[0], "expand_dims", "energy intensity of VDT:n-y", K.coord.t["F ROAD"])
+    # Concatenate data from (a) file (InputVehicle.key) and (b) IEA Future of Trucks
+    c.add(k[0], "concat", InputVehicle.key, "energy intensity of VDT:n-t")
+
     # Broadcast over dimensions (c, l, y, yv, ya)
     prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.model)
-    # Convert MESSAGE data structure
-    c.add(k[2], "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
-    # Convert units; add to `TARGET`
-    collect(k.name, convert_units, k[2], "transport info")
+
+    # Convert to MESSAGE data structure; add to `target`
+    collect(k.name, "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
 
     ### `output`
     k = Key("output", NTY, "F")
@@ -190,8 +196,7 @@ def usage(c: "Computer") -> None:
     k = Key("F usage input", NTY)
 
     c.add(k[0], wildcard(1.0, "gigavehicle km", NTY))
-    coords = ["n::ex world", "t::F usage", "y::model"]
-    c.add(k[1], "broadcast_wildcard", k[0], *coords, dim=NTY)
+    c.add(k[1], "broadcast_wildcard", k[0], K.n, "t::F usage", K.y, dim=NTY)
     # Broadcast (t,) → (t, c, l) and (y,) → (yv, ya) dimensions
     prev = c.add(k[2], "mul", k[1], K.bcast_tcl.input, K.bcast_y.no_vintage)
     # Convert to MESSAGE data structure
