@@ -157,15 +157,9 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # The following replicates a deleted .transport.test_data.test_get_freight_data()
     freight.TARGET: (
         ContainsDataForParameters(
-            {
-                "demand",
-                "capacity_factor",
-                "input",
-                "output",
-                "technical_lifetime",
-            }
+            {"demand", "capacity_factor", "input", "output", "technical_lifetime"}
         ),
-        # HasCoords({"technology": ["f rail electr"]}),
+        HasCoords({"technology": ["f rail electr"]}),
     ),
     "output::F+ixmp": (
         HasCoords(
