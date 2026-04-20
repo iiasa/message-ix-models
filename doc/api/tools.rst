@@ -110,6 +110,9 @@ IAMC data structures (:mod:`.tools.iamc`)
 .. automodule:: message_ix_models.tools.iamc
    :members:
 
+.. automodule:: message_ix_models.tools.iamc.structure
+   :members:
+
 Policies (:mod:`.tools.policy`)
 ===============================
 
