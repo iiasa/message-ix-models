@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, cast
 import genno
 import pandas as pd
 from genno import Computer, Key
-from genno.core.key import single_key
 from genno.operator import load_file
 from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
@@ -113,41 +112,38 @@ class IEA_Future_of_Trucks(ExoDataSource):
     Parameters
     ----------
     measure : int
-        One of the keys of ;attr:`name_unit`.
+        One of the keys of :attr:`name_unit`.
     """
 
     @dataclass
     class Options(BaseOptions):
+        dims: tuple[str, ...] = ("n", "t")
         measure: str = "0"
-        convert_units: str | None = None
+        units: str = ""
+
+        def __post_init__(self) -> None:
+            # Mapp from measure to name and unit.
+            self.name, self.units = {
+                1: ("energy intensity of VDT", "GWa / (Gv km)"),
+                2: ("load factor", "tonne / vehicle"),
+                3: ("energy intensity of FV", ""),
+            }[int(self.measure)]
 
     options: Options
 
-    #: Mapping from :attr:`Options.measure` to name and unit.
-    name_unit = {
-        1: ("energy intensity of VDT", "GWa / (Gv km)"),
-        2: ("load factor", None),
-        3: ("energy intensity of FV", None),
-    }
-
     def __init__(self, *args, **kwargs) -> None:
-        self.options = self.Options.from_args(self, *args, **kwargs)
-
-        self.options.name, self._unit = self.name_unit[int(self.options.measure)]
-        self.path = package_data_path(
-            "transport", f"iea-2017-t4-{self.options.measure}.csv"
-        )
-        super().__init__()
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = package_data_path("transport", f"iea-2017-t4-{opt.measure}.csv")
+        super().__init__()  # Construct self.key
 
     def get(self) -> "AnyQuantity":
         return load_file(self.path, dims=RENAME_DIMS)
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
-        import xarray as xr
-
         # Broadcast to regions. map_as_qty() expects columns in from/to order.
         map_node = pd.DataFrame(
             [
+                # Exact or partial match
                 ("R12_CHN", "CHN"),
                 ("R12_EEU", "EU28"),
                 ("R12_NAM", "USA"),
@@ -166,24 +162,26 @@ class IEA_Future_of_Trucks(ExoDataSource):
         )[["n", "n2"]]
 
         # Share of freight activity; transcribed from figure 18, page 38
-        share = genno.Quantity(
-            xr.DataArray([0.1, 0.3, 0.6], coords=[("t", ["LCV", "MFT", "HFT"])])
-        )
+        share = genno.Quantity([0.1, 0.3, 0.6], coords={"t": ["LCV", "MFT", "HFT"]})
 
         # Add tasks
         k = base_key
+
         # Map from IEA source nodes to target nodes
         c.add(k[1], "map_as_qty", map_node, [])
         c.add(k[2], "broadcast_map", base_key, k[1], rename={"n2": "n"})
-        # Weight by share of freight activity
-        result = c.add(k[3], "sum", k[2], weights=share, dimensions=["t"])
 
-        if self.options.convert_units:
-            result = c.add(
-                k[4], "convert_units", k[3], units=self.options.convert_units
-            )
+        # Weight by share of freight activity; this discards the "t" dimension with
+        # "LCV", "MFT", "HFT" coords
+        c.add(k[3], "sum", k[2], weights=share, dimensions=["t"])
 
-        return single_key(result)
+        # Recreate the "t" dimension with all F ROAD technologies
+        c.add(k[4], "expand_dims", k[3], K.coord.t["F ROAD"])
+
+        # Convert to target units
+        c.add(k[5], "convert_units", k[4], units=self.options.units)
+
+        return k[5]
 
 
 class Lifetime(ExoDataSource):
