@@ -12,15 +12,18 @@ def import_indicators(input_data:pd.DataFrame,
                       region:str,
                       portfolio:list[str],
                       portfolio_level:str,
-                      use_units:str = "EJ/yr",) -> pd.DataFrame:
+                      use_units:str = "EJ/yr",
+                      make_wide:bool = False) -> pd.DataFrame:
     """
     Calculate the total imports for a given region
 
     Args:
         input_data: pandas dataframe with trade data (full)
+        region: region to include
         portfolio: list of fuels (e.g. ["Oil", "Gas"])
-        region: list of regions to include
-        use_units: physical (EJ/yr) or monetary (billion USD_2010/yr)
+        portfolio_level: portfolio level (e.g. "Primary Energy" or "Secondary Energy")
+        use_units: units of energy (EJ/yr)
+        make_wide: whether to make the output wide
     """
 
     # Filter data
@@ -82,4 +85,17 @@ def import_indicators(input_data:pd.DataFrame,
 
     df = pd.concat([df, df_total])
 
-    return df
+    # Make wide
+    if make_wide:
+        df_out = pd.DataFrame(columns = ["Model", "Scenario", "Unit", "Year"])
+        for f in df['Fuel'].unique():
+            dfw = df[df['Fuel'] == f]
+            dfw = dfw.rename(columns={f"Net Imports": f"Net Imports of {f}", 
+                                    f"Net Import Dependence": f"Net Import Dependence of {f}",
+                                    f"Energy Demand": f"Energy Demand of {f}"})
+            dfw = dfw.drop(columns=["Fuel"])
+            df_out = df_out.merge(dfw, on=["Model", "Scenario", "Unit", "Year"], how="outer")
+    else:
+        df_out = df
+
+    return df_out
