@@ -13,6 +13,7 @@ import yaml
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import local_data_path
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -56,6 +57,7 @@ def single_policy_of_type(collection: Collection[Policy], cls: type["T"]) -> "T 
     return None
 
 
+# Older ScenarioRunner class dependent on message_data repository
 def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
 ) -> message_ix.Scenario:
@@ -379,3 +381,295 @@ def add_forever_interpolate(
     solve(context, scenario, model=solve_type)
     scenario.set_as_default()
     return scenario
+
+
+def load_anchor_data(context: Context) -> pd.DataFrame:
+    """Read anchor CSV from static data under local data."""
+    _ANCHOR_REQUIRED_COLUMNS: tuple[str, ...] = (
+        "policy_id",
+        "depth",
+        "speed",
+        "timing",
+        "node",
+        "parameter",
+        "unit_convertion",
+        "year_act",
+    )
+    _ANCHOR_DROP_COLUMNS: frozenset[str] = frozenset({"description", "indicator"})
+    cols = list(_ANCHOR_REQUIRED_COLUMNS)
+
+    anchor_name = getattr(context, "anchor_data_file", None)
+    if not anchor_name:
+        log.warning(
+            "load_anchor_data: context.anchor_data_file is not set; "
+            "returning empty DataFrame"
+        )
+        return pd.DataFrame(columns=cols)
+
+    path = local_data_path("anchor", anchor_name, context=context)
+    if not path.is_file():
+        log.warning(
+            "load_anchor_data: anchor CSV not found at %s "
+            "(expected under message-static-data/anchor/ "
+            "within message local data from ixmp config); returning empty DataFrame",
+            path.resolve(),
+        )
+        return pd.DataFrame(columns=cols)
+
+    df = pd.read_csv(path)
+    df = df.drop(columns=[c for c in _ANCHOR_DROP_COLUMNS if c in df.columns])
+    missing = [c for c in _ANCHOR_REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
+        raise ValueError(
+            f"anchor CSV {path} is missing required columns {missing}; "
+            f"columns after filter: {list(df.columns)}"
+        )
+    df = df.copy()
+
+    # Numeric parsing and derived values.
+    df["depth"] = pd.to_numeric(df["depth"], errors="coerce")
+    df["speed"] = pd.to_numeric(df["speed"], errors="coerce")
+    df["timing"] = pd.to_numeric(df["timing"], errors="coerce")
+    df["year_act"] = pd.to_numeric(df["year_act"], errors="coerce")
+    df["unit_convertion"] = pd.to_numeric(df["unit_convertion"], errors="coerce")
+    df["depth_converted"] = df["depth"] * df["unit_convertion"]
+
+    # Broadcast if multiple regions
+    df["node"] = df["node"].astype(str).str.split(",")
+    df = df.explode("node", ignore_index=True)
+    df["node"] = df["node"].str.strip()
+    df = df.loc[df["node"].ne("")].copy()
+
+    log.info("load_anchor_data: read anchor data from %s", path.resolve())
+    log.info("load_anchor_data: preview (head):\n%s", df.head().to_string())
+
+    # For debugging
+    debug_path = local_data_path("anchor", "_debug_loaded_anchor.csv", context=context)
+    df.to_csv(debug_path, index=False)
+
+    return df
+
+
+def add_anchor(
+    context: Context,
+    scenario: message_ix.Scenario,
+) -> message_ix.Scenario:
+    """Add anchor data to the scenario."""
+
+    df_anchor = load_anchor_data(context)
+
+    anchor_emission_factor(df_anchor, scenario)
+    anchor_input(df_anchor, scenario)
+
+    return scenario
+
+
+def anchor_emission_factor(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``emission_factor``."""
+
+    # Filter for emission_factor parameter rows
+    df_ef = df_anchor.loc[df_anchor["parameter"] == "emission_factor"].copy()
+    if df_ef.empty:
+        log.info("anchor_emission_factor: no policies tuning 'emission_factor'")
+        return
+
+    updates: list[pd.DataFrame] = []
+
+    key_cols = ["policy_id", "technology", "mode", "emission"]
+    for keys, group in df_ef.groupby(key_cols, dropna=False):
+        policy_id, technology, mode, emission = keys
+
+        # Prepare original emission_factor rows
+        df_initial = scenario.par(
+            "emission_factor",
+            filters={
+                "technology": [technology],
+                "mode": [mode],
+                "emission": [emission],
+            },
+        )
+        log.info(
+            "Initial emission_factor, tech:%s; mode:%s, emission:%s, "
+            "region number: %d, slice number: %d",
+            technology,
+            mode,
+            emission,
+            df_initial["node_loc"].nunique() if "node_loc" in df_initial else 0,
+            pd.to_numeric(df_initial["year_act"], errors="coerce").dropna().nunique()
+            if "year_act" in df_initial
+            else 0,
+        )
+
+        df_ef_loop = group.copy()
+
+        has_speed = df_ef_loop["speed"].notna().any()
+        has_timing = df_ef_loop["timing"].notna().any()
+
+        df_update = df_initial.copy()
+
+        # Anchor by speed
+        if has_speed and not has_timing:
+            for _, r in df_ef_loop.loc[
+                df_ef_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
+            ].iterrows():
+                if r.isna().any():
+                    continue
+                start_year = int(r["year_act"])
+                speed = float(r["speed"])
+                depth_cap = float(r["depth_converted"])
+                for region, g in df_update.groupby("node_loc"):
+                    base = g.loc[g["year_act"] == start_year, "value"]
+                    if base.empty:
+                        continue
+                    base_value = float(base.iat[0])
+                    years = sorted(y for y in g["year_act"].unique() if y >= start_year)
+                    for step, year in enumerate(years, start=1):
+                        idx = (df_update["node_loc"] == region) & (
+                            df_update["year_act"] == year
+                        )
+                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
+                        candidate = base_value + growth
+                        if speed >= 0:
+                            df_update.loc[idx, "value"] = min(depth_cap, candidate)
+                        else:
+                            df_update.loc[idx, "value"] = max(depth_cap, candidate)
+
+        # Anchor by timing
+        elif has_timing and not has_speed:
+            for _, r in df_ef_loop.loc[
+                df_ef_loop["timing"].notna(), ["year_act", "depth_converted", "node"]
+            ].iterrows():
+                if r.isna().any():
+                    continue
+                idx = (df_update["year_act"] >= int(r["year_act"])) & (
+                    df_update["node_loc"] == r["node"]
+                )
+                df_update.loc[idx, "value"] = float(r["depth_converted"])
+
+        updates.append(df_update)
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        log.info("anchor_emission_factor: no emission_factor updates to apply")
+        return
+
+    # For debugging
+    debug_updates_path = local_data_path(
+        "anchor", "_debug_anchor_updates_emission_factor.csv"
+    )
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    # with scenario.transact("apply anchor emission_factor"):
+    #     scenario.add_par("emission_factor", df_updates)
+
+    log.info(
+        "anchor_emission_factor: applied %d updated emission_factor rows",
+        len(df_updates),
+    )
+
+    return
+
+
+def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None:  # noqa: C901
+    """Apply anchor settings to parameter ``input``."""
+
+    # Filter for emission_factor parameter rows
+    df_input = df_anchor.loc[df_anchor["parameter"] == "input"].copy()
+    if df_input.empty:
+        log.info("anchor_input: no policies tuning 'input'")
+        return
+
+    updates: list[pd.DataFrame] = []
+
+    key_cols = ["policy_id", "technology", "mode", "commodity", "level"]
+    for keys, group in df_input.groupby(key_cols, dropna=False):
+        policy_id, technology, mode, commodity, level = keys
+
+        # Prepare original emission_factor rows
+        df_initial = scenario.par(
+            "input",
+            filters={
+                "technology": [technology],
+                "mode": [mode],
+                "commodity": [commodity],
+                "level": [level],
+            },
+        )
+        log.info(
+            "Initial input, tech:%s; mode:%s, commodity:%s, level:%s, "
+            "region number: %d, slice number: %d",
+            technology,
+            mode,
+            commodity,
+            level,
+            df_initial["node_loc"].nunique() if "node_loc" in df_initial else 0,
+            pd.to_numeric(df_initial["year_act"], errors="coerce").dropna().nunique()
+            if "year_act" in df_initial
+            else 0,
+        )
+
+        df_input_loop = group.copy()
+
+        has_speed = df_input_loop["speed"].notna().any()
+        has_timing = df_input_loop["timing"].notna().any()
+
+        df_update = df_initial.copy()
+
+        # Anchor by speed
+        if has_speed and not has_timing:
+            for _, r in df_input_loop.loc[
+                df_input_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
+            ].iterrows():
+                if r.isna().any():
+                    continue
+                start_year = int(r["year_act"])
+                speed = float(r["speed"])
+                depth_cap = float(r["depth_converted"])
+                for region, g in df_update.groupby("node_loc"):
+                    base = g.loc[g["year_act"] == start_year, "value"]
+                    if base.empty:
+                        continue
+                    base_value = float(base.iat[0])
+                    years = sorted(y for y in g["year_act"].unique() if y >= start_year)
+                    for step, year in enumerate(years, start=1):
+                        idx = (df_update["node_loc"] == region) & (
+                            df_update["year_act"] == year
+                        )
+                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
+                        candidate = base_value + growth
+                        if speed >= 0:
+                            df_update.loc[idx, "value"] = min(depth_cap, candidate)
+                        else:
+                            df_update.loc[idx, "value"] = max(depth_cap, candidate)
+
+        # Anchor by timing
+        elif has_timing and not has_speed:
+            for _, r in df_input_loop.loc[
+                df_input_loop["timing"].notna(), ["year_act", "depth_converted", "node"]
+            ].iterrows():
+                if r.isna().any():
+                    continue
+                idx = (df_update["year_act"] >= int(r["year_act"])) & (
+                    df_update["node_loc"] == r["node"]
+                )
+                df_update.loc[idx, "value"] = float(r["depth_converted"])
+
+        updates.append(df_update)
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        log.info("anchor_input: no input updates to apply")
+        return
+
+    # For debugging
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_updates_input.csv")
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    # with scenario.transact("apply anchor input"):
+    #     scenario.add_par("input", df_updates)
+
+    log.info("anchor_input: applied %d updated input rows", len(df_updates))
+
+    return
