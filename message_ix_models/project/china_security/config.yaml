@@ -19,18 +19,18 @@ models_scenarios:
   #SSP2_2C:
   #  model: SSP_SSP2_v6.6
   #  scenario: baseline_1000f
-  SSP2_Commitments:
-    model: SSP_SSP2_v6.6
-    scenario: INDC2030i
-  #LED_Baseline:
-  #  model: SSP_LED_v6.5
-  #  scenario: baseline
+  #SSP2_Commitments:
+  #  model: SSP_SSP2_v6.6
+  #  scenario: INDC2030i
+  LED_Baseline:
+    model: SSP_LED_v6.5
+    scenario: baseline
   #LED_2C:
   #  model: SSP_LED_v6.5
   #  scenario: baseline_1000f
-  LED_Commitments:
-    model: SSP_LED_v6.5
-    scenario: INDC2030i
+  #LED_Commitments:
+  #  model: SSP_LED_v6.5
+  #  scenario: INDC2030i
 
 ##############################
 # COVERED TRADE TECHNOLOGIES #
