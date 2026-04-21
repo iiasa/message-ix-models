@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from abc import ABC
 from collections.abc import Collection
 from typing import TYPE_CHECKING, cast
@@ -460,6 +461,7 @@ def add_anchor(
 
     anchor_emission_factor(df_anchor, scenario)
     anchor_input(df_anchor, scenario)
+    anchor_share_comm_lo(df_anchor, scenario)
 
     return scenario
 
@@ -671,5 +673,150 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
     #     scenario.add_par("input", df_updates)
 
     log.info("anchor_input: applied %d updated input rows", len(df_updates))
+
+    return
+
+
+def anchor_share_comm_lo(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``share_comm``."""
+
+    # Filter for share_comm parameter rows
+    df_share_comm = df_anchor.loc[df_anchor["parameter"] == "share_commodity_lo"].copy()
+    if df_share_comm.empty:
+        log.info("anchor_share_comm: no policies tuning 'share_comm'")
+        return
+
+    # Prepare df for share commodity sets and parameters
+    map_shares_commodity_share_rows: list[pd.DataFrame] = []
+    map_shares_commodity_total_rows: list[pd.DataFrame] = []
+    cat_tec_rows: list[pd.DataFrame] = []
+    share_commodity_lo_rows: list[pd.DataFrame] = []
+    share_names: list[str] = []
+
+    key_cols = ["policy_id", "technology", "mode", "commodity", "level"]
+    available = [c for c in key_cols if c in df_share_comm.columns]
+    for _, group in df_share_comm.groupby(available, dropna=False):
+        df_share_comm_loop = group.copy()
+        row0 = df_share_comm_loop.iloc[0]
+
+        share_name = f"policy_{row0['policy_id']}"
+        share_names.append(share_name)
+
+        map_shares_commodity_share_rows.append(
+            make_df(
+                "map_shares_commodity_share",
+                shares=share_name,
+                node_share=df_share_comm_loop["node"],
+                node=df_share_comm_loop["node"],
+                type_tec=f"{share_name}_share",
+                mode="M1",
+                commodity=row0["commodity"],
+                level=row0["level"],
+            )
+        )
+        map_shares_commodity_total_rows.append(
+            make_df(
+                "map_shares_commodity_total",
+                shares=share_name,
+                node_share=df_share_comm_loop["node"],
+                node=df_share_comm_loop["node"],
+                type_tec=f"{share_name}_total",
+                mode="M1",
+                commodity=row0["commodity"],
+                level=row0["level"],
+            )
+        )
+        share_commodity_lo_rows.append(
+            make_df(
+                "share_commodity_lo",
+                shares=share_name,
+                node_share=df_share_comm_loop["node"],
+                year_act=df_share_comm_loop["year_act"],
+                time="year",
+                unit="-",
+                value=df_share_comm_loop["depth"],
+            )
+        )
+
+        # TODO: apply better ways to group technologies
+        # Assign technologies for {share_name}_share
+        if re.search(r"[\^\$\|\(\)]", str(row0["technology"])):
+            tech_share = [
+                t
+                for t in map(str, scenario.set("technology"))
+                if re.search(str(row0["technology"]), t)
+            ]
+        else:
+            tech_share = [str(row0["technology"])]
+        if tech_share:
+            cat_tec_rows.append(
+                pd.DataFrame(
+                    {"type_tec": f"{share_name}_share", "technology": tech_share}
+                )
+            )
+
+        # Assign technologies for {share_name}_total
+        df_output = scenario.par(
+            "output",
+            filters={"commodity": [row0["commodity"]], "level": [row0["level"]]},
+        )
+        tech_total_group = (
+            sorted(df_output["technology"].dropna().astype(str).unique().tolist())
+            if not df_output.empty
+            else []
+        )
+        if tech_total_group:
+            cat_tec_rows.append(
+                pd.DataFrame(
+                    {"type_tec": f"{share_name}_total", "technology": tech_total_group}
+                )
+            )
+
+    df_map_share = pd.concat(
+        map_shares_commodity_share_rows, ignore_index=True
+    ).drop_duplicates()
+    df_map_total = pd.concat(
+        map_shares_commodity_total_rows, ignore_index=True
+    ).drop_duplicates()
+    df_cat_tec = pd.concat(cat_tec_rows, ignore_index=True).drop_duplicates()
+    df_share_lo = pd.concat(
+        share_commodity_lo_rows, ignore_index=True
+    ).drop_duplicates()
+
+    # For debugging
+    debug_dir = local_data_path("anchor")
+    pd.DataFrame({"shares": sorted(set(share_names))}).to_csv(
+        debug_dir / "_debug_anchor_shares.csv", index=False
+    )
+    df_map_share.to_csv(
+        debug_dir / "_debug_anchor_map_shares_commodity_share.csv", index=False
+    )
+    df_map_total.to_csv(
+        debug_dir / "_debug_anchor_map_shares_commodity_total.csv", index=False
+    )
+    df_cat_tec.to_csv(debug_dir / "_debug_anchor_cat_tec.csv", index=False)
+    df_share_lo.to_csv(debug_dir / "_debug_anchor_share_commodity_lo.csv", index=False)
+
+    with scenario.transact("apply anchor share_commodity_lo"):
+        scenario.add_set("shares", sorted(set(share_names)))
+        scenario.add_set(
+            "type_tec",
+            sorted(df_cat_tec["type_tec"].dropna().astype(str).unique().tolist()),
+        )
+        scenario.add_set("cat_tec", df_cat_tec)
+        scenario.add_set("map_shares_commodity_share", df_map_share)
+        scenario.add_set("map_shares_commodity_total", df_map_total)
+        scenario.add_par("share_commodity_lo", df_share_lo)
+
+    log.info(
+        "anchor_share_comm_lo: added %d shares, %d share-map rows, "
+        "%d total-map rows, %d share_commodity_lo rows",
+        len(set(share_names)),
+        len(df_map_share),
+        len(df_map_total),
+        len(df_share_lo),
+    )
 
     return
