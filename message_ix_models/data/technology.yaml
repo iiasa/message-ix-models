@@ -2897,7 +2897,7 @@ sp_el_RC:
   output: [rc_spec, useful]
 
 sp_el_RC_RT:
-  name: sp_el_RC
+  name: sp_el_RC_RT
   description: Specific use of electricity in residential/commercial from rooftop PV
   type: useful
   sector: residential/commercial

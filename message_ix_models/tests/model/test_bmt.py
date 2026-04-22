@@ -33,43 +33,15 @@ log = logging.getLogger(__name__)
 def _minimal_buildings_data():
     """Minimal DataFrames for prepare_data_B / build_B."""
     commodities = ["electr", "gas", "lightoil", "d_heat"]
-    buildings_commodity = "resid_heat_electr"
-    nodes = ["R12_AFR"]
-    years = [2020, 2030]
+    common_dims = dict(
+        node="R12_AFR", unit="GWa", time="year", level="useful", year=[2020, 2030]
+    )
     prices = pd.DataFrame({"commodity": commodities})
-    sturm_r = pd.DataFrame(
-        {
-            "node": [nodes[0]] * 2,
-            "commodity": [buildings_commodity] * 2,
-            "year": years,
-            "value": [1.0, 1.0],
-            "unit": ["GWa"] * 2,
-            "time": ["year"] * 2,
-            "level": ["useful"] * 2,
-        }
-    )
-    sturm_c = pd.DataFrame(
-        {
-            "node": [nodes[0]] * 2,
-            "commodity": ["comm_heat_electr"] * 2,
-            "year": years,
-            "value": [0.5, 0.5],
-            "unit": ["GWa"] * 2,
-            "time": ["year"] * 2,
-            "level": ["useful"] * 2,
-        }
-    )
-    demand_static = pd.DataFrame(
-        {
-            "commodity": ["afofio_spec", "afofio_therm"],
-            "node": [nodes[0], nodes[0]],
-            "year": [2020, 2020],
-            "value": [0.1, 0.1],
-            "unit": ["GWa", "GWa"],
-            "time": ["year", "year"],
-            "level": ["useful", "useful"],
-        }
-    )
+    sturm_r = make_df("demand", **common_dims, commodity="resid_heat_electr", value=1.0)
+    sturm_c = make_df("demand", **common_dims, commodity="comm_heat_electr", value=0.5)
+    demand_static = make_df(
+        "demand", **common_dims, commodity=["afofio_spec", "afofio_therm"], value=0
+    ).assign(year=[2020, 2020])
     return prices, sturm_r, sturm_c, demand_static
 
 
@@ -100,14 +72,7 @@ def bmt_context(test_context, tmp_path):
 @pytest.fixture
 def bmt_context_with_materials(bmt_context):
     """Like bmt_context but with with_materials=True for build_B materials path."""
-    b = bmt_context.buildings
-    bmt_context.buildings = SimpleNamespace(
-        prices=b.prices,
-        sturm_r=b.sturm_r,
-        sturm_c=b.sturm_c,
-        demand_static=b.demand_static,
-        with_materials=True,
-    )
+    bmt_context.buildings.with_materials = True
     return bmt_context
 
 
