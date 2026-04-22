@@ -738,7 +738,7 @@ def build_historical_activity(
     check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
-
+    
     outdf = reformat_to_parameter(
         indf=tradedf,
         message_regions=message_regions,
@@ -746,6 +746,9 @@ def build_historical_activity(
         project_name=project_name,
         config_name=config_name,
     )
+    outdf = outdf.groupby(['node_loc', 'technology', 'year_act',
+                        'mode', 'time'])['value'].sum().reset_index()
+                        
     outdf["unit"] = "GWa"
 
     return outdf.drop_duplicates()
@@ -848,6 +851,13 @@ def build_historical_price(
     )
     bacidf["YEAR"] = "broadcast"
 
+    # Add costs for piped gas based on LNG prices
+    bacidf_pg = bacidf[bacidf['MESSAGE COMMODITY'] == 'LNG_shipped'].copy()
+    bacidf_pg['MESSAGE COMMODITY'] = 'gas_piped'
+    print(bacidf_pg)
+    
+    bacidf = pd.concat([bacidf, bacidf_pg])
+    
     outdf = reformat_to_parameter(
         indf=bacidf,
         message_regions=message_regions,
@@ -860,7 +870,8 @@ def build_historical_price(
 
     outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
-
+    print(outdf)
+    
     return outdf
 
 
