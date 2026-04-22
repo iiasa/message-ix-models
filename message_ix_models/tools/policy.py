@@ -390,7 +390,7 @@ def load_anchor_data(context: Context) -> pd.DataFrame:
         "policy_id",
         "depth",
         "speed",
-        "timing",
+        "arrival",
         "node",
         "parameter",
         "unit_convertion",
@@ -430,7 +430,7 @@ def load_anchor_data(context: Context) -> pd.DataFrame:
     # Numeric parsing and derived values.
     df["depth"] = pd.to_numeric(df["depth"], errors="coerce")
     df["speed"] = pd.to_numeric(df["speed"], errors="coerce")
-    df["timing"] = pd.to_numeric(df["timing"], errors="coerce")
+    df["arrival"] = pd.to_numeric(df["arrival"], errors="coerce")
     df["year_act"] = pd.to_numeric(df["year_act"], errors="coerce")
     df["unit_convertion"] = pd.to_numeric(df["unit_convertion"], errors="coerce")
     df["depth_converted"] = df["depth"] * df["unit_convertion"]
@@ -445,7 +445,7 @@ def load_anchor_data(context: Context) -> pd.DataFrame:
     log.info("load_anchor_data: preview (head):\n%s", df.head().to_string())
 
     # For debugging
-    debug_path = local_data_path("anchor", "_debug_loaded_anchor.csv", context=context)
+    debug_path = local_data_path("anchor", "_debug_loaded.csv", context=context)
     df.to_csv(debug_path, index=False)
 
     return df
@@ -507,12 +507,12 @@ def anchor_emission_factor(  # noqa: C901
         df_ef_loop = group.copy()
 
         has_speed = df_ef_loop["speed"].notna().any()
-        has_timing = df_ef_loop["timing"].notna().any()
+        has_arrival = df_ef_loop["arrival"].notna().any()
 
         df_update = df_initial.copy()
 
-        # Anchor by speed
-        if has_speed and not has_timing:
+        # Anchor by speed and depth
+        if has_speed and not has_arrival:
             for _, r in df_ef_loop.loc[
                 df_ef_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
             ].iterrows():
@@ -538,10 +538,38 @@ def anchor_emission_factor(  # noqa: C901
                         else:
                             df_update.loc[idx, "value"] = max(depth_cap, candidate)
 
-        # Anchor by timing
-        elif has_timing and not has_speed:
+        # Anchor by speed and arrival
+        elif has_speed and has_arrival:
             for _, r in df_ef_loop.loc[
-                df_ef_loop["timing"].notna(), ["year_act", "depth_converted", "node"]
+                df_ef_loop["speed"].notna() & df_ef_loop["arrival"].notna(),
+                ["year_act", "speed", "arrival"],
+            ].iterrows():
+                if r.isna().any():
+                    continue
+                start_year = int(r["year_act"])
+                end_year = int(r["arrival"])
+                speed = float(r["speed"])
+                if end_year < start_year:
+                    continue
+                for region, g in df_update.groupby("node_loc"):
+                    base = g.loc[g["year_act"] == start_year, "value"]
+                    if base.empty:
+                        continue
+                    base_value = float(base.iat[0])
+                    years = sorted(
+                        y for y in g["year_act"].unique() if start_year <= y <= end_year
+                    )
+                    for step, year in enumerate(years, start=1):
+                        idx = (df_update["node_loc"] == region) & (
+                            df_update["year_act"] == year
+                        )
+                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
+                        df_update.loc[idx, "value"] = base_value + growth
+
+        # Anchor by arrival and depth
+        elif has_arrival and not has_speed:
+            for _, r in df_ef_loop.loc[
+                df_ef_loop["arrival"].notna(), ["year_act", "depth_converted", "node"]
             ].iterrows():
                 if r.isna().any():
                     continue
@@ -558,9 +586,7 @@ def anchor_emission_factor(  # noqa: C901
         return
 
     # For debugging
-    debug_updates_path = local_data_path(
-        "anchor", "_debug_anchor_updates_emission_factor.csv"
-    )
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_emission_factor.csv")
     df_updates.to_csv(debug_updates_path, index=False)
 
     # with scenario.transact("apply anchor emission_factor"):
@@ -615,12 +641,12 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
         df_input_loop = group.copy()
 
         has_speed = df_input_loop["speed"].notna().any()
-        has_timing = df_input_loop["timing"].notna().any()
+        has_arrival = df_input_loop["arrival"].notna().any()
 
         df_update = df_initial.copy()
 
-        # Anchor by speed
-        if has_speed and not has_timing:
+        # Anchor by speed and depth
+        if has_speed and not has_arrival:
             for _, r in df_input_loop.loc[
                 df_input_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
             ].iterrows():
@@ -646,10 +672,39 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
                         else:
                             df_update.loc[idx, "value"] = max(depth_cap, candidate)
 
-        # Anchor by timing
-        elif has_timing and not has_speed:
+        # Anchor by speed and arrival
+        elif has_speed and has_arrival:
             for _, r in df_input_loop.loc[
-                df_input_loop["timing"].notna(), ["year_act", "depth_converted", "node"]
+                df_input_loop["speed"].notna() & df_input_loop["arrival"].notna(),
+                ["year_act", "speed", "arrival"],
+            ].iterrows():
+                if r.isna().any():
+                    continue
+                start_year = int(r["year_act"])
+                end_year = int(r["arrival"])
+                speed = float(r["speed"])
+                if end_year < start_year:
+                    continue
+                for region, g in df_update.groupby("node_loc"):
+                    base = g.loc[g["year_act"] == start_year, "value"]
+                    if base.empty:
+                        continue
+                    base_value = float(base.iat[0])
+                    years = sorted(
+                        y for y in g["year_act"].unique() if start_year <= y <= end_year
+                    )
+                    for step, year in enumerate(years, start=1):
+                        idx = (df_update["node_loc"] == region) & (
+                            df_update["year_act"] == year
+                        )
+                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
+                        df_update.loc[idx, "value"] = base_value + growth
+
+        # Anchor by arrival and depth
+        elif has_arrival and not has_speed:
+            for _, r in df_input_loop.loc[
+                df_input_loop["arrival"].notna(),
+                ["year_act", "depth_converted", "node"],
             ].iterrows():
                 if r.isna().any():
                     continue
@@ -666,7 +721,7 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
         return
 
     # For debugging
-    debug_updates_path = local_data_path("anchor", "_debug_anchor_updates_input.csv")
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_input.csv")
     df_updates.to_csv(debug_updates_path, index=False)
 
     # with scenario.transact("apply anchor input"):
