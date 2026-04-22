@@ -491,9 +491,24 @@ def build_accounting_relations(
         **common_years,
         **common_cols,
     )
-    df_rel = df_rel.drop_duplicates()
+    df_rel_exports = df_rel.copy().drop_duplicates()
 
-    parameter_outputs[tec]["trade"]["relation_activity_CO2_Emission"] = df_rel
+    df_rel_imports = df_rel.copy().drop_duplicates()
+    df_rel_imports["technology"] = tec + "_imp"
+    df_rel_imports = df_rel_imports.drop_duplicates()
+
+    if config_dict["emission_factor"][tec] is not None:
+        emission_factor = config_dict["emission_factor"][tec]["CO2"]
+        if emission_factor is not None:
+            df_rel_exports["value"] = emission_factor*-1
+            df_rel_imports["value"] = emission_factor
+        else:
+            df_rel_exports["value"] = 0
+            df_rel_imports["value"] = 0
+
+    df_rel = pd.concat([df_rel_exports, df_rel_imports])
+
+    parameter_outputs[tec]["trade"]["relation_activity_CO2_Emission"] = df_rel.drop_duplicates()
 
     # Primary energy total
     df_rel = message_ix.make_df(
@@ -856,7 +871,7 @@ def build_flow_Vcosts(
         df_vcost_base = message_ix.make_df(
             "var_cost",
             node_loc=network_setup[tec]["exporter"],
-            mode=mode_use,
+            mode="M1",
             technology=flow_tec,
             unit="USD/" + config_dict["flow_units"][tec],
             time="year",
@@ -865,7 +880,7 @@ def build_flow_Vcosts(
     if "shipped" in tec:
         df_vcost_base["value"] = 0.002  # Default is 0.002 USD/Mt-km
 
-    vcost_out = pd.concat([parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base])
+    vcost_out = pd.concat([parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base]).drop_duplicates()
     parameter_outputs[tec]["flow"]["var_cost"] = vcost_out
 
     return parameter_outputs
@@ -1083,6 +1098,7 @@ def export_edit_files(
             os.path.join(
                 "relation_activity_regional_exp.csv"
             ),  # necessary for legacy reporting
+            os.path.join("relation_activity_CO2_Emission.csv"),
             os.path.join("flow_technology", "capacity_factor.csv"),
             os.path.join("flow_technology", "input.csv"),
             os.path.join("flow_technology", "output.csv"),
@@ -1342,10 +1358,10 @@ def prepare_edit_files(
         costdf["technology"] = costdf["technology"].str.replace("ethanol_", "eth_")
         costdf["technology"] = costdf["technology"].str.replace("fueloil_", "foil_")
 
-        for tec in [i for i in covered_tec if i != "gas_piped"]:
+        for tec in covered_tec: #[i for i in covered_tec if i != "gas_piped"]:
             log.info("Add fix cost for " + tec)
 
-            if "piped" in tec:
+            if "piped" in tec and tec != 'gas_piped':
                 tec_shipped = tec.replace("piped", "shipped")
                 add_df = costdf[costdf["technology"].str.contains(tec_shipped)].copy()
                 add_df["technology"] = add_df["technology"].str.replace(
@@ -1383,7 +1399,7 @@ def prepare_edit_files(
             add_df["value"] = np.where(
                 add_df["value"].isnull(), mean_cost, add_df["value"]
             )
-            add_df["value"] = round(add_df["value"] / 5, 0)
+            add_df["value"] = round(add_df["value"], 0)
 
             add_df["unit"] = "USD/GWa"
 
