@@ -1,0 +1,14 @@
+# Input energy intensity of vehicle activity
+#
+# Sources: given inline.
+#
+# Units: MJ / (vehicle km)
+#
+node, technology,      value
+# Ratio of values from https://github.com/iiasa/message_data/issues/608#issuecomment-2842282743
+# = 34.17 (catenary electric) × 80.91 (diesel) = 0.422
+# …multiplied by the value for "f rail lightoil"
+*,    f rail electr,   3.912
+#
+# Value from https://github.com/iiasa/message_data/issues/608#issuecomment-2842380226
+*,    f rail lightoil, 9.263

@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+from pytest import mark
 
+from message_ix_models import Context
 from message_ix_models.model.transport import CL_SCENARIO, Config, build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.data import (
@@ -10,7 +12,6 @@ from message_ix_models.model.transport.data import (
     read_structures,
 )
 from message_ix_models.model.transport.roadmap import get_roadmap_data
-from message_ix_models.model.transport.testing import MARK, make_mark
 from message_ix_models.project.navigate import T35_POLICY
 
 
@@ -21,7 +22,7 @@ class TestMultiFile:
 
 
 class TestLoadFactorLDV:
-    @pytest.mark.parametrize("code", CL_SCENARIO.get())
+    @mark.parametrize("code", CL_SCENARIO.get())
     def test_filename(self, code) -> None:
         """:attr:`LoadFactorLDV.filename` works for all defined scenario codes."""
         obj = LoadFactorLDV(config=Config(_code=code), nodes="R12")
@@ -30,7 +31,7 @@ class TestLoadFactorLDV:
         assert result.endswith(".csv")
 
 
-@MARK["sdmx#230"]
+@mark.sdmx_230
 def test_collect_structures():
     sm1 = collect_structures()
 
@@ -42,14 +43,14 @@ def test_collect_structures():
     assert 30 <= len(sm1.dataflow) == len(sm2.dataflow)
 
 
-@make_mark[5]("RoadmapResults_2017.xlsx")
-@pytest.mark.parametrize(
+@mark.non_public_data("RoadmapResults_2017.xlsx")
+@mark.parametrize(
     "region, length",
     [
         (("Africa", "R11_AFR"), 224),
     ],
 )
-def test_get_afr_data(test_context, region, length):
+def test_get_afr_data(test_context: Context, region: str, length: int) -> None:
     ctx = test_context
 
     df = get_roadmap_data(ctx, region)
@@ -79,7 +80,7 @@ def test_get_afr_data(test_context, region, length):
     ]
 
 
-@pytest.mark.skip("Pending https://github.com/transportenergy/database/issues/75")
+@mark.skip("Pending https://github.com/transportenergy/database/issues/75")
 def test_get_chn_ind_data():
     df = get_chn_ind_data()
 
@@ -150,18 +151,18 @@ def test_get_chn_ind_pop():
 
 
 @build.get_computer.minimum_version
-@MARK[10]
-@pytest.mark.parametrize("years", ["A", "B"])
-@pytest.mark.parametrize(
+@mark.transport_build_data
+@mark.parametrize("years", ["A", "B"])
+@mark.parametrize(
     "regions",
     [
-        pytest.param("ISR", marks=MARK[3]),
+        pytest.param("ISR", marks=mark.ISR_no_data),
         "R11",
         "R12",
         "R14",
     ],
 )
-@pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
+@mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context

@@ -173,6 +173,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Miscellaneous data
     kw = dict(nodes=context.model.regions, config=config)
     data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
+    data.InputVehicle.add_tasks(c, **kw, **c_s)
     data.Lifetime.add_tasks(c, **kw, **c_s)
     data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
 
@@ -186,10 +189,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
     IEA_EWEB.add_tasks(c, **kw, **c_s)
-
-    # Add IEA Future of Trucks data
-    for kw in dict(measure=1), dict(measure=2):
-        data.IEA_Future_of_Trucks.add_tasks(c, **kw, **c_s)
 
     # Add ADVANCE data
     adv_common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)

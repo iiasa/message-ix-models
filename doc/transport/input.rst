@@ -136,6 +136,7 @@ Quick links to each of the data flows:
 :data:`~.data.input_cap_new`
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
+:class:`~.data.InputVehicle`
 :class:`~.data.Lifetime`
 :data:`~.data.load_factor_f`
 :data:`~.data.load_factor_p`
@@ -233,6 +234,16 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.input_cap_new
 .. autodata:: message_ix_models.model.transport.data.input_ref_ldv
 .. autodata:: message_ix_models.model.transport.data.input_share
+.. autoclass:: message_ix_models.model.transport.data.InputVehicle
+
+   References:
+
+   - `message_data#608 <https://github.com/iiasa/message_data/issues/608>`_.
+   - https://www.bts.gov/content/energy-intensity-class-i-railroad-freight-service-1
+   - https://www.bts.gov/content/class-i-rail-freight-fuel-consumption-and-travel-0
+   - Aredah et al. (2024). `doi: 10.1016/j.apenergy.2023.122411
+     <https://doi.org/10.1016/j.apenergy.2023.122411>`_
+
 .. autoclass:: message_ix_models.model.transport.data.Lifetime
 .. autodata:: message_ix_models.model.transport.data.load_factor_f
 .. autodata:: message_ix_models.model.transport.data.load_factor_p

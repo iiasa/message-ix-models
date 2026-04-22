@@ -5,6 +5,9 @@ Next release
 ============
 
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
+- Improve :doc:`/transport/index` (:pull:`497`):
+
+  .. todo:: Expand.
 
 v2026.4.17
 ==========

@@ -6,7 +6,8 @@ try:
     from base64 import b32hexencode as b32encode
 except ImportError:
     from base64 import b32encode
-from collections.abc import Generator, Hashable
+import platform
+from collections.abc import Generator
 from copy import deepcopy
 from importlib.metadata import version
 from importlib.util import find_spec
@@ -24,8 +25,10 @@ from packaging.version import Version
 
 from message_ix_models import util
 from message_ix_models.model import snapshot
+from message_ix_models.model.transport import testing as transport
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
+from message_ix_models.util.pytest import MarkFactory
 
 if TYPE_CHECKING:
     from importlib.resources.abc import Traversable
@@ -60,53 +63,69 @@ EXPORT_OMIT = [
 #: :data:`True` if tests occur on GitHub Actions.
 GHA = "GITHUB_ACTIONS" in os.environ
 
-#: Common marks for tests. Use either short, informative :class:`str` keys or
-#: :class:`int`; in the latter case, do not reuse keys lower than the highest key in the
-#: collection.
-MARK: dict[Hashable, pytest.MarkDecorator] = {
-    0: pytest.mark.xfail(
+#: Common marks for tests. Use short, informative keys that are valid identifiers; these
+#: can then be applied using, for instance, :py:`@pytest.mark.ci_db_access`.
+MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
+    "ci_db_access": pytest.mark.xfail(
         condition=GHA,
         reason="GitHub-hosted runner has no access to IIASA-internal databases",
     ),
-    2: pytest.mark.xfail(
+    "ci_linux_only": pytest.mark.skipif(
+        condition=GHA and platform.system() != "Linux",
+        reason="Skip on non-Linux GitHub Actions runners, for performance",
+    ),
+    # Used in .material.test_{build,data_steel}; .transport.test_report
+    "ci_timeout": pytest.mark.skipif(
+        GHA, reason="Stalls or times out on GitHub Actions"
+    ),
+    # Alternate version: don't allow tests to run more than 5 minutes. This appears to
+    # interact badly with pytest-xdist, so skip is used instead.
+    # "ci_timeout": pytest.mark.timeout(
+    #     600, method="thread" if platform.system() == "Windows" else "thread"
+    # ),
+    "needs_message_data": pytest.mark.xfail(
         condition=not util.HAS_MESSAGE_DATA,
         reason="Not yet migrated from message_data",
     ),
-    # Used in .material.test_{build,data_steel}; .transport.test_report
-    11: pytest.mark.skipif(GHA, reason="Stalls or times out on GitHub Actions"),
-    # Alternate version: don't allow tests to run more than 5 minutes. This appears to
-    # interact badly with pytest-xdist, so skip is used instead.
-    # 11: pytest.mark.timeout(
-    #     600, method="thread" if platform.system() == "Windows" else "thread"
-    # ),
-    12: pytest.mark.xfail(
-        Version(version("message_ix")) < Version("3.12"),
-        reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
-        ">=3.12",
+    "no_data": MarkFactory(
+        "xfail", reason="No input data/config for {0}", raises=lambda args: args[1]
     ),
-    "#375": pytest.mark.flaky(
+    "non_public_data": MarkFactory("xfail", reason="Requires non-public data ({0})"),
+    # References to GitHub issues and PRs in the same repository
+    "gh_375": pytest.mark.flaky(
         reruns=3,
         rerun_delay=2,
         condition=GHA,
         reason="https://github.com/iiasa/message-ix-models/issues/375",
     ),
-    "ixmp#595": pytest.mark.xfail(
+    "gh_471": pytest.mark.xfail(
+        condition=GHA,
+        reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/471",
+    ),
+    # References to issues and PRs in other packages' repositories
+    "ixmp_595": pytest.mark.xfail(
         condition=version("ixmp") > "3.11.0"
         and find_spec("ixmp4") is not None
         and version("ixmp4") >= "0.11.0",
         reason="https://github.com/iiasa/ixmp#595",
         # raises=ixmp4.core.exceptions.RunLockRequired,
     ),
-    "sdmx#230": pytest.mark.xfail(
+    "ixmp_600": pytest.mark.xfail(
+        condition=version("ixmp") == "3.11.0" and find_spec("ixmp4") is not None,
+        reason="https://github.com/iiasa/ixmp/issues/600",
+    ),
+    "message_ix_cap_comm": pytest.mark.xfail(
+        Version(version("message_ix")) < Version("3.12"),
+        reason="Requires MESSAGE cap-comm parameters, only available in message-ix "
+        ">=3.12",
+    ),
+    "sdmx_230": pytest.mark.xfail(
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
     ),
-    "ixmp#600": pytest.mark.xfail(
-        condition=version("ixmp") == "3.11.0" and find_spec("ixmp4") is not None,
-        reason="https://github.com/iiasa/ixmp/issues/600",
-    ),
 }
+MARK.update(transport.MARK)
 
 #: Shorthand for marking a parametrized test case that is expected to fail because it is
 #: not implemented.
@@ -147,6 +166,55 @@ def pytest_addoption(parser):
         default="",
         help="Arguments for Java VM used by ixmp JDBCBackend",
     )
+
+
+def pytest_collection_modifyitems(
+    session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Substitute or add marks from :data:`MARK`."""
+    for item in items:
+        # Iterate over markers of `item` whose names appear as keys of MARK
+        for existing in filter(lambda m: m.name in MARK, item.iter_markers()):
+            # Retrieve the MarkDecorator from MARK
+            mark_decorator_or_factory = MARK[existing.name]
+            if isinstance(mark_decorator_or_factory, MarkFactory):
+                # Call the factory to generate a new mark
+                new_mark = mark_decorator_or_factory(existing.args, existing.kwargs)
+            else:
+                new_mark = mark_decorator_or_factory.mark
+
+            try:
+                # Position of `existing` in the markers of `item`
+                idx = item.own_markers.index(existing)
+            except ValueError:
+                item.own_markers.insert(0, new_mark)  # Doesn't exist → insert
+            else:
+                item.own_markers[idx] = new_mark  # Replace `existing`
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register markers for keys in :data:`MARK`."""
+    # Iterate over keys of MARK that are valid Python identifiers. Others cannot be
+    # used, e.g. @pytest.mark.#123 is not valid syntax.
+    for name in filter(str.isidentifier, map(str, MARK)):
+        mark_decorator_or_factory = MARK[name]
+        if isinstance(mark_decorator_or_factory, MarkFactory):
+            config.addinivalue_line(
+                "markers", mark_decorator_or_factory.get_inivalue_line(name)
+            )
+        elif mark_decorator_or_factory.name == "usefixtures":
+            # "usefixtures" marks are handled *before* tests reach
+            # pytest_collection_modifyitems() above, so substituting from MARK at that
+            # stage does not work. Instead, set this decorator directly as an attribute
+            # of pytest.mark.
+            setattr(pytest.mark, name, mark_decorator_or_factory)
+        else:
+            desc = mark_decorator_or_factory.kwargs.get(
+                "reason",  # Use the MarkDecorator's 'reason' kwarg as description
+                f"message_ix_models.testing.MARK[{name!r}]",  # Default if no 'reason'
+            )
+            # Create a configuration line to register the marker
+            config.addinivalue_line("markers", f"{name}: {desc}")
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:

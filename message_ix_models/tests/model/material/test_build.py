@@ -4,7 +4,7 @@ import pytest
 
 from message_ix_models.model.material import build
 from message_ix_models.model.structure import get_codes
-from message_ix_models.testing import GHA, MARK, NIE, bare_res
+from message_ix_models.testing import NIE, bare_res
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def test_make_spec(regions_arg, regions_exp, material):
 #: - https://github.com/iiasa/message-ix-models/pull/345
 MARKS = [
     # pytest.mark.xfail(reason="Times out"),  # Used with pytest.mark.timeout
-    MARK[11],
+    pytest.mark.ci_timeout,
 ]
 
 
@@ -47,7 +47,7 @@ MARKS = [
 @pytest.mark.parametrize(
     "regions, years, relations, solve",
     [
-        pytest.param("R12", "B", "B", False, marks=MARKS if GHA else []),
+        pytest.param("R12", "B", "B", False, marks=MARKS),
         pytest.param("R11", "B", "B", False, marks=NIE),
     ],
 )

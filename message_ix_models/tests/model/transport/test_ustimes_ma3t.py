@@ -1,17 +1,18 @@
+from pytest import mark
+
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.transport import testing
 from message_ix_models.model.transport.ustimes_ma3t import read_USTIMES_MA3T
 
 
-@testing.make_mark[5]("R11/ldv-cost-efficiency.xlsx")
-def test_read_USTIMES_MA3T():
+@mark.non_public_data("R11/ldv-cost-efficiency.xlsx")
+def test_read_USTIMES_MA3T() -> None:
     """Data from the US-TIMES / MA³T source can be read.
 
     .. todo:: Adapt to be more like :func:`.test_build.test_debug`, using the output
        of :func:`.ldv.prepare_computer`.
     """
     all_nodes = get_codes("node/R11")
-    nodes = all_nodes[all_nodes.index("World")].child
+    nodes = all_nodes[all_nodes.index("World")].child  # type: ignore
     data = read_USTIMES_MA3T(nodes, "R11")
 
     # Expected contents
