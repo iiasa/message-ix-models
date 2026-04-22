@@ -17,6 +17,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
@@ -82,8 +83,6 @@ def _add_minimal_rc_pars(scenario):
     Uses mode='all' to match the bare RES scenario's mode set (no 'M1' in bare RES).
     Skips emission_factor (unit tC/GWa and emission set may not exist in bare RES).
     """
-    from message_ix import make_df
-
     nodes = scenario.set("node")
     if not len(nodes):
         return
