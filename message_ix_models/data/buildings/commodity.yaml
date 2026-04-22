@@ -66,12 +66,13 @@ comm_hotwater_gas:
 
 # loil_rc
 resid_cook_lightoil:
-  description: Lightoil demand for residential cooking
+resid_cook_lightoil:
+  description: Light oil demand for residential cooking
 resid_hotwater_lightoil:
-  description: Lightoil demand for residential hotwater
+  description: Light oil demand for residential hotwater
 comm_hotwater_lightoil:
-  description: Lightoil demand for commercial hotwater
+  description: Light oil demand for commercial hotwater
 resid_heat_lightoil:
-  description: Lightoil demand for residential heating
+  description: Light oil demand for residential heating
 comm_heat_lightoil:
-  description: Lightoil demand for commercial heating
+  description: Light oil demand for commercial heating
