@@ -142,10 +142,10 @@ def run_nam_boost(base_scenario_name: str,
 # Run scenarios
 for lev in [10, 15, 20, 25, 30]:
     gwa_level = lev * 31.71 # approximation of EJ to GWa
-    #print(f"Build and run: Base scenario = SSP2, Boost level = {lev}EJ")
-    #run_nam_boost(base_scenario_name = 'SSP2',
-    #              out_scenario_name = f'SSP2_NAM{lev}EJ',
-    #              bound_level = gwa_level)
+    print(f"Build and run: Base scenario = SSP2, Boost level = {lev}EJ")
+    run_nam_boost(base_scenario_name = 'SSP2',
+                  out_scenario_name = f'SSP2_NAM{lev}EJ',
+                  bound_level = gwa_level)
 
     print(f"Build and run: Base scenario = FSU2100, Boost level = {lev}EJ")
     run_nam_boost(base_scenario_name = 'FSU2100',

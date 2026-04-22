@@ -100,7 +100,7 @@ def run_friction_scenario(base_scenario_name: str,
     mp.close_db()
     
 # Run scenarios
-#run_friction_scenario('SSP2', 'FSU', 2100)
-#run_friction_scenario('SSP2', 'FSU', 2040)
+run_friction_scenario('SSP2', 'FSU', 2100)
+run_friction_scenario('SSP2', 'FSU', 2040)
 run_friction_scenario('INDC2030', 'FSU', 2100, scenario_name_adder = "INDC2030_")
 run_friction_scenario('INDC2030', 'FSU', 2040, scenario_name_adder = "INDC2030_")

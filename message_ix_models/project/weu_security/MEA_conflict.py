@@ -117,10 +117,10 @@ def run_friction_scenario(base_scenario_name:str,
     mp.close_db()
 
 # Run scenarios
-#for scen in ['FSU2100', 'FSU2040']: # Add back SSP2
-#    for conflict in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
-#        print(f"Build and run: Base scenario = {scen}, Impact Level = {conflict}")
-#        run_friction_scenario(scen, conf_level = conflict)
+for scen in ['SSP2', 'FSU2100', 'FSU2040']:
+    for conflict in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
+        print(f"Build and run: Base scenario = {scen}, Impact Level = {conflict}")
+        run_friction_scenario(scen, conf_level = conflict)
 
 # Add decarbonization sensitivities
 for scen in ["INDC2030", "INDC2030_FSU2040", "INDC2030_FSU2100"]:

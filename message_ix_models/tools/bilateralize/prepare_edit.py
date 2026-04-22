@@ -627,6 +627,8 @@ def build_flow_input(
                 **common_years,
                 **common_cols,
             )
+            if "gas_pipe" in tec:
+                df_input_base['value'] = 0.002
             df_input = pd.concat([df_input, df_input_base])
 
         # If shipping, technologies and outputs are global with diff modes
@@ -649,6 +651,7 @@ def build_flow_input(
             )
         if "shipped" in tec:
             df_input_base["value"] = 1e-6  # Default is 1e-6 GWa
+            
         df_input = pd.concat([df_input, df_input_base])
 
         # For shipped trade, set up bunker fuels

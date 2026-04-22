@@ -17,17 +17,21 @@ models_scenarios = config['models_scenarios']
 data_path = package_data_path("bilateralize")
 
 base_model = 'weu_security'
-base_scen = 'SSP2_INDC2030'
+base_scen = 'SSP2'
 
 mp = ixmp.Platform()
 base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-out_scenario = base_scenario.clone('weu_security', "SSP_INDC2030_loose", keep_solution = False)
+out_scenario = base_scenario.clone('weu_security', "SSP2_ppcost", keep_solution = False)
 
-print("Remove emissions constraints on non-WEU or EEU regions")
-remdf = out_scenario.par("bound_emission")
-remdf = remdf[remdf['node'].isin(['R12_WEU', 'R12_EEU']) == False]
-with out_scenario.transact(f"remove emission bound for indc scenario"):
-    out_scenario.remove_par("bound_emission", remdf)
+print("Update pipeline investment costs")
+cdf = out_scenario.par("inv_cost")
+cdf = cdf[cdf['technology'].str.contains('gas_pipe_')]
+cdf_new = cdf.copy()
+cdf_new['value'] = 10
+
+with out_scenario.transact("Update pipeline investment costs"):
+    out_scenario.remove_par("inv_cost", cdf)
+    out_scenario.add_par("inv_cost", cdf_new)
     
 print("Solve scenario")
 out_scenario.solve()
