@@ -23,7 +23,7 @@ def load_config(name: str) -> "Config":
     return Config.from_files(name)
 
 def pyam_df_from_rep(
-    rep: message_ix.Reporter, reporter_var: str, mapping_df: pd.DataFrame
+    rep: message_ix.Reporter, scenario: message_ix.Scenario, reporter_var: str, mapping_df: pd.DataFrame
 ) -> pd.DataFrame:
     """Queries data from Reporter and maps to IAMC variable names.
 
@@ -42,15 +42,18 @@ def pyam_df_from_rep(
     }
     base_tec_list = filters_dict['t']
     base_tec_exp = [v for v in base_tec_list if v.endswith('_exp')]
-    base_tec_dom = [v for v in base_tec_list if v not in base_tec_exp]
+    base_tec_pipes = [v for v in base_tec_list if v.endswith('_pipe')]
+    base_tec_tankers = [v for v in base_tec_list if v.endswith('_tanker')]
+
+    base_tec_dom = [v for v in base_tec_list if v not in base_tec_exp and v not in base_tec_pipes and v not in base_tec_tankers]
     
     new_tec_list = [v for v in scenario.set('technology')
                         if any(v.startswith(prefix) for prefix in base_tec_list)]
     filters_dict['t'] = new_tec_list
-    
+            
     for bt in base_tec_list:
         base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates() #gas_piped_exp
-        for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i) or (bt in base_tec_dom and bt == i)]:
+        for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i) or (bt in base_tec_pipes and bt in i) or (bt in base_tec_tankers and bt in i) or (bt in base_tec_dom and bt == i)]:
             add_index = [(*item[:-1], nt) for item in base_index]
             add_index = pd.MultiIndex.from_tuples(add_index, names = mapping_df.index.names)
             new_rows = mapping_df.loc[base_index].copy()
@@ -59,6 +62,11 @@ def pyam_df_from_rep(
         if bt not in new_tec_list:
             mapping_df = mapping_df.drop(base_index)
     
+    # Update commodity dictionary
+    for pipe in ['gas_pipeline_capacity', 'oil_pipeline_capacity']:
+        if pipe in filters_dict['c']:
+            filters_dict['c'] = filters_dict['c'] + [c for c in scenario.set('commodity') if c.startswith(pipe)]
+
     rep.set_filters(**filters_dict)
     
     if reporter_var == 'out':
@@ -67,14 +75,18 @@ def pyam_df_from_rep(
 
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
-            df = (
-                    dfv.join(mapping_df[["iamc_name", "unit"]])
-                    .dropna()
-                    .groupby(["nl", "nd", "ya", "iamc_name"])
-                    .sum(numeric_only=True)
+            df = dfv.join(mapping_df[['iamc_name', 'unit']])
+            df = (df.dropna()
+                  .groupby(["nl", "nd", "ya", "t", "iamc_name"])
+                  .sum(numeric_only=True)
                 )
-            # Adjust df to include exporters in iamc_name for trade variables
             dfn = df.index.to_frame(index = False)
+            dfn['iamc_name'] = np.where(dfn['t'].str.contains('_pipe_'),
+                                       dfn['iamc_name'] + 'R12_' + dfn['t'].str.split('_').str[-1].str.upper(),
+                                       dfn['iamc_name'])
+            dfn = dfn.drop(columns = ['t'])
+
+            # Adjust df to include exporters in iamc_name for trade variables
             ndiff = dfn['nl'] != dfn['nd']
             dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
             dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
@@ -98,7 +110,7 @@ def fuel_supply_reporting(rep: Reporter, scenario: message_ix.Scenario, config_n
     supply_config = load_config(config_name)
     full_df = pd.DataFrame()
     for var in ['out']:
-        rdf = pyam_df_from_rep(rep, var, supply_config.mapping)
+        rdf = pyam_df_from_rep(rep, scenario, var, supply_config.mapping)
         rdf = rdf.reset_index()
         rdf = rdf.drop_duplicates()
         full_df = pd.concat([full_df, rdf])
@@ -116,79 +128,90 @@ def fuel_supply_reporting(rep: Reporter, scenario: message_ix.Scenario, config_n
 
     return df 
 
-# Call reporter
-mp = ixmp.Platform()
+def run_reporting():
+    # Call reporter
+    mp = ixmp.Platform()
 
-model_scenarios = [('weu_security', 'SSP2'),
-                   ('weu_security', 'FSU2040'),
-                   ('weu_security', 'FSU2100')]
-for lev in [10, 15, 20, 25, 30]:
-#for lev in [30]:
-    model_scenarios = model_scenarios + [('weu_security', f'SSP2_NAM{lev}EJ'),
-                       ('weu_security', f'FSU2040_NAM{lev}EJ'),
-                       ('weu_security', f'FSU2100_NAM{lev}EJ')]
-for conf in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
-#for conf in [1.0]:
-    model_scenarios = model_scenarios + [('weu_security', f'SSP2_MEACON_{conf}'),
-                       ('weu_security', f'FSU2040_MEACON_{conf}'),
-                       ('weu_security', f'FSU2100_MEACON_{conf}')]
+    model_scenarios = [('weu_security', 'SSP2'),
+                       ('weu_security', 'FSU2040'),
+                       ('weu_security', 'FSU2100'),]
+    #for lev in [10, 15, 20, 25, 30]:
+    #    model_scenarios = model_scenarios + [('weu_security', f'SSP2_NAM{lev}EJ'),
+    #                    ('weu_security', f'FSU2040_NAM{lev}EJ'),
+    #                    ('weu_security', f'FSU2100_NAM{lev}EJ')]
+    for conf in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
+        model_scenarios = model_scenarios + [('weu_security', f'SSP2_MEACON_{conf}'),
+                        #('weu_security', f'FSU2040_MEACON_{conf}'),
+                        #('weu_security', f'FSU2100_MEACON_{conf}')
+                        ]
 
-model_scenarios = model_scenarios + [('weu_security', 'SSP2_NAM30EJ_RSC_NAM'),
-                                     ('weu_security', 'INDC2030'),
-                                     ('weu_security', 'INDC2030_FSU2040'),
-                                     ('weu_security', 'INDC2030_FSU2100'),
-                                     ('weu_security', 'INDC2030_NAM30EJ'),
-                                     ('weu_security', 'INDC2030_FSU2040_NAM30EJ'),
-                                     ('weu_security', 'INDC2030_FSU2100_NAM30EJ'),
-                                     ('weu_security', 'INDC2030_MEACON_1.0'),
-                                     ('weu_security', 'INDC2030_FSU2040_MEACON_1.0'),
-                                     ('weu_security', 'INDC2030_FSU2100_MEACON_1.0')]
-print(model_scenarios)
+    model_scenarios = model_scenarios + [#('weu_security', 'SSP2_NAM30EJ_RSC_NAM'),
+                                        #('weu_security', 'INDC2030'),
+                                        #('weu_security', 'INDC2030_FSU2040'),
+                                        #('weu_security', 'INDC2030_FSU2100'),
+                                        #('weu_security', 'INDC2030_NAM30EJ'),
+                                        #('weu_security', 'INDC2030_FSU2040_NAM30EJ'),
+                                        #('weu_security', 'INDC2030_FSU2100_NAM30EJ'),
+                                        #('weu_security', 'INDC2030_MEACON_1.0'),
+                                        #('weu_security', 'INDC2030_FSU2040_MEACON_1.0'),
+                                        #('weu_security', 'INDC2030_FSU2100_MEACON_1.0'),
+                                        ]
+    print(model_scenarios)
 
-fuel_supply_out = pd.DataFrame()
-for mod, scen in model_scenarios:
-    print(f"COMPILING {mod}/{scen}")
-    print(f"--------------------------------")
-    scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
-    rep = Reporter.from_scenario(scenario)
+    fuel_supply_out = pd.DataFrame()
+    for mod, scen in model_scenarios:
+        print(f"COMPILING {mod}/{scen}")
+        print(f"--------------------------------")
+        scenario = message_ix.Scenario(mp, model = mod, scenario = scen)
+        rep = Reporter.from_scenario(scenario)
+        fuel_supply = pd.DataFrame()
+        # Collect all gas supply reporting
+        for fuel in ['biomass', 'coal', 'crude', 'ethanol', 'fueloil', 'gas', 'h2', 'lightoil', 'methanol']:
+            fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
+            fuel_supply = pd.concat([fuel_supply, fuel_supply_df])
+            
+            check = fuel_supply_df[fuel_supply_df['year'] == 2030]
+            check = check[check['variable'].str.contains("Imports")]
+            check = check[check['variable'].str.contains("R12_NAM")]
+            check = check[check['region'] == "R12_EEU"]
+            print(fuel)
+            print(check)
+            
+        fuel_supply['fuel_type'] = fuel_supply['variable'].str.split('|').str[0]
+        fuel_supply['fuel_type'] = fuel_supply['fuel_type'].str.replace(' Supply', '')
 
-    check = scenario.var("ACT")
-    check = check['year_act'].unique()
-    print(check)
-    
-    fuel_supply = pd.DataFrame()
-    # Collect all gas supply reporting
-    for fuel in ['biomass', 'coal', 'crude', 'ethanol', 'fueloil', 'gas', 'h2', 'lightoil', 'methanol']:
-        fuel_supply_df = fuel_supply_reporting(rep, scenario, f'{fuel}_supply')
-        fuel_supply = pd.concat([fuel_supply, fuel_supply_df])
-        
-        check = fuel_supply_df[fuel_supply_df['year'] == 2030]
-        check = check[check['variable'].str.contains("Imports")]
-        check = check[check['variable'].str.contains("R12_NAM")]
-        check = check[check['region'] == "R12_EEU"]
-        print(fuel)
-        print(check)
-        
-    fuel_supply['fuel_type'] = fuel_supply['variable'].str.split('|').str[0]
-    fuel_supply['fuel_type'] = fuel_supply['fuel_type'].str.replace(' Supply', '')
+        fuel_supply['supply_type'] = fuel_supply['variable'].str.split('|').str[1]
+        fuel_supply['exporter'] = np.where(fuel_supply['supply_type'] == 'Imports',
+                                        fuel_supply['variable'].str.split('|').str[-1], '')
+        fuel_exports = fuel_supply.copy()
+        fuel_exports = fuel_exports[['region', 'exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
+        fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
+        fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type'] + "|" + fuel_exports['region']
+        fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'variable', 'unit', 'year'])['value'].sum().reset_index()
+        fuel_exports = fuel_exports.rename(columns = {'exporter': 'region'})
+        fuel_exports['exporter'] = ''
+        fuel_exports['supply_type'] = 'Exports'
+        fuel_exports['value'] *= -1 # Set to negative
 
-    fuel_supply['supply_type'] = fuel_supply['variable'].str.split('|').str[1]
-    fuel_supply['exporter'] = np.where(fuel_supply['supply_type'] == 'Imports',
-                                       fuel_supply['variable'].str.split('|').str[-1], '')
-    fuel_exports = fuel_supply.copy()
-    fuel_exports = fuel_exports[['region', 'exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'year']]
-    fuel_exports = fuel_exports[fuel_exports['supply_type'] == 'Imports']
-    fuel_exports['variable'] = 'Exports|' + fuel_exports['fuel_type'] + "|" + fuel_exports['region']
-    fuel_exports = fuel_exports.groupby(['exporter', 'fuel_type', 'model', 'scenario', 'supply_type', 'variable', 'unit', 'year'])['value'].sum().reset_index()
-    fuel_exports = fuel_exports.rename(columns = {'exporter': 'region'})
-    fuel_exports['exporter'] = ''
-    fuel_exports['supply_type'] = 'Exports'
-    fuel_exports['value'] *= -1 # Set to negative
+        fuel_supply = fuel_supply[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
+        fuel_exports = fuel_exports[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
+        fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply, fuel_exports])
 
-    fuel_supply = fuel_supply[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
-    fuel_exports = fuel_exports[['region', 'fuel_type', 'model', 'scenario', 'supply_type', 'unit', 'value', 'variable', 'exporter', 'year']].drop_duplicates()
-    fuel_supply_out = pd.concat([fuel_supply_out, fuel_supply, fuel_exports])
+    # Update scenario names
+    update_scenario_names = {'SSP2': 'REF', 
+                             'FSU2100': 'FSULONG',}
+    for sn in update_scenario_names.keys():
+        fuel_supply_out['scenario'] = np.where(fuel_supply_out['scenario'] == sn, update_scenario_names[sn], fuel_supply_out['scenario'])
 
-fuel_supply_out.to_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
+    fuel_supply_out['scenario'] = np.where(fuel_supply_out['scenario'].str.contains("SSP2_MEACON"),
+                                            fuel_supply_out['scenario'].str.replace("SSP2_MEACON", "REF_MEACON"),
+                                            fuel_supply_out['scenario'])
+    fuel_supply_out['scenario'] = np.where(fuel_supply_out['scenario'].str.contains("MEACON"),
+                                           fuel_supply_out['scenario'].str.replace("MEACON_", "MEACON"),
+                                           fuel_supply_out['scenario'])
+                                           
+    fuel_supply_out.to_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
 
-mp.close_db()
+    mp.close_db()
+
+run_reporting()

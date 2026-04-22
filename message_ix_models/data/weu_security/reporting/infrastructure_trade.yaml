@@ -1,0 +1,56 @@
+var:
+  out
+
+iamc_prefix:
+  Trade|Infrastructure|
+
+unit: EJ/yr
+
+vars:
+
+# Gas pipeline capacity
+  Trade|Infrastructure|Pipeline|Gas|:
+    filter:
+      { technology: [gas_pipe], commodity: ['gas_pipeline_capacity_weu', 'gas_pipeline_capacity_mea',
+                                            'gas_pipeline_capacity_fsu', 'gas_pipeline_capacity_chn',
+                                            'gas_pipeline_capacity_lam', 'gas_pipeline_capacity_sas',
+                                            'gas_pipeline_capacity_pas', 'gas_pipeline_capacity_afr',
+                                            'gas_pipeline_capacity_eeu', 'gas_pipeline_capacity_rcpa',
+                                            'gas_pipeline_capacity_nam'], mode: M1, level: [piped] }
+    short:
+      gas_pipe
+
+# Oil pipeline capacity
+  Trade|Infrastructure|Pipeline|Oil|:
+    filter:
+      { technology: [oil_pipe], commodity: oil_pipeline_capacity, mode: M1, level: [piped] }
+    short:
+      oil_pipe
+
+# LNG tanker capacity
+  Trade|Infrastructure|Shipping|LNG Tanker|:
+    filter:
+      { technology: [LNG_tanker], commodity: LNG_tanker_capacity, mode: M1, level: [shipped] }
+    short:
+      LNG_tanker
+
+# Crude tanker capacity
+  Trade|Infrastructure|Shipping|Crude Tanker|:
+    filter:
+      { technology: [crudeoil_tanker], commodity: crudeoil_tanker_capacity, mode: M1, level: [shipped] }
+    short:
+      crudeoil_tanker
+
+# Petroleum tanker capacity
+  Trade|Infrastructure|Shipping|Petroleum Tanker|:
+    filter:
+      { technology: [oil_tanker], commodity: oil_tanker_capacity, mode: M1, level: [shipped] }
+    short:
+      petroleum_tanker
+
+# LH2 tanker capacity
+  Trade|Infrastructure|Shipping|LH2 Tanker|:
+    filter:
+      { technology: [lh2_tanker], commodity: lh2_tanker_capacity, mode: M1, level: [shipped] }
+    short:
+      LH2_tanker
