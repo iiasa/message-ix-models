@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 
 v2026.4.17
 ==========
