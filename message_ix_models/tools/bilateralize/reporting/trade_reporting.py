@@ -24,23 +24,18 @@ def load_config(name: str) -> "Config":
     return Config.from_files(name)
 
 def pyam_df_from_rep(
-    rep: message_ix.Reporter, 
-    reporter_var: str, 
-    mapping_df: pd.DataFrame,
-    scenario: message_ix.Scenario
+    rep: message_ix.Reporter, scenario: message_ix.Scenario, reporter_var: str, mapping_df: pd.DataFrame
 ) -> pd.DataFrame:
     """Queries data from Reporter and maps to IAMC variable names.
 
     Parameters
     ----------
-    rep: message_ix.Reporter
+    rep
         message_ix.Reporter to query
-    reporter_var: str
+    reporter_var
         Registered key of Reporter to query, e.g. "out", "in", "ACT", "emi", "CAP"
-    mapping_df: pd.DataFrame
+    mapping_df
         DataFrame mapping Reporter dimension values to IAMC variable names
-    scenario: message_ix.Scenario
-        Scenario to query
     """
     filters_dict = {
         col: list(mapping_df.index.get_level_values(col).unique())
@@ -53,18 +48,18 @@ def pyam_df_from_rep(
     new_tec_list = [v for v in scenario.set('technology')
                         if any(v.startswith(prefix) for prefix in base_tec_list)]
     filters_dict['t'] = new_tec_list
-    
+
     for bt in base_tec_list:
         base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates() #gas_piped_exp
         for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i) or (bt in base_tec_dom and bt == i)]:
             add_index = [(*item[:-1], nt) for item in base_index]
             add_index = pd.MultiIndex.from_tuples(add_index, names = mapping_df.index.names)
-            new_rows = mapping_df.loc[base_index].copy()
+            new_rows = mapping_df.loc[base_index].copy().drop_duplicates()
             new_rows.index = add_index
             mapping_df = pd.concat([mapping_df, new_rows])
         if bt not in new_tec_list:
             mapping_df = mapping_df.drop(base_index)
-    
+
     rep.set_filters(**filters_dict)
     
     if reporter_var == 'out':
@@ -73,17 +68,18 @@ def pyam_df_from_rep(
 
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
-            df = (
-                    dfv.join(mapping_df[["iamc_name", "unit"]])
-                    .dropna()
-                    .groupby(["nl", "nd", "ya", "iamc_name"])
-                    .sum(numeric_only=True)
+            df = dfv.join(mapping_df[['iamc_name', 'unit']])
+            df = (df.dropna()
+                  .groupby(["nl", "nd", "ya", "t", "iamc_name"])
+                  .sum(numeric_only=True)
                 )
-            # Adjust df to include exporters in iamc_name for trade variables
             dfn = df.index.to_frame(index = False)
+            dfn = dfn.drop(columns = ['t'])
+
+            # Adjust df to include exporters in iamc_name for trade variables
             ndiff = dfn['nl'] != dfn['nd']
-            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name']
-            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nl'] + ">" +dfn.loc[ndiff, 'nd']
+            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
+            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
             df.index = pd.MultiIndex.from_frame(dfn)
             df_out = pd.concat([df_out, df])
     else:
@@ -106,7 +102,7 @@ def bilat_trade_reporting(rep: Reporter,
     supply_config = load_config(config_name)
     full_df = pd.DataFrame()
     for var in ['out']:
-        rdf = pyam_df_from_rep(rep, var, supply_config.mapping, scenario)
+        rdf = pyam_df_from_rep(rep, scenario, var, supply_config.mapping)
         rdf = rdf.reset_index()
         rdf = rdf.drop_duplicates()
         full_df = pd.concat([full_df, rdf])

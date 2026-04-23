@@ -11,7 +11,7 @@ vars:
 # Biomass trade
   Trade|Primary Energy|Biomass [Volume]:
     filter:
-      { technology: [biomass_shipped_exp, biomass_piped_exp], mode: M1, commodity: biomass, level: [shipped, piped] }
+      { technology: [biomass_shipped_exp], mode: M1, commodity: biomass, level: [shipped] }
     short:
       biomass_trade
 
@@ -25,7 +25,7 @@ vars:
 # Coal trade
   Trade|Primary Energy|Coal [Volume]:
     filter:
-      { technology: [coal_shipped_exp, coal_piped_exp], mode: M1, commodity: coal, level: [shipped, piped] }
+      { technology: [coal_shipped_exp], mode: M1, commodity: coal, level: [shipped] }
     short:
       coal_trade
 
