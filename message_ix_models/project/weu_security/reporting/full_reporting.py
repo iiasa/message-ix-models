@@ -1,4 +1,4 @@
-"""Reporting workflow for WEU security scenarios"""
+"""Reporting workflow for security scenarios"""
 
 import ixmp
 import message_ix
@@ -11,9 +11,9 @@ from message_ix_models.tools.bilateralize.reporting.full_reporting import report
 
 # Call all scenarios for analysis
 mp = ixmp.Platform()
-for scen in [#"SSP2", "FSU2040", "FSU2100",
-             #"SSP2_NAM30EJ", "FSU2040_NAM30EJ", "FSU2100_NAM30EJ",
-             #"SSP2_MEACON_1.0", "FSU2040_MEACON_1.0", "FSU2100_MEACON_1.0",
+for scen in ["SSP2", "FSU2040", "FSU2100",
+             "SSP2_NAM30EJ", "FSU2040_NAM30EJ", "FSU2100_NAM30EJ",
+             "SSP2_MEACON_1.0", "FSU2040_MEACON_1.0", "FSU2100_MEACON_1.0",
              "INDC2030", "INDC2030_FSU2040", "INDC2030_FSU2100",
              "INDC2030_NAM30EJ", "INDC2030_FSU2100_NAM30EJ",
              "INDC2030_MEACON_1.0", "INDC2030_FSU2100_MEACON_1.0"]:
