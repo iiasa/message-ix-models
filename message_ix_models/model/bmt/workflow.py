@@ -9,7 +9,7 @@ import message_ix
 
 from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
-from message_ix_models.model.buildings.build import build_B as build_B
+from message_ix_models.model.buildings.build import main as build_B
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T

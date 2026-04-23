@@ -22,7 +22,8 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
 from message_ix_models.model.bmt.workflow import generate
-from message_ix_models.model.buildings.build import build_B, prepare_data_B
+from message_ix_models.model.buildings.build import main as build_B
+from message_ix_models.model.buildings.build import prepare_data_B
 from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
