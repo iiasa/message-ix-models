@@ -13,7 +13,6 @@ Coverage notes:
 """
 
 import logging
-from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -50,6 +49,8 @@ def _minimal_buildings_data():
 @pytest.fixture
 def bmt_context(test_context, tmp_path):
     """BMT context (R12) and buildings config with paths to minimal CSVs."""
+    from message_ix_models.model.buildings.config import METHOD, Config
+
     test_context.model.regions = "R12"
     test_context.regions = "R12"
     test_context.ssp = "SSP2"
@@ -61,12 +62,16 @@ def bmt_context(test_context, tmp_path):
     # keep "commodity" as a column by adding an index column
     demand_static.insert(0, "idx", range(len(demand_static)))
     demand_static.to_csv(tmp_path / "demand_static.csv", index=False)
-    test_context.buildings = SimpleNamespace(
-        prices=str(tmp_path / "prices.csv"),
-        sturm_r=str(tmp_path / "sturm_r.csv"),
-        sturm_c=str(tmp_path / "sturm_c.csv"),
-        demand_static=str(tmp_path / "demand_static.csv"),
+    test_context.buildings = Config(
+        data_paths=dict(
+            prices=tmp_path / "prices.csv",
+            sturm_r=tmp_path / "sturm_r.csv",
+            sturm_c=tmp_path / "sturm_c.csv",
+            demand_static=tmp_path / "demand_static.csv",
+        ),
+        method=METHOD.B,
         with_materials=False,
+        sturm_scenario="NONE",
     )
     return test_context
 
