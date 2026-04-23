@@ -1,3 +1,5 @@
+"""Build MESSAGEix-Buildings on a MESSAGEix-GLOBIOM scenario."""
+
 import logging
 import re
 from collections import defaultdict
@@ -502,7 +504,7 @@ def scale_and_replace(
     return result
 
 
-def prepare_data(
+def prepare_data_A(
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
     demand: pd.DataFrame,
@@ -632,9 +634,9 @@ def prepare_data_B(  # noqa: C901
     prices: pd.DataFrame,
     sturm_r: pd.DataFrame,
     sturm_c: pd.DataFrame,
-    demand_static: pd.DataFrame = None,
-    with_materials: bool = True,
-    relations: list[str] = [],
+    demand_static: pd.DataFrame,
+    with_materials: bool,
+    relations: list[str],
 ) -> "ParameterData":
     """Derive data for MESSAGEix-Buildings from `scenario`.
 
@@ -893,21 +895,44 @@ def prune_spec(spec: Spec, data: "ParameterData") -> None:
             )
 
 
-def main(
-    context: Context,
-    scenario: message_ix.Scenario,
-    demand: pd.DataFrame,
-    prices: pd.DataFrame,
-    sturm_r: pd.DataFrame,
-    sturm_c: pd.DataFrame,
-):
+def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -> None:
     """Set up the structure and data for MESSAGE_Buildings on `scenario`.
+
+    The function responds to a :class:`.buildings.Config` instance at
+    :py:`context.buildings`; if none exists, it is created using
+    :func:`.bmt.config.load_buildings_config`; see its documentation.
+
+    If :attr:`.buildings.Config.method` is :any:`~.buildings.config.METHOD.A`:
+
+    - `args` must contain four (4) data frames; these are data for `demand`, `prices`,
+      `sturm_r`, and `sturm_c`.
+    - Model data are prepared using :func:`prepare_data_A`.
+
+    If :attr:`.buildings.Config.method` is :any:`~.buildings.config.METHOD.B`:
+
+    - `args` must be empty.
+    - Data for demand, prices, and STURM are loaded from CSV files given by
+      :attr:`.buildings.Config.data_paths`.
+    - Model data are prepared using :func:`prepare_data_B`
+    - The functions :func:`_remove_rc_bounds` and
+      :func:`_replace_ue_rt_share_with_share_mode` are called on `scenario`.
 
     Parameters
     ----------
+    context
+        :py:`context.buildings` may be an instance of :class:`.buildings.Config`.
     scenario
         Scenario to set up.
     """
+    from .config import METHOD
+
+    # Ensure context.buildings is set (e.g. by BMT from config.yaml); else defaults
+    if "buildings" not in context:
+        from message_ix_models.model.bmt.config import load_buildings_config
+
+        # Same as in .model.bmt.workflow.generate()
+        context.buildings = load_buildings_config()
+
     # Info about the `scenario` to be modified. If build.main() has already been run on
     # the scenario, this will reflect that, e.g. will include the structures from
     # buildings/set.yaml.
@@ -924,18 +949,64 @@ def main(
     # Generate a spec for the model
     spec = get_spec(context)
 
-    # Prepare data based on the contents of `scenario`
-    data = prepare_data(
-        scenario,
-        info,
-        demand,
-        prices,
-        sturm_r,
-        sturm_c,
-        context.buildings.with_materials,
-        relations=spec.require.set["relation"],
-        afofi_demand=None,  # Use calculated AFOFI demand
-    )
+    if context.buildings.method is METHOD.A:
+        assert 4 == len(args)
+        demand, prices, sturm_r, sturm_c = args
+        # Prepare data based on the contents of `scenario`
+        data = prepare_data_A(
+            scenario,
+            info,
+            demand,
+            prices,
+            sturm_r,
+            sturm_c,
+            context.buildings.with_materials,
+            relations=spec.require.set["relation"],
+            afofi_demand=None,  # Use calculated AFOFI demand
+        )
+    elif context.buildings.method is METHOD.B:
+        from pathlib import Path
+
+        def _load_csv(attr: str, index_col=None):
+            """Resolve path from context.buildings or defaults and load CSV."""
+            val = context.buildings.data_paths[attr]
+            path = Path(val)
+            # TODO Move this path logic into .buildings.Config
+            path = path if path.is_absolute() else private_data_path("buildings", val)
+            return pd.read_csv(path, index_col=index_col)
+
+        # Restrict required relations to those present on the scenario
+        # TODO Move this into get_spec()
+        scenario_relations = set(scenario.set("relation").tolist())
+        req_relation = spec.require.set["relation"]
+
+        def _id(e):
+            return getattr(e, "id", e)
+
+        spec.require.set["relation"] = [
+            r for r in req_relation if _id(r) in scenario_relations
+        ]
+
+        # Inputs for prepare_data_B from context.buildings or defaults
+        prices = _load_csv("prices")
+        sturm_r = _load_csv("sturm_r", index_col=0)
+        sturm_c = _load_csv("sturm_c", index_col=0)
+        demand_static = _load_csv("demand_static", index_col=0)
+        demand_static.loc[
+            demand_static["commodity"].str.contains("afofio", na=False), "value"
+        ] = 0  # Temporary fix to remove AFOFIO demand from demand_static
+
+        # Prepare data based on the contents of `scenario`
+        data = prepare_data_B(
+            scenario,
+            info,
+            prices,
+            sturm_r,
+            sturm_c,
+            demand_static,
+            context.buildings.with_materials,
+            relations=spec.require.set["relation"],
+        )
 
     # Remove unused commodities and technologies
     prune_spec(spec, data)
@@ -948,6 +1019,10 @@ def main(
     #       already been set up
     options = dict(fast=True)
     build.apply_spec(scenario, spec, _add_data, **options)
+
+    if context.buildings.method is METHOD.B:
+        _remove_rc_bounds(scenario)
+        _replace_ue_rt_share_with_share_mode(scenario)
 
     scenario.set_as_default()
 
@@ -1087,14 +1162,6 @@ def materials(
     return {k: pd.concat(v) for k, v in result.items()}
 
 
-# Default input filenames when context.buildings does not provide paths
-_BUILD_B_DEFAULT_PATHS = {
-    "prices": "input_prices_R12.csv",
-    "sturm_r": "report_MESSAGE_resid_SSP2_nopol_post.csv",
-    "sturm_c": "report_MESSAGE_comm_SSP2_nopol_post.csv",
-    "demand_static": "static_20251227.csv",
-}
-
 _BOUND_PARAMS = [
     "bound_activity_lo",
     "bound_activity_up",
@@ -1178,110 +1245,3 @@ def _replace_ue_rt_share_with_share_mode(scenario: message_ix.Scenario) -> None:
         scenario.add_set("shares", "RT_elec_share_RC_max")
         scenario.add_par("share_mode_up", df_share_mode_up)
         log.info("Added share mode constraint RT_elec_share_RC_max")
-
-
-def build_B(
-    context: Context,
-    scenario: message_ix.Scenario,
-):
-    """Set up the structure and data for MESSAGEix_Buildings on `scenario`.
-
-    Input paths and :attr:`with_materials` are read from :attr:`context.buildings`.
-    When running the BMT workflow, :attr:`context.buildings` is populated from the
-    ``buildings`` section of :file:`data/bmt/config.yaml` (via
-    :func:`message_ix_models.model.bmt.config.load_buildings_config`). If
-    :attr:`context.buildings` is not set, or an attribute is missing, values fall
-    back to :data:`_BUILD_B_DEFAULT_PATHS` and :attr:`with_materials` = False.
-
-    Parameters
-    ----------
-    context
-        Context; may have :attr:`buildings` with attributes :attr:`prices`,
-        :attr:`sturm_r`, :attr:`sturm_c`, :attr:`demand_static` (path or
-        filename), and :attr:`with_materials`.
-    scenario
-        Scenario to set up.
-    """
-    from pathlib import Path
-    from types import SimpleNamespace
-
-    info = ScenarioInfo(scenario)
-
-    # Use context.buildings if set (e.g. by BMT from config.yaml); else defaults
-    buildings = getattr(context, "buildings", None)
-    if buildings is None:
-        context.buildings = SimpleNamespace(
-            **_BUILD_B_DEFAULT_PATHS,
-            with_materials=False,
-        )
-        buildings = context.buildings
-
-    def _load_csv(attr: str, index_col=None):
-        """Resolve path from context.buildings or defaults and load CSV."""
-        val = getattr(buildings, attr, None) or _BUILD_B_DEFAULT_PATHS[attr]
-        path = Path(val)
-        path = path if path.is_absolute() else private_data_path("buildings", val)
-        return pd.read_csv(path, index_col=index_col)
-
-    scenario.check_out()
-
-    try:
-        # TODO explain what this is for
-        scenario.init_set("time_relative")
-    except ValueError:
-        pass  # Already exists
-
-    # Generate a spec for the model
-    spec = get_spec(context)
-
-    # Restrict required relations to those present on the scenario
-    scenario_relations = set(scenario.set("relation").tolist())
-    req_relation = spec.require.set["relation"]
-
-    def _id(e):
-        return getattr(e, "id", e)
-
-    spec.require.set["relation"] = [
-        r for r in req_relation if _id(r) in scenario_relations
-    ]
-
-    # Inputs for prepare_data_B from context.buildings or defaults
-    prices = _load_csv("prices")
-    sturm_r = _load_csv("sturm_r", index_col=0)
-    sturm_c = _load_csv("sturm_c", index_col=0)
-    demand_static = _load_csv("demand_static", index_col=0)
-    demand_static.loc[
-        demand_static["commodity"].str.contains("afofio", na=False), "value"
-    ] = 0  # Temporary fix to remove AFOFIO demand from demand_static
-
-    with_materials = getattr(buildings, "with_materials", False)
-
-    # Prepare data based on the contents of `scenario`
-    data = prepare_data_B(
-        scenario,
-        info,
-        prices,
-        sturm_r,
-        sturm_c,
-        demand_static,
-        with_materials,
-        relations=spec.require.set["relation"],
-    )
-
-    # Remove unused commodities and technologies
-    prune_spec(spec, data)
-
-    # Simple callback for apply_spec()
-    def _add_data(s, **kw):
-        return data
-
-    # Apply the spec to the scenario
-    options = dict(fast=True)
-    build.apply_spec(scenario, spec, _add_data, **options)
-
-    _remove_rc_bounds(scenario)
-    _replace_ue_rt_share_with_share_mode(scenario)
-
-    scenario.set_as_default()
-
-    log.info(f"Built {scenario.url} and set as default")
