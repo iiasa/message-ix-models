@@ -135,13 +135,15 @@ def adapt_emission_factors(data: "MutableParameterData") -> None:
     data["input"] = data["input"].assign(value=1.0)
 
 
-def get_spec(context: Context) -> Spec:
+def get_spec(context: Context, filter_relations: list[str] = []) -> Spec:
     """Return the specification for MESSAGEix-Buildings.
 
     Parameters
     ----------
     context : .Context
         The key ``regions`` determines the regional aggregation used.
+    filter_relations, optional
+        if given, only include these relations in :attr:`Spec.require`.
 
     .. todo:: Expand to handle :data:`BUILD_COMM_CONVERT`.
     """
@@ -163,6 +165,14 @@ def get_spec(context: Context) -> Spec:
 
     # The set of required nodes varies according to context.regions
     s.require.set["node"].extend(map(str, get_region_codes(context.regions)))
+
+    if filter_relations:
+        s.require.set["relation"] = list(
+            filter(
+                lambda r: getattr(r, "id", r) in filter_relations,
+                s.require.set["relation"],
+            )
+        )
 
     return s
 
@@ -910,6 +920,8 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
 
     If :attr:`.buildings.Config.method` is :any:`~.buildings.config.METHOD.B`:
 
+    - :func:`get_spec` is called with the :py:`filter_relations` parameter, using only
+      the relation set members already present on `scenario`.
     - `args` must be empty.
     - Data for demand, prices, and STURM are loaded from CSV files given by
       :attr:`.buildings.Config.data_paths`.
@@ -946,8 +958,14 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
     except ValueError:
         pass  # Already exists
 
-    # Generate a spec for the model
-    spec = get_spec(context)
+    # Generate a spec for the model.
+    # For METHOD.B, restrict required relations to those present on the scenario.
+    spec = get_spec(
+        context,
+        filter_relations=scenario.set("relation").tolist()
+        if context.buildings.method is METHOD.B
+        else [],
+    )
 
     if context.buildings.method is METHOD.A:
         assert 4 == len(args)
@@ -974,18 +992,6 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             # TODO Move this path logic into .buildings.Config
             path = path if path.is_absolute() else private_data_path("buildings", val)
             return pd.read_csv(path, index_col=index_col)
-
-        # Restrict required relations to those present on the scenario
-        # TODO Move this into get_spec()
-        scenario_relations = set(scenario.set("relation").tolist())
-        req_relation = spec.require.set["relation"]
-
-        def _id(e):
-            return getattr(e, "id", e)
-
-        spec.require.set["relation"] = [
-            r for r in req_relation if _id(r) in scenario_relations
-        ]
 
         # Inputs for prepare_data_B from context.buildings or defaults
         prices = _load_csv("prices")
