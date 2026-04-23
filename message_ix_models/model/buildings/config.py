@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 import ixmp
 
 from message_ix_models.model.workflow import Config as SolveConfig
+from message_ix_models.util.config import ConfigHelper
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -47,7 +48,7 @@ def _code_dir_factory() -> Path:
 
 
 @dataclass
-class Config:
+class Config(ConfigHelper):
     """Configuration options for :mod:`.buildings` code.
 
     The code responds to values set on an instance of this class.
