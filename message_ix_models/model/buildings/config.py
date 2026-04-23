@@ -12,9 +12,26 @@ from message_ix_models.model.workflow import Config as SolveConfig
 from message_ix_models.util.config import ConfigHelper
 
 if TYPE_CHECKING:
+    from typing import TypedDict
+
     from message_ix_models import Context
 
+    class DataPaths(TypedDict):
+        prices: Path
+        sturm_r: Path
+        sturm_c: Path
+        demand_static: Path
+
+
 log = logging.getLogger(__name__)
+
+#: Defaults for :attr:`Config.data_paths`.
+DEFAULT_DATA_PATHS: "DataPaths" = dict(
+    prices=Path("input_prices_R12.csv"),
+    sturm_r=Path("report_MESSAGE_resid_SSP2_nopol_post.csv"),
+    sturm_c=Path("report_MESSAGE_comm_SSP2_nopol_post.csv"),
+    demand_static=Path("static_20251227.csv"),
+)
 
 
 class METHOD(Enum):
@@ -82,6 +99,9 @@ class Config(ConfigHelper):
     #:
     #: If not set explicitly, this is populated using :func:`_code_dir_factory`.
     code_dir: Path = field(default_factory=_code_dir_factory)
+
+    #: Paths to input data files.
+    data_paths: "DataPaths" = field(default_factory=DEFAULT_DATA_PATHS.copy)
 
     #: Maximum number of iterations of the ACCESS–STURM–MESSAGE loop. Set to 1 for
     #: once-through mode.
