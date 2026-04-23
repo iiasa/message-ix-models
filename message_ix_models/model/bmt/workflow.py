@@ -1,7 +1,4 @@
-# The workflow mainly contains the steps to build bmt baseline,
-# as well as the steps to apply policy scenario settings. See bmt-workflow.svg.
-# Example cli command:
-# mix-models bmt run --from="base" "glasgow+" --dry-run
+"""Construct the Buildings-Materials-Transport workflow."""
 
 import logging
 
@@ -77,11 +74,32 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return scenario
 
 
-# Main BMT workflow
-
-
 def generate(context: Context) -> Workflow:
-    """Create the BMT-run workflow."""
+    """Create the BMT workflow.
+
+    The workflow includes the following named steps:
+
+    - "M": load a base scenario that already contains :doc:`/material/index`.
+    - "M cloned": clone the above.
+    - Add sectoral structure and data:
+
+      - "BM built": build :doc:`/buildings/index` using :func:`.build_B`.
+      - "BM solved": solve the above scenario.
+      - "BM reported": report the solved scenario.
+      - "BMT built": build :doc:`MESSAGEix-Transport </transport/index>` using
+        :mod:`.transport.build`.
+      - "BMT solved": solve the above scenario.
+      - "BMTX built": add power-sector configuration for MESSAGEix-Materials using
+        :func:`.build_PM`.
+      - "BMTX baseline solved": solve the above scenario.
+
+    Through pending or future pull requests, the workflow will be extended to include:
+
+    - Policies such as emission budgets.
+    - Dynamic price-demand feedback.
+
+    .. todo:: Include a prepared version of :file:`bmt-workflow.svg` here.
+    """
     from message_ix_models.model.bmt.config import load_buildings_config
 
     wf = Workflow(context)
@@ -93,70 +111,30 @@ def generate(context: Context) -> Workflow:
 
     # Define model name
     model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-BMT-R12"
+    # Template for formatting URLs
+    url = model_name + "/baseline_"
+    base_url = "ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14"
 
-    wf.add_step(
-        "M",
-        None,
-        target="ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14",
-        # target = f"{model_name}/baseline",
-    )
+    # Common keyword argument for cloning
+    c = dict(keep_solution=False)
 
-    wf.add_step(
-        "M cloned",
-        "M",
-        target=f"{model_name}/baseline_M",
-        clone=dict(keep_solution=False),
-    )
+    name = wf.add_step("M", None, target=base_url)
+    name = wf.add_step("M cloned", name, target=f"{url}M", clone=c)
+    name = wf.add_step("BM built", name, build_B, target=f"{url}BM_20260308", clone=c)
+    name = wf.add_step("BM solved", name, solve)
 
-    wf.add_step(
-        "BM built",
-        "M cloned",
-        build_B,
-        target=f"{model_name}/baseline_BM_20260308",
-        clone=dict(keep_solution=False),
-    )
+    # This step requires the message_data branch `bmt_ssp`
+    name = wf.add_step("BM reported", name, report)
 
-    wf.add_step(
-        "BM solved",
-        "BM built",
-        solve,
-    )
-
-    wf.add_step(
-        "BM reported",
-        "BM solved",
-        report,  # require the message-data branch bmt_ssp
-    )
-
-    wf.add_step(
-        "BMT built",
-        "BM reported",
-        target=f"{model_name}/baseline_BMT",
-        clone=dict(keep_solution=False),
-    )
+    name = wf.add_step("BMT built", name, target=f"{url}BMT", clone=c)
     # calling build in transport workflow
     # and move build transport before buildings (to be added in next PR)
 
-    wf.add_step(
-        "BMT solved",
-        "BMT built",
-        solve,
+    name = wf.add_step("BMT solved", name, solve)
+    name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=False)
+    name = wf.add_step(
+        "BMTX baseline solved", name, solve, target=f"{url}BMTX", clone=False
     )
-
-    wf.add_step(
-        "BMTX built",
-        "BMT solved",
-        build_PM,
-        target=f"{model_name}/baseline_BMTX",
-        clone=False,
-    )
-
-    wf.add_step(
-        "BMTX baseline solved",
-        "BMTX built",
-        solve,
-        target=f"{model_name}/baseline_BMTX",
-        clone=False,  # clone true here and shift fmy to 2030
-    )
+    # NB At this point, clone and shift firstmodelyear to 2030
 
     return wf
