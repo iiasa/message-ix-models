@@ -2,6 +2,7 @@
 
 import logging
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +15,15 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 log = logging.getLogger(__name__)
+
+
+class METHOD(Enum):
+    """Enumeration of code paths in :func:`.buildings.build.main`."""
+
+    #: Code path with :func:`~.prepare_data_A`, used by :mod:`.project.navigate`.
+    A = auto()
+    #: Code path with :func:`~.prepare_data_B`, used by :mod:`.model.bmt`.
+    B = auto()
 
 
 def _code_dir_factory() -> Path:
@@ -76,6 +86,9 @@ class Config(ConfigHelper):
     #: Maximum number of iterations of the ACCESS–STURM–MESSAGE loop. Set to 1 for
     #: once-through mode.
     max_iterations: int = 0
+
+    #: Code path to use in :func:`.buildings.build.main`.
+    method: METHOD = METHOD.A
 
     #: :obj:`True` if the MESSAGEix-Materials + MESSAGEix-Buildings combination is
     #: active
