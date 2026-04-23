@@ -8,47 +8,61 @@ unit: EJ/yr
 
 vars:
 
-# Shipped biomass imports
-  Trade|Secondary Energy|Ethanol Volume|Shipped:
+# Ethanol trade
+  Trade|Secondary Energy|Ethanol [Volume]:
+    filter:
+      { technology: [eth_shipped_exp], mode: M1, commodity: ethanol, level: [shipped] }
+    short:
+      ethanol_trade
+
+# Shipped ethanol trade
+  Trade|Secondary Energy|Ethanol [Volume]|Shipped:
     filter:
       { technology: [eth_shipped_exp], mode: M1, commodity: ethanol, level: [shipped] }
     short:
       ethanol_shipped_exp
 
-# Piped fuel oil imports
-  Trade|Secondary Energy|Fuel Oil Volume|Piped:
+# Hydrogen trade
+  Trade|Secondary Energy|Hydrogen [Volume]:
     filter:
-      { technology: [foil_piped_exp], mode: M1, commodity: fueloil, level: [piped] }
+      { technology: [lh2_shipped_exp], mode: M1, commodity: hydrogen, level: [shipped] }
     short:
-      fueloil_piped_exp
-
-# Shipped fuel oil imports
-  Trade|Secondary Energy|Fuel Oil Volume|Shipped:
-    filter:
-      { technology: [foil_shipped_exp], mode: M1, commodity: fueloil, level: [shipped] }
-    short:
-      fueloil_shipped_exp
+      lh2_trade
 
 # Shipped hydrogen imports
-  Trade|Secondary Energy|Hydrogen Volume|Shipped:
+  Trade|Secondary Energy|Hydrogen [Volume]|Shipped:
     filter:
       { technology: [lh2_shipped_exp], mode: M1, commodity: hydrogen, level: [shipped] }
     short:
       lh2_shipped_exp
 
+# Light oil trade
+  Trade|Secondary Energy|Light Oil [Volume]:
+    filter:
+      { technology: [loil_shipped_exp, loil_piped_exp], mode: M1, commodity: lightoil, level: [shipped, piped] }
+    short:
+      loil_trade
+
 # Piped light oil imports
-  Trade|Secondary Energy|Light Oil Volume|Piped:
+  Trade|Secondary Energy|Light Oil [Volume]|Piped:
     filter:
       { technology: [loil_piped_exp], mode: M1, commodity: lightoil, level: [piped] }
     short:
       lightoil_piped_exp
 
 # Shipped light oil imports
-  Trade|Secondary Energy|Light Oil Volume|Shipped:
+  Trade|Secondary Energy|Light Oil [Volume]|Shipped:
     filter:
       { technology: [loil_shipped_exp], mode: M1, commodity: lightoil, level: [shipped] }
     short:
       lightoil_shipped_exp
+
+# Methanol trade
+  Trade|Secondary Energy|Methanol [Volume]:
+    filter:
+      { technology: [meth_shipped_exp, meth_piped_exp], mode: M1, commodity: methanol, level: [shipped, piped] }
+    short:
+      methanol_trade
 
 # Piped methanol imports
   Trade|Secondary Energy|Methanol Volume|Piped:
