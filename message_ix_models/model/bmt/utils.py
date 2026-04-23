@@ -136,6 +136,7 @@ def subtract_material_demand(
         Commercial STURM data
     method : str, optional
         Method to use for subtraction:
+
         - "bm_subtraction": default, substract entire trajectory
         - "im_subtraction": substract base year and rerun material demand projection
         - "pm_subtraction": to be determined (currently treated as additional demand)

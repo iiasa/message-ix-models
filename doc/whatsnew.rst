@@ -5,6 +5,15 @@ Next release
 ============
 
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
+- Add :doc:`/api/model-bmt` (:pull:`433`).
+
+  - Add
+    :data:`.buildings.config.DEFAULT_DATA_PATHS`,
+    :class:`~.buildings.config.METHOD`,
+    :attr:`.buildings.Config.data_paths`, and
+    :attr:`~.buildings.Config.method`.
+  - Add :func:`.buildings.build.prepare_data_B`;
+    rename :py:`prepare_data()` to :func:`~.buildings.build.prepare_data_A`.
 
 v2026.4.17
 ==========

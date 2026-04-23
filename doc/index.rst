@@ -93,6 +93,7 @@ Other submodules are documented on their respective pages:
 
    api/model
    api/model-bare
+   api/model-bmt
    api/model-build
    api/model-emissions
    api/model-snapshot
@@ -119,7 +120,6 @@ Other submodules are documented on their respective pages:
    material/index
    transport/index
    water/index
-   bmt/index
 
 .. _index-projects:
 
