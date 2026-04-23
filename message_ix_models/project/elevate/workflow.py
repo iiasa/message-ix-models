@@ -7,31 +7,25 @@ import logging
 
 import message_ix  # type: ignore
 
-from message_ix import make_df
-
-from message_ix_models import Context, ScenarioInfo
+from message_ix_models import Context
 from message_ix_models.tools.policy import (
-    add_NPi2030, 
-    add_NDC2030, 
-    add_glasgow, 
+    add_anchor,
     add_forever_constant,
-)
-from message_ix_models.project.engage.workflow import (
-    PolicyConfig,
-    step_1,
-    step_2,
-    step_3,
-    step_4,
+    add_glasgow,
+    add_NDC2030,
+    add_NPi2030,
 )
 from message_ix_models.workflow import Workflow
 
 log = logging.getLogger(__name__)
 
-# Single source of truth for the ELEVATE GP model name (config key and scenario target prefix)
-# ELE_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 GP"
-ELE_MODEL_NAME = "to_be_deleted"
+# Single source of truth for the ELEVATE GP model name
+# (config key and scenario target prefix)
+ELE_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-M-R12 GP"
+# ELE_MODEL_NAME = "to_be_deleted"
 
 # Functions for individual workflow steps
+
 
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Report the scenario."""
@@ -88,6 +82,25 @@ def solve(
 
     return scenario
 
+
+def add_gp(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Add GP to the scenario."""
+    context.anchor_data_file = "20260419gp.csv"
+    add_anchor(context, scenario)
+    solve(context, scenario, model="MESSAGE")
+
+    return scenario
+
+
+def add_gpl(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Add GPL to the scenario."""
+    context.anchor_data_file = "20260419gpl.csv"
+    add_anchor(context, scenario)
+    solve(context, scenario, model="MESSAGE")
+
+    return scenario
+
+
 # Constant carbon price (USD/tCO2) per region from 2030 to 2110 for CP-D0
 # Picked from lookup run
 CP_C0_PRICE = {
@@ -138,7 +151,8 @@ CP_C0_PRICE = {
 #                 constraint_value = eval(global_co2_bnd)
 #             except Exception as e:
 #                 raise ValueError(
-#                     f"Could not evaluate global_co2_bnd expression '{global_co2_bnd}' "
+#                     f"Could not evaluate global_co2_bnd expression "
+#                     f"'{global_co2_bnd}' "
 #                     f"for scenario '{scen}': {e}"
 #                 )
 #         else:
@@ -209,7 +223,8 @@ CP_C0_PRICE = {
 #         # but this flag does not matter here.
 #         context.run_reporting_only = False
 
-#     # TODO: discuss with Paul, step_2 does not actually use any PolicyConfig attributes?
+#     # TODO: discuss with Paul;
+#     # step_2 does not actually use any PolicyConfig attributes?
 #     # Create an empty PolicyConfig to satisfy the function signature
 #     policy_config = PolicyConfig()
 
@@ -283,7 +298,7 @@ _scen_all = [
     "ELV-SSP2-NDC-D0",
     "ELV-SSP2-LTS",
     "ELV-SSP2-NDC-LTS",
-    # "ELV-SSP2-GP",
+    "ELV-SSP2-GP",
     # "ELV-SSP2-GPL",
     # "ELV-SSP2-GPB",
 ]
@@ -314,7 +329,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "base",
         None,
-        target="ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline", 
+        target="ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline",
     )
 
     wf.add_step(
@@ -332,7 +347,7 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "NPi2030 solved",
-        "base reported", 
+        "base reported",
         add_NPi2030,
         target=f"{model_name}/NPi2030",
     )
@@ -350,6 +365,34 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "ELV-SSP2-CP-D0 reported",
         "CP-D0 solved",
+        report,
+    )
+
+    wf.add_step(
+        "GP solved",
+        "CP-D0 solved",
+        add_gp,
+        target=f"{model_name}/ELV-SSP2-GP",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "ELV-SSP2-GP reported",
+        "GP solved",
+        report,
+    )
+
+    wf.add_step(
+        "GPL solved",
+        "CP-D0 solved",
+        add_gpl,
+        target=f"{model_name}/ELV-SSP2-GPL",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "ELV-SSP2-GPL reported",
+        "GPL solved",
         report,
     )
 
