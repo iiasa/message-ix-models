@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
+from update_scenario_names import update_scenario_names
+
 # Import plot configurations
 with open(package_data_path('weu_security', 'reporting', 'plot_config.yaml'), 'r') as f:
     config = yaml.safe_load(f)
@@ -16,6 +18,7 @@ region_labels = config['region_labels']
 indf = pd.read_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
 indf = indf[indf['supply_type'].isin(['Imports', 'Exports'])]
 indf = indf[indf['model'] == 'weu_security'] # no reexports
+indf = update_scenario_names(indf)
 
 def make_paneled_figure(
     df,
@@ -26,7 +29,7 @@ def make_paneled_figure(
     plot_fuel_types: list[str],
     plot_fuel_colors: dict[str, str] = None,
     plot_all_years: list[int] = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060],
-    plot_ref_scenario: str = 'SSP2',
+    plot_ref_scenario: str = 'REF',
     region_labels: dict[str, str] = None,
     region_colors: dict[str, str] = None,
     row_scenario_groups: list[list[str]] = None,
@@ -36,7 +39,7 @@ def make_paneled_figure(
     from matplotlib.patches import Patch
 
     if row_scenario_groups is None:
-        keywords = row_keywords or ['SSP2', 'FSU2040', 'FSU2100']
+        keywords = row_keywords or ['REF', 'FSU2040', 'FSULONG']
         row_scenario_groups = [
             [s for s in plot_scenarios if keyword in s]
             for keyword in keywords
@@ -60,7 +63,7 @@ def make_paneled_figure(
     all_non_ref = [s for s in plot_scenarios if s != plot_ref_scenario]
     marker_styles = ["o", "s", "^", "D", "v", "P", "X"]
 
-    _keywords = ['FSU2040', 'FSU2100', 'SSP2']
+    _keywords = ['FSU2040', 'FSULONG', 'SSP2']
 
     def _scenario_suffix(s: str) -> str:
         for kw in _keywords:
@@ -172,7 +175,7 @@ def make_paneled_figure(
         row_non_ref = [s for s in row_scenarios if s != plot_ref_scenario]
 
         row_keyword = next(
-            (kw for kw in ['SSP2', 'FSU2040', 'FSU2100']
+            (kw for kw in ['REF', 'FSU2040', 'FSULONG']
              if any(kw in s for s in row_scenarios)),
             ", ".join(row_scenarios),
         )
@@ -351,9 +354,9 @@ make_paneled_figure(df = indf[indf['model'] == 'weu_security'],
                     plot_year = 2030,
                     plot_exporter = 'R12_MEA',
                     plot_regions = ['R12_EEU', 'R12_WEU'],
-                    plot_scenarios = ['SSP2', 'SSP2_MEACON_1.0', 'SSP2_MEACON_0.9', 'SSP2_MEACON_0.8', 'SSP2_MEACON_0.75', 'SSP2_MEACON_0.5', 'SSP2_MEACON_0.25',
-                                      'FSU2040_MEACON_1.0', 'FSU2040_MEACON_0.9', 'FSU2040_MEACON_0.8', 'FSU2040_MEACON_0.75', 'FSU2040_MEACON_0.5', 'FSU2040_MEACON_0.25',
-                                      'FSU2100_MEACON_1.0', 'FSU2100_MEACON_0.9', 'FSU2100_MEACON_0.8', 'FSU2100_MEACON_0.75', 'FSU2100_MEACON_0.5', 'FSU2100_MEACON_0.25'],
+                    plot_scenarios = ['REF', 'REF_MEACON1.0', 'REF_MEACON0.9', 'REF_MEACON0.8', 'REF_MEACON0.75', 'REF_MEACON0.5', 'REF_MEACON0.25',
+                                      'FSU2040_MEACON1.0', 'FSU2040_MEACON0.9', 'FSU2040_MEACON0.8', 'FSU2040_MEACON0.75', 'FSU2040_MEACON0.5', 'FSU2040_MEACON0.25',
+                                      'FSULONG_MEACON1.0', 'FSULONG_MEACON0.9', 'FSULONG_MEACON0.8', 'FSULONG_MEACON0.75', 'FSULONG_MEACON0.5', 'FSULONG_MEACON0.25'],
                     plot_fuel_types = ['Gas', 'Coal', 'Crude', 'Fuel Oil', 'Light Oil', 'Ethanol'],
                     region_labels = region_labels,
                     region_colors = region_colors)
@@ -362,9 +365,9 @@ make_paneled_figure(df = indf[indf['model'] == 'weu_security'],
                     plot_year = 2030,
                     plot_exporter = 'R12_NAM',
                     plot_regions = ['R12_EEU', 'R12_WEU'],
-                    plot_scenarios = ['SSP2', 'SSP2_NAM15EJ', 'SSP2_NAM20EJ', 'SSP2_NAM25EJ', 'SSP2_NAM30EJ',
+                    plot_scenarios = ['REF', 'REF_NAM15EJ', 'REF_NAM20EJ', 'REF_NAM25EJ', 'REF_NAM30EJ',
                                       'FSU2040_NAM15EJ', 'FSU2040_NAM20EJ', 'FSU2040_NAM25EJ', 'FSU2040_NAM30EJ',
-                                      'FSU2100_NAM15EJ', 'FSU2100_NAM20EJ', 'FSU2100_NAM25EJ', 'FSU2100_NAM30EJ'],
+                                      'FSULONG_NAM15EJ', 'FSULONG_NAM20EJ', 'FSULONG_NAM25EJ', 'FSULONG_NAM30EJ'],
                     plot_fuel_types = ['Gas', 'Coal', 'Crude', 'Fuel Oil', 'Light Oil', 'Ethanol'],
                     region_labels = region_labels,
                     region_colors = region_colors)

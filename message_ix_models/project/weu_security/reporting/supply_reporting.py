@@ -214,4 +214,5 @@ def run_reporting():
 
     mp.close_db()
 
-run_reporting()
+if __name__ == "__main__":
+    run_reporting()

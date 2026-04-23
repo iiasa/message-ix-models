@@ -46,7 +46,7 @@ def infrastructure_reporting(rep: Reporter, scenario: message_ix.Scenario) -> pd
 # Call reporter
 mp = ixmp.Platform()
 
-model_scenarios = [('weu_security', 'SSP2_ppcost')]
+model_scenarios = [('weu_security', 'SSP2')]
 
 infra_out = pd.DataFrame()
 for mod, scen in model_scenarios:
@@ -61,6 +61,11 @@ for mod, scen in model_scenarios:
 
     infra_out['infrastructure'] = "Pipeline"
     infra_out['infrastructure'] = np.where(infra_out['variable'].str.contains('Shipping'), "Shipping", infra_out['infrastructure'])
+
+    update_scenario_names = {'SSP2': 'REF', 
+                             'FSU2100': 'FSULONG',}
+    for sn in update_scenario_names.keys():
+        infra_out['scenario'] = np.where(infra_out['scenario'] == sn, update_scenario_names[sn], infra_out['scenario'])
 
     infra_out.to_csv(package_data_path('weu_security', 'reporting', 'infrastructure_out.csv'))
 

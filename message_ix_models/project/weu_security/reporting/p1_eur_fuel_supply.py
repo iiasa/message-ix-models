@@ -7,6 +7,8 @@ import matplotlib.patches as mpatches
 import numpy as np
 import yaml
 
+from update_scenario_names import update_scenario_names
+
 # Import plot configurations
 with open(package_data_path('weu_security', 'reporting', 'plot_config.yaml'), 'r') as f:
     config = yaml.safe_load(f)
@@ -15,6 +17,7 @@ region_labels = config['region_labels']
 
 # Import fuel supply data
 df = pd.read_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
+df = update_scenario_names(df)
 df['exporter'] = np.where(df['supply_type'] == 'Exports', df['region'], df['exporter'])
 df = df[df['value'] != 0]
 
@@ -171,18 +174,18 @@ def plot_eur_supply(df: pd.DataFrame,
 
 plot_eur_supply(df = df,
                 plot_fuel = ["Gas"],
-                plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
+                plot_scenarios = ["REF", "FSU2040", "FSULONG"],
                 plot_regions = ["R12_EEU", "R12_WEU"],
                 plot_years = [2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060])
 
 plot_eur_supply(df = df,
                 plot_fuel = ["Light Oil"],
-                plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
+                plot_scenarios = ["REF", "FSU2040", "FSULONG"],
                 plot_regions = ["R12_EEU", "R12_WEU"],
                 plot_years = [2030, 2035, 2040, 2045, 2050, 2055, 2060])
 
 plot_eur_supply(df = df,
                 plot_fuel = ["Gas"],
-                plot_scenarios = ["SSP2", "FSU2040", "FSU2100"],
+                plot_scenarios = ["REF", "FSU2040", "FSULONG"],
                 plot_regions = ["R12_CHN"],
                 plot_years = [2030, 2035, 2040, 2045, 2050, 2055, 2060])
