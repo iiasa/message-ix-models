@@ -113,16 +113,16 @@ class ConfigHelper:
         for f in self._fields():
             yield f, getattr(self, f)
 
-    def read_file(self, path: Path) -> None:
+    def read_file(self, path: Path, key: str = "") -> None:
         """Update configuration from file.
 
         Parameters
         ----------
         path
             to a :file:`.yaml` file containing a top-level mapping.
-        fail : str
-            if "raise" (the default), any names in `path` which do not match attributes
-            of the dataclass raise a ValueError. Otherwise, a message is logged.
+        key, optional
+            if given, read data not from the top level of the file, but from a sub-
+            mapping under the top-level key `key`.
         """
         if path.suffix == ".yaml":
             # Read data from YAML
@@ -138,6 +138,9 @@ class ConfigHelper:
                 data = json.load(f)
         else:
             raise NotImplementedError(f"Read from {path.suffix}")
+
+        if key:
+            data = data[key]
 
         for key, value in self._canonicalize(data, "file section", ValueError):
             existing = getattr(self, key, None)

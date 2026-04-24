@@ -45,6 +45,18 @@ These are handled by :func:`.buildings.build_and_solve`.
 
    These steps are handled by :func:`.buildings.pre_solve`.
 
+   When the buildings module is run as part of the :doc:`/bmt/index` workflow,
+   it calls :func:`.buildings.build.build_B`,
+   which loads inputs (prices, STURM outputs, static demand) specified in :attr:`context.buildings`
+   or from :file:`data/bmt/config.yaml`,
+   calls :func:`.buildings.build.prepare_data_B`
+   to derive parameter data from the base scenario and those inputs,
+   then applies the buildings spec to the scenario.
+   :func:`.buildings.build.prepare_data_B` produces demand and technology parameters
+   (input, output, capacity factor, etc.)
+   for buildings commodities and the residual AFOFIO representation.
+   It can also add materials linkage when :attr:`with_materials` is :any:`True`.
+
 2. **Solve.**
    Because prices are endogenous in MESSAGE, solving the MESSAGE scenario produced by (1.4) can result in prices that are *different* from the ones provided to ACCESS and STURM in steps (1.2) and (1.3).
 
@@ -55,7 +67,6 @@ These are handled by :func:`.buildings.build_and_solve`.
 
    .. note:: As of 2023-01-10, this is not in active use; the models are run in a once-through fashion with :attr:`.max_iterations` set to 1.
       See also the :ref:`NAVIGATE workflow <navigate-workflow>`, wherein a second iteration is run manually after a policy scenario is solved.
-
 
 Report
 ------
@@ -180,7 +191,8 @@ The following corresponds to :file:`reporting_EFC.py`:
 Configuration
 =============
 
-The class :class:`.buildings.Config` defines all the options to which the code responds, as well as default values.
+The class :class:`.buildings.Config` defines all the options to which the code responds,
+as well as default values.
 Values given in code or on the command line will override these.
 
 .. autoclass:: message_ix_models.model.buildings.Config
@@ -196,4 +208,4 @@ Code reference
    :template: autosummary-module.rst
    :recursive:
 
-   buildings
+   message_ix_models.model.buildings
