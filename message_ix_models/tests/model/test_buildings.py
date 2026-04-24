@@ -6,12 +6,30 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from message_ix_models import ScenarioInfo
 from message_ix_models.model.buildings import Config, _mpd, sturm
-from message_ix_models.model.buildings.build import get_spec, get_tech_groups, get_techs
+from message_ix_models.model.buildings.build import (
+    get_spec,
+    get_tech_groups,
+    get_techs,
+    main,
+    prepare_data_B,
+)
 from message_ix_models.model.buildings.report import (
     configure_legacy_reporting,
     report2,
     report3,
+)
+from message_ix_models.testing import bare_res
+
+# TODO Avoid cross-imports from test modules; move these items to a common location.
+from message_ix_models.tests.model.test_bmt import (
+    _add_buildings_tech_set,
+    _add_materials_commodities,
+    _add_minimal_rc_pars,
+    _minimal_buildings_data,
+    bmt_context,  # noqa: F401
+    bmt_context_with_materials,  # noqa: F401
 )
 from message_ix_models.util import package_data_path
 
@@ -118,6 +136,90 @@ def test_mpd() -> None:
     assert np.isnan(_mpd(a, c, "value"))
     assert np.isnan(_mpd(a, d, "value"))
     assert np.isnan(_mpd(c, c, "value"))
+
+
+def test_prepare_data_B_returns_structure(
+    request: pytest.FixtureRequest,
+    bmt_context: "Context",  # noqa: F811
+) -> None:
+    """prepare_data_B runs and returns a dict with expected keys (demand, etc.)."""
+    scenario = bare_res(request, bmt_context)
+    info = ScenarioInfo(scenario)
+    prices, sturm_r, sturm_c, demand_static = _minimal_buildings_data()
+
+    result = prepare_data_B(
+        scenario,
+        info,
+        prices,
+        sturm_r,
+        sturm_c,
+        demand_static=demand_static,
+        with_materials=False,
+        relations=[],
+    )
+
+    assert isinstance(result, dict)
+    assert "demand" in result
+    assert isinstance(result["demand"], pd.DataFrame)
+
+
+def test_prepare_data_B_with_rc_tech_data(
+    request: pytest.FixtureRequest,
+    bmt_context: "Context",  # noqa: F811
+) -> None:
+    """prepare_data_B produces buildings tech data when scenario has rc techs."""
+    scenario = bare_res(request, bmt_context)
+    _add_minimal_rc_pars(scenario)
+    info = ScenarioInfo(scenario)
+    prices, sturm_r, sturm_c, demand_static = _minimal_buildings_data()
+
+    result = prepare_data_B(
+        scenario,
+        info,
+        prices,
+        sturm_r,
+        sturm_c,
+        demand_static=demand_static,
+        with_materials=True,
+        relations=[],
+    )
+
+    assert "demand" in result
+    # With elec_rc and resid_heat_electr in demand we expect some generated tech data
+    assert not result["demand"].empty
+    if "input" in result and not result["input"].empty:
+        techs = result["input"].get("technology", pd.Series())
+        assert any("electr_" in str(t) for t in techs)
+
+
+def test_main_B_runs_with_minimal_data(
+    request: pytest.FixtureRequest,
+    bmt_context: "Context",  # noqa: F811
+) -> None:
+    """build_B runs without error with buildings config and minimal rc scenario."""
+    scenario = bare_res(request, bmt_context)
+    _add_minimal_rc_pars(scenario)
+    _add_buildings_tech_set(scenario)
+
+    main(bmt_context, scenario)
+
+    # Scenario should still be usable and have been modified
+    assert scenario is not None
+
+
+def test_main_B_runs_with_materials(
+    request: pytest.FixtureRequest,
+    bmt_context_with_materials: "Context",  # noqa: F811
+) -> None:
+    """build_B runs with with_materials=True (materials linkage path)."""
+    scenario = bare_res(request, bmt_context_with_materials)
+    _add_minimal_rc_pars(scenario)
+    _add_materials_commodities(scenario)
+    _add_buildings_tech_set(scenario)
+
+    main(bmt_context_with_materials, scenario)
+
+    assert scenario is not None
 
 
 def test_report3() -> None:

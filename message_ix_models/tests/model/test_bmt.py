@@ -18,11 +18,9 @@ import pandas as pd
 import pytest
 from message_ix import make_df
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import Context
 from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
 from message_ix_models.model.bmt.workflow import generate
-from message_ix_models.model.buildings.build import main as build_B
-from message_ix_models.model.buildings.build import prepare_data_B
 from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
@@ -183,117 +181,29 @@ def _add_materials_commodities(scenario):
     scenario.commit("Add materials commodities for with_materials=True test")
 
 
-# --- Tests for prepare_data_B ---
-
-
-def test_prepare_data_B_returns_structure(bmt_context, request):
-    """prepare_data_B runs and returns a dict with expected keys (demand, etc.)."""
-    scenario = bare_res(request, bmt_context)
-    info = ScenarioInfo(scenario)
-    prices, sturm_r, sturm_c, demand_static = _minimal_buildings_data()
-
-    result = prepare_data_B(
-        scenario,
-        info,
-        prices,
-        sturm_r,
-        sturm_c,
-        demand_static=demand_static,
-        with_materials=False,
-        relations=[],
-    )
-
-    assert isinstance(result, dict)
-    assert "demand" in result
-    assert isinstance(result["demand"], pd.DataFrame)
-
-
-def test_prepare_data_B_with_rc_tech_data(bmt_context, request):
-    """prepare_data_B produces buildings tech data when scenario has rc techs."""
-    scenario = bare_res(request, bmt_context)
-    _add_minimal_rc_pars(scenario)
-    info = ScenarioInfo(scenario)
-    prices, sturm_r, sturm_c, demand_static = _minimal_buildings_data()
-
-    result = prepare_data_B(
-        scenario,
-        info,
-        prices,
-        sturm_r,
-        sturm_c,
-        demand_static=demand_static,
-        with_materials=True,
-        relations=[],
-    )
-
-    assert "demand" in result
-    # With elec_rc and resid_heat_electr in demand we expect some generated tech data
-    assert not result["demand"].empty
-    if "input" in result and not result["input"].empty:
-        techs = result["input"].get("technology", pd.Series())
-        assert any("electr_" in str(t) for t in techs)
-
-
-# --- Tests for build_B ---
-
-
-def test_build_B_runs_with_minimal_data(bmt_context, request):
-    """build_B runs without error with buildings config and minimal rc scenario."""
-    scenario = bare_res(request, bmt_context)
-    _add_minimal_rc_pars(scenario)
-    _add_buildings_tech_set(scenario)
-
-    build_B(bmt_context, scenario)
-
-    # Scenario should still be usable and have been modified
-    assert scenario is not None
-
-
-def test_build_B_runs_with_materials(bmt_context_with_materials, request):
-    """build_B runs with with_materials=True (materials linkage path)."""
-    scenario = bare_res(request, bmt_context_with_materials)
-    _add_minimal_rc_pars(scenario)
-    _add_materials_commodities(scenario)
-    _add_buildings_tech_set(scenario)
-
-    build_B(bmt_context_with_materials, scenario)
-
-    assert scenario is not None
-
-
 # --- Tests for workflow (BM built step) ---
 
 
-def test_bmt_workflow_has_bm_built_step():
+def test_bmt_workflow_has_bm_built_step(test_context: Context) -> None:
     """The BMT workflow includes the 'BM built' step that calls build_B."""
-    from message_ix_models import Context
+    from message_ix_models.model.buildings import build
 
-    ctx = Context()
+    ctx = test_context
     wf = generate(ctx)
     assert "BM built" in wf.graph
     # Graph: (step, "context", base_name); step.action = build_B
     task = wf.graph["BM built"]
     step = task[0] if isinstance(task, tuple) else task
-    assert step.action is build_B
-
-
-def test_bmt_workflow_step_bm_built_callable(bmt_context, request):
-    """The build_B step (BM built) can be invoked with context and scenario."""
-    scenario = bare_res(request, bmt_context)
-    _add_minimal_rc_pars(scenario)
-    _add_buildings_tech_set(scenario)
-    build_B(bmt_context, scenario)
-    assert scenario is not None
+    assert step.action is build.main
 
 
 # --- Tests for build_PM (BMTX built step) ---
 
 
-def test_bmt_workflow_has_bmtx_built_step():
+def test_bmt_workflow_has_bmtx_built_step(test_context: Context) -> None:
     """The BMT workflow includes the 'BMTX built' step that calls build_PM."""
-    from message_ix_models import Context
 
-    ctx = Context()
+    ctx = test_context
     wf = generate(ctx)
     assert "BMTX built" in wf.graph
     task = wf.graph["BMTX built"]
