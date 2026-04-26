@@ -158,8 +158,10 @@ main.add_command(ixmp_cli.commands["config"])
 #: Each of these should contain a function named ``cli`` decorated with @click.command
 #: or @click.group.
 submodules = [
+    "message_ix_models.model.bmt.cli",
     "message_ix_models.model.buildings.cli",
     "message_ix_models.model.cli",
+    "message_ix_models.model.material.cli",
     "message_ix_models.model.structure",
     "message_ix_models.model.transport.cli",
     "message_ix_models.model.water.cli",
@@ -168,11 +170,9 @@ submodules = [
     "message_ix_models.project.navigate.cli",
     "message_ix_models.project.ssp.cli",
     "message_ix_models.report.cli",
-    "message_ix_models.model.material.cli",
     "message_ix_models.testing.cli",
     "message_ix_models.util.pooch",
     "message_ix_models.util.slurm",
-    "message_ix_models.model.bmt.cli",
 ]
 
 try:
