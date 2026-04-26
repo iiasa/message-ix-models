@@ -638,6 +638,7 @@ def prepare_data_A(
     return result
 
 
+# FIXME Reduce complexity from 27 to ≤11
 def prepare_data_B(  # noqa: C901
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
