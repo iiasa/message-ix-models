@@ -6,8 +6,19 @@
 import logging
 
 import message_ix  # type: ignore
+import yaml
 
 from message_ix_models import Context
+from message_ix_models.project.engage.workflow import (
+    PolicyConfig,
+    step_1,
+    step_2,
+    step_3,
+    step_4,
+)
+
+# TODO: too many configs... (for this workflow, for SR, for PolicyConfig)
+#       need to refactor...
 from message_ix_models.tools.policy import (
     add_anchor,
     add_forever_constant,
@@ -15,6 +26,7 @@ from message_ix_models.tools.policy import (
     add_NDC2030,
     add_NPi2030,
 )
+from message_ix_models.util import private_data_path
 from message_ix_models.workflow import Workflow
 
 log = logging.getLogger(__name__)
@@ -118,195 +130,241 @@ CP_C0_PRICE = {
     "R12_WEU": 14.667,
 }
 
-# def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-#     """Prepare step 0 of the EN 3 steps."""
 
-#     # A step to get a scenario ready to enter the EN 3 steps
-#     # For now only add the lower bound of global CO2 emissions
-#     # to limit high penetration of negative emissions.
-#     from message_ix_models.tools import add_CO2_emission_constraint
-#     from message_ix_models.util import identify_nodes
+def _get_elv_config(context: Context) -> dict:
+    """Return model-level ELEVATE GP config from `context.policy_config_path`."""
+    config_path = (
+        private_data_path(*context.policy_config_path)
+        if isinstance(context.policy_config_path, tuple)
+        else private_data_path(context.policy_config_path)
+    )
+    with open(config_path, encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
 
-#     context.model.regions = identify_nodes(scenario)
-
-#     # Get scenario name
-#     scen = context.scenario_info.get("scenario", scenario.scenario)
-#     if scen.endswith("_base"):
-#         scen = scen[:-5]  # Remove "_base" suffix to get base scenario name
-
-#     # Get global_co2_bnd from config
-#     global_co2_bnd = _get_ngfs_config(context).get(scen, {}).get("global_co2_bnd")
-
-#     # If not found in config, default to 0.0
-#     if global_co2_bnd is None:
-#         constraint_value = 0.0
-#         log.info(
-#             "No global_co2_bnd found in config for scenario '%s', using default: 0.0",
-#             scen,
-#         )
-#     else:
-#         # If it is a string (like "500.0 / (44.0 / 12.0)"), evaluate it
-#         if isinstance(global_co2_bnd, str):
-#             try:
-#                 constraint_value = eval(global_co2_bnd)
-#             except Exception as e:
-#                 raise ValueError(
-#                     f"Could not evaluate global_co2_bnd expression "
-#                     f"'{global_co2_bnd}' "
-#                     f"for scenario '{scen}': {e}"
-#                 )
-#         else:
-#             # If it is already a number, use it directly
-#             constraint_value = float(global_co2_bnd)
-
-#         log.info(
-#             f"Using global_co2_bnd={constraint_value:.2f} for scenario '{scen}' "
-#             f"(from config: {global_co2_bnd})"
-#         )
-
-#     add_CO2_emission_constraint.main(
-#         scenario,
-#         reg=f"{context.model.regions}_GLB",
-#         relation_name="CO2_Emission_Global_Total",
-#         constraint_value=constraint_value,
-#         type_rel="lower",
-#     )
-
-#     scenario.set_as_default()
-#     return scenario
+    model_name = context.dest_scenario.get("model", ELE_MODEL_NAME)
+    return config.get(model_name, {})
 
 
-# def step_1_and_solve(
-#     context: Context, scenario: message_ix.Scenario
-# ) -> message_ix.Scenario:
-#     """Apply budget constraint (step_1 of the EN 3 steps) and solve the scenario.
+def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Prepare step 0 of the EN steps.
+    It can optionally borrow demand from a low-demand source scenario.
+    It can add global CO2 lower-bound constraint (`global_co2_bnd`).
+    """
 
-#     This function gets the scenario name from context, loads the budget from config,
-#     validates it, applies the budget constraint using step_1,
-#     and then solves the scenario.
-#     """
-#     # Get scenario name from context and extract base name
-#     # (remove _EN1 suffix if present).
-#     scen = context.scenario_info.get("scenario", scenario.scenario)
-#     if scen.endswith("_EN1"):
-#         scen = scen[:-4]  # Remove "_EN1" suffix to get base scenario name
+    # A step to get a scenario ready to enter the EN 3 steps
+    # For now only add the lower bound of global CO2 emissions
+    # to limit high penetration of negative emissions.
+    from message_ix_models.tools import add_CO2_emission_constraint
+    from message_ix_models.util import identify_nodes
 
-#     # Get budget from config
-#     budget_value = _get_ngfs_config(context).get(scen, {}).get("budget")
+    context.model.regions = identify_nodes(scenario)
 
-#     # Use "non-calc" mode:
-#     # - `label` is ignored
-#     # - `budget` is passed directly to add_budget() as the bound value
-#     policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
+    # Get scenario name
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    if scen.endswith("_base"):
+        scen = scen[:-5]  # Remove "_base" suffix to get base scenario name
 
-#     step_1(context, scenario, policy_config)
-#     solve(context, scenario)
+    # Get scenario-specific ELEVATE config once.
+    scen_cfg = _get_elv_config(context).get(scen, {})
 
-#     return scenario
+    # If configured, copy DEMAND variable from low-demand source scenario
+    # (same model/platform) and add it as demand parameter.
+    low_dem_scen = scen_cfg.get("low_dem_scen")
+    if low_dem_scen:
+        base = message_ix.Scenario(
+            scenario.platform,
+            model=scenario.model,
+            scenario=low_dem_scen,
+        )
+        df = base.var("DEMAND").rename(columns={"lvl": "value"}).assign(unit="GWa")
+        commodities = scenario.par("demand").commodity.unique().tolist()
+        df = df.loc[df.commodity.isin(commodities)]
+        with scenario.transact(
+            message=f"Copy demand from {scenario.model}/{low_dem_scen}"
+        ):
+            scenario.add_par("demand", df)
+        log.info(
+            "Copied %d demand rows from %s/%s into %s/%s",
+            len(df),
+            scenario.model,
+            low_dem_scen,
+            scenario.model,
+            scenario.scenario,
+        )
 
+    # Get global_co2_bnd from config
+    global_co2_bnd = scen_cfg.get("global_co2_bnd")
 
-# def step_2_and_solve(
-#     context: Context, scenario: message_ix.Scenario
-# ) -> message_ix.Scenario:
-#     """Apply emission trajectory (step_2 of the EN 3 steps) and solve the scenario.
+    # If not found in config, default to 0.0
+    if global_co2_bnd is None:
+        constraint_value = 0.0
+        log.info(
+            "No global_co2_bnd found in config for scenario '%s', using default: 0.0",
+            scen,
+        )
+    else:
+        # If it is a string (like "500.0 / (44.0 / 12.0)"), evaluate it
+        if isinstance(global_co2_bnd, str):
+            try:
+                constraint_value = eval(global_co2_bnd)
+            except Exception as e:
+                raise ValueError(
+                    f"Could not evaluate global_co2_bnd expression "
+                    f"'{global_co2_bnd}' "
+                    f"for scenario '{scen}': {e}"
+                )
+        else:
+            # If it is already a number, use it directly
+            constraint_value = float(global_co2_bnd)
 
-#     This function applies the emission trajectory constraint using step_2, which
-#     retrieves the CO2 emission trajectory from the solved scenario and applies it
-#     as bound_emission. Then it solves the scenario.
+        log.info(
+            f"Using global_co2_bnd={constraint_value:.2f} for scenario '{scen}' "
+            f"(from config: {global_co2_bnd})"
+        )
 
-#     Note: step_2 requires the scenario to have a solution (from step_1) to retrieve
-#     the emission trajectory from.
-#     """
+    add_CO2_emission_constraint.main(
+        scenario,
+        reg=f"{context.model.regions}_GLB",
+        relation_name="CO2_Emission_Global_Total",
+        constraint_value=constraint_value,
+        type_rel="lower",
+    )
 
-#     if not hasattr(context, "run_reporting_only"):
-#         # step_2 uses its own scenario_runner under engage,
-#         # but this flag does not matter here.
-#         context.run_reporting_only = False
-
-#     # TODO: discuss with Paul;
-#     # step_2 does not actually use any PolicyConfig attributes?
-#     # Create an empty PolicyConfig to satisfy the function signature
-#     policy_config = PolicyConfig()
-
-#     step_2(context, scenario, policy_config)
-#     message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-#         "advind": 0,
-#         "lpmethod": 4,
-#         "threads": 4,
-#         "epopt": 1e-6,
-#         "scaind": -1,
-#         # "predual": 1,
-#         "barcrossalg": 0,
-#     }
-#     scenario.solve(model="MESSAGE")
-
-#     return scenario
-
-
-# def step_3_and_solve(
-#     context: Context, scenario: message_ix.Scenario
-# ) -> message_ix.Scenario:
-#     """Apply tax_emission prices (step_3 of the EN 3 steps) and solve the scenario.
-
-#     This function loads step_3_type_emission from config, applies tax_emission prices
-#     using the specified type_emission (TCE_non-CO2 by default),
-#     and then solves the scenario.
-#     """
-#     # Get scenario name from context and extract base name
-#     # (remove _EN2 suffix if present).
-#     scen = context.scenario_info.get("scenario", scenario.scenario)
-#     if scen.endswith("_EN2"):
-#         scen = scen[:-4]  # Remove "_EN2" suffix to get base scenario name
-#     elif scen.endswith("_EN3"):
-#         scen = scen[:-4]  # Remove "_EN3" suffix to get base scenario name
-
-#     # Get step_3_type_emission from config
-#     step_3_type_emission = (
-#         _get_ngfs_config(context).get(scen, {}).get("step_3_type_emission")
-#     )
-#     if step_3_type_emission is None:
-#         step_3_type_emission = ["TCE_non-CO2"]
-#     elif isinstance(step_3_type_emission, str):
-#         step_3_type_emission = [step_3_type_emission]
-#     elif isinstance(step_3_type_emission, list):
-#         step_3_type_emission = step_3_type_emission
-
-#     policy_config = PolicyConfig(step_3_type_emission=step_3_type_emission)
-
-#     step_3(context, scenario, policy_config)
-#     solve(context, scenario)
-
-#     return scenario
+    scenario.set_as_default()
+    return scenario
 
 
-# def step_4_and_solve(
-#     context: Context, scenario: message_ix.Scenario
-# ) -> message_ix.Scenario:
-#     """Lock in regional TCE emission path to deliver regional carbon prices."""
+def step_1_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply budget constraint (step_1 of the EN 3 steps) and solve the scenario.
 
-#     step_4(context, scenario)
-#     solve(context, scenario)
+    This function gets the scenario name from context, loads the budget from config,
+    validates it, applies the budget constraint using step_1,
+    and then solves the scenario.
+    """
+    # Get scenario name from context and extract base name
+    # (remove _EN1 suffix if present).
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    if scen.endswith("_EN1"):
+        scen = scen[:-4]  # Remove "_EN1" suffix to get base scenario name
 
-#     return scenario
+    # Get budget from config
+    budget_value = _get_elv_config(context).get(scen, {}).get("budget")
+
+    # Use "non-calc" mode:
+    # - `label` is ignored
+    # - `budget` is passed directly to add_budget() as the bound value
+    policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
+
+    step_1(context, scenario, policy_config)
+    solve(context, scenario)
+
+    return scenario
+
+
+def step_2_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply emission trajectory (step_2 of the EN 3 steps) and solve the scenario.
+
+    This function applies the emission trajectory constraint using step_2, which
+    retrieves the CO2 emission trajectory from the solved scenario and applies it
+    as bound_emission. Then it solves the scenario.
+
+    Note: step_2 requires the scenario to have a solution (from step_1) to retrieve
+    the emission trajectory from.
+    """
+
+    if not hasattr(context, "run_reporting_only"):
+        # step_2 uses its own scenario_runner under engage,
+        # but this flag does not matter here.
+        context.run_reporting_only = False
+
+    # TODO: discuss with Paul;
+    # step_2 does not actually use any PolicyConfig attributes?
+    # Create an empty PolicyConfig to satisfy the function signature
+    policy_config = PolicyConfig()
+
+    step_2(context, scenario, policy_config)
+    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
+        "advind": 0,
+        "lpmethod": 4,
+        "threads": 4,
+        "epopt": 1e-6,
+        "scaind": -1,
+        # "predual": 1,
+        "barcrossalg": 0,
+    }
+    scenario.solve(model="MESSAGE")
+
+    return scenario
+
+
+def step_3_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Apply tax_emission prices (step_3 of the EN 3 steps) and solve the scenario.
+
+    This function loads step_3_type_emission from config, applies tax_emission prices
+    using the specified type_emission (TCE_non-CO2 by default),
+    and then solves the scenario.
+    """
+    # Get scenario name from context and extract base name
+    # (remove _EN2 suffix if present).
+    scen = context.scenario_info.get("scenario", scenario.scenario)
+    if scen.endswith("_EN2"):
+        scen = scen[:-4]  # Remove "_EN2" suffix to get base scenario name
+    elif scen.endswith("_EN3"):
+        scen = scen[:-4]  # Remove "_EN3" suffix to get base scenario name
+
+    # Get step_3_type_emission from config
+    step_3_type_emission = (
+        _get_elv_config(context).get(scen, {}).get("step_3_type_emission")
+    )
+    if step_3_type_emission is None:
+        step_3_type_emission = ["TCE_non-CO2"]
+    elif isinstance(step_3_type_emission, str):
+        step_3_type_emission = [step_3_type_emission]
+    elif isinstance(step_3_type_emission, list):
+        step_3_type_emission = step_3_type_emission
+
+    policy_config = PolicyConfig(step_3_type_emission=step_3_type_emission)
+
+    step_3(context, scenario, policy_config)
+    solve(context, scenario)
+
+    return scenario
+
+
+def step_4_and_solve(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Lock in regional TCE emission path to deliver regional carbon prices."""
+
+    step_4(context, scenario)
+    solve(context, scenario)
+
+    return scenario
 
 
 # ELEVATE GP scenarios:
 _scen_all = [
-    # "ELV-SSP2-650P-400F",
-    # "ELV-SSP2-1150F",
+    "ELV-SSP2-650P-400F",
+    "ELV-SSP2-1150F",
     "ELV-SSP2-CP-D0",
     "ELV-SSP2-NDC-D0",
     "ELV-SSP2-LTS",
     "ELV-SSP2-NDC-LTS",
     "ELV-SSP2-GP",
-    # "ELV-SSP2-GPL",
-    # "ELV-SSP2-GPB",
+    "ELV-SSP2-GPL",
+    "ELV-SSP2-GPB",
 ]
 
 _scen_en_steps: list[str] = [
-    # "ELV-SSP2-650P-400F",
-    # "ELV-SSP2-1150F",
-    # "ELV-SSP2-GPB",
+    "ELV-SSP2-650P-400F",
+    "ELV-SSP2-1150F",
+    "ELV-SSP2-GPB",
 ]
 
 
@@ -353,7 +411,7 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "CP-D0 solved",
+        "ELV-SSP2-CP-D0 solved",
         "NPi2030 solved",
         add_forever_constant,
         specified_price=CP_C0_PRICE,
@@ -363,37 +421,19 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "ELV-SSP2-CP-D0 reported",
-        "CP-D0 solved",
-        report,
-    )
-
-    wf.add_step(
-        "GP solved",
-        "CP-D0 solved",
+        "ELV-SSP2-GP solved",
+        "ELV-SSP2-CP-D0 solved",
         add_gp,
         target=f"{model_name}/ELV-SSP2-GP",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
-        "ELV-SSP2-GP reported",
-        "GP solved",
-        report,
-    )
-
-    wf.add_step(
-        "GPL solved",
-        "CP-D0 solved",
+        "ELV-SSP2-GPL solved",
+        "ELV-SSP2-CP-D0 solved",
         add_gpl,
         target=f"{model_name}/ELV-SSP2-GPL",
         clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "ELV-SSP2-GPL reported",
-        "GPL solved",
-        report,
     )
 
     wf.add_step(
@@ -410,18 +450,12 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "NDC-D0 solved",
+        "ELV-SSP2-NDC-D0 solved",
         "NDC2030 solved",
         add_forever_constant,
         target=f"{model_name}/ELV-SSP2-NDC-D0",
         solve_type="MESSAGE-MACRO",
         clone=dict(keep_solution=False),
-    )
-
-    wf.add_step(
-        "ELV-SSP2-NDC-D0 reported",
-        "NDC-D0 solved",
-        report,
     )
 
     wf.add_step(
@@ -442,7 +476,7 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "NDC-LTS solved",
+        "ELV-SSP2-NDC-LTS solved",
         "NDC2030 reported",
         add_glasgow,
         target=f"{model_name}/NDC-LTS_glasgow_full",
@@ -453,66 +487,70 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False, shift_first_model_year=2035),
     )
 
-    wf.add_step(
-        "ELV-SSP2-NDC-LTS reported",
-        "NDC-LTS solved",
-        report,
-    )
+    for scen in _scen_en_steps:
+        wf.add_step(
+            f"{scen} base built",
+            "base reported",
+            step_0,
+            target=f"{model_name}/{scen}_base",
+            clone=dict(keep_solution=False),
+        )
 
-    # for scen in _scen_en_steps:
-    #     wf.add_step(
-    #         f"{scen} EN1",
-    #         f"{scen} base built",
-    #         step_1_and_solve,
-    #         target=f"{model_name}/{scen}_EN1",
-    #         clone=dict(keep_solution=False),
-    #     )
+        wf.add_step(
+            f"{scen} EN1",
+            f"{scen} base built",
+            step_1_and_solve,
+            target=f"{model_name}/{scen}_EN1",
+            clone=dict(keep_solution=False),
+        )
 
-    #     wf.add_step(
-    #         f"{scen} EN2",
-    #         f"{scen} EN1",
-    #         step_2_and_solve,
-    #         target=f"{model_name}/{scen}_EN2",
-    #         # Must have solution to retrieve emission trajectories.
-    #         clone=dict(keep_solution=True),
-    #     )
+        wf.add_step(
+            f"{scen} EN2",
+            f"{scen} EN1",
+            step_2_and_solve,
+            target=f"{model_name}/{scen}_EN2",
+            # Must have solution to retrieve emission trajectories.
+            clone=dict(keep_solution=True),
+        )
 
-    #     wf.add_step(
-    #         f"{scen} EN2 reported",
-    #         f"{scen} EN2",
-    #         report,
-    #     )
+        wf.add_step(
+            f"{scen} EN2 reported",
+            f"{scen} EN2",
+            report,
+        )
 
-    #     wf.add_step(
-    #         f"{scen} EN3",
-    #         f"{scen} EN2",
-    #         step_3_and_solve,
-    #         target=f"{model_name}/{scen}_EN3",
-    #         # Must have solution to retrieve prices.
-    #         clone=dict(keep_solution=True),
-    #     )
+        wf.add_step(
+            f"{scen} EN3",
+            f"{scen} EN2",
+            step_3_and_solve,
+            target=f"{model_name}/{scen}_EN3",
+            # Must have solution to retrieve prices.
+            clone=dict(keep_solution=True),
+        )
 
-    #     wf.add_step(
-    #         f"{scen} EN3 reported",
-    #         f"{scen} EN3",
-    #         report,
-    #     )
+        wf.add_step(
+            f"{scen} EN3 reported",
+            f"{scen} EN3",
+            report,
+        )
 
-    #     wf.add_step(
-    #         f"{scen} solved",
-    #         f"{scen} EN3",
-    #         step_4_and_solve,
-    #         target=f"{model_name}/{scen}",
-    #         # Must have solution to retrieve prices.
-    #         clone=dict(keep_solution=True),
-    #     )
+        wf.add_step(
+            f"{scen} solved",
+            f"{scen} EN3",
+            step_4_and_solve,
+            target=f"{model_name}/{scen}",
+            # Must have solution to retrieve prices.
+            clone=dict(keep_solution=True),
+        )
 
-    # for scen in _scen_all:
-    #     wf.add_step(
-    #         f"{scen} reported",
-    #         f"{scen} solved",
-    #         report,
-    #     )
+    for scen in _scen_all:
+        if scen == "ELV-SSP2-LTS":
+            continue
+        wf.add_step(
+            f"{scen} reported",
+            f"{scen} solved",
+            report,
+        )
 
     reported_keys = [f"{scen} reported" for scen in _scen_all]
     wf.add("prep all", reported_keys)
