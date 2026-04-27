@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from message_ix_models.tools.bilateralize.calculate_distance import calculate_pipeline_distances
 from message_ix_models.tools.bilateralize.utils import load_config
 from message_ix_models.util import package_data_path
 
@@ -59,6 +60,7 @@ def import_gem(
     project_name: str | None = None,
     config_name: str | None = None,
     first_model_year: int = 2030,
+    regional_specification: str = "R12",
 ):
     """
     Import Global Energy Monitor data
@@ -360,7 +362,7 @@ def import_gem(
     inputdf2 = inputdf.copy()
     inputdf2 = inputdf2.rename(columns = {"EXPORTER": "IMPORTER", "IMPORTER": "EXPORTER"})
     inputdf = pd.concat([inputdf, inputdf2])
-    inputdf = inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]].max().reset_index()
+    inputdf = inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]].mean().reset_index()
 
     inputdf["node_loc"] = inputdf["EXPORTER"]
     inputdf["technology"] = (
@@ -375,10 +377,18 @@ def import_gem(
     inputdf = inputdf[["node_loc", "technology", "value_update", "commodity"]]  # km/GWa
 
     basedf = pd.read_csv(os.path.join(trade_dir, "input.csv"))
-    # The largest capacity pipelines have maximum 300,000GWh (~30bcm) annually
+    
+    # Where historical pipeline is missing, use haversine distance formula
+    haversine_distances = calculate_pipeline_distances(regional_specification)
+    
+    basedf['Node1'] = basedf['node_loc']
+    basedf['Node2'] = regional_specification + '_' + basedf['technology'].str.split('_').str[-1].str.upper()
+    basedf = basedf.merge(haversine_distances, left_on=["Node1", "Node2"], right_on=["Node1", "Node2"], how="left")
+
     basedf["value"] = np.where(
-        basedf["commodity"].str.contains(flow_commodity), 500, basedf["value"]
+        basedf["commodity"].str.contains(flow_commodity), basedf['Distance_km'], basedf["value"]
     )
+    basedf = basedf.drop(["Node1", "Node2", "Distance_km"], axis=1)
 
     inputdf = basedf.merge(
         inputdf,

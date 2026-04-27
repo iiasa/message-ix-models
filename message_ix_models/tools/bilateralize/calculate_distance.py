@@ -4,7 +4,7 @@ Calculate distances between pairs of ports
 
 import math
 import os
-from itertools import combinations
+from itertools import combinations, permutations
 
 import pandas as pd
 from scgraph.geographs.marnet import marnet_geograph
@@ -143,3 +143,63 @@ def calculate_distance(regional_specification: str = "R12"):
     df.to_csv(
         os.path.join(csv_path, regional_specification + "_distances.csv"), index=False
     )
+
+# Calculate pipeline distances
+def calculate_pipeline_distances(regional_specification: str = "R12") -> pd.DataFrame:
+    """
+    Calculate distances between pairs of pipeline ports
+    Pipeline ports and coordinates are provided in the distances.xlsx file in data/bilateralize/distances/
+    Use Haversine distance formula to calculate distances between pipeline ports
+    """
+
+    # Specify the path to CSV file
+    csv_path = os.path.abspath(
+        os.path.join(
+            os.path.dirname(package_data_path("bilateralize")),
+            "bilateralize",
+            "distances",
+        )
+    )
+
+    infile = pd.read_excel(
+        os.path.join(csv_path, "distances.xlsx"), sheet_name="node_pipes"
+    )
+    df = infile[infile["Regionalization"] == regional_specification].copy()
+
+    # Calculate distances
+    # Check if required columns exist
+    required_columns = ["Port", "Latitude", "Longitude"]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {missing_columns}")
+
+    # Remove rows with missing coordinates
+    ports_clean = df.dropna(subset=["Latitude", "Longitude"])
+
+    if ports_clean.empty:
+        raise ValueError("No valid coordinate data found in the file")
+
+    # Get all combinations of ports (with repetition)
+    port_combinations = list(permutations(ports_clean.index, 2))
+    print(f"Calculating pipeline distances for {len(port_combinations)} pairs...")
+
+     # Calculate distances between all port combinations
+    distances = []
+    for i, j in port_combinations:
+        port1 = ports_clean.iloc[i]
+        port2 = ports_clean.iloc[j]
+
+        distance = haversine_distance(port1["Latitude"], port1["Longitude"], port2["Latitude"], port2["Longitude"])
+
+        distances.append(
+            {
+                "Node1": port1["Node"],
+                "Node2": port2["Node"],
+                "Distance_km": round(distance, 2),
+            }
+        )
+
+    # Create DataFrame with results
+    outdf = pd.DataFrame(distances)
+    return outdf

@@ -135,27 +135,27 @@ def run_reporting():
     model_scenarios = [('weu_security', 'SSP2'),
                        ('weu_security', 'FSU2040'),
                        ('weu_security', 'FSU2100'),]
-    for lev in [10, 15, 20, 25, 30]:
-        model_scenarios = model_scenarios + [('weu_security', f'SSP2_NAM{lev}EJ'),
-                        ('weu_security', f'FSU2040_NAM{lev}EJ'),
-                        ('weu_security', f'FSU2100_NAM{lev}EJ')]
-    for conf in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
-        model_scenarios = model_scenarios + [('weu_security', f'SSP2_MEACON_{conf}'),
-                        ('weu_security', f'FSU2040_MEACON_{conf}'),
-                        ('weu_security', f'FSU2100_MEACON_{conf}')
-                        ]
+    #for lev in [10, 15, 20, 25, 30]:
+    #    model_scenarios = model_scenarios + [('weu_security', f'SSP2_NAM{lev}EJ'),
+    #                    ('weu_security', f'FSU2040_NAM{lev}EJ'),
+    #                    ('weu_security', f'FSU2100_NAM{lev}EJ')]
+    #for conf in [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]:
+    #    model_scenarios = model_scenarios + [('weu_security', f'SSP2_MEACON_{conf}'),
+    #                    ('weu_security', f'FSU2040_MEACON_{conf}'),
+    #                    ('weu_security', f'FSU2100_MEACON_{conf}')
+    #                    ]
 
-    model_scenarios = model_scenarios + [('weu_security', 'SSP2_NAM30EJ_RSC_NAM'),
-                                        ('weu_security', 'INDC2030'),
-                                        ('weu_security', 'INDC2030_FSU2040'),
-                                        ('weu_security', 'INDC2030_FSU2100'),
-                                        ('weu_security', 'INDC2030_NAM30EJ'),
-                                        ('weu_security', 'INDC2030_FSU2040_NAM30EJ'),
-                                        ('weu_security', 'INDC2030_FSU2100_NAM30EJ'),
-                                        ('weu_security', 'INDC2030_MEACON_1.0'),
-                                        ('weu_security', 'INDC2030_FSU2040_MEACON_1.0'),
-                                        ('weu_security', 'INDC2030_FSU2100_MEACON_1.0'),
-                                        ]
+    #model_scenarios = model_scenarios + [('weu_security', 'SSP2_NAM30EJ_RSC_NAM'),
+    #                                    ('weu_security', 'INDC2030'),
+    #                                    ('weu_security', 'INDC2030_FSU2040'),
+    #                                    ('weu_security', 'INDC2030_FSU2100'),
+    #                                    ('weu_security', 'INDC2030_NAM30EJ'),
+    #                                    ('weu_security', 'INDC2030_FSU2040_NAM30EJ'),
+    #                                    ('weu_security', 'INDC2030_FSU2100_NAM30EJ'),
+    #                                    ('weu_security', 'INDC2030_MEACON_1.0'),
+    #                                    ('weu_security', 'INDC2030_FSU2040_MEACON_1.0'),
+    #                                    ('weu_security', 'INDC2030_FSU2100_MEACON_1.0'),
+    #                                    ]
     print(model_scenarios)
 
     fuel_supply_out = pd.DataFrame()
