@@ -340,20 +340,35 @@ def import_gem(
     )
 
     # Input
-    inputdf = (
-        df.groupby(["EXPORTER", "IMPORTER"])[["Capacity (GWa)", "LengthMergedKm"]]
+    inputdf_capacity = (
+        df.groupby(["EXPORTER", "IMPORTER"])[["Capacity (GWa)"]]
         .sum()
         .reset_index()
     )
-    inputdf["Capacity (GWa/km)"] = inputdf["Capacity (GWa)"] / inputdf["LengthMergedKm"]
-    inputdf = inputdf[["EXPORTER", "IMPORTER", "Capacity (GWa/km)"]].drop_duplicates()
+    inputdf_capacity = inputdf_capacity.rename(columns = {"Capacity (GWa)": "Total Capacity (GWa/km)"})
+    inputdf = df.merge(inputdf_capacity, left_on=["EXPORTER", "IMPORTER"], right_on=["EXPORTER", "IMPORTER"], how="left")
+    inputdf['Capacity Share'] = inputdf['Capacity (GWa)'] / inputdf['Total Capacity (GWa/km)']
+    inputdf['LengthMergedKm Weighted'] = inputdf['LengthMergedKm'] * inputdf['Capacity Share']
+    
+    inputdf = (
+        inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]]
+        .sum()
+        .reset_index()
+    )
+    #inputdf["Capacity (GWa/km)"] = inputdf["Capacity (GWa)"] / inputdf["LengthMergedKm"]
+    inputdf = inputdf[["EXPORTER", "IMPORTER", "LengthMergedKm Weighted"]].drop_duplicates() # Capacity (GWa/km)
+    inputdf2 = inputdf.copy()
+    inputdf2 = inputdf2.rename(columns = {"EXPORTER": "IMPORTER", "IMPORTER": "EXPORTER"})
+    inputdf = pd.concat([inputdf, inputdf2])
+    inputdf = inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]].max().reset_index()
+
     inputdf["node_loc"] = inputdf["EXPORTER"]
     inputdf["technology"] = (
         trade_technology
         + "_exp_"
         + inputdf["IMPORTER"].str.lower().str.split("_").str[-1]
     )
-    inputdf["value_update"] = round((1 / inputdf["Capacity (GWa/km)"]), 0)
+    inputdf["value_update"] = round(inputdf["LengthMergedKm Weighted"], 0) # round((1 / inputdf["Capacity (GWa/km)"]), 0)
     inputdf["commodity"] = (
         flow_commodity + "_" + inputdf["IMPORTER"].str.lower().str.split("_").str[-1]
     )
@@ -362,7 +377,7 @@ def import_gem(
     basedf = pd.read_csv(os.path.join(trade_dir, "input.csv"))
     # The largest capacity pipelines have maximum 300,000GWh (~30bcm) annually
     basedf["value"] = np.where(
-        basedf["commodity"].str.contains(flow_commodity), 30, basedf["value"]
+        basedf["commodity"].str.contains(flow_commodity), 500, basedf["value"]
     )
 
     inputdf = basedf.merge(
