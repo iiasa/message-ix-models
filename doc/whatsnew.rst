@@ -16,6 +16,8 @@ Next release
   - Add :func:`.buildings.build.prepare_data_B`;
     rename :py:`prepare_data()` to :func:`~.buildings.build.prepare_data_A`.
 
+- Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
+
 v2026.4.17
 ==========
 
