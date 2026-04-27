@@ -10,3 +10,13 @@ Project information
 ===================
 
 - Website: https://wcrp-cmip.org/mips/scenariomip/
+
+Code reference
+==============
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   message_ix_models.project.scenariomip
