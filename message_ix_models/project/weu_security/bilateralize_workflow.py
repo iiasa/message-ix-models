@@ -115,5 +115,5 @@ for model_scen in models_scenarios.keys():
                      base_level = 'secondary')
 
     print("Solve scenario")
-    out_scenario.solve()
+    out_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
     mp.close_db()
