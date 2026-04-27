@@ -287,16 +287,7 @@ def step_2_and_solve(
     policy_config = PolicyConfig()
 
     step_2(context, scenario, policy_config)
-    message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-        "advind": 0,
-        "lpmethod": 4,
-        "threads": 4,
-        "epopt": 1e-6,
-        "scaind": -1,
-        # "predual": 1,
-        "barcrossalg": 0,
-    }
-    scenario.solve(model="MESSAGE")
+    solve(context, scenario, model="MESSAGE")
 
     return scenario
 
@@ -487,14 +478,38 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False, shift_first_model_year=2035),
     )
 
+    wf.add_step(
+        "ELV-SSP2-1150F base built",
+        "NPi2030 solved",
+        step_0,
+        target=f"{model_name}/ELV-SSP2-1150F_base",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "ELV-SSP2-650P-400F base built",
+        "NPi2030 solved",
+        step_0,
+        target=f"{model_name}/ELV-SSP2-650P-400F_base",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "ELV-SSP2-GPB base built",
+        "ELV-SSP2-GP solved",
+        step_0,
+        target=f"{model_name}/ELV-SSP2-GPB_base",
+        clone=dict(keep_solution=False),
+    )
+
     for scen in _scen_en_steps:
-        wf.add_step(
-            f"{scen} base built",
-            "base reported",
-            step_0,
-            target=f"{model_name}/{scen}_base",
-            clone=dict(keep_solution=False),
-        )
+        # wf.add_step(
+        #     f"{scen} base built",
+        #     "base reported",
+        #     step_0,
+        #     target=f"{model_name}/{scen}_base",
+        #     clone=dict(keep_solution=False),
+        # )
 
         wf.add_step(
             f"{scen} EN1",
