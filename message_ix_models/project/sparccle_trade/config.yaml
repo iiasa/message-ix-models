@@ -98,3 +98,17 @@ define_parameters:
       - var_cost
       - capacity_factor
       - relation_activity_CO2_Emission
+      
+# TECHNOLOGIES THAT ARE UPDATED WITH PROJECT-SPECIFIC SCENARIO UPDATES
+update_tec:
+  - biomass_shipped
+  - coal_shipped
+  - crudeoil_piped
+  - crudeoil_shipped
+  - eth_shipped
+  - foil_piped
+  - foil_shipped
+  - gas_piped
+  - LNG_shipped
+  - loil_piped
+  - loil_shipped

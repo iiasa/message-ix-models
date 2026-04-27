@@ -35,7 +35,7 @@ prepare_edit_files(project_name = 'sparccle_trade',
 
 # Add scenario updates for project
 print("Add scenario updates for project")
-for tec in config['constrained_tec']:
+for tec in config['update_tec']:
     print(f"...{tec}")
     if os.path.exists(package_data_path("sparccle_trade", "scenario_updates", tec)):
         for file in os.listdir(package_data_path("sparccle_trade", "scenario_updates", tec)):
