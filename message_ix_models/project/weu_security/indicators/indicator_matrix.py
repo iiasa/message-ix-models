@@ -49,11 +49,15 @@ total_imports_df = calculate_total_imports(input_data=base_df,
                                            region = ["R12_WEU", "R12_EEU"],
                                            region_name = "Europe")
 # Import dependence
+fuel_supply_data = pd.read_csv(package_data_path('weu_security', 'reporting', 'fuel_supply_out.csv'))
+
 pe_import_dependence = calculate_import_dependence(input_data=base_df,
                                                    region = ["R12_WEU", "R12_EEU"],
                                                    region_name = "Europe",
                                                    portfolio = ["Biomass", "Coal", "Gas", "Oil"],
-                                                   portfolio_level = "Primary Energy")
+                                                   portfolio_level = "Primary Energy",
+                                                   fuel_supply_data = fuel_supply_data,
+                                                   fuel_map = {"Oil": "Crude", "Gas": "Gas"})
 
 se_import_dependence = calculate_import_dependence(input_data=base_df,
                                                    region = ["R12_WEU", "R12_EEU"],
