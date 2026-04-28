@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Callable, Hashable
 from functools import cache
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -9,6 +10,7 @@ import pytest
 from genno import Computer
 from message_ix import Scenario
 
+from message_ix_models import Context
 from message_ix_models.model.transport.testing import MARK as MARK_TRANSPORT
 from message_ix_models.project.ssp.transport import (
     METHOD,
@@ -70,9 +72,6 @@ I_O = IN_ | OUT  # Both
 #: Emissions species codes appearing in the IAMC-structured / reported data; these are
 #: *different* from those internal to the model.
 SPECIES = {"CH4", "BC", "CO", "CO2", "N2O", "NH3", "NOx", "OC", "Sulfur", "VOC"}
-
-#: Species for which no aviation-specific emission factor values are available.
-SPECIES_WITHOUT_EF: set[str] = set()
 
 
 def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
@@ -157,27 +156,27 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
 def expected_variables(flag: int, method: METHOD) -> set[str]:
     """Set of expected ‘Variable’ codes according to `flag` and `method`."""
     # Shorthand
-    edb, edt = "Energy|Demand|Bunkers", "Energy|Demand|Transportation"
+    edb = "Energy|Demand|Bunkers"
 
     result = set()
 
     # Emissions
     for e in SPECIES:
-        # Expected data flows in which these variable codes appear
-        exp = IN_ if (e in SPECIES_WITHOUT_EF and method != METHOD.A) else I_O
-        if flag & exp:
-            result |= {
-                f"Emissions|{e}|{edb}",
-                f"Emissions|{e}|{edb}|International Aviation",
-            } | (
-                {
-                    f"Emissions|{e}|{edt}",
-                    # NB Present up to input data format V2; not in V3
-                    # f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
+        result |= {
+            f"Emissions|{e}|{edb}",
+            f"Emissions|{e}|{edb}|International Aviation",
+        }
+        if e == "CO2":
+            result.add(f"Emissions|{e}|Energy|Demand|Transportation")
+        else:
+            result.add(f"Emissions|{e}|Energy|Demand")
+            if not (method == METHOD.A and e in {"CH4", "N2O", "NH3"}):
+                result |= {
+                    f"Emissions|{e}",
+                    f"Emissions|{e}|Energy",
+                    f"Emissions|{e}|Energy|Combustion",
+                    f"Emissions|{e}|Fossil Fuels and Industry",
                 }
-                if method == METHOD.C
-                else set()
-            )
 
     # Final Energy
     if method != METHOD.A:
@@ -209,8 +208,11 @@ def insert_nans(
     )
 
 
+@MARK_TRANSPORT[10]
 @get_computer.minimum_version
-def test_cli(tmp_path, mix_models_cli, test_context, input_xlsx_path) -> None:
+def test_cli(
+    tmp_path: Path, mix_models_cli, test_context: Context, input_xlsx_path: Path
+) -> None:
     """Code can be invoked from the command-line."""
     from shutil import copyfile
 
