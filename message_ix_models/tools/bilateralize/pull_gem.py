@@ -224,6 +224,11 @@ def import_gem(
         round(inv_cost["value_update"], 0),
         inv_cost["value"],
     )
+    inv_cost["value"] = np.where(
+        inv_cost["value"] < 2, 2, # Make investment cost floor 2MUSD/km
+        inv_cost["value"]
+    )
+
     inv_cost["year_vtg"] = "broadcast"
     inv_cost["unit"] = "USD/km"
     inv_cost = inv_cost[
