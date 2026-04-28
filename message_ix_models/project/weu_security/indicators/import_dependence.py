@@ -67,6 +67,34 @@ def calculate_import_dependence(input_data:pd.DataFrame,
     pdf = pdf.groupby(["Model", "Scenario", "Fuel", "Unit", "Year"])["Value"].sum().reset_index()
     pdf = pdf.rename(columns={"Value": "Energy Demand"})
 
+    # For Primary Energy Oil, Net Imports (crude bilateral flows) includes crude imported and
+    # then refined into products that are re-exported.  Primary Energy|Oil only captures crude
+    # consumed domestically, so Net Imports can exceed Energy Demand when the region is a
+    # refinery hub.  Adjust by adding SE oil product exports from the region to the Oil energy
+    # demand so the denominator covers total crude throughput (domestic use + re-exported).
+    if portfolio_level == "Primary Energy" and "Oil" in portfolio:
+        se_exp_df = input_data.copy()
+        se_exp_df = se_exp_df[se_exp_df["Unit"] == use_units]
+        se_exp_df = se_exp_df[se_exp_df["Variable"].str.split("|").str[0] == "Trade"]
+        se_exp_df = se_exp_df[se_exp_df["Variable"].str.contains("Secondary Energy")]
+        se_exp_df = se_exp_df[se_exp_df["Variable"].str.contains("Fuel Oil|Light Oil")]
+        se_exp_df["exporter"] = se_exp_df["Region"].str.split(">").str[0]
+        se_exp_df["importer"] = se_exp_df["Region"].str.split(">").str[1]
+        se_exp_df = se_exp_df[
+            se_exp_df["exporter"].isin(region) & ~se_exp_df["importer"].isin(region)
+        ]
+        se_exp_total = (
+            se_exp_df.groupby(["Model", "Scenario", "Unit", "Year"])["Value"]
+            .sum()
+            .reset_index()
+            .rename(columns={"Value": "SE_Product_Exports"})
+        )
+        se_exp_total["Fuel"] = "Oil"
+        pdf = pdf.merge(se_exp_total, on=["Model", "Scenario", "Fuel", "Unit", "Year"], how="left")
+        pdf["SE_Product_Exports"] = pdf["SE_Product_Exports"].fillna(0)
+        pdf["Energy Demand"] = pdf["Energy Demand"] + pdf["SE_Product_Exports"]
+        pdf = pdf.drop(columns=["SE_Product_Exports"])
+
     # Import dependence
     df = df.merge(pdf, on=["Model", "Scenario", "Fuel", "Unit", "Year"], how="left")
     df['Net Import Dependence'] = df['Net Imports'] / df['Energy Demand']
