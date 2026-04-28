@@ -14,10 +14,11 @@ from genno import Key, quote
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codelist
-from message_ix_models.model.transport import CL_SCENARIO
+from message_ix_models.model.transport import CL_SCENARIO, build
+from message_ix_models.report import prepare_reporter
 from message_ix_models.tools.iamc import iamc_like_data_for_query, to_quantity
 from message_ix_models.util import minimum_version
-from message_ix_models.util.genno import Keys
+from message_ix_models.util.genno import Keys, update_computer
 
 if TYPE_CHECKING:
     import pathlib
@@ -390,6 +391,20 @@ def get_computer(
     # Change labels e.g. "AFR" → "R12_AFR"; see get_label()
     c.add(K.fe_in, "relabel", K.fe_in[1], labels=get_labels())
 
+    # NB the following might be equivalent, and it may be sufficient to use either one
+    #    all three METHOD.
+    if method in (METHOD.A, METHOD.B):
+        # Add the same structure information and exogenous data used in the build
+        # workflow stage for MESSAGEix-Transport, in particular:
+        # - e::codelist
+        # - groups::iea to transport
+        # - energy::n-y-product-flow:iea —using .tools.iea.web.IEA_EWEB
+        build.get_computer(context, c)
+    else:
+        # - Prepare a Reporter to retrieve model solution data from `target_url`.
+        # - Transfer all its tasks to `c`
+        update_computer(c, prepare_reporter(context)[0])
+
     # Call a function to prepare the remaining calculations up to K.emi
     method_func = {METHOD.A: method_A, METHOD.B: method_B, METHOD.C: method_C}[method]
     method_func(c)
@@ -499,17 +514,6 @@ def method_B(c: "Computer") -> None:
        labels are produced). This is the share of aviation in final energy.
     4. Add the steps from :func:`.method_BC_common`.
     """
-    from message_ix_models.model.transport import build
-
-    context: Context = c.graph["context"]
-
-    # Add the same structure information and exogenous data used in the build and report
-    # workflow steps for MESSAGEix-Transport, in particular:
-    # - e::codelist
-    # - groups::iea to transport
-    # - energy::n-y-product-flow:iea —using .tools.iea.web.IEA_EWEB
-    build.get_computer(context, c)
-
     # Shorthand for keys and sequences of keys
     fe = Keys(
         cnt=f"energy:c-n-t:{L}+0",
@@ -564,7 +568,6 @@ def method_BC_common(
     k_emi_share
         A key giving the share of aviation in total transport emissions.
     """
-
     from message_ix_models.model.transport.key import exo
 
     # Check dimensions of k_fe_share
@@ -662,15 +665,6 @@ def method_C(c: "Computer") -> None:  # pragma: no cover
        energy.
     3. Apply the steps from :func:`.method_BC_common`.
     """
-    from message_ix_models.report import prepare_reporter
-    from message_ix_models.util.genno import update_computer
-
-    context: Context = c.graph["context"]
-
-    # - Prepare a Reporter to retrieve model solution data from `target_url`.
-    # - Transfer all its tasks to `c`
-    update_computer(c, prepare_reporter(context)[0])
-
     # Prepare `c` to compute the final energy share for aviation
     k = Keys(
         # Added by .transport.base.prepare_reporter()
