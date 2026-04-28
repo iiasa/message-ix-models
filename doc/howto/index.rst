@@ -20,6 +20,7 @@ Each HOWTO is contained on its own page:
    path
    pull-request
    Document research projects <doc-project>
+   Develop reporting code <report>
    migrate
    Release message-ix-models <release>
 

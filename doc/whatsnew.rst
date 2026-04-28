@@ -18,6 +18,7 @@ Next release
 
 - Adjust :mod:`.project.ssp.transport` (:pull:`485`):
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
+- New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
 
 v2026.4.17
 ==========
