@@ -1,4 +1,4 @@
-# Gas imports to Europe
+# Matrix of energy security indicators
 
 import pandas as pd
 from message_ix_models.util import package_data_path
@@ -118,3 +118,7 @@ fig.suptitle("Total Value by Exporter, Scenario & SSP2_INDC2030",
 plt.tight_layout()
 
 plt.show()
+
+fig.savefig(package_data_path("weu_security", "figures", "indc_matrix.png"), 
+            dpi=160, bbox_inches="tight",
+            transparent=True)

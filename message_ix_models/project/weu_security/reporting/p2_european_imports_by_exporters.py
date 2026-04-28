@@ -63,7 +63,7 @@ def make_paneled_figure(
     all_non_ref = [s for s in plot_scenarios if s != plot_ref_scenario]
     marker_styles = ["o", "s", "^", "D", "v", "P", "X"]
 
-    _keywords = ['FSU2040', 'FSULONG', 'SSP2']
+    _keywords = ['FSU2040', 'FSULONG', 'REF']
 
     def _scenario_suffix(s: str) -> str:
         for kw in _keywords:

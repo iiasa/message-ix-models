@@ -216,6 +216,10 @@ def plot_heat_matrix(
     ax.set_title(title or f"Heat Matrix — {year}", fontsize=13, pad=14, loc="left")
     fig.tight_layout()
 
+    fig.savefig(package_data_path("weu_security", "figures", "indc_matrix.png"), 
+                dpi=160, bbox_inches="tight",
+                transparent=True)
+
     return fig
 
 matrix_indicators = ['Energy Demand (Primary Energy)', 'Energy Demand (Oil)', 'Energy Demand (Gas)',
