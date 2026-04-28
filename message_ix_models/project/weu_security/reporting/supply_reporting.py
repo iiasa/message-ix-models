@@ -156,7 +156,10 @@ def run_reporting():
                                         ('weu_security', 'INDC2030_FSU2040_MEACON_1.0'),
                                         ('weu_security', 'INDC2030_FSU2100_MEACON_1.0'),
                                         ]
+<<<<<<< HEAD
     print(model_scenarios)
+=======
+>>>>>>> e8256c71e (Rerun all scenarios and reporting with updated pipelines)
 
     fuel_supply_out = pd.DataFrame()
     for mod, scen in model_scenarios:

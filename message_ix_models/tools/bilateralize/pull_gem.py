@@ -367,7 +367,7 @@ def import_gem(
     inputdf2 = inputdf.copy()
     inputdf2 = inputdf2.rename(columns = {"EXPORTER": "IMPORTER", "IMPORTER": "EXPORTER"})
     inputdf = pd.concat([inputdf, inputdf2])
-    inputdf = inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]].mean().reset_index()
+    inputdf = inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]].min().reset_index()
 
     inputdf["node_loc"] = inputdf["EXPORTER"]
     inputdf["technology"] = (
