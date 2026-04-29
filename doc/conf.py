@@ -181,6 +181,12 @@ extlinks = {
     "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #%s"),
     "gh-user": ("https://github.com/%s", "@%s"),
     "source": ("https://github.com/iiasa/message-ix-models/blob/main/%s", "%s"),
+    # Temporary, for #275. DO NOT use these except in doc/dev/275.rst
+    "md-to-migrate": ("https://github.com/iiasa/message_data/blob/ssp_dev/%s", None),
+    "msc-to-migrate": (
+        "https://github.com/iiasa/message_single_country/blob/SSP_Dev_2023/%s",
+        None,
+    ),
 }
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
