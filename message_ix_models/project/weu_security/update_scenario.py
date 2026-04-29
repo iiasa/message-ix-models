@@ -21,17 +21,17 @@ base_scen = 'SSP2'
 
 mp = ixmp.Platform()
 base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-out_scenario = base_scenario.clone('weu_security', "SSP2_ppcost", keep_solution = False)
+out_scenario = base_scenario.clone('weu_security', "tec_lt", keep_solution = False)
 
-print("Update pipeline investment costs")
-cdf = out_scenario.par("inv_cost")
-cdf = cdf[cdf['technology'].str.contains('gas_pipe_')]
+print("Update pipeline lifetime")
+cdf = out_scenario.par("technical_lifetime")
+cdf = cdf[cdf['technology'].str.contains('_pipe_')]
 cdf_new = cdf.copy()
-cdf_new['value'] = 10
+cdf_new['value'] = 50
 
-with out_scenario.transact("Update pipeline investment costs"):
-    out_scenario.remove_par("inv_cost", cdf)
-    out_scenario.add_par("inv_cost", cdf_new)
+with out_scenario.transact("Update pipeline lifetime"):
+    out_scenario.remove_par("technical_lifetime", cdf)
+    out_scenario.add_par("technical_lifetime", cdf_new)
     
 print("Solve scenario")
 out_scenario.solve()
