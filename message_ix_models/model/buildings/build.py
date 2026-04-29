@@ -638,6 +638,7 @@ def prepare_data_A(
     return result
 
 
+# FIXME Reduce complexity from 27 to ≤11
 def prepare_data_B(  # noqa: C901
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
@@ -940,10 +941,10 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
 
     # Ensure context.buildings is set (e.g. by BMT from config.yaml); else defaults
     if "buildings" not in context:
-        from message_ix_models.model.bmt.config import load_buildings_config
+        from message_ix_models.model.bmt.config import apply_bmt_config
 
         # Same as in .model.bmt.workflow.generate()
-        context.buildings = load_buildings_config()
+        apply_bmt_config(context)
 
     # Info about the `scenario` to be modified. If build.main() has already been run on
     # the scenario, this will reflect that, e.g. will include the structures from

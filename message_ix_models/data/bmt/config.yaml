@@ -1,17 +1,26 @@
-# BMT workflow configuration.
-# Top-level keys are energy demand sectors; each is loaded into context (e.g. context.buildings).
-# Paths under a sector are relative to private_data_path(sector) unless redefined.
+# BMT workflow configuration
+
+# Top-level keys: model_name, buildings, macro, transport, …
+# apply_bmt_config sets context.bmt (full dict), context.buildings, context.macro,
+# and context.transport (MESSAGEix-Transport Config from the transport section).
+
+model_name: "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12"
 
 buildings:
   data_paths:
       # Input file names under private_data_path("buildings")
       prices: "input_prices_R12.csv"
-      sturm_r: "report_MESSAGE_resid_SSP2_nopol_post.csv"
-      sturm_c: "report_MESSAGE_comm_SSP2_nopol_post.csv"
+      sturm_r: "report_MESSAGE_resid_SSP2_nopol_20250318.csv"
+      sturm_c: "report_MESSAGE_comm_SSP2_nopol_20250318.csv"
       demand_static: "static_20251227.csv"
   # Whether to include materials (steel, cement, aluminum) in the buildings spec
   with_materials: true
 
-# transport: {}
+macro: "macro_calibration_input_SSP2_bmt.xlsx"
+
+transport:
+  # Scenario code id from the transport SDMX codelist
+  code: "SSP2" # or "M SSP2"
+
 # materials: {}
 # others: {}

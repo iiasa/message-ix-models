@@ -44,27 +44,23 @@ def _generate_vetting_csv(
         how="outer",
     ).fillna(0)
 
-    # Calculate subtraction amounts and percentages
-    vetting_data["subtracted_amount"] = (
+    # Calculate gap and gap share
+    vetting_data["gap"] = (
         vetting_data["value_original"] - vetting_data["value_modified"]
     )
 
-    # Calculate percentage subtracted (avoid division by zero)
-    vetting_data["subtraction_percentage"] = (
-        vetting_data["subtracted_amount"]
-        / vetting_data["value_original"].replace(0, 1)
-        * 100
+    # Calculate gap share (percentage) (avoid division by zero)
+    vetting_data["gap_share"] = (
+        vetting_data["gap"] / vetting_data["value_original"].replace(0, 1) * 100
     )
 
     # Replace infinite values with 0 (when original was 0)
-    vetting_data["subtraction_percentage"] = vetting_data[
-        "subtraction_percentage"
-    ].replace([float("inf"), -float("inf")], 0)
+    vetting_data["gap_share"] = vetting_data["gap_share"].replace(
+        [float("inf"), -float("inf")], 0
+    )
 
     # Round to reasonable precision
-    vetting_data["subtraction_percentage"] = vetting_data[
-        "subtraction_percentage"
-    ].round(2)
+    vetting_data["gap_share"] = vetting_data["gap_share"].round(2)
 
     # Select and rename columns for clarity
     output_columns = [
@@ -73,8 +69,8 @@ def _generate_vetting_csv(
         "commodity",
         "value_original",
         "value_modified",
-        "subtracted_amount",
-        "subtraction_percentage",
+        "gap",
+        "gap_share",
     ]
 
     vetting_data = vetting_data[output_columns].copy()
@@ -84,12 +80,12 @@ def _generate_vetting_csv(
         "commodity",
         "original_demand",
         "modified_demand",
-        "subtracted_amount",
-        "subtraction_percentage",
+        "gap",
+        "gap_share",
     ]
 
     # # Filter out rows where no subtraction occurred
-    # vetting_data = vetting_data[vetting_data["subtracted_amount"] > 0]
+    # vetting_data = vetting_data[vetting_data["gap"] > 0]
 
     # Sort by commodity, node, year for better readability
     vetting_data = vetting_data.sort_values(["commodity", "node", "year"])
@@ -101,10 +97,10 @@ def _generate_vetting_csv(
 
     # Log summary statistics
     if len(vetting_data) > 0:
-        avg_pct = vetting_data["subtraction_percentage"].mean()
-        max_pct = vetting_data["subtraction_percentage"].max()
-        log.info(f"Average subtraction percentage: {avg_pct:.2f}%")
-        log.info(f"Max subtraction percentage: {max_pct:.2f}%")
+        avg_pct = vetting_data["gap_share"].mean()
+        max_pct = vetting_data["gap_share"].max()
+        log.info(f"Average gap share: {avg_pct:.2f}%")
+        log.info(f"Max gap share: {max_pct:.2f}%")
 
 
 # Maybe it is better to have one function for each method?
@@ -115,7 +111,7 @@ def subtract_material_demand(
     sturm_c: pd.DataFrame,
     method: str = "bm_subtraction",
     generate_vetting_csv: bool = True,
-    vetting_output_path: str = "material_demand_subtraction_vetting.csv",
+    vetting_output_path: str = "material_haircut_buildings.csv",
 ) -> pd.DataFrame:
     """Subtract inter-sector material demand from existing demands in scenario.
 
@@ -145,7 +141,7 @@ def subtract_material_demand(
         Whether to generate a CSV file showing subtraction details (default: True)
     vetting_output_path : str, optional
         Path for the vetting CSV file (default:
-        "material_demand_subtraction_vetting.csv")
+        "material_haircut_buildings.csv")
 
     Returns
     -------
@@ -258,21 +254,7 @@ def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
     **kwargs
         Additional keyword arguments (ignored, for workflow compatibility).
     """
-    # Check if power sector material data already exists
-    if scenario.has_par("input_cap_new"):
-        try:
-            existing_data = scenario.par("input_cap_new")
-            if (
-                not existing_data.empty
-                and "cement" in existing_data.get("commodity", pd.Series()).values
-            ):
-                log.info(
-                    "Power sector material intensity data already exists "
-                    "(found cement in input_cap_new). Skipping build_pm."
-                )
-                return scenario
-        except Exception as e:
-            log.warning(f"Could not check existing input_cap_new data: {e}")
+    # TODO: check if the power sector material data already exists
 
     log.info("Adding material intensity for power capacities...")
     scenario.check_out()
