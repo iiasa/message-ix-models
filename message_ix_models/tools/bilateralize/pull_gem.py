@@ -394,7 +394,7 @@ def import_gem(
         basedf["commodity"].str.contains(flow_commodity), basedf['Distance_km'], basedf["value"]
     )
     basedf = basedf.drop(["Node1", "Node2", "Distance_km"], axis=1)
-
+    
     inputdf = basedf.merge(
         inputdf,
         left_on=["node_loc", "technology", "commodity"],
@@ -409,7 +409,7 @@ def import_gem(
         inputdf["value"],
     )
     inputdf = inputdf.drop(["value_update"], axis=1)
-
+    
     inputdf.to_csv(os.path.join(gem_dir_out, "inputs_GEM.csv"), index=False)
     inputdf.to_csv(os.path.join(trade_dir, "input.csv"), index=False)
     inputdf.to_csv(os.path.join(trade_dir_out, "input.csv"), index=False)
