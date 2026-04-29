@@ -1,4 +1,4 @@
-node_loc,technology,year_act,time,value,unit
+node_loc,technology,year_vtg,time,value,unit
 R12_AFR,gas_pipe_mea,broadcast,year,0.05,km
 R12_AFR,gas_pipe_weu,broadcast,year,0.05,km
 R12_EEU,gas_pipe_fsu,broadcast,year,0.05,km
