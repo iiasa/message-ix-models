@@ -168,6 +168,10 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     ),
     # .freight.other()
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
+    # input values are generated for usage technologies
+    "usage input::F+ixmp": (
+        HasCoords({"technology": ["transport F RAIL usage", "transport F ROAD usage"]}),
+    ),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
     "mode share:n-t-y:base": (HasUnits(""),),
