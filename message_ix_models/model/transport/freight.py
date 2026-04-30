@@ -196,7 +196,7 @@ def usage(c: "Computer") -> None:
     k = Key("F usage input", NTY)
 
     c.add(k[0], wildcard(1.0, "gigavehicle km", NTY))
-    c.add(k[1], "broadcast_wildcard", k[0], K.n, "t::F usage", K.y, dim=NTY)
+    c.add(k[1], "broadcast_wildcard", k[0], K.n, K.t["F usage"], K.y, dim=NTY)
     # Broadcast (t,) → (t, c, l) and (y,) → (yv, ya) dimensions
     prev = c.add(k[2], "mul", k[1], K.bcast_tcl.input, K.bcast_y.no_vintage)
     # Convert to MESSAGE data structure
