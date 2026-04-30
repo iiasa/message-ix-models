@@ -15,12 +15,12 @@ scenario:
     R12
 
 models_scenarios:
-  SSP2:
-    model: SSP_SSP2_v6.6
-    scenario: baseline
-  #INDC2030:
+  #SSP2:
   #  model: SSP_SSP2_v6.6
-  #  scenario: INDC2030i
+  #  scenario: baseline
+  INDC2030:
+    model: SSP_SSP2_v6.6
+    scenario: INDC2030i
     
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:

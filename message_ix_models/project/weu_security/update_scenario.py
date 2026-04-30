@@ -20,19 +20,23 @@ base_model = 'weu_security'
 base_scen = 'SSP2'
 
 mp = ixmp.Platform()
-base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-out_scenario = base_scenario.clone('weu_security', "tec_lt", keep_solution = False)
+df = mp.scenario_list()
+df = df[df['model'] == 'SSP_SSP2_v6.6']
+print(df.scenario.unique())
 
-print("Update pipeline lifetime")
-cdf = out_scenario.par("technical_lifetime")
-cdf = cdf[cdf['technology'].str.contains('_pipe_')]
-cdf_new = cdf.copy()
-cdf_new['value'] = 50
+#base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
+#out_scenario = base_scenario.clone('weu_security', "tec_lt", keep_solution = False)
 
-with out_scenario.transact("Update pipeline lifetime"):
-    out_scenario.remove_par("technical_lifetime", cdf)
-    out_scenario.add_par("technical_lifetime", cdf_new)
+#print("Update pipeline lifetime")
+##cdf = out_scenario.par("technical_lifetime")
+#cdf = cdf[cdf['technology'].str.contains('_pipe_')]
+#cdf_new = cdf.copy()
+#cdf_new['value'] = 50
+
+#with out_scenario.transact("Update pipeline lifetime"):
+#    out_scenario.remove_par("technical_lifetime", cdf)
+#    out_scenario.add_par("technical_lifetime", cdf_new)
     
-print("Solve scenario")
-out_scenario.solve()
-mp.close_db()
+#print("Solve scenario")
+#out_scenario.solve()
+#mp.close_db()
