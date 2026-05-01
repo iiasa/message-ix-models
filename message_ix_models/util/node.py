@@ -124,6 +124,28 @@ def identify_nodes(scenario: Scenario) -> str:
         return id
 
 
+def extract_region_code(node: str) -> str:
+    """Extract short region code from a MESSAGE node name.
+
+    Strips the ``R{n}_`` prefix (e.g. ``R11_``, ``R12_``, ``R14_``) if present;
+    returns the string unchanged for any other format.
+
+    Parameters
+    ----------
+    node
+        MESSAGE node name (e.g. ``"R12_AFR"``, ``"R11_WEU"``) or a short code
+        that needs no stripping (e.g. ``"AFR"``).
+
+    Returns
+    -------
+    str
+        Short code (e.g. ``"AFR"``).
+    """
+    import re
+
+    return re.sub(r"^R\d+_", "", node)
+
+
 def nodes_ex_world(nodes: Sequence[str | Code]) -> list[str | Code]:
     """Exclude "World" and anything containing "GLB" from `nodes`.
 

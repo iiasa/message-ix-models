@@ -12,6 +12,7 @@ from message_ix import Reporter, Scenario
 
 from message_ix_models.model.water.utils import USD_KM3_TO_USD_MCM, m3_GJ_TO_MCM_GWa
 from message_ix_models.util import package_data_path
+from message_ix_models.util.node import extract_region_code
 
 log = logging.getLogger(__name__)
 
@@ -439,7 +440,7 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
     target_regions = reg_map[reg_map.region.str.startswith(f"{reg}_")]
     basin_to_reg_map = {}
     for _, row in target_regions.iterrows():
-        region_code = row.region.split("_")[1]  # R12_CHN -> CHN
+        region_code = extract_region_code(row.region)
         basin_to_reg_map[region_code] = row.region  # CHN -> R12_CHN
 
     df_rate["region"] = df_rate["region_short"].map(basin_to_reg_map)

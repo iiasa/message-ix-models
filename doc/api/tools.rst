@@ -10,6 +10,7 @@ On other pages:
 
 - :doc:`tools-bilateralize`
 - :doc:`tools-costs`
+- :doc:`tools-impacts`
 
 On this page:
 
