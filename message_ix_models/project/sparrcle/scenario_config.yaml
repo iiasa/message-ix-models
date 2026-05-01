@@ -1,0 +1,66 @@
+# SPARRCLE Scenario Configuration
+#
+# Consumed by `message_ix_models.project.sparrcle.workflow.generate`.
+#
+# Phase 1 — Module build ("{ssp}/{scenario} cooling"):
+#   subprocess `mix-models water-ix cooling` → {scenario}_cooling
+#
+# Phase 2 — CID variants ("{ssp}/{scenario} CI_b" / "CI_p" / "CI_bp"):
+#   buildings: rc_spec/rc_therm demand adjustment        → _CI_b
+#   cooling:   freshwater + dry cooling capacity factors → _CI_p
+#   combined:  buildings + cooling on the cooling clone  → _CI_bp
+
+platform_info:
+  name: ixmp_dev
+
+regions: R12
+
+# Starter scenarios — assumed to exist on `platform_info.name`. The list
+# is the source of truth for which scenarios the build pipeline iterates
+# over.
+#
+# `_PHY` starters are prep clones of Adriano's solved GDP CI_50 inputs.
+# magicc_output_dir points at the upstream Adriano starter name with no
+# `_PHY` suffix because the MAGICC GSAT ensemble is keyed to that
+# upstream solved scenario.
+starters:
+  - model: SSP_SSP1_v6.5_sp
+    scenario: NPiREF_GDP_CI_50_ensemble_1_PHY
+    ssp: SSP1
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/NPiREF_GDP_CI_50_ensemble_1/
+  - model: SSP_SSP1_v6.5_sp
+    scenario: INDC2030i_uncon_800f_GDP_CI_50_ensemble_1_PHY
+    ssp: SSP1
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP1_v6.5_sp__INDC2030i_uncon_800f_GDP_CI_50_ensemble_1/
+  - model: SSP_SSP2_v6.5_sp
+    scenario: NPiREF_GDP_CI_50_ensemble_2_PHY
+    ssp: SSP2
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/NPiREF_GDP_CI_50_ensemble_2/
+  - model: SSP_SSP2_v6.5_sp
+    scenario: INDC2030i_uncon_600f_GDP_CI_50_ensemble_1_PHY
+    ssp: SSP2
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP2_v6.5_sp__INDC2030i_uncon_600f_GDP_CI_50_ensemble_1/
+  - model: SSP_SSP3_v6.5_sp
+    scenario: NPiREF_GDP_CI_50_ensemble_2_PHY
+    ssp: SSP3
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/NPiREF_GDP_CI_50_ensemble_2/
+  - model: SSP_SSP3_v6.5_sp
+    scenario: INDC2030i_uncon_600f_GDP_CI_50_ensemble_1_PHY
+    ssp: SSP3
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/INDC2030i_uncon_600f_GDP_CI_50_ensemble_1/
+  - model: SSP_SSP3_v6.5_sp
+    scenario: INDC2030i_uncon_800f_GDP_CI_50_ensemble_1_PHY
+    ssp: SSP3
+    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/INDC2030i_uncon_800f_GDP_CI_50_ensemble_1/
+
+# Phase-1 cooling-module build settings (passed to `mix-models water-ix cooling`)
+cooling:
+  rcps: no_climate
+  rels: low
+
+# Phase-2 CID settings
+cid:
+  # `n_runs: null` means use all available MAGICC ensemble members.
+  n_runs: null
+  # Earliest model year touched by cooling CID constraints and dry-cooling derating.
+  min_year: 2045
