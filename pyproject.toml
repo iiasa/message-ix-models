@@ -78,6 +78,7 @@ report = ["plotnine", "xlsxwriter"]
 tests = [
   "message-ix[tests]",
   "message_ix_models[bilateralize,buildings,material,report,transport]",
+  "netCDF4",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
