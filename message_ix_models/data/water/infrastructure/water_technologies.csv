@@ -7,10 +7,8 @@ membrane,desalination,saline,coastal_basins,Membrane-based desalination
 distillation,desalination,saline,coastal_basins,Thermal desalination
 desal_t_d,distribution,desalinated,coastal_basins,Desalinated water transmission & distribution
 urban_t_d,distribution,freshwater,urban_developed_basins,Urban water transmission & distribution
-urban_unconnected,distribution,freshwater,urban_developed_basins,Urban areas without water connection
 industry_unconnected,distribution,freshwater,industrial_basins,Industrial areas without water connection
 rural_t_d,distribution,freshwater,rural_basins,Rural water transmission & distribution
-rural_unconnected,distribution,freshwater,rural_basins,Rural areas without water connection
 urban_sewerage,treatment,wastewater,urban_developed_basins,Urban wastewater collection
 urban_untreated,treatment,wastewater,urban_developed_basins,Untreated urban return flows
 urban_discharge,treatment,wastewater,urban_developed_basins,Treated urban water discharge

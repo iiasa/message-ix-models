@@ -1032,16 +1032,6 @@ nexus:
       untreated industry water return flows
     input: { commodity: urban_uncollected_wst }
 
-  urban_unconnected:
-    description: >-
-      untreated urban water not connected to system
-    input: { commodity: freshwater_supply }
-
-  rural_unconnected:
-    description: >-
-      untreated rural water not connected to system
-    input: { commodity: freshwater_supply }
-
   urban_sewerage:
     description: >-
       urban wastewater
