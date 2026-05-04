@@ -417,7 +417,27 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
     """
     # Load rates data
     load_path = package_data_path("water", "demands", "harmonized", reg)
-    all_rates = pd.read_csv(load_path / f"all_rates_{ssp}.csv")
+    rates_path = load_path / f"all_rates_{ssp}.csv"
+    if rates_path.exists():
+        all_rates = pd.read_csv(rates_path)
+    else:
+        frames = []
+        for path in sorted(load_path.glob(f"{ssp.lower()}_regional_*_rate_*.csv")):
+            df = pd.read_csv(path)
+            year_col = df.columns[0]
+            variable = path.stem.removeprefix(f"{ssp.lower()}_regional_")
+            frames.append(
+                df.rename(columns={year_col: "year"})
+                .melt(id_vars="year", var_name="node", value_name="value")
+                .assign(variable=variable)
+                .dropna(subset=["value"])
+            )
+
+        if not frames:
+            log.warning(f"No rate CSVs found for {ssp} in {load_path}")
+            return pd.DataFrame()
+
+        all_rates = pd.concat(frames, ignore_index=True)
 
     # Filter for scenario type
     scenario_type = "SDG" if sdgs else "baseline"
@@ -951,7 +971,9 @@ def compute_cooling_technologies(
     return report_iam, cooling_rows
 
 
-def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
+def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:  # noqa: C901
+    # NB: This legacy reporting function will move to genno rather than be split
+    # piecemeal.
     """Report nexus module results
 
     Parameters
@@ -1001,7 +1023,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "CAP_NEW|new capacity|urban_sewerage",
         "CAP_NEW|new capacity|urban_t_d",
         "CAP_NEW|new capacity|urban_treatment",
-        "CAP_NEW|new capacity|urban_unconnected",
         "CAP_NEW|new capacity|urban_untreated",
     ]
 
@@ -1010,7 +1031,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "CAP_NEW|new capacity|rural_sewerage",
         "CAP_NEW|new capacity|rural_t_d",
         "CAP_NEW|new capacity|rural_treatment",
-        "CAP_NEW|new capacity|rural_unconnected",
         "CAP_NEW|new capacity|rural_untreated",
     ]
 
@@ -1028,16 +1048,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
 
     rural_dist = ["CAP_NEW|new capacity|rural_t_d"]
     urban_dist = ["CAP_NEW|new capacity|urban_t_d"]
-
-    rural_unconnected = [
-        "CAP_NEW|new capacity|rural_unconnected",
-        "CAP_NEW|new capacity|rural_untreated",
-    ]
-
-    urban_unconnected = [
-        "CAP_NEW|new capacity|urban_unconnected",
-        "CAP_NEW|new capacity|urban_untreated",
-    ]
 
     industry_unconnected = [
         "CAP_NEW|new capacity|industry_unconnected",
@@ -1068,7 +1078,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "inv cost|rural_sewerage",
         "inv cost|rural_t_d",
         "inv cost|rural_treatment",
-        "inv cost|rural_unconnected",
         "inv cost|rural_untreated",
     ]
 
@@ -1077,7 +1086,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "inv cost|urban_sewerage",
         "inv cost|urban_t_d",
         "inv cost|urban_treatment",
-        "inv cost|urban_unconnected",
         "inv cost|urban_untreated",
     ]
 
@@ -1095,16 +1103,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
 
     rural_dist_inv = ["inv cost|rural_t_d"]
     urban_dist_inv = ["inv cost|urban_t_d"]
-
-    rural_unconnected_inv = [
-        "inv cost|rural_unconnected",
-        "inv cost|rural_untreated",
-    ]
-
-    urban_unconnected_inv = [
-        "inv cost|urban_unconnected",
-        "inv cost|urban_untreated",
-    ]
 
     industry_unconnected_inv = [
         "inv cost|industry_unconnected",
@@ -1129,7 +1127,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "total om cost|urban_sewerage",
         "total om cost|urban_t_d",
         "total om cost|urban_treatment",
-        "total om cost|urban_unconnected",
         "total om cost|urban_untreated",
     ]
 
@@ -1138,7 +1135,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
         "total om cost|rural_sewerage",
         "total om cost|rural_t_d",
         "total om cost|rural_treatment",
-        "total om cost|rural_unconnected",
         "total om cost|rural_untreated",
     ]
 
@@ -1157,16 +1153,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     rural_dist_totalom = ["total om cost|rural_t_d"]
     urban_dist_totalom = ["total om cost|urban_t_d"]
 
-    rural_unconnected_totalom = [
-        "total om cost|rural_unconnected",
-        "total om cost|rural_untreated",
-    ]
-
-    urban_unconnected_totalom = [
-        "total om cost|urban_unconnected",
-        "total om cost|urban_untreated",
-    ]
-
     industry_unconnected_totalom = [
         "total om cost|industry_unconnected",
         "total om cost|industry_untreated",
@@ -1182,12 +1168,8 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
     env_flow = ["in|water_avail_basin|surfacewater_basin|return_flow|M1"]
     gw_recharge = ["in|water_avail_basin|groundwater_basin|gw_recharge|M1"]
 
-    rural_mwdem_unconnected = ["out|final|rural_disconnected|rural_unconnected|M1"]
-    rural_mwdem_unconnected_eff = ["out|final|rural_disconnected|rural_unconnected|Mf"]
     rural_mwdem_connected = ["out|final|rural_mw|rural_t_d|M1"]
     rural_mwdem_connected_eff = ["out|final|rural_mw|rural_t_d|Mf"]
-    urban_mwdem_unconnected = ["out|final|urban_disconnected|urban_unconnected|M1"]
-    urban_mwdem_unconnected_eff = ["out|final|urban_disconnected|urban_unconnected|Mf"]
     urban_mwdem_connected = ["out|final|urban_mw|urban_t_d|M1"]
     urban_mwdem_connected_eff = ["out|final|urban_mw|urban_t_d|Mf"]
     industry_mwdem_unconnected = ["out|final|industry_mw|industry_unconnected|M1"]
@@ -1280,14 +1262,10 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             [
                 "Water Withdrawal",
                 region_withdr
-                + rural_mwdem_unconnected
-                + rural_mwdem_unconnected_eff
                 + rural_mwdem_connected
                 + rural_mwdem_connected_eff
                 + urban_mwdem_connected
                 + urban_mwdem_connected_eff
-                + urban_mwdem_unconnected
-                + urban_mwdem_unconnected_eff
                 + industry_mwdem_unconnected
                 + industry_mwdem_unconnected_eff,
                 "MCM/yr",
@@ -1369,38 +1347,14 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
                 urban_dist,
                 "MCM/yr",
             ],
-            [
-                "Capacity Additions|Infrastructure|Water|Unconnected|Rural",
-                rural_unconnected,
-                "MCM/yr",
-            ],
-            [
-                "Capacity Additions|Infrastructure|Water|Unconnected|Urban",
-                urban_unconnected,
-                "MCM/yr",
-            ],
             ["Freshwater|Environmental Flow", env_flow, "MCM/yr"],
             ["Groundwater Recharge", gw_recharge, "MCM/yr"],
             [
                 "Water Withdrawal|Municipal Water",
-                rural_mwdem_unconnected
-                + rural_mwdem_unconnected_eff
-                + rural_mwdem_connected
+                rural_mwdem_connected
                 + rural_mwdem_connected_eff
-                + urban_mwdem_unconnected
-                + urban_mwdem_unconnected_eff
                 + urban_mwdem_connected
                 + urban_mwdem_connected_eff,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Municipal Water|Unconnected|Rural",
-                rural_mwdem_unconnected,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Municipal Water|Unconnected|Rural Eff",
-                rural_mwdem_unconnected_eff,
                 "MCM/yr",
             ],
             [
@@ -1411,16 +1365,6 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             [
                 "Water Withdrawal|Municipal Water|Connected|Rural Eff",
                 rural_mwdem_connected_eff,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Municipal Water|Unconnected|Urban",
-                urban_mwdem_unconnected,
-                "MCM/yr",
-            ],
-            [
-                "Water Withdrawal|Municipal Water|Unconnected|Urban Eff",
-                urban_mwdem_unconnected_eff,
                 "MCM/yr",
             ],
             [
@@ -1635,19 +1579,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             ],
             [
                 "Investment|Infrastructure|Water|Unconnected",
-                rural_unconnected_inv
-                + urban_unconnected_inv
-                + industry_unconnected_inv,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Unconnected|Rural",
-                rural_unconnected_inv,
-                "million US$2010/yr",
-            ],
-            [
-                "Investment|Infrastructure|Water|Unconnected|Urban",
-                urban_unconnected_inv,
+                industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
@@ -1729,25 +1661,7 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water|Unconnected",
-                rural_unconnected_totalom
-                + urban_unconnected_totalom
-                + industry_unconnected_totalom,
-                "million US$2010/yr",
-            ],
-            [
-                (
-                    "Total Operation Management"
-                    " Cost|Infrastructure|Water|Unconnected|Rural"
-                ),
-                rural_unconnected_totalom,
-                "million US$2010/yr",
-            ],
-            [
-                (
-                    "Total Operation Management"
-                    " Cost|Infrastructure|Water|Unconnected|Urban"
-                ),
-                urban_unconnected_totalom,
+                industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
@@ -1860,6 +1774,81 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:
             subregions=map_node_dict[rr],
             append=True,
         )
+
+    # Connected/Unconnected reconstruction. Post-retirement of urban_unconnected
+    # / rural_unconnected, all municipal volume routes through
+    # urban_t_d / rural_t_d, so the Connected|* rows aggregated above currently
+    # hold totals. Recover the split with SSP-specific connection_rate:
+    #   Connected   = total * rate
+    #   Unconnected = total * (1 - rate)
+    rates = get_rates_data(reg, ssp, sdgs)
+    rate_long = []
+    for setting in ("urban", "rural"):
+        sub = rates[
+            rates["variable"].str.contains(f"{setting}_connection_rate", regex=False)
+        ][["region", "year", "value"]].copy()
+        rate_long.append(
+            sub.assign(
+                variable=f"connection_rate|{setting}",
+                model=sc.model,
+                scenario=sc.scenario,
+                unit="-",
+            )
+        )
+        rate_long.append(
+            sub.assign(
+                value=1 - sub["value"],
+                variable=f"unconnection_rate|{setting}",
+                model=sc.model,
+                scenario=sc.scenario,
+                unit="-",
+            )
+        )
+    report_iam = report_iam.append(
+        pyam.IamDataFrame(pd.concat(rate_long, ignore_index=True))
+    )
+    split_variables = []
+    for setting_lc, setting_cap in (("rural", "Rural"), ("urban", "Urban")):
+        for suffix in ("", " Eff"):
+            connected_var = (
+                f"Water Withdrawal|Municipal Water|Connected|{setting_cap}{suffix}"
+            )
+            unconnected_var = (
+                f"Water Withdrawal|Municipal Water|Unconnected|{setting_cap}{suffix}"
+            )
+            tmp = f"_tmp_connected|{setting_cap}{suffix}"
+            # total * rate -> stash as temp; total * (1-rate) -> Unconnected
+            report_iam.multiply(
+                connected_var,
+                f"connection_rate|{setting_lc}",
+                tmp,
+                ignore_units="MCM/yr",
+                append=True,
+            )
+            report_iam.multiply(
+                connected_var,
+                f"unconnection_rate|{setting_lc}",
+                unconnected_var,
+                ignore_units="MCM/yr",
+                append=True,
+            )
+            split_variables.extend([connected_var, unconnected_var])
+            # Drop the unscaled total and promote the scaled version
+            report_iam.filter(variable=connected_var, keep=False, inplace=True)
+            report_iam.rename(variable={tmp: connected_var}, inplace=True)
+    report_iam.filter(
+        variable=["connection_rate|*", "unconnection_rate|*"],
+        keep=False,
+        inplace=True,
+    )
+    for variable in split_variables:
+        for rr in map_node_dict:
+            report_iam.aggregate_region(
+                variable,
+                region=rr,
+                subregions=map_node_dict[rr],
+                append=True,
+            )
 
     # Remove duplicate variables
     varsexclude = [

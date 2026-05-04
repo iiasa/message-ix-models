@@ -217,6 +217,10 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     # Format the dataframe to be compatible with message format
     df_dmds = df_f.stack(future_stack=True).reset_index(level=0).reset_index()
     df_dmds.columns = ["year", "node", "variable", "value"]
+    # R12 input files do not all use the same basin-region column set. xarray
+    # aligns on the union, so rows for combinations absent from a source file
+    # are structural gaps rather than zero-valued demand or rate observations.
+    df_dmds = df_dmds.dropna(subset=["value"])
     df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
 
     df_dmds["time"] = "year"
@@ -384,16 +388,12 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         all_rates = pd.concat([all_rates_base, all_rates_sdg])
         save_path = package_data_path("water", "demands", "harmonized", context.regions)
         # save all the rates for reporting purposes
-        all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
+        all_rates.to_csv(save_path / f"all_rates_{context.ssp}.csv", index=False)
 
-    # urban water demand and return.
+    # urban water demand and return. Full withdrawal routes through urban_mw;
+    # connected/unconnected attribution is reconstructed at reporting time
+    # via ACT_t_d * connection_rate.
     urban_mw = urban_withdrawal_df.reset_index(drop=True)
-    urban_mw = urban_mw.merge(
-        urban_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
-    )
-    urban_mw["value"] = (urban_mw["value"]) * urban_mw["rate"]
 
     dmd_df = make_df(
         "demand",
@@ -405,37 +405,8 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         value=urban_mw["value"],
         unit="MCM/year",
     )
-    urban_dis = urban_withdrawal_df.reset_index(drop=True)
-    urban_dis = urban_dis.merge(
-        urban_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
-    )
-    urban_dis["value"] = (urban_dis["value"]) * (1 - urban_dis["rate"])
-
-    dmd_df = pd.concat(
-        [
-            dmd_df,
-            make_df(
-                "demand",
-                node="B" + urban_dis["node"],
-                commodity="urban_disconnected",
-                level="final",
-                year=urban_dis["year"],
-                time=urban_dis["time"],
-                value=urban_dis["value"],
-                unit="MCM/year",
-            ),
-        ]
-    )
     # rural water demand and return
     rural_mw = rual_withdrawal_df.reset_index(drop=True)
-    rural_mw = rural_mw.merge(
-        rural_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
-    )
-    rural_mw["value"] = (rural_mw["value"]) * rural_mw["rate"]
 
     dmd_df = pd.concat(
         [
@@ -448,30 +419,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
                 year=rural_mw["year"],
                 time=rural_mw["time"],
                 value=rural_mw["value"],
-                unit="MCM/year",
-            ),
-        ]
-    )
-
-    rural_dis = rual_withdrawal_df.reset_index(drop=True)
-    rural_dis = rural_dis.merge(
-        rural_connection_rate_df.drop(columns=["variable", "time"]).rename(
-            columns={"value": "rate"}
-        )
-    )
-    rural_dis["value"] = (rural_dis["value"]) * (1 - rural_dis["rate"])
-
-    dmd_df = pd.concat(
-        [
-            dmd_df,
-            make_df(
-                "demand",
-                node="B" + rural_dis["node"],
-                commodity="rural_disconnected",
-                level="final",
-                year=rural_dis["year"],
-                time=rural_dis["time"],
-                value=rural_dis["value"],
                 unit="MCM/year",
             ),
         ]
@@ -629,8 +576,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         (h_act["commodity"] == "urban_mw"),
         (h_act["commodity"] == "industry_mw"),
         (h_act["commodity"] == "rural_mw"),
-        (h_act["commodity"] == "urban_disconnected"),
-        (h_act["commodity"] == "rural_disconnected"),
         (h_act["commodity"] == "urban_collected_wst"),
         (h_act["commodity"] == "rural_collected_wst"),
         (h_act["commodity"] == "urban_uncollected_wst"),
@@ -643,8 +588,6 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         "urban_t_d",
         "industry_unconnected",
         "rural_t_d",
-        "urban_unconnected",
-        "rural_unconnected",
         "urban_sewerage",
         "rural_sewerage",
         "urban_untreated",
