@@ -27,31 +27,31 @@ starters:
   - model: SSP_SSP1_v6.5_sp
     scenario: NPiREF_GDP_CI_50_ensemble_1_PHY
     ssp: SSP1
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/NPiREF_GDP_CI_50_ensemble_1/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP1_v6.5_sp__NPiREF_GDP_CI_50_ensemble_1/
   - model: SSP_SSP1_v6.5_sp
     scenario: INDC2030i_uncon_800f_GDP_CI_50_ensemble_1_PHY
     ssp: SSP1
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP1_v6.5_sp__INDC2030i_uncon_800f_GDP_CI_50_ensemble_1/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP1_v6.5_sp__INDC2030i_uncon_800f_GDP_CI_50_ensemble_1/
   - model: SSP_SSP2_v6.5_sp
     scenario: NPiREF_GDP_CI_50_ensemble_2_PHY
     ssp: SSP2
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/NPiREF_GDP_CI_50_ensemble_2/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP2_v6.5_sp__NPiREF_GDP_CI_50_ensemble_2/
   - model: SSP_SSP2_v6.5_sp
     scenario: INDC2030i_uncon_600f_GDP_CI_50_ensemble_1_PHY
     ssp: SSP2
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP2_v6.5_sp__INDC2030i_uncon_600f_GDP_CI_50_ensemble_1/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP2_v6.5_sp__INDC2030i_uncon_600f_GDP_CI_50_ensemble_1/
   - model: SSP_SSP3_v6.5_sp
     scenario: NPiREF_GDP_CI_50_ensemble_2_PHY
     ssp: SSP3
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/NPiREF_GDP_CI_50_ensemble_2/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP3_v6.5_sp__NPiREF_GDP_CI_50_ensemble_2/
   - model: SSP_SSP3_v6.5_sp
     scenario: INDC2030i_uncon_600f_GDP_CI_50_ensemble_1_PHY
     ssp: SSP3
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/INDC2030i_uncon_600f_GDP_CI_50_ensemble_1/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP3_v6.5_sp__INDC2030i_uncon_600f_GDP_CI_50_ensemble_1/
   - model: SSP_SSP3_v6.5_sp
     scenario: INDC2030i_uncon_800f_GDP_CI_50_ensemble_1_PHY
     ssp: SSP3
-    magicc_output_dir: /mnt/p/watxene/IMPACTS/sparrcle/magicc_output/INDC2030i_uncon_800f_GDP_CI_50_ensemble_1/
+    magicc_output_dir: /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output/SSP_SSP3_v6.5_sp__INDC2030i_uncon_800f_GDP_CI_50_ensemble_1/
 
 # Phase-1 cooling-module build settings (passed to `mix-models water-ix cooling`)
 cooling:
