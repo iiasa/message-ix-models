@@ -439,8 +439,11 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
 
         all_rates = pd.concat(frames, ignore_index=True)
 
-    # Filter for scenario type
-    scenario_type = "SDG" if sdgs else "baseline"
+    # Filter for scenario type. The CLI option `--sdgs` is a string ("baseline"
+    # by default; "SDG" when SDG measures are active), but legacy callers pass
+    # a bool. Treat truthy-non-"baseline" as SDG.
+    sdgs_active = sdgs is True or sdgs == "SDG"
+    scenario_type = "SDG" if sdgs_active else "baseline"
     df_rate = all_rates[all_rates.variable.str.contains(scenario_type)]
 
     if df_rate.empty:
