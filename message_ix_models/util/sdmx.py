@@ -454,6 +454,12 @@ class StructureFactory(ABC, Generic[MaintainableT]):
         if existing is None or existing.version != cls.version or force:
             result = cls.create()
 
+            if isinstance(result, common.ItemScheme):
+                # Ensure items have URNs
+                for item in result:
+                    if item.urn is None:
+                        item.urn = sdmx.urn.make(item)
+
             # Touch up `existing` for a fair comparison
             if existing is not None:
                 existing.maintainer = result.maintainer
