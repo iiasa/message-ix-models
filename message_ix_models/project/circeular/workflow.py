@@ -1,23 +1,41 @@
+import logging
 from typing import TYPE_CHECKING
+
+from message_ix_models.workflow import Workflow
 
 if TYPE_CHECKING:
     from message_ix_models.util.context import Context
-    from message_ix_models.workflow import Workflow
+
+log = logging.getLogger(__name__)
 
 
-def generate(
-    context: "Context", *, report_key: str = "transport_all", **options
-) -> "Workflow":
-    """Generate the CircEUlar scenario workflow."""
-    from message_ix_models.model.transport.workflow import SOLVE_CONFIG
-    from message_ix_models.model.workflow import from_codelist
+def generate(context: "Context") -> Workflow:
+    """Create the CircEUlar workflow."""
+    from message_ix_models.model.bmt.config import apply_bmt_config
+    from message_ix_models.model.bmt.workflow import add_steps
 
-    from .structure import CL_SCENARIO_TRANSPORT
+    from .structure import CL_SCENARIO
 
-    # Set the default .report.Config key for ".* reported" steps
-    context.report.key = report_key
+    ### Same as .bmt.workflow.generate() until ###
+    wf = Workflow(context)
 
-    # Set options for solving
-    context.solve = SOLVE_CONFIG
+    # Configure
+    context.ssp = "SSP2"
+    context.model.regions = "R12"
+    apply_bmt_config(context)
+    log.info(repr(context.asdict()))
 
-    return from_codelist(context, CL_SCENARIO_TRANSPORT)
+    # TODO Move this to a .Config.base_url setting on an appropriate config class
+    #      (probably .model.workflow.Config).
+    base_url = "ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14"
+
+    ###
+
+    # Load the base scenario
+    base_step = wf.add_step("M", None, target=base_url)
+
+    # Iterate over all CircEUlar scenario IDs
+    for scenario_code in CL_SCENARIO.get():
+        add_steps(wf, base_step, prefix=f"{scenario_code.id} ")
+
+    return wf
