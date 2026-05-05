@@ -39,7 +39,7 @@ SOLVE_CONFIG = WorkflowConfig(
 )
 
 
-def add_steps(wf: "Workflow", base: str, scenario_code: "Code") -> str:
+def add_steps(wf: "Workflow", base: str, scenario_code: "Code", label: str = "") -> str:
     """Add 0 or more MESSAGEix-Transport workflow steps to `wf`.
 
     If `scenario_code` does not contain annotations necessary to configure
@@ -65,6 +65,12 @@ def add_steps(wf: "Workflow", base: str, scenario_code: "Code") -> str:
       :func:`.add_steps` extend the list.
     - "T report multi": :func:`.transport.report.multi`, called on all the target URLs
       for (1). Repeated calls to :func:`.add_steps` extend the list.
+
+    Parameters
+    ----------
+    label :
+        if given, added steps are given names like ``"{label} T built"``. If not given,
+        the `scenario_code` ID is used, for instance ``"SSP2 T built"``.
     """
     from message_ix.tools.migrate import initial_new_capacity_up_v311
 
@@ -96,7 +102,7 @@ def add_steps(wf: "Workflow", base: str, scenario_code: "Code") -> str:
         context.report.register(callback)
 
     # Short label for workflow step names
-    label = f"{config.code.id} T"
+    label = f"{label or config.code.id} T"
 
     # Identify the target of the build step
     target_url = config.get_target_url(context)
