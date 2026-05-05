@@ -179,7 +179,102 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     return scenario
 
 
-@minimum_version("message_ix 3.11")
+def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
+    """Add BMT workflow steps to `wf`, starting from `base_step`.
+
+    Step names are prefixed with `prefix`, if any.
+    """
+    from message_ix_models.model.transport import workflow as transport
+
+    # Retrieve the Context instance associatd with `wf`
+    context = wf.graph["context"]
+
+    # Define model name
+    model_name = context.bmt["model_name"]
+    # Template for formatting URLs
+    url = model_name + f"/{prefix}baseline_"
+
+    # Common keyword argument for cloning
+    c = dict(keep_solution=False)
+
+    name = base_step
+
+    # Clone the base scenario
+    name = wf.add_step(f"{prefix}M cloned", name, target=f"{url}M", clone=True)
+    name = wf.add_step(f"{prefix}M reported", name, report)
+
+    # Retrieve a 'Code' object with 'Annotations' that identify a particular
+    # MESSAGEix-Transport configuration. For reference:
+    # - .model.transport.config.CL_SCENARIO
+    # - .model.transport.config.ScenarioCodeAnnotations
+    # - .model.transport.config.Config.code
+    # scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
+
+    # CL_SCENARIO (see .model.transport.config) is built from SDMX codelist
+    # data/sdmx/IIASA_ECE_CL_TRANSPORT_SCENARIO(1.3.0).xml. From that version each
+    # scenario has two codes: id "SSP{n}" (extra_modules=[]) and
+    # "M SSP{n}" (extra_modules=["material"]).
+    # Use the code without "M " to build transport without the material module.
+    # scenario_code = CL_SCENARIO.get()[context.ssp]
+
+    # Add step(s) on top of "M cloned" that build MESSAGEix-Transport. For reference:
+    # - .model.transport.workflow.add_steps
+    # - .model.workflow.from_codelist, which makes a similar call
+    #
+    # `name` is the name of the final step
+    name = transport.add_steps(wf, name, context.transport.code, label=prefix.strip())
+
+    # Clone to the URL desired for this workflow, at a step named "MT built".
+    # After cloning, set the scenario as default so it is the one used by later steps
+    name = wf.add_step(
+        f"{prefix}MT built", name, _set_as_default, target=f"{url}MT", clone=True
+    )
+    # TODO: check if Paul's action already has something to set as default
+
+    # NB .model.transport.workflow.generate sets context.solve including
+    #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
+    #    MESSAGEix-Transport.
+
+    name = wf.add_step(f"{prefix}MT solved", name, solve)
+
+    # Transport report step (from .model.transport.workflow: callback + "transport all")
+    name = wf.add_step(f"{prefix}MT reported", name, report)
+    name = wf.add_step(
+        f"{prefix}BMT built", f"{prefix}MT solved", build_B, target=f"{url}BMT", clone=c
+    )
+    name = wf.add_step(f"{prefix}BMT solved", name, solve)
+    name = wf.add_step(
+        f"{prefix}BMTX built", name, build_PM, target=f"{url}BMTX", clone=c
+    )
+    name = wf.add_step(f"{prefix}BMTX baseline solved", name, solve)
+    name = wf.add_step(f"{prefix}BMT reported", f"{prefix}BMT solved", report)
+
+    # make sure the scenario before this step is reported
+    name = wf.add_step(
+        f"{prefix}BMTX prep macro",
+        # "BMTX baseline solved",
+        f"{prefix}BMT reported",
+        prep_for_macro,
+        target=f"{url}BMTX_message",
+        clone=dict(shift_first_model_year=2030),
+    )
+
+    # the add_macro generate another target scenario with the suffix _macro
+    # baseline_BMTX_message_macro
+    # the scenario will not be cloned to the target,
+    # but the next step will report from the target in the previous step
+    name = wf.add_step(
+        f"{prefix}BMTX baseline macro",
+        name,
+        add_macro,
+        target=f"{url}BMTX_message_macro",
+    )
+
+    name = wf.add_step(f"{prefix}BMTX baseline macro reported", name, report)
+
+    return name
+
+
 def generate(context: Context) -> Workflow:
     """Create the BMT workflow.
 
@@ -207,86 +302,23 @@ def generate(context: Context) -> Workflow:
     .. todo:: Include a prepared version of :file:`bmt-workflow.svg` here.
     """
     from message_ix_models.model.bmt.config import apply_bmt_config
-    from message_ix_models.model.transport import workflow as transport
 
     wf = Workflow(context)
+
+    # Configure
     context.ssp = "SSP2"
     context.model.regions = "R12"
-
     apply_bmt_config(context)
-    print(repr(context.asdict()))
+    log.info(repr(context.asdict()))
 
-    # Define model name
-    model_name = context.bmt["model_name"]
-    # Template for formatting URLs
-    url = model_name + "/baseline_"
+    # TODO Move this to a .Config.base_url setting on an appropriate config class
+    #      (probably .model.workflow.Config).
     base_url = "ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14"
 
-    # Common keyword argument for cloning
-    c = dict(keep_solution=False)
-
+    # Load the base scenario
     name = wf.add_step("M", None, target=base_url)
-    name = wf.add_step("M cloned", name, target=f"{url}M", clone=dict(keep_solution=True))
-    name = wf.add_step("M reported", name, report)
 
-    # Retrieve a 'Code' object with 'Annotations' that identify a particular
-    # MESSAGEix-Transport configuration. For reference:
-    # - .model.transport.config.CL_SCENARIO
-    # - .model.transport.config.ScenarioCodeAnnotations
-    # - .model.transport.config.Config.code
-    # scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
-
-    # CL_SCENARIO (see .model.transport.config) is built from SDMX codelist
-    # data/sdmx/IIASA_ECE_CL_TRANSPORT_SCENARIO(1.3.0).xml. From that version each
-    # scenario has two codes: id "SSP{n}" (extra_modules=[]) and
-    # "M SSP{n}" (extra_modules=["material"]).
-    # Use the code without "M " to build transport without the material module.
-    # scenario_code = CL_SCENARIO.get()[context.ssp]
-
-    # Add step(s) on top of "M cloned" that build MESSAGEix-Transport. For reference:
-    # - .model.transport.workflow.add_steps
-    # - .model.workflow.from_codelist, which makes a similar call
-    #
-    # `name` is the name of the final step
-    name = transport.add_steps(wf, name, context.transport.code)
-
-    # Clone to the URL desired for this workflow, at a step named "MT built".
-    # After cloning, set the scenario as default so it is the one used by later steps
-    name = wf.add_step("MT built", name, _set_as_default, target=f"{url}MT", clone=True)
-    # TODO: check if Paul's action already has something to set as default
-
-    # NB .model.transport.workflow.generate sets context.solve including
-    #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
-    #    MESSAGEix-Transport.
-
-    name = wf.add_step("MT solved", name, solve)
-
-    # Transport report step (from .model.transport.workflow: callback + "transport all")
-    name = wf.add_step("MT reported", name, report)
-    name = wf.add_step("BMT built", "MT solved", build_B, target=f"{url}BMT", clone=c)
-    name = wf.add_step("BMT solved", name, solve)
-    name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=c)
-    name = wf.add_step("BMTX baseline solved", name, solve)
-    name = wf.add_step("BMT reported", "BMT solved", report)
-
-    # make sure the scenario before this step is reported
-    name = wf.add_step(
-        "BMTX prep macro",
-        # "BMTX baseline solved",
-        "BMT reported",
-        prep_for_macro,
-        target=f"{url}BMTX_message",
-        clone=dict(shift_first_model_year=2030),
-    )
-
-    # the add_macro generate another target scenario with the suffix _macro
-    # baseline_BMTX_message_macro
-    # the scenario will not be cloned to the target,
-    # but the next step will report from the target in the previous step
-    name = wf.add_step(
-        "BMTX baseline macro", name, add_macro, target=f"{url}BMTX_message_macro"
-    )
-
-    wf.add_step("BMTX baseline macro reported", name, report)
+    # Add the remaining steps
+    add_steps(wf, name, prefix="")
 
     return wf
