@@ -12,7 +12,7 @@ def generate(
     from message_ix_models.model.transport.workflow import SOLVE_CONFIG
     from message_ix_models.model.workflow import from_codelist
 
-    from .structure import CL_TRANSPORT_SCENARIO
+    from .structure import CL_SCENARIO_TRANSPORT
 
     # Set the default .report.Config key for ".* reported" steps
     context.report.key = report_key
@@ -20,4 +20,4 @@ def generate(
     # Set options for solving
     context.solve = SOLVE_CONFIG
 
-    return from_codelist(context, CL_TRANSPORT_SCENARIO)
+    return from_codelist(context, CL_SCENARIO_TRANSPORT)
