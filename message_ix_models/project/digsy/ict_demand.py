@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Literal
 
+import ixmp
+import message_ix
 import pandas as pd
 import pint_pandas  # noqa: F401
 import pyam
@@ -34,6 +36,7 @@ def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3, s_info=None) -> pd.Da
         3: read_ict_v3,
         "prisma": read_ict_v3,
         "prisma2": generate_demand,
+        "prisma_convergence": generate_demand,
     }
     if version == 3:
         scen_map = {
@@ -81,6 +84,14 @@ def read_ict_demand(scenario: DIGSY_SCENS, ssp, version=3, s_info=None) -> pd.Da
         df = read[version](dc_scen, tele_scen, ssp)
     elif version == "prisma2":
         df = read[version](scenario, ssp, s_info)
+    elif version == "prisma_convergence":
+        df = read[version](scenario, ssp, s_info)
+        dc = df[df["commodity"] == "data_centre_elec"]
+        tc = df[df["commodity"] == "tele_comm_elec"]
+        dfs = []
+        for ict_dem in [dc, tc]:
+            dfs.append(run_convergence(ict_dem, s_info))
+        df = pd.concat(dfs)
     else:
         df = read[version](scenario, ssp)
     return df
@@ -335,7 +346,7 @@ def gen_ict_demands(
     ict_demand = read_ict_demand(
         ict_scenario, get_ssp_from_context(context), ict_version, s_info
     )
-    if ict_version != "prisma2":
+    if ict_version not in ["prisma2", "prisma_convergence"]:
         ict_demand = extrapolate_post_2050(ict_demand, scenario)
     ict_demand_ue = fe_to_ue(ict_demand, scenario)
     rc_demand_adjusted = adjust_rc_elec(scenario, ict_demand_ue)
@@ -377,3 +388,90 @@ def read_ict_r5(scenario, ssp):
     )
     py_df = pyam.IamDataFrame(pd.concat([df_dc, df_tc])).convert_unit("GWa", "EJ")
     return py_df
+
+
+def get_population_data(s_info: "ScenarioInfo") -> pd.Series:
+    # TODO: replace with .project.ssp.data.SSPUpdate
+    mp = ixmp.Platform()
+    scen = message_ix.Scenario(mp, s_info.model, s_info.scenario)
+    pop = (
+        scen.par("bound_activity_up", filters={"technology": "Population"})
+        .rename(columns={"node_loc": "node", "year_act": "year"})
+        .set_index(["node", "year"])["value"]
+        .div(1000)
+    )
+    return pop
+
+
+def calc_demand_per_cap(
+    demand: pd.DataFrame, pop: pd.Series
+) -> tuple[pd.Series, pd.Series]:
+    pop_wld = pop.groupby("year").sum(numeric_only=True)
+    demand = demand.groupby(["node", "year"]).sum()["value"]
+    demand_wld = demand.groupby("year").sum(numeric_only=True)
+    demand_pcap = demand.div(pop).dropna()
+    demand_pcap_wld = demand_wld.div(pop_wld).dropna()
+    return demand_pcap, demand_pcap_wld
+
+
+def gen_conv_parameters(offset_target, exponent_target) -> tuple[pd.Series, pd.Series]:
+    y_target = 2050
+    y_start = 2030
+    offsets = {
+        2020: 0,
+        2025: 0,
+        y_start: 0,
+        2035: None,
+        2040: None,
+        2045: None,
+        y_target: offset_target,
+    }
+    exponents = {
+        2020: 1,
+        2025: 1,
+        y_start: 1,
+        2035: None,
+        2040: None,
+        2045: None,
+        y_target: exponent_target,
+    }
+    y_prev = None
+    scaler = {2035: 1 / 8}
+
+    def interpolation_func(x_prev, y, target, start):
+        return x_prev + scaler.get(y, 1 / 4) * (target - start)
+
+    for y, v in exponents.items():
+        if v is None:
+            exponents[y] = interpolation_func(
+                exponents[y_prev], y, exponents[y_target], exponents[y_start]
+            )
+        y_prev = y
+    y_prev = None
+    for y, v in offsets.items():
+        if v is None:
+            offsets[y] = interpolation_func(
+                offsets[y_prev], y, offsets[y_target], offsets[y_start]
+            )
+        y_prev = y
+
+    df_exp = pd.Series(exponents).rename("value").rename_axis("year")
+    df_off = pd.Series(offsets).rename("value").rename_axis("year")
+    return df_off, df_exp
+
+
+def run_convergence(ict_demand: pd.DataFrame, s_info: "ScenarioInfo") -> pd.DataFrame:
+    pop = get_population_data(s_info)
+    demands_pcap, demand_pcap_wld = calc_demand_per_cap(ict_demand, pop)
+    demand_pcap_ratio = demands_pcap.div(demand_pcap_wld)
+    offset_target = 0.31
+    expontent_target = 1.5
+    offsets, exponents = gen_conv_parameters(offset_target, expontent_target)
+    demand_pcap_ratio_conv = demand_pcap_ratio.add(
+        offsets, fill_value=offset_target
+    ).pow(1 / exponents, fill_value=1 / expontent_target)
+    demand_conv = demand_pcap_ratio_conv.mul(demand_pcap_wld).mul(pop)
+    demand_par = ict_demand.drop("value", axis=1).merge(
+        demand_conv.reset_index(), on=["node", "year"]
+    )
+    return demand_par
