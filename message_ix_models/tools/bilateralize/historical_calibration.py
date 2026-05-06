@@ -645,6 +645,7 @@ def build_historical_activity(
     config_name: str | None = None,
     reimport_IEA=False,
     reimport_BACI=False,
+    diagnosis_only=False,
 ):
     """
     Build historical activity parameter dataframe.
@@ -739,19 +740,22 @@ def build_historical_activity(
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
     
-    outdf = reformat_to_parameter(
-        indf=tradedf,
-        message_regions=message_regions,
-        parameter_name="historical_activity",
-        project_name=project_name,
-        config_name=config_name,
-    )
-    outdf = outdf.groupby(['node_loc', 'technology', 'year_act',
-                        'mode', 'time'])['value'].sum().reset_index()
-                        
-    outdf["unit"] = "GWa"
+    if diagnosis_only:
+        return tradedf
+    else:
+        outdf = reformat_to_parameter(
+            indf=tradedf,
+            message_regions=message_regions,
+            parameter_name="historical_activity",
+            project_name=project_name,
+            config_name=config_name,
+        )
+        outdf = outdf.groupby(['node_loc', 'technology', 'year_act',
+                            'mode', 'time'])['value'].sum().reset_index()
+                            
+        outdf["unit"] = "GWa"
 
-    return outdf.drop_duplicates()
+        return outdf.drop_duplicates()
 
 
 # Calculate historical new capacity based on activity
