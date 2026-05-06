@@ -1,13 +1,12 @@
 # config file for GDP_climate_shocks
 rime_path: "C:\\Users\\vinca\\IIASA\\ECE.prog - GDP_damages\\"
 model_name: SSP_SSP3_v6.5_sp
-model_name_clone: SSP_SSP3_v6.5_sp_GDP_CI
-ssp: SSP2
+model_name_clone: SSP_SSP3_v6.5_sp
+ssp: SSP3
 scens_ref:
   - NPiREF
 damage_model:
-  - Waidelich
-  - Burke
+  - ensemble
 percentiles:
   - 50
 shift_year: Null  # or 2030 if you want to force a shift
