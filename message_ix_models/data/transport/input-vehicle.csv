@@ -12,3 +12,6 @@ node, technology,      value
 #
 # Value from https://github.com/iiasa/message_data/issues/608#issuecomment-2842380226
 *,    f rail lightoil, 9.263
+# Temporary value for 2/3 wheelers taken from https://www.iea.org/data-and-statistics/charts/energy-intensity-of-passenger-transport-modes-2018
+*,    ICE_H_moto,   0.5
+*,    ELE_moto,   0.1
