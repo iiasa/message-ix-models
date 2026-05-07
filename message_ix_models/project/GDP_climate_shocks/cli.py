@@ -24,6 +24,7 @@ from message_ix_models.project.GDP_climate_shocks.call_climate_processor import 
     run_climate_processor_from_file,
 )
 from message_ix_models.project.GDP_climate_shocks.gdp_table_out_ISO import run_rime_pre
+from message_ix_models.project.GDP_climate_shocks.report import report_damages
 from message_ix_models.project.GDP_climate_shocks.util import (
     add_slack_ix,
     apply_growth_rates,
@@ -123,6 +124,7 @@ def iterate_with_climate_impacts(
     shift_year: int,
     regions: list[str],
     rime_path: str,
+    discount_rate: float = 0.015,
 ) -> None:
     """
     Run iterative climate–GDP feedback calculations until temperature change converges.
@@ -149,6 +151,8 @@ def iterate_with_climate_impacts(
         List with a region code for regional GDP calculations (e.g. R12).
     rime_path : str
         Path to store RIME (regional integrated model evaluation) outputs.
+    discount_rate : float, optional
+        Annual discount rate for the damage cost timeseries, by default 0.015 (1.5 %).
 
     Returns:
     -------
@@ -204,6 +208,17 @@ def iterate_with_climate_impacts(
 
     logging.info(f"Convergence with scenario {scs.scenario}. Run full reporting")
     run_legacy_reporting(scs, scs.platform)
+    log.info("Running damage cost reporting")
+    report_damages(
+        scs=scs,
+        sc_str=sc_str_rime,
+        damage_model=damage_model,
+        pp=percentile,
+        it=it,
+        ssp=ssp,
+        regions=regions,
+        discount_rate=discount_rate,
+    )
     del scs, meanT, gdp_change_df
     gc.collect()
 
@@ -276,6 +291,13 @@ def cli():
     default="default",
     help='Optional config file path, or "default" to use built-in config.',
 )
+@click.option(
+    "--discount_rate",
+    type=float,
+    default=0.015,
+    show_default=True,
+    help="Annual discount rate for the damage cost timeseries (default: 1.5 %).",
+)
 def run_full(
     config: str = "default",
     model_name: Optional[str] = None,
@@ -286,6 +308,7 @@ def run_full(
     percentiles: Optional[tuple[int, ...]] = None,
     shift_year: Optional[int] = None,
     regions: Optional[list[str]] = None,
+    discount_rate: float = 0.015,
 ) -> None:
     """
     Run the full GDP–Climate Impact iteration workflow.
@@ -389,6 +412,7 @@ def run_full(
                     regions=region,
                     shift_year=shift_year,
                     rime_path=rime_path,
+                    discount_rate=discount_rate,
                 )
 
         mp.close_db()
