@@ -12,7 +12,6 @@ from message_ix import Reporter
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report import STAGE, add_plots
-from message_ix_models.report.util import add_replacements
 
 from . import Config, plot
 from . import key as K
@@ -92,6 +91,22 @@ CONVERT_IAMC = (
     # ),
 )
 
+#: Replacements applied to constructed IAMC ‘variable’ strings.
+#:
+#: These are used in :func:`convert_iamc`.
+#:
+#: 1. Quantity.name is prepended automatically; this occurs with quantities derived
+#:    from CAP and CAP_NEW. Remove the prefix.
+#: 2. For "Final Energy|…", use the “Vehicle” (vehicle technologies only) group total.
+#:
+#:    .. todo:: Drop ‘_T’, which includes usage technologies.
+#: 3. Replace "Air|…" technology names with "Domestic Aviation" to reflect that these
+#:    technologies are currently only used for domestic aviation.
+IAMC_VAR_REPLACE = {
+    r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2",
+    r"^(Final Energy\|Transportation)\|Vehicle": r"\1",
+    r"(Transportation\|)Air\|": r"\1Domestic Aviation\|",
+}
 
 #: Quantities in which to select transport technologies only. See :func:`callback`.
 QUANTITY = [
@@ -296,18 +311,23 @@ def configure_legacy_reporting(config: dict) -> None:
 
 
 def convert_iamc(c: "Computer") -> None:
-    """Add tasks from :data:`.CONVERT_IAMC`."""
+    """Add tasks from :data:`.CONVERT_IAMC`.
+
+    Also:
+
+    - Call :func:`.report.util.add_replacements` for dimension "t" and all transport
+      technologies in :attr:`.transport.Config.spec`.
+    - Update :data:`.report.util.REPLACE_VARS` using :data:`IAMC_VAR_REPLACE`.
+    """
     from message_ix_models.report import iamc as handle_iamc
     from message_ix_models.report import util
 
     # Configure replacements for technology IDs in conversion to IAMC data structure
     cfg: Config = c.graph["context"].transport
-    add_replacements("t", cfg.spec.add.set["technology"])
+    util.add_replacements("t", cfg.spec.add.set["technology"])
 
     # Update replacements for fully-constructed IAMC variable codes
-    # - Quantity.name is prepended automatically; this occurs with quantities derived
-    #   from CAP and CAP_NEW. Remove the prefix.
-    util.REPLACE_VARS.update({r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2"})
+    util.REPLACE_VARS.update(IAMC_VAR_REPLACE)
 
     keys = []
     for info in CONVERT_IAMC:
