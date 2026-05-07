@@ -171,3 +171,8 @@ message_ix_models/data/ssp/*.txt
 
 # Hydrogen debug utilities
 message_ix_models/data/hydrogen/debug_utils/
+
+# Scenario output artifacts at repo root
+/hyway_*.xlsx
+/SSP_*.csv
+/SSP_*.xlsx
