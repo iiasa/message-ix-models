@@ -59,32 +59,6 @@ def maybe_shift_year(scenario, shift_year: int) -> dict:
     return {}
 
 
-def load_pop_data():  # NOT NEEDED
-    """
-    This function loads a CSV file containing population data from SSP
-    24 projections and transforms it into a specific format.
-
-    Returns:
-        pop_df (pd.DataFrame): The transformed DataFrame.
-    """
-    pop_file_path = private_data_path(
-        "projects", "GDP_climate_shocks", "SSP2_population.csv"
-    )
-    # Load the CSV file into a DataFrame
-    pop_df = pd.read_csv(pop_file_path)
-
-    # Specify the columns to use as identifier variables (non-melted columns)
-    id_vars = ["Model", "Scenario", "Region", "Variable", "Unit"]
-    # Melt the DataFrame to convert it to long format
-    pop_df = pd.melt(pop_df, id_vars=id_vars, var_name="Year", value_name="Value")
-    pop_df["Value"] = pop_df["Value"] * 10**6
-    pop_df["Unit"] = "people"
-    pop_df = pop_df[["Region", "Scenario", "Year", "Value"]]
-    pop_df.columns = ["iso", "ssp", "year", "Population"]
-
-    return pop_df
-
-
 def load_gdp_data():
     """
     This function loads a CSV file containing GDP data from OECD ENV-Growth
@@ -108,26 +82,6 @@ def load_gdp_data():
     )
     return gdp_df
 
-
-def calculate_gdp_diff(gdp_df, pop_df):  # NOT NEEDED
-    # GDP From Burke, RCP 6.0 and 2.6
-    csv_file_path = private_data_path(
-        "projects", "GDP_climate_shocks", "burke_damages_message2.csv"
-    )
-    gdp_df = pd.read_csv(csv_file_path)
-    # this is per ita, need to mltiply by population
-    # TEMP exclude the iso == MNG entrie in gdp_df
-    gdp_df = gdp_df[gdp_df["iso"] != "MNG"]
-
-    # left join pop_df to gdp_df
-    gdp_df["year"] = gdp_df["year"].astype(int)
-    pop_df["year"] = pop_df["year"].astype(int)
-    gdp_df = gdp_df.merge(pop_df, on=["iso", "year"], how="left")
-    # multuply GDPNoCF and GDPCF by population and convert from $ to T$
-    gdp_df["GDPNoCC"] = gdp_df["GDPcapNoCC"] * gdp_df["Population"] / 10**9
-    gdp_df["GDPCC"] = gdp_df["GDPcapCC"] * gdp_df["Population"] / 10**9
-
-    return gdp_df
 
 
 def run_legacy_reporting(sc=False, mp=False):
