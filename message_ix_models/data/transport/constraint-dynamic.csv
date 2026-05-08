@@ -27,8 +27,8 @@ ELC_100,         *,         growth_activity_lo,       -0.0192
 ICE_conv,        *,         growth_activity_lo,       -0.0700
 
 # Two-Wheeler technologies
-ICE_H_moto,       *,       growth_new_capacity_lo,      -0.0192
-ELE_moto,         *,       growth_new_capacity_up,       0.0192
+ICE_H_moto,       *,       growth_new_capacity_lo,      -0.0371
+ELE_moto,         *,       growth_new_capacity_up,       0.0371
 
 
 # Some LDV technologies
