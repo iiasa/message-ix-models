@@ -428,13 +428,16 @@ def import_iea_balances(
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
 
     ieadf1 = pd.read_csv(
-        os.path.join(data_paths["iea_web"], "EARLYBIG1.txt"), sep=r"\s+", header=None
+        os.path.join(data_paths["iea_web"], "WORLDBIG_by_COUNTRY_from_GIBRALTAR_to_RWANDA.txt"), sep=r"\s+", header=None
     )
     ieadf2 = pd.read_csv(
-        os.path.join(data_paths["iea_web"], "EARLYBIG2.txt"), sep=r"\s+", header=None
+        os.path.join(data_paths["iea_web"], "WORLDBIG_by_COUNTRY_from_SAUDIARABIA_to_MAURITANIA.txt"), sep=r"\s+", header=None
+    )
+    ieadf3 = pd.read_csv(
+        os.path.join(data_paths["iea_web"], "WORLDBIG_by_COUNTRY_from_WORLD_to_GHANA.txt"), sep=r"\s+", header=None
     )
 
-    ieadf = pd.concat([ieadf1, ieadf2])
+    ieadf = pd.concat([ieadf1, ieadf2, ieadf3])
     ieadf.columns = [
         "region",
         "fuel",
@@ -480,11 +483,12 @@ def check_iea_balances(
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
 
     iea = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
-    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_iso3.csv"))
     iea = iea.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
     iea["IEA-WEB VALUE"] = np.where(
         iea["FLOW"] == "EXPORTS", iea["IEA-WEB VALUE"] * -1, iea["IEA-WEB VALUE"]
     )
+    iea = iea.groupby(["YEAR", "ISO3", "IEA-WEB COMMODITY", "IEA-WEB UNIT", "FLOW"])["IEA-WEB VALUE"].sum().reset_index()
 
     # LNG and pipe gas are directly from IEA
     indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
@@ -502,11 +506,16 @@ def check_iea_balances(
             iea["COMMODITY"],
         )
         indf["COMMODITY"] = np.where(
-            indf["MESSAGE COMMODITY"] == commodity_codes[c]["MESSAGE Commodity"],
+            indf["MESSAGE COMMODITY"].str.contains(commodity_codes[c]["MESSAGE Commodity"]),
             c,
             indf["COMMODITY"],
         )
+    iea = iea.groupby(["YEAR", "ISO3", "COMMODITY", "IEA-WEB UNIT", "FLOW"])["IEA-WEB VALUE"].sum().reset_index()
+    iea = iea[iea['COMMODITY'] != ""]
+    indf = indf[indf['COMMODITY'] != ""]
+    basedf = indf.copy()
 
+    # Calibrate by exports/imports
     exports = (
         indf.groupby(["YEAR", "EXPORTER", "COMMODITY"])["ENERGY (TJ)"]
         .sum()
@@ -520,31 +529,33 @@ def check_iea_balances(
 
     exports = exports.merge(
         iea[iea["FLOW"] == "EXPORTS"][
-            ["ISO", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
+            ["ISO3", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
         ],
         left_on=["YEAR", "EXPORTER", "COMMODITY"],
-        right_on=["YEAR", "ISO", "COMMODITY"],
+        right_on=["YEAR", "ISO3", "COMMODITY"],
         how="left",
     )
     imports = imports.merge(
         iea[iea["FLOW"] == "IMPORTS"][
-            ["ISO", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
+            ["ISO3", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
         ],
         left_on=["YEAR", "IMPORTER", "COMMODITY"],
-        right_on=["YEAR", "ISO", "COMMODITY"],
+        right_on=["YEAR", "ISO3", "COMMODITY"],
         how="left",
     )
 
-    exports["DIFFERENCE"] = (
-        exports["ENERGY (TJ)"] - exports["IEA-WEB VALUE"]
-    ) / exports["IEA-WEB VALUE"]
-    imports["DIFFERENCE"] = (
-        imports["ENERGY (TJ)"] - imports["IEA-WEB VALUE"]
-    ) / imports["IEA-WEB VALUE"]
+    exports["MULTIPLIER"] = exports["IEA-WEB VALUE"]/ exports["ENERGY (TJ)"]
+    imports["MULTIPLIER"] = imports["IEA-WEB VALUE"]/ imports["ENERGY (TJ)"]
 
     exports.to_csv(os.path.join(data_paths["iea_diag"], "iea_calibration_exports.csv"))
     imports.to_csv(os.path.join(data_paths["iea_diag"], "iea_calibration_imports.csv"))
 
+    # Calibrate based on export multiplier
+    exports = exports[exports['MULTIPLIER'].isnull() == False][['YEAR', 'EXPORTER', 'COMMODITY', 'MULTIPLIER']]
+    basedf = basedf.merge(exports, left_on = ['YEAR', 'EXPORTER', 'COMMODITY'], right_on = ['YEAR', 'EXPORTER', 'COMMODITY'], how = 'left')
+    basedf['MULTIPLIER'] = np.where(basedf['MULTIPLIER'].isnull(), 1, basedf['MULTIPLIER'])
+    basedf['ENERGY (TJ)'] = basedf['ENERGY (TJ)'] * basedf['MULTIPLIER']
+    return basedf
 
 # Aggregate UN Comtrade data to MESSAGE regions
 def reformat_to_parameter(
@@ -680,16 +691,16 @@ def build_historical_activity(
     # Calibrate gas to IEA WEB data
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
     web = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
-    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_iso3.csv"))
     web = web.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
     web["IEA-WEB VALUE"] = np.where(
         web["FLOW"] == "EXPORTS", web["IEA-WEB VALUE"] * -1, web["IEA-WEB VALUE"]
     )
     web = web[web["IEA-WEB COMMODITY"] == "NATURAL_GAS"]
 
-    web_tot = web[web["FLOW"] == "EXPORTS"][["YEAR", "ISO", "IEA-WEB VALUE"]]
-    web_tot = web_tot.groupby(["YEAR", "ISO"])["IEA-WEB VALUE"].sum().reset_index()
-    web_tot = web_tot.rename(columns={"ISO": "EXPORTER", "IEA-WEB VALUE": "WEB TOTAL"})
+    web_tot = web[web["FLOW"] == "EXPORTS"][["YEAR", "ISO3", "IEA-WEB VALUE"]]
+    web_tot = web_tot.groupby(["YEAR", "ISO3"])["IEA-WEB VALUE"].sum().reset_index()
+    web_tot = web_tot.rename(columns={"ISO3": "EXPORTER", "IEA-WEB VALUE": "WEB TOTAL"})
     ngdf_tot = ngdf.groupby(["YEAR", "EXPORTER"])["ENERGY (TJ)"].sum().reset_index()
     ngdf_tot = ngdf_tot.rename(
         columns={"EXPORTER": "EXPORTER", "ENERGY (TJ)": "NGDF TOTAL"}
@@ -736,7 +747,8 @@ def build_historical_activity(
         ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)"]
     ].reset_index()
 
-    check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
+    # Calibrate to IEA balances separately for exports and imports
+    tradedf = check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
     
