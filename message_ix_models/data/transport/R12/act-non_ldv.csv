@@ -77,15 +77,15 @@ R12_RCPA, conm_ar,       2020, 0.01
 R12_SAS,  conm_ar,       2020, 0.01
 R12_WEU,  conm_ar,       2020, 0.01
 # AJ: Added 2026-05-046 to address 2-3 wheelers use in 2020
-R12_AFR,  ICE_H_moto,       2020, 0.01
-R12_CHN,  ICE_H_moto,       2020, 0.01
-R12_EEU,  ICE_H_moto,       2020, 0.01
-R12_FSU,  ICE_H_moto,       2020, 0.01
-R12_LAM,  ICE_H_moto,       2020, 0.01
-R12_MEA,  ICE_H_moto,       2020, 0.01
-R12_NAM,  ICE_H_moto,       2020, 0.01
-R12_PAO,  ICE_H_moto,       2020, 0.01
-R12_PAS,  ICE_H_moto,       2020, 0.01
-R12_RCPA, ICE_H_moto,       2020, 0.01
-R12_SAS,  ICE_H_moto,       2020, 0.01
-R12_WEU,  ICE_H_moto,       2020, 0.01
+R12_AFR,  ELE_moto,     2020, 0.01
+R12_CHN,  ICE_H_moto,   2020, 0.01
+R12_EEU,  ICE_H_moto,   2020, 0.01
+R12_FSU,  ICE_H_moto,   2020, 0.01
+R12_LAM,  ICE_H_moto,   2020, 0.01
+R12_MEA,  ICE_H_moto,   2020, 0.01
+R12_NAM,  ICE_H_moto,   2020, 0.01
+R12_PAO,  ICE_H_moto,   2020, 0.01
+R12_PAS,  ICE_H_moto,   2020, 0.01
+R12_RCPA, ICE_H_moto,   2020, 0.01
+R12_SAS,  ICE_H_moto,   2020, 0.01
+R12_WEU,  ICE_H_moto,   2020, 0.01
