@@ -11,9 +11,29 @@ from .util import regional_gdp_impacts
 
 log = logging.getLogger(__name__)
 
-DAMAGE_VARIABLE = "Damage Cost|Gross Economic Climate Damages without adaptation"
+DAMAGE_VARIABLE = "Damage Cost|Gross"  # Economic Climate Damages without adaptation
 DAMAGE_UNIT = "billion US$2010/yr"
+DAMAGE_REL_VARIABLE = "Damage Cost|Gross|Relative"
+DAMAGE_REL_UNIT = "%"
 BASE_YEAR = 2025
+
+# Mapping from RIME model node codes to IXMP/pyam region names used in the
+# scenario timeseries. Keeps the merged result in timeseries format so it can
+# be uploaded back via add_timeseries() without further renaming.
+_NODE_TO_REGION_R12 = {
+    "R12_CHN": "China (R12)",
+    "R12_EEU": "Eastern Europe (R12)",
+    "R12_FSU": "Former Soviet Union (R12)",
+    "R12_LAM": "Latin America (R12)",
+    "R12_MEA": "Middle East and Africa (R12)",
+    "R12_NAM": "North America (R12)",
+    "R12_PAS": "Pacific Asia (R12)",
+    "R12_PAO": "Pacific OECD (R12)",
+    "R12_RCPA": "Rest of Centrally planned Asia (R12)",
+    "R12_SAS": "South Asia (R12)",
+    "R12_AFR": "Subsaharan Africa (R12)",
+    "R12_WEU": "Western Europe (R12)",
+}
 
 
 def report_damages(
@@ -68,12 +88,10 @@ def report_damages(
     # regional_gdp_impacts reads the file indexed at (it_arg - 1), so pass
     # it + 1 to load the RIME output written during the last loop iteration.
     gdp_change_df = regional_gdp_impacts(sc_str, damage_model, it + 1, ssp, regions, pp)
-    # columns: node (R11_xxx), year (int), perc_change_sum (%, negative = loss)
 
     # Step 2: GDP|MER from scenario timeseries (populated by run_legacy_reporting).
     idf = pyam.IamDataFrame(scs.timeseries())
-    gdp_data = idf.filter(variable="GDP|MER", region="World", keep=False).data
-    # long format: model, scenario, region, variable, unit, year, value
+    gdp_data = idf.filter(variable="GDP|MER").filter(region="World", keep=False).data
 
     if gdp_data.empty:
         raise ValueError(
@@ -85,6 +103,12 @@ def report_damages(
     gdp_df = gdp_data[["region", "year", "value"]].rename(
         columns={"region": "node", "value": "gdp_mer"}
     )
+    # Translate RIME node codes to timeseries region names before merging.
+    gdp_change_df = (
+        gdp_change_df.assign(node=gdp_change_df["node"].map(_NODE_TO_REGION_R12))
+        .dropna(subset=["node"])
+        .drop_duplicates(subset=["node", "year"])
+    )
     merged = gdp_df.merge(gdp_change_df, on=["node", "year"], how="inner")
 
     if merged.empty:
@@ -95,24 +119,55 @@ def report_damages(
 
     # perc_change_sum is negative (GDP loss) → negate to get positive damage cost.
     merged["damage"] = -merged["gdp_mer"] * merged["perc_change_sum"] / 100
-    merged["value"] = merged["damage"] / (1 + discount_rate) ** (
-        merged["year"] - BASE_YEAR
-    )
+    discount_factor = (1 + discount_rate) ** (merged["year"] - BASE_YEAR)
+    merged["value"] = merged["damage"] / discount_factor
+    # relative damage: raw RIME loss negated to positive — discount-rate agnostic
+    merged["value_rel"] = -merged["perc_change_sum"]
 
-    # Step 4: add World aggregate (sum of all regional damages per year).
-    world = merged.groupby("year", as_index=False)["value"].sum()
-    world["node"] = "World"
+    # Step 4: add World aggregate (sum of regional damages / sum of regional GDP).
+    world_abs = merged.groupby("year", as_index=False)["value"].sum()
+    world_abs["node"] = "World"
+    # World relative: GDP-weighted average of regional loss percentages
+    world_gdp = merged.groupby("year")["gdp_mer"].sum()
+    world_rel_val = (
+        merged.groupby("year")["damage"].sum() / world_gdp * 100
+    ).reset_index()
+    world_rel_val.columns = ["year", "value_rel"]
+    world_rel_val["node"] = "World"
 
-    result = pd.concat(
-        [merged[["node", "year", "value"]], world[["node", "year", "value"]]],
+    result_abs = pd.concat(
+        [merged[["node", "year", "value"]], world_abs[["node", "year", "value"]]],
         ignore_index=True,
     )
-    result["model"] = scs.model
-    result["scenario"] = scs.scenario
-    result["variable"] = DAMAGE_VARIABLE
-    result["unit"] = DAMAGE_UNIT
-    result = result.rename(columns={"node": "region"})
-    result_idf = pyam.IamDataFrame(result)
+    result_rel = pd.concat(
+        [
+            merged[["node", "year", "value_rel"]].rename(
+                columns={"value_rel": "value"}
+            ),
+            world_rel_val[["node", "year", "value_rel"]].rename(
+                columns={"value_rel": "value"}
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    def _to_idf(df, variable, unit):
+        out = df.copy()
+        out["model"] = scs.model
+        out["scenario"] = scs.scenario
+        out["variable"] = variable
+        out["unit"] = unit
+        return out.rename(columns={"node": "region"})
+
+    result_idf = pyam.IamDataFrame(
+        pd.concat(
+            [
+                _to_idf(result_abs, DAMAGE_VARIABLE, DAMAGE_UNIT),
+                _to_idf(result_rel, DAMAGE_REL_VARIABLE, DAMAGE_REL_UNIT),
+            ],
+            ignore_index=True,
+        )
+    )
 
     # Step 5: append to scenario timeseries in the database.
     # timeseries() returns wide format with MultiIndex (model, scenario, region,
@@ -124,9 +179,9 @@ def report_damages(
         .reset_index()
     )
 
-    scs.check_out()
+    scs.check_out(timeseries_only=True)
     scs.add_timeseries(result_ts)
-    scs.commit(f"Add {DAMAGE_VARIABLE}")
+    scs.commit(f"Add {DAMAGE_VARIABLE} and {DAMAGE_REL_VARIABLE}")
     log.info("Damage timeseries committed to scenario %s", scs.scenario)
 
     # Step 6: replace reporting Excel file with version that includes damage rows.
