@@ -8,6 +8,19 @@ that combines all 3 of the
 :doc:`MESSAGEix-Transport </transport/index>` (**T**)
 model variants.
 
+In :func:`.bmt.workflow.generate`, each variant is added as follows:
+
+- **Materials (M)** — load a baseline that already includes MESSAGEix-Materials
+  (step ``M``); there is no separate materials build step yet.
+- **Transport (T)** — build MESSAGEix-Transport on the cloned materials scenario
+  via :func:`.transport.workflow.add_steps` and :func:`.transport.build.main`,
+  using the ``transport`` section of :file:`data/bmt/config.yaml``.
+- **Buildings (B)** — in step ``BMT built``, call :func:`.buildings.build.main`
+  (imported in :mod:`.bmt.workflow` as ``build_B``) on the ``MT solved`` scenario.
+- **Other BMT extensions** — add power-sector material intensity with
+  :func:`.bmt.utils.build_PM` (``BMTX built``); later steps prepare MACRO
+  calibration and solve with MESSAGE-MACRO.
+
 The current module :mod:`.model.bmt` includes:
 
 - :func:`.bmt.workflow.generate` —generates a :class:`.Workflow`
@@ -17,7 +30,7 @@ The current module :mod:`.model.bmt` includes:
   used to invoke the workflow.
   For example::
 
-    mix-models bmt run --from="base" "glasgow+" --dry-run
+    mix-models bmt run --from="base" "BMTX baseline macro reported" --dry-run
 
   See :program:`mix-models bmt run --help` for options.
 - :mod:`.bmt.config` —handling for configuration,
