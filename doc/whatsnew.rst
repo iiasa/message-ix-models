@@ -20,8 +20,8 @@ Next release
 - Adjust :mod:`.project.ssp.transport` (:pull:`485`):
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
-- New :mod:`.tools.impacts` library and :mod:`.project.sparrcle` consumer
-  for SPARRCLE physical-impact scenarios (:pull:`479`).
+- New :mod:`.tools.impacts` library and :mod:`.project.sparccle` consumer
+  for SPARCCLE physical-impact scenarios (:pull:`479`).
 
 v2026.4.17
 ==========

@@ -1,6 +1,6 @@
-# SPARRCLE Scenario Configuration
+# SPARCCLE Scenario Configuration
 #
-# Consumed by `message_ix_models.project.sparrcle.workflow.generate`.
+# Consumed by `message_ix_models.project.sparccle.workflow.generate`.
 #
 # Phase 1 — Module build ("{ssp}/{scenario} cooling"):
 #   subprocess `mix-models water-ix cooling` → {scenario}_cooling

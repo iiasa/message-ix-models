@@ -1,9 +1,9 @@
-"""SPARRCLE physical-impact workflow.
+"""SPARCCLE physical-impact workflow.
 
 Builds a :class:`message_ix_models.workflow.Workflow` whose nodes are the
-SPARRCLE Phase-1 cooling-module clones and the Phase-2 CID variants
+SPARCCLE Phase-1 cooling-module clones and the Phase-2 CID variants
 (``CI_b`` / ``CI_p`` / ``CI_bp``) for every starter declared in
-``scenario_config.yaml``. ``mix-models sparrcle run TARGET`` selects the
+``scenario_config.yaml``. ``mix-models sparccle run TARGET`` selects the
 subgraph, ``--from`` truncates at a given step, ``--go`` actually runs.
 
 Phase-1 cooling delegates to ``mix-models water-ix cooling`` via
@@ -36,12 +36,12 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 _DEFAULT_CONFIG_PATH = package_data_path(
-    "..", "project", "sparrcle", "scenario_config.yaml"
+    "..", "project", "sparccle", "scenario_config.yaml"
 )
 
 
 def load_config(path: str | Path) -> dict:
-    """Load the SPARRCLE scenario config."""
+    """Load the SPARCCLE scenario config."""
     with open(path) as f:
         raw = yaml.safe_load(f)
 
@@ -115,7 +115,7 @@ def validate_inputs(config: dict) -> None:
     )
     if missing:
         raise FileNotFoundError(
-            "SPARRCLE preflight: required inputs not found:\n  - "
+            "SPARCCLE preflight: required inputs not found:\n  - "
             + "\n  - ".join(missing)
         )
 
@@ -177,14 +177,13 @@ def apply_buildings(
     )
     from message_ix_models.util import ScenarioInfo
 
-    del context  # unused; required by workflow action signature
-
     gmt = load_magicc_gmt(magicc_dir, n_runs=n_runs)
     n = gmt.values.shape[0] if gmt.values.ndim > 1 else 1
     cooling, heating = compute_building_cids(
         gmt,
         ScenarioInfo(scenario).Y,
         reference_scenario=reference_scenario,
+        regions=context.model.regions,
     )
     apply_building_cids(
         scenario,
@@ -211,8 +210,6 @@ def apply_cooling(
     """
     from message_ix_models.model.water.data.cooling_impacts import apply_cooling_cids
 
-    del context
-
     gmt = load_magicc_gmt(magicc_dir, n_runs=n_runs)
     n = gmt.values.shape[0] if gmt.values.ndim > 1 else 1
     kwargs = {"min_year": min_year} if min_year is not None else {}
@@ -220,6 +217,7 @@ def apply_cooling(
         scenario,
         gmt,
         commit_message=f"Cooling CIDs (wet+dry), {n} runs",
+        regions=context.model.regions,
         **kwargs,
     )
     persist_gmt_mean(scenario, gmt)
@@ -257,7 +255,7 @@ def generate(
     config_path: str | Path | None = None,
     **options,
 ) -> Workflow:
-    """Build the SPARRCLE Phase-1 + Phase-2 workflow.
+    """Build the SPARCCLE Phase-1 + Phase-2 workflow.
 
     Parameters
     ----------

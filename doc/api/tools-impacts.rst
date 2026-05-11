@@ -15,7 +15,7 @@ resampling sparse calibration inputs onto MESSAGE model years.
 
 The toolkit is domain-agnostic: it predicts at native emulator resolution and
 returns NumPy arrays. Domain modules under :mod:`.model.buildings`,
-:mod:`.model.water.data`, and :mod:`.project.sparrcle` own the transformation
+:mod:`.model.water.data`, and :mod:`.project.sparccle` own the transformation
 to MESSAGE-compatible parameters.
 
 RIME prediction is an adapted reimplementation of the GWL-binned
