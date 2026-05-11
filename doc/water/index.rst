@@ -96,6 +96,9 @@ Build and run
 .. automodule:: message_ix_models.model.water.build
    :members:
 
+.. automodule:: message_ix_models.model.water.config
+   :members:
+
 Data preparation
 ----------------
 

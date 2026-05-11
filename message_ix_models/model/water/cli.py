@@ -8,6 +8,8 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util.click import common_params, scenario_param
 
+from .config import Config
+
 if TYPE_CHECKING:
     from message_ix import Scenario
 log = logging.getLogger(__name__)
@@ -39,6 +41,8 @@ def water_ini(context: "Context", regions, time):
 
     from .utils import read_config
 
+    config = Config.from_context(context)
+
     # Ensure water model configuration is loaded
     read_config(context)
     if not context.scenario_info:
@@ -61,9 +65,9 @@ def water_ini(context: "Context", regions, time):
         regions = "R12"
     # add an attribute to distinguish country models
     if regions in ["R11", "R12", "R14", "R32", "RCP"]:
-        context.type_reg = "global"
+        config.type_reg = "global"
     else:
-        context.type_reg = "country"
+        config.type_reg = "country"
     context.regions = regions
 
     # create a mapping ISO code :
@@ -71,10 +75,10 @@ def water_ini(context: "Context", regions, time):
     # only needed for 1-country models
     n_codes = get_codes(f"node/{context.regions}")
     nodes = list(map(str, n_codes[n_codes.index(Code(id="World"))].child))
-    if context.type_reg == "country":
+    if config.type_reg == "country":
         map_ISO_c = {context.regions: nodes[0]}
-        context.map_ISO_c = map_ISO_c
-        log.info(f"mapping {context.map_ISO_c[context.regions]}")
+        config.map_ISO_c = map_ISO_c
+        log.info(f"mapping {config.map_ISO_c[context.regions]}")
 
     # deinfe the timestep
     if not time:
@@ -82,13 +86,13 @@ def water_ini(context: "Context", regions, time):
         time = sc_ref.set("time")
         sub_time = list(time[time != "year"])
         if len(sub_time) == 0:
-            context.time = ["year"]
+            config.time = ["year"]
 
         else:
-            context.time = sub_time
+            config.time = sub_time
     else:
-        context.time = [time]
-    log.info(f"Using the following time-step for the water module: {context.time}")
+        config.time = [time]
+    log.info(f"Using the following time-step for the water module: {config.time}")
 
     # setting the time information in context
 
@@ -163,12 +167,11 @@ def nexus_cli(
     water balance linking different water demands to supply.
     """
     # Set basin filtering configuration on context
-    context.reduced_basin = reduced_basin
-    if filter_list:
-        context.filter_list = list(filter_list)
-    if num_basins is not None:
-        context.num_basins = num_basins
-    context.basin_selection = basin_selection
+    config = Config.from_context(context)
+    config.reduced_basin = reduced_basin
+    config.filter_list = list(filter_list or [])
+    config.num_basins = num_basins
+    config.basin_selection = basin_selection
 
     nexus(context, regions, rcps, sdgs, rels, macro)
 
@@ -193,17 +196,18 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
         Specifies the reliability of hydrological data ['low','mid','high']
     """
     # add input information to the class context
-    context.nexus_set = "nexus"
+    config = Config.from_context(context)
+    config.nexus_set = "nexus"
     if not context.regions:
         context.regions = regions
 
-    context.RCP = rcps
-    context.SDG = sdgs
-    context.REL = rels
+    config.RCP = rcps
+    config.SDG = sdgs
+    config.REL = rels
 
     log.info(
-        f"SSP assumption is {context.ssp}. SDG is {context.SDG}. "
-        f"RCP is {context.RCP}. REL is {context.REL}."
+        f"SSP assumption is {context.ssp}. SDG is {config.SDG}. "
+        f"RCP is {config.RCP}. REL is {config.REL}."
     )
 
     from .build import main as build
@@ -298,12 +302,13 @@ def cooling(
         Specifies the climate scenario used ['no_climate','6p0','2p6']
 
     """
-    context.nexus_set = "cooling"
-    context.RCP = rcps
-    context.REL = rels
+    config = Config.from_context(context)
+    config.nexus_set = "cooling"
+    config.RCP = rcps
+    config.REL = rels
 
     log.info(
-        f"SSP assumption is {context.ssp}. RCP is {context.RCP}. REL is {context.REL}."
+        f"SSP assumption is {context.ssp}. RCP is {config.RCP}. REL is {config.REL}."
     )
 
     from .build import main as build

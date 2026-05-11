@@ -10,6 +10,7 @@ from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import broadcast, package_data_path
 
+from .config import Config
 from .utils import filter_basins_by_region, read_config
 
 log = logging.getLogger(__name__)
@@ -184,9 +185,10 @@ def cat_tec_cooling_calib(
             - 'tec': Name of the cooling technology.
         - regions_df: A list of unique region nodes from the scenario.
     """
+    cfg = Config.from_context(context)
     FILE1 = (
         "cooltech_cost_and_shares_"
-        + (f"ssp_msg_{context.regions}" if context.type_reg == "global" else "country")
+        + (f"ssp_msg_{context.regions}" if cfg.type_reg == "global" else "country")
         + ".csv"
     )
     path1 = package_data_path("water", "ppl_cooling_tech", FILE1)
@@ -288,7 +290,9 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
         # Elements to add
         add.set[set_name].extend(config.get("add", []))
 
-    if context.nexus_set == "nexus":
+    cfg = Config.from_context(context)
+
+    if cfg.nexus_set == "nexus":
         # Merge technology.yaml with set.yaml
         context["water set"]["nexus"]["technology"]["add"] = context[
             "water technology"
@@ -311,7 +315,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
 
         # Share commodity for groundwater
         results = {}
-        df_node = context.all_nodes
+        df_node = cfg.all_nodes
         n = len(df_node.values)
 
         d = {
@@ -550,6 +554,7 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
 
     # define an empty dictionary
     results = {}
+    cfg = Config.from_context(context)
     # read csv file for basin names and region mapping
     # reading basin_delineation
     FILE = f"basins_by_region_simpl_{context.regions}.csv"
@@ -564,8 +569,8 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     df["node"] = "B" + df["BCU_name"].astype(str)
     df["mode"] = "M" + df["BCU_name"].astype(str)
     df["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df["REGION"].astype(str)
     )
 
@@ -580,9 +585,9 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
 
     results["map_node"] = nodes
 
-    context.all_nodes = df["node"]
+    cfg.all_nodes = df["node"]
     # Store the filtered basin names for use in other functions
-    context.valid_basins = set(df["BCU_name"].astype(str))
+    cfg.valid_basins = set(df["BCU_name"].astype(str))
 
     for set_name, config in results.items():
         # Sets to add
@@ -604,7 +609,7 @@ def main(context: Context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
-    if context.nexus_set == "nexus":
+    if Config.from_context(context).nexus_set == "nexus":
         # Add water balance
         spec = map_basin(context)
 

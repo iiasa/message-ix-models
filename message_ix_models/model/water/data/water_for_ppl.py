@@ -9,6 +9,7 @@ import yaml
 from message_ix import make_df
 
 from message_ix_models import Context
+from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 from message_ix_models.model.water.utils import get_vintage_and_active_years
 from message_ix_models.util import (
@@ -43,11 +44,12 @@ def _load_scenario_and_cooling_data(
     scen : Scenario object
     cost_share_df : DataFrame with cost and share data
     """
+    cfg = Config.from_context(context)
     # File paths
     tech_perf_path = package_data_path(
         "water", "ppl_cooling_tech", "tech_water_performance_ssp_msg.csv"
     )
-    suffix = "ssp_msg_" + context.regions if context.type_reg == "global" else "country"
+    suffix = "ssp_msg_" + context.regions if cfg.type_reg == "global" else "country"
     cost_share_file = f"cooltech_cost_and_shares_{suffix}.csv"
     cost_share_path = package_data_path("water", "ppl_cooling_tech", cost_share_file)
     basin_path = package_data_path(
@@ -59,8 +61,8 @@ def _load_scenario_and_cooling_data(
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
     node_region = df_node["region"].unique()
@@ -152,7 +154,8 @@ def _compute_cooling_rates(input_cool: pd.DataFrame) -> pd.DataFrame:
 
 def _make_input_params(input_cool: pd.DataFrame, context: "Context") -> pd.DataFrame:
     """Generate input parameter DataFrame."""
-    commodity = "surfacewater" if context.nexus_set == "nexus" else "freshwater"
+    cfg = Config.from_context(context)
+    commodity = "surfacewater" if cfg.nexus_set == "nexus" else "freshwater"
 
     # Electricity input for parasitic demand
     electr = input_cool[input_cool["parasitic_electricity_demand_fraction"] > 0].copy()
@@ -325,18 +328,19 @@ def _make_technical_lifetime(
 
 def _make_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
     """Generate capacity_factor parameter with optional climate impacts."""
+    cfg = Config.from_context(context)
     cap_fact = make_matched_dfs(inp, capacity_factor=1)["capacity_factor"]
     cap_fact["unit"] = "-"  # capacity_factor is dimensionless
     cap_fact = cap_fact.drop_duplicates().reset_index(drop=True)
 
-    if context.RCP == "no_climate":
+    if cfg.RCP == "no_climate":
         return cap_fact
 
     # Apply climate impacts on freshwater cooling
     impact_path = package_data_path(
         "water",
         "ppl_cooling_tech",
-        f"power_plant_cooling_impact_MESSAGE_{context.regions}_{context.RCP}.csv",
+        f"power_plant_cooling_impact_MESSAGE_{context.regions}_{cfg.RCP}.csv",
     )
     df_impact = pd.read_csv(impact_path)
 
@@ -569,7 +573,7 @@ def _add_nexus_params(
     results: dict, context: "Context", node_region: list, info
 ) -> None:
     """Add basin-region distribution for nexus mode."""
-    if context.nexus_set != "nexus":
+    if Config.from_context(context).nexus_set != "nexus":
         return
 
     df_sw = map_basin_region_wat(context)
@@ -797,7 +801,11 @@ def non_cooling_tec(context: "Context", scenario=None) -> dict[str, pd.DataFrame
 
     merged = output_data.merge(non_cool, on="technology", how="right").dropna()
 
-    commodity = "surfacewater" if context.nexus_set == "nexus" else "freshwater"
+    commodity = (
+        "surfacewater"
+        if Config.from_context(context).nexus_set == "nexus"
+        else "freshwater"
+    )
 
     inp = make_df(
         "input",

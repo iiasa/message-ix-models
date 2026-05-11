@@ -9,6 +9,7 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
+from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.utils import KM3_TO_MCM
 from message_ix_models.util import broadcast, package_data_path
 
@@ -178,12 +179,13 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     results = {}
 
     # Reference to the water configuration
+    cfg = Config.from_context(context)
     info = context["water build info"]
     year_vtgs = tuple(range(2010, info.Y[0], 5))
 
     # defines path to read in demand data
     region = f"{context.regions}"
-    sub_time = context.time
+    sub_time = cfg.time
     path = package_data_path("water", "demands", "harmonized", region, ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("ssp2_regional_*.csv"))
@@ -220,14 +222,14 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     df_dmds["time"] = "year"
 
     # Filter to only include basins that exist after basin filtering
-    df_dmds = df_dmds[df_dmds["node"].isin(context.valid_basins)]
+    df_dmds = df_dmds[df_dmds["node"].isin(cfg.valid_basins)]
 
     # Write final interpolated values as csv
     # df2_f.to_csv('final_interpolated_values.csv')
 
     # if we are using sub-annual timesteps we replace the rural and municipal
     # withdrawals and return flows with monthly data and also add industrial
-    if "year" not in context.time:
+    if "year" not in cfg.time:
         PATH = package_data_path(
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
@@ -245,7 +247,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
 
         # Filter monthly data to only include valid basins
-        df_m = df_m[df_m["node"].isin(context.valid_basins)]
+        df_m = df_m[df_m["node"].isin(cfg.valid_basins)]
 
         # remove yearly parts from df_dms
         df_dmds = df_dmds[
@@ -307,9 +309,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         ]
     )
 
-    if context.SDG != "baseline":
+    if cfg.SDG != "baseline":
         # only if SDG exactly equal to SDG, otherwise other policies are possible
-        pol_scen = context.SDG
+        pol_scen = cfg.SDG
         if pol_scen == "SDG":
             # reading basin mapping to countries
             FILE2 = f"basins_country_{context.regions}.csv"
@@ -769,6 +771,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     """
 
     # Reference to the water configuration
+    cfg = Config.from_context(context)
     info = context["water build info"]
     # reading sample for assiging basins
     PATH = package_data_path(
@@ -777,15 +780,15 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     df_x = pd.read_csv(PATH)
 
     # Filter to only include valid basins
-    df_x = df_x[df_x["BCU_name"].isin(context.valid_basins)]
+    df_x = df_x[df_x["BCU_name"].isin(cfg.valid_basins)]
 
-    if "year" in context.time:
+    if "year" in cfg.time:
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = package_data_path(
             "water",
             "availability",
-            f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qtot_5y_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
         # Read rcp 2.6 data
         df_sw = pd.read_csv(path1)
@@ -794,7 +797,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         # Filter rows to valid basins using index positions from full list
         full_basin_df = pd.read_csv(PATH)
         valid_indices = full_basin_df[
-            full_basin_df["BCU_name"].isin(context.valid_basins)
+            full_basin_df["BCU_name"].isin(cfg.valid_basins)
         ].index
         df_sw = df_sw.iloc[valid_indices]  # Keep only rows for valid basins
         df_sw.reset_index(drop=True, inplace=True)
@@ -817,7 +820,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         path1 = package_data_path(
             "water",
             "availability",
-            f"qr_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qr_5y_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
 
         # Read groundwater data
@@ -847,7 +850,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         path1 = package_data_path(
             "water",
             "availability",
-            f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qtot_5y_m_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -855,7 +858,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         # Filter rows to valid basins
         full_basin_df = pd.read_csv(PATH)
         valid_indices = full_basin_df[
-            full_basin_df["BCU_name"].isin(context.valid_basins)
+            full_basin_df["BCU_name"].isin(cfg.valid_basins)
         ].index
         df_sw = df_sw.iloc[valid_indices]
         df_sw.reset_index(drop=True, inplace=True)
@@ -878,7 +881,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
         path1 = package_data_path(
             "water",
             "availability",
-            f"qr_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qr_5y_m_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)

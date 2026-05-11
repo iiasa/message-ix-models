@@ -125,14 +125,16 @@ class TestSelectByStress:
 @pytest.mark.parametrize("basin_selection", ["first_k", "stress"])
 def test_filter_list_additive_on_automatic(test_context, basin_selection):
     """filter_list augments automatic selection rather than replacing it."""
+    from message_ix_models.model.water.config import Config
     from message_ix_models.util import package_data_path
 
     df_basins = pd.read_csv(
         package_data_path("water", "delineation", "basins_by_region_simpl_R12.csv")
     )
 
-    test_context.reduced_basin = True
-    test_context.basin_selection = basin_selection
+    cfg = Config.from_context(test_context)
+    cfg.reduced_basin = True
+    cfg.basin_selection = basin_selection
     test_context.regions = "R12"
     test_context.ssp = "SSP2"
 
@@ -145,7 +147,7 @@ def test_filter_list_additive_on_automatic(test_context, basin_selection):
     extra_basins = list(all_basins - auto_basins)[:3]
     assert len(extra_basins) > 0, "Need basins outside automatic set"
 
-    test_context.filter_list = extra_basins
+    cfg.filter_list = extra_basins
     combined = filter_basins_by_region(df_basins, test_context, n_per_region=1)
     combined_basins = set(combined["BCU_name"])
 

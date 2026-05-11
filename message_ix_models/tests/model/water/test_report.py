@@ -8,6 +8,7 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
+from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.report import (
     ScenarioMetadata,
     aggregate_totals,
@@ -23,8 +24,9 @@ from message_ix_models.util import package_data_path
 def test_report_full(test_context: Any, request: pytest.FixtureRequest) -> None:
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
-    test_context.time = "year"
-    test_context.type_reg = "global"
+    cfg = Config.from_context(test_context)
+    cfg.time = ["year"]
+    cfg.type_reg = "global"
     test_context.regions = "R12"
     codes = get_codes(f"node/{test_context.regions}")
     world_code = [n for n in codes if str(n) == "World"][0]

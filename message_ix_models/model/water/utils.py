@@ -14,6 +14,8 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import load_package_data, package_data_path
 
+from .config import Config
+
 log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -117,19 +119,18 @@ def filter_basins_by_region(
     if not context:
         context = Context.get_instance(-1)
 
-    # Check if reduced basin filtering is enabled
-    reduced_basin = getattr(context, "reduced_basin", False)
+    cfg = Config.from_context(context)
 
-    if not reduced_basin:
+    if not cfg.reduced_basin:
         # No filtering, return original dataframe
         log.info("Basin filtering disabled, returning all basins")
         return df_basins
 
     # Basin filtering is enabled — run automatic selection, then augment with
     # filter_list if provided.
-    filter_list = getattr(context, "filter_list", None)
-    num_basins = getattr(context, "num_basins", None)
-    basin_selection = getattr(context, "basin_selection", "first_k")
+    filter_list = cfg.filter_list
+    num_basins = cfg.num_basins
+    basin_selection = cfg.basin_selection
 
     if num_basins is None:
         log.info(f"num_basins not set, using default n_per_region={n_per_region}")

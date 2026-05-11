@@ -4,6 +4,7 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import Context
+from message_ix_models.model.water.config import Config
 from message_ix_models.util import broadcast, package_data_path
 
 
@@ -27,6 +28,7 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
 
     # define an empty dictionary
     results = {}
+    cfg = Config.from_context(context)
 
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
@@ -34,14 +36,14 @@ def add_irr_structure(context: "Context") -> dict[str, pd.DataFrame]:
     df_node = pd.read_csv(PATH)
 
     # Filter to only include valid basins
-    df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
+    df_node = df_node[df_node["BCU_name"].isin(cfg.valid_basins)]
 
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
 

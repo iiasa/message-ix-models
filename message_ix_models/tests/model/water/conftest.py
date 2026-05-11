@@ -6,6 +6,7 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
+from message_ix_models.model.water.config import Config
 from message_ix_models.util import package_data_path
 
 REGION_CONFIG = {
@@ -52,7 +53,7 @@ def setup_valid_basins(context, regions="R12"):
     df_filtered = filter_basins_by_region(df_basins, context)
 
     # Set valid_basins as set of basin names
-    context.valid_basins = set(df_filtered["BCU_name"].astype(str))
+    Config.from_context(context).valid_basins = set(df_filtered["BCU_name"].astype(str))
 
     return context
 
@@ -70,29 +71,31 @@ def water_context(test_context, request):
 
     # Apply defaults
     test_context.regions = params.get("regions", "R11")
-    test_context.type_reg = params.get("type_reg", "global")
-    test_context.time = params.get("time", "year")
-    test_context.nexus_set = params.get("nexus_set", "nexus")
+    cfg = Config.from_context(test_context)
+    cfg.type_reg = params.get("type_reg", "global")
+    cfg.time = params.get("time", "year")
+    cfg.nexus_set = params.get("nexus_set", "nexus")
 
     # Optional attributes
     for attr in [
         "RCP",
         "REL",
         "SDG",
-        "ssp",
         "reduced_basin",
         "basin_selection",
         "num_basins",
         "filter_list",
     ]:
         if attr in params:
-            setattr(test_context, attr, params[attr])
+            setattr(cfg, attr, params[attr])
+    if "ssp" in params:
+        test_context.ssp = params["ssp"]
 
     # Node mapping for country models
-    if test_context.type_reg == "country":
+    if cfg.type_reg == "country":
         nodes = get_codes(f"node/{test_context.regions}")
         nodes = list(map(str, nodes[nodes.index("World")].child))
-        test_context.map_ISO_c = {test_context.regions: nodes[0]}
+        cfg.map_ISO_c = {test_context.regions: nodes[0]}
 
     # Set up valid_basins for basin filtering
     setup_valid_basins(test_context, regions=test_context.regions)

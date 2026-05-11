@@ -9,6 +9,7 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.utils import (
     ANNUAL_CAPACITY_FACTOR,
     KM3_TO_MCM,
@@ -273,11 +274,12 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         ``context["water build info"]``, plus the additional year 2010.
     """
     # Reference to the water configuration
+    cfg = Config.from_context(context)
     info = context["water build info"]
 
     # define an empty dictionary
     results = {}
-    sub_time = pd.Series(context.time)
+    sub_time = pd.Series(cfg.time)
     # load the scenario from context
     scen = context.get_scenario()
 
@@ -293,14 +295,14 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     df_node = pd.read_csv(PATH)
 
     # Filter to only valid basins (already filtered in map_basin)
-    df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
+    df_node = df_node[df_node["BCU_name"].isin(cfg.valid_basins)]
 
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
 
@@ -322,7 +324,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     df_elec = df[df["incmd"] == "electr"].reset_index()
 
     inp_df = start_creating_input_dataframe(
-        sdg=context.SDG,
+        sdg=cfg.SDG,
         df_node=df_node,
         df_non_elec=df_non_elec,
         df_dist=df_dist,
@@ -383,9 +385,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
         )
 
     # Process distribution outputs using helper function
-    dist_out = _make_dist_output(
-        df_out_dist, scenario_info, df_node, sub_time, context.SDG
-    )
+    dist_out = _make_dist_output(df_out_dist, scenario_info, df_node, sub_time, cfg.SDG)
     out_df = pd.concat([out_df, dist_out]) if not dist_out.empty else out_df
 
     results["output"] = out_df
@@ -496,7 +496,7 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     df_var = df_inv[~df_inv["tec"].isin(techs)]
     df_var_dist = df_inv[df_inv["tec"].isin(techs)]
 
-    if context.SDG != "baseline":
+    if cfg.SDG != "baseline":
         for index, rows in df_var.iterrows():
             # Check if this is a dummy technology
             use_same_year = is_dummy_technology(rows)
@@ -646,6 +646,7 @@ def prepare_input_dataframe(
     df_elec: pd.DataFrame,
 ) -> defaultdict[Any, list]:
     result_dc = defaultdict(list)
+    cfg = Config.from_context(context)
     # Unit 1 KWh/m^3 = 10^3 GWh/Km^3 = 1 GWh/MCM,
     # Parkinson et al.
     # which is the only explanation as to how the model solved.
@@ -654,7 +655,7 @@ def prepare_input_dataframe(
             # Check if this is a dummy technology (for distribution techs)
             use_same_year = is_dummy_technology(rows)
 
-            if context.SDG != "baseline":
+            if cfg.SDG != "baseline":
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
@@ -774,7 +775,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     """
     # define an empty dictionary
     results = {}
-    sub_time = pd.Series(context.time)
+    cfg = Config.from_context(context)
+    sub_time = pd.Series(cfg.time)
     # Reference to the water configuration
     info = context["water build info"]
 
@@ -801,7 +803,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     df_desal = pd.read_csv(path)
     df_hist = pd.read_csv(path2)
     df_proj = pd.read_csv(path3)
-    df_proj = df_proj[df_proj["rcp"] == f"{context.RCP}"]
+    df_proj = df_proj[df_proj["rcp"] == f"{cfg.RCP}"]
     df_proj = df_proj[~(df_proj["year"] == 2065) & ~(df_proj["year"] == 2075)]
     df_proj.reset_index(inplace=True, drop=True)
     df_proj = df_proj[df_proj["year"].isin(info.Y)]
@@ -813,20 +815,20 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     df_node = pd.read_csv(PATH)
 
     # Filter to only valid basins (already filtered in map_basin)
-    df_node = df_node[df_node["BCU_name"].isin(context.valid_basins)]
+    df_node = df_node[df_node["BCU_name"].isin(cfg.valid_basins)]
 
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
 
     # Filter to basins that exist after filtering
-    df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
-    df_proj = df_proj[df_proj["BCU_name"].isin(context.valid_basins)]
+    df_hist = df_hist[df_hist["BCU_name"].isin(cfg.valid_basins)]
+    df_proj = df_proj[df_proj["BCU_name"].isin(cfg.valid_basins)]
 
     # output dataframe linking to desal tech types
     out_df = (

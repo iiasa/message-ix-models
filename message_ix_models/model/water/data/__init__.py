@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.water.config import Config
 from message_ix_models.util import add_par_data
 
 from .demands import add_irrigation_demand, add_sectoral_demands, add_water_availability
@@ -57,12 +58,13 @@ def add_data(scenario, context: "Context", dry_run=False):
 
     info = ScenarioInfo(scenario)
     context["water build info"] = info
+    cfg = Config.from_context(context)
 
     data_funcs: list[DataFunc] = (
         [add_water_supply, cool_tech, non_cooling_tec]
-        if context.nexus_set == "cooling"
+        if cfg.nexus_set == "cooling"
         else DATA_FUNCTIONS
-        if context.type_reg == "global"
+        if cfg.type_reg == "global"
         else DATA_FUNCTIONS_COUNTRY
     )
 

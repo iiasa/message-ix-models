@@ -5,6 +5,7 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import (
     ANNUAL_CAPACITY_FACTOR,
@@ -36,16 +37,17 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
     -------
         data : pandas.DataFrame
     """
+    cfg = Config.from_context(context)
     info = context["water build info"]
 
-    if "year" in context.time:
+    if "year" in cfg.time:
         PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x_full = pd.read_csv(PATH)
 
         # Get positional indices of valid basins from the unfiltered list
-        valid_mask = df_x_full["BCU_name"].isin(context.valid_basins)
+        valid_mask = df_x_full["BCU_name"].isin(cfg.valid_basins)
         valid_indices = df_x_full[valid_mask].index
         df_x = df_x_full[valid_mask].reset_index(drop=True)
 
@@ -54,7 +56,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         path1 = package_data_path(
             "water",
             "availability",
-            f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qtot_5y_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
 
         df_sw = pd.read_csv(path1)
@@ -64,8 +66,8 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw = df_sw.iloc[valid_indices].reset_index(drop=True)
         df_sw["BCU_name"] = df_x["BCU_name"]
         df_sw["MSGREG"] = (
-            context.map_ISO_c[context.regions]
-            if context.type_reg == "country"
+            cfg.map_ISO_c[context.regions]
+            if cfg.type_reg == "country"
             else f"{context.regions}_" + df_sw["BCU_name"].str.split("|").str[-1]
         )
 
@@ -93,7 +95,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         path3 = package_data_path(
             "water",
             "availability",
-            f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qtot_5y_m_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
         df_sw = pd.read_csv(path3)
 
@@ -104,7 +106,7 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_x_full = pd.read_csv(PATH)
 
         # Get positional indices of valid basins from the unfiltered list
-        valid_mask = df_x_full["BCU_name"].isin(context.valid_basins)
+        valid_mask = df_x_full["BCU_name"].isin(cfg.valid_basins)
         valid_indices = df_x_full[valid_mask].index
         df_x = df_x_full[valid_mask].reset_index(drop=True)
 
@@ -113,8 +115,8 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw["BCU_name"] = df_x["BCU_name"]
 
         df_sw["MSGREG"] = (
-            context.map_ISO_c[context.regions]
-            if context.type_reg == "country"
+            cfg.map_ISO_c[context.regions]
+            if cfg.type_reg == "country"
             else f"{context.regions}_" + df_sw["BCU_name"].str.split("|").str[-1]
         )
 
@@ -161,6 +163,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     results = {}
 
     # Reference to the water configuration
+    cfg = Config.from_context(context)
     info = context["water build info"]
     # load the scenario from context
     scen = context.get_scenario()
@@ -168,7 +171,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     fut_year = info.Y
     year_wat = (*range(2010, info.Y[0] + 1, 5), *info.Y)
     last_vtg_yr = info.Y[0] - 5
-    sub_time = context.time
+    sub_time = cfg.time
     scen_info = ScenarioInfo(scen)
 
     print(" future year = ", fut_year)
@@ -187,8 +190,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df_node["REGION"].astype(str)
     )
 
@@ -200,8 +203,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     PATH1 = package_data_path("water", "availability", FILE1)
     df_gwt = pd.read_csv(PATH1)
     df_gwt["region"] = (
-        context.map_ISO_c[context.regions]
-        if context.type_reg == "country"
+        cfg.map_ISO_c[context.regions]
+        if cfg.type_reg == "country"
         else f"{context.regions}_" + df_gwt["REGION"].astype(str)
     )
 
@@ -211,11 +214,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     df_hist = pd.read_csv(PATH2)
 
     # Filter to only include valid basins (nexus mode only)
-    if context.nexus_set == "nexus":
-        df_hist = df_hist[df_hist["BCU_name"].isin(context.valid_basins)]
+    if cfg.nexus_set == "nexus":
+        df_hist = df_hist[df_hist["BCU_name"].isin(cfg.valid_basins)]
         df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
-    if context.nexus_set == "cooling":
+    if cfg.nexus_set == "cooling":
         # Add output df  for surfacewater supply for regions
         output_df = (
             make_df(
@@ -324,7 +327,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
 
         results["input"] = pd.concat([inp_sw, inp_gw], ignore_index=True)
 
-    elif context.nexus_set == "nexus":
+    elif cfg.nexus_set == "nexus":
         # input data frame  for slack technology balancing equality with demands
         inp = (
             make_df(
@@ -559,7 +562,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             ]
         )
 
-        if context.type_reg == "global":
+        if cfg.type_reg == "global":
             inp.loc[
                 (inp["technology"].str.contains("extract_gw_fossil"))
                 & (inp["year_act"] == 2020)
@@ -995,6 +998,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     """
     # define an empty dictionary
     results = {}
+    cfg = Config.from_context(context)
 
     info = context["water build info"]
 
@@ -1008,10 +1012,9 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     )
     df_x_full = pd.read_csv(PATH)
     # Index positions of valid basins in the full CSV (for positional CSV filtering)
-    valid_indices = df_x_full[df_x_full["BCU_name"].isin(context.valid_basins)].index
-    df_x = df_x_full[df_x_full["BCU_name"].isin(context.valid_basins)].reset_index(
-        drop=True
-    )
+    valid_mask = df_x_full["BCU_name"].isin(cfg.valid_basins)
+    valid_indices = df_x_full[valid_mask].index
+    df_x = df_x_full[valid_mask].reset_index(drop=True)
 
     dmd_df = make_df(
         "demand",
@@ -1026,12 +1029,12 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     dmd_df = dmd_df[dmd_df["year"] >= 2025].reset_index(drop=True)
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
 
-    if "year" in context.time:
+    if "year" in cfg.time:
         # Reading data, the data is spatially and temporally aggregated from GHMs
         path1 = package_data_path(
             "water",
             "availability",
-            f"e-flow_{context.RCP}_{context.regions}.csv",
+            f"e-flow_{cfg.RCP}_{context.regions}.csv",
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -1054,7 +1057,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         path1 = package_data_path(
             "water",
             "availability",
-            f"e-flow_5y_m_{context.RCP}_{context.regions}.csv",
+            f"e-flow_5y_m_{cfg.RCP}_{context.regions}.csv",
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -1074,7 +1077,7 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env = df_env[df_env["year"].isin(info.Y)]
 
     # Return a processed dataframe for env flow calculations
-    if context.SDG != "baseline":
+    if cfg.SDG != "baseline":
         # dataframe to put constraints on env flows
         eflow_df = make_df(
             "bound_activity_lo",
