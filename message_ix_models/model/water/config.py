@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
 from message_ix_models.util.config import ConfigHelper
@@ -54,19 +54,8 @@ class Config(ConfigHelper):
     def from_context(cls, context: "Context") -> "Config":
         """Return ``context.water``, creating it if needed."""
         if "water" not in context:
-            context["water"] = cls(
-                **{
-                    f.name: getattr(context, f.name)
-                    for f in fields(cls)
-                    if f.name in context
-                }
-            )
+            context["water"] = cls()
         elif isinstance(context["water"], dict):
             context["water"] = cls.from_dict(context["water"])
 
         return context["water"]
-
-    def apply(self, context: "Context") -> None:
-        """Mirror settings to legacy direct ``Context`` attributes."""
-        for f in fields(self):
-            setattr(context, f.name, getattr(self, f.name))
