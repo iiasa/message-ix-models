@@ -42,15 +42,19 @@ log = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
+# R12 regional emulator with two cooling-axis values: "wet" and "dry".
 _DATASET = "r12_thermoelectric_gwl.nc"
 _VAR = "capacity_factor"
+
+# Ratio denominator: CF(GWL) / CF(1.0 degC). Other baselines are possible
+# only if the calibration is re-derived against that reference level.
 _DEFAULT_BASELINE_GWL = 1.0
-# 2045 because (a) regional climatology shows clear scenario forcing
-# differentiation around then, and (b) applying the wet-cooling
-# relation_activity for years before 2045 produced infeasibilities in
-# practice. (b) was not rigorously investigated.
+
+# Earlier wet-cooling bounds produced infeasibilities in preliminary runs.
 _DEFAULT_MIN_YEAR = 2045
 
+# Dataset selectors. "wet" covers freshwater once-through + closed-loop;
+# "dry" covers air cooling. Saline cooling is not represented in this file.
 _WET_SEL = {"cooling": "wet"}
 _DRY_SEL = {"cooling": "dry"}
 _WET_TIMESERIES_VARIABLE = (
@@ -543,16 +547,16 @@ def build_dry_cooling_factors(
 # ---------------------------------------------------------------------------
 
 
-def _ratios_to_long(ratios: pd.DataFrame) -> pd.DataFrame:
-    """Wide (region x year) ratios → long (region, year, value), R12-prefixed.
+def _ratios_to_long(ratios: pd.DataFrame, regions: str) -> pd.DataFrame:
+    """Wide (region x year) ratios → long (region, year, value), node-prefixed.
 
     Region values come from the RIME dataset as short codes (``"AFR"``);
-    they are reprefixed with ``"R12_"`` to match scenario node labels.
+    they are reprefixed with ``f"{regions}_"`` to match scenario node labels.
     """
     long = ratios.reset_index().melt(
         id_vars="region", var_name="year", value_name="value"
     )
-    long["region"] = "R12_" + long["region"].astype(str)
+    long["region"] = f"{regions}_" + long["region"].astype(str)
     return long
 
 
@@ -561,6 +565,7 @@ def apply_cooling_cids(
     gmt: GmtArray,
     min_year: int = _DEFAULT_MIN_YEAR,
     commit_message: str | None = None,
+    regions: str = "R12",
 ) -> None:
     """Apply wet + dry cooling CIDs to *scen* in place.
 
@@ -582,16 +587,35 @@ def apply_cooling_cids(
     commit_message
         Commit message for the parameter writes. Default
         ``"Apply cooling CIDs (wet+dry)"``.
+    regions
+        MESSAGE node codelist. Only ``"R12"`` is supported by the shipped
+        RIME and freshwater-share data.
     """
+    if regions != "R12":
+        raise NotImplementedError(
+            f"regions={regions!r}; this kernel currently only supports R12 "
+            "(input RIME and freshwater-share data files are R12-coded)."
+        )
     from message_ix_models.util import ScenarioInfo
 
     info = ScenarioInfo(scen)
     model_years = info.Y
 
-    year_mask = np.isin(gmt.years, model_years)
-    values = gmt.values
-    gmt_model = values[:, year_mask] if values.ndim == 2 else values[year_mask]
-    matched_years = gmt.years[year_mask].tolist()
+    values = np.asarray(gmt.values)
+    years = np.asarray(gmt.years, dtype=int)
+    year_index = {int(year): i for i, year in enumerate(years)}
+    last_year = int(years.max())
+    matched_years = [
+        int(year)
+        for year in sorted(model_years)
+        if int(year) in year_index or int(year) > last_year
+    ]
+    if not matched_years:
+        raise ValueError(
+            "No MESSAGE model years overlap with or follow GMT input years"
+        )
+    positions = [year_index.get(year, year_index[last_year]) for year in matched_years]
+    gmt_model = values[:, positions] if values.ndim == 2 else values[positions]
 
     log.info("Computing wet cooling degradation ratios...")
     wet_ratios = compute_degradation_ratios(
@@ -654,12 +678,12 @@ def apply_cooling_cids(
     # RIME capacity-factor source variable.
     constrained = [y for y in matched_years if y >= min_year]
     ts_wet = frame_to_iamc(
-        _ratios_to_long(wet_ratios.loc[:, constrained]),
+        _ratios_to_long(wet_ratios.loc[:, constrained], regions),
         _WET_TIMESERIES_VARIABLE,
         "dimensionless",
     )
     ts_dry = frame_to_iamc(
-        _ratios_to_long(dry_ratios.loc[:, constrained]),
+        _ratios_to_long(dry_ratios.loc[:, constrained], regions),
         _DRY_TIMESERIES_VARIABLE,
         "dimensionless",
     )
