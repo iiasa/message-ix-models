@@ -1,6 +1,6 @@
 """Climate impact prediction toolkit.
 
-GMT-to-impact prediction via RIME emulators and GMT/year helpers.
+GMT-to-impact prediction via RIME emulators and year helpers.
 Domain-specific transforms live with their domain modules; this package only
 handles emulator lookup and ensemble reduction. RIME prediction is an adapted
 reimplementation of `iiasa/rime

@@ -8,17 +8,15 @@ from message_ix_models.tools.impacts.temporal import sample_to_model_years
 
 @pytest.fixture
 def annual_df():
-    """Annual data 2020-2040 for 3 basins."""
     years = list(range(2020, 2041))
     data = {"basin": ["B1", "B2", "B3"]}
     for y in years:
-        data[y] = [float(y)] * 3  # value = year for easy verification
+        data[y] = [float(y)] * 3
     return pd.DataFrame(data)
 
 
 @pytest.fixture
 def decadal_df():
-    """Decadal theta-shape data for two nodes (mirrors buildings theta)."""
     rows = [
         {"node": "R12_AFR", 2020: 0.4, 2030: 0.6, 2040: 0.8, 2050: 1.0},
         {"node": "R12_NAM", 2020: 1.0, 2030: 0.9, 2040: 0.85, 2050: 0.8},
@@ -30,7 +28,6 @@ def test_point_method(annual_df):
     model_years = [2020, 2025, 2030, 2035, 2040]
     result = sample_to_model_years(annual_df, ["basin"], model_years, method="point")
     assert list(result.columns) == ["basin"] + model_years
-    # Values should be the year itself
     assert result[2025].iloc[0] == 2025.0
     assert result[2040].iloc[0] == 2040.0
 
@@ -38,26 +35,21 @@ def test_point_method(annual_df):
 def test_average_method(annual_df):
     model_years = [2020, 2025, 2030]
     result = sample_to_model_years(annual_df, ["basin"], model_years, method="average")
-    # 2025 should average 2021-2025 = mean(2021..2025) = 2023
     assert pytest.approx(result[2025].iloc[0]) == 2023.0
 
 
 def test_forward_fill_beyond_range(annual_df):
     model_years = [2020, 2030, 2040, 2050]
     result = sample_to_model_years(annual_df, ["basin"], model_years, method="point")
-    # 2050 is beyond 2040: forward-filled from 2040
     assert result[2050].iloc[0] == result[2040].iloc[0]
 
 
 def test_missing_year_column(annual_df):
-    # 2050 is beyond the input range (2020-2040) but gets forward-filled.
-    # 2019 is before input range and truly missing.
     with pytest.raises(ValueError, match="not found in input"):
         sample_to_model_years(annual_df, ["basin"], [2019, 2020], method="point")
 
 
 def test_interpolate_linear_between_inputs(decadal_df):
-    """5-year midpoints should be the arithmetic mean of bracket years."""
     result = sample_to_model_years(
         decadal_df,
         ["node"],
@@ -65,16 +57,14 @@ def test_interpolate_linear_between_inputs(decadal_df):
         method="interpolate",
     )
     afr = result.set_index("node").loc["R12_AFR"]
-    assert pytest.approx(afr[2025]) == 0.5  # mean(0.4, 0.6)
+    assert pytest.approx(afr[2025]) == 0.5
     assert pytest.approx(afr[2035]) == 0.7
     assert pytest.approx(afr[2045]) == 0.9
-    # Anchor years preserved exactly
     assert afr[2020] == 0.4
     assert afr[2050] == 1.0
 
 
 def test_interpolate_forward_fill_beyond_last_input(decadal_df):
-    """Years beyond max input stay equal to the last interpolated value."""
     result = sample_to_model_years(
         decadal_df, ["node"], [2050, 2060, 2100], method="interpolate"
     )
@@ -84,8 +74,6 @@ def test_interpolate_forward_fill_beyond_last_input(decadal_df):
 
 
 def test_interpolate_drop_below_first_input_year_by_default(decadal_df):
-    """Targets below the first input year are dropped (buildings semantic)."""
-    # Input min = 2020; ask for 2010, 2015, 2020, 2030
     result = sample_to_model_years(
         decadal_df, ["node"], [2010, 2015, 2020, 2030], method="interpolate"
     )
@@ -97,7 +85,6 @@ def test_interpolate_drop_below_first_input_year_by_default(decadal_df):
 
 
 def test_interpolate_extrapolate_below_backfills(decadal_df):
-    """extrapolate_below=True back-fills below-range targets from first input."""
     result = sample_to_model_years(
         decadal_df,
         ["node"],
@@ -106,15 +93,13 @@ def test_interpolate_extrapolate_below_backfills(decadal_df):
         extrapolate_below=True,
     )
     afr = result.set_index("node").loc["R12_AFR"]
-    assert afr[2010] == afr[2020]  # back-filled from first input
+    assert afr[2010] == afr[2020]
 
 
 def test_interpolate_independent_per_row(decadal_df):
-    """Interpolation must be independent across id_cols rows."""
     result = sample_to_model_years(
         decadal_df, ["node"], [2025, 2035], method="interpolate"
     ).set_index("node")
-    # AFR rises; NAM falls
     assert pytest.approx(result.loc["R12_AFR", 2025]) == 0.5
     assert pytest.approx(result.loc["R12_NAM", 2025]) == 0.95
     assert pytest.approx(result.loc["R12_AFR", 2035]) == 0.7
