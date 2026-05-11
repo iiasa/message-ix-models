@@ -33,7 +33,6 @@ _MJ_MM2_TO_EJ = 1e-6
 # MESSAGE demand parameter expects GWa
 _EJ_TO_GWA = registry("1 EJ").to("GW * year").magnitude
 
-_REFERENCE_SCENARIO = "SSP2"
 _CORRECTION_COEFFICIENT_SCENARIO = "SSP2"
 _FINAL_ENERGY_UNIT = "EJ/yr"
 
@@ -64,9 +63,7 @@ def load_correction_coefficients(
     return pd.read_csv(path, comment="#")
 
 
-def load_sector_fractions(
-    reference_scenario: str = _REFERENCE_SCENARIO,
-) -> pd.DataFrame:
+def load_sector_fractions(reference_scenario: str) -> pd.DataFrame:
     """Load sector fractions of rc_spec/rc_therm per (node, year)."""
     return pd.read_csv(
         _buildings_data_path(f"rc_sector_fractions_{reference_scenario}.csv"),
@@ -81,7 +78,7 @@ def load_floor_areas(sector: Literal["resid", "comm"] = "resid") -> pd.DataFrame
 
 def load_theta(
     mode: Literal["cool", "heat"],
-    reference_scenario: str = _REFERENCE_SCENARIO,
+    reference_scenario: str,
 ) -> pd.DataFrame:
     """Load theta(node, year) calibrated to the reference scenario demand."""
     path = _buildings_data_path(f"theta_{mode}_{reference_scenario}.csv")
@@ -223,7 +220,7 @@ def _compute_sector_energy(
 def _apply_theta(
     demand: pd.DataFrame,
     mode: Literal["cool", "heat"],
-    reference_scenario: str = _REFERENCE_SCENARIO,
+    reference_scenario: str,
 ) -> pd.DataFrame:
     """Scale raw RIME demand by theta to match SSP-calibrated STURM levels.
 
@@ -255,7 +252,8 @@ def _apply_theta(
 def compute_building_cids(
     gmt: GmtArray,
     model_years: list[int],
-    reference_scenario: str = _REFERENCE_SCENARIO,
+    reference_scenario: str,
+    regions: str = "R12",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute building energy CIDs from a GMT ensemble.
 
@@ -270,14 +268,22 @@ def compute_building_cids(
         ``gmt.years`` that match these are used; 2110 is forward-filled
         from 2100.
     reference_scenario
-        SSP scenario for theta and sector fractions ('SSP2', 'SSP3').
+        SSP scenario for theta and sector fractions.
+    regions
+        MESSAGE node codelist. Only ``"R12"`` is supported by the shipped
+        RIME EI datasets and STURM floor-area files.
 
     Returns
     -------
     tuple[pd.DataFrame, pd.DataFrame]
         ``(cooling, heating)`` DataFrames with columns
-        ``[node, year, value]`` where value is GWa. Node uses R12_ prefix.
+        ``[node, year, value]`` where value is GWa.
     """
+    if regions != "R12":
+        raise NotImplementedError(
+            f"regions={regions!r}; this kernel currently only supports R12 "
+            "(RIME EI datasets and STURM floor-area files are R12-coded)."
+        )
     values = np.asarray(gmt.values)
     years = np.asarray(gmt.years, dtype=int)
 
@@ -319,7 +325,7 @@ def compute_building_cids(
             .groupby(["region", "year"], as_index=False)["value"]
             .sum()
             .assign(
-                node=lambda df: "R12_" + df["region"],
+                node=lambda df: f"{regions}_" + df["region"],
                 value=lambda df: df["value"] * _EJ_TO_GWA,
             )[["node", "year", "value"]]
         )
@@ -386,7 +392,7 @@ def prepare_building_demand(
     cooling_cids: pd.DataFrame,
     heating_cids: pd.DataFrame,
     fractions: pd.DataFrame | None = None,
-    reference_scenario: str = _REFERENCE_SCENARIO,
+    reference_scenario: str | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Replace the STURM-calibrated climate component of rc_spec/rc_therm.
 
@@ -407,9 +413,10 @@ def prepare_building_demand(
         Same format, heating.
     fractions
         Sector fractions. If *None*, loaded from package data for
-        *reference_scenario*.
+        *reference_scenario* — which then becomes required.
     reference_scenario
-        SSP scenario for sector fractions ('SSP2', 'SSP3').
+        SSP scenario for sector fractions. Required when *fractions* is
+        None.
 
     Returns
     -------
@@ -418,6 +425,8 @@ def prepare_building_demand(
         with the same columns as the inputs.
     """
     if fractions is None:
+        if reference_scenario is None:
+            raise ValueError("reference_scenario is required when fractions is None")
         fractions = load_sector_fractions(reference_scenario)
 
     demand_years = sorted(
@@ -465,8 +474,9 @@ def apply_building_cids(
     scen: Scenario,
     cooling_demand: pd.DataFrame,
     heating_demand: pd.DataFrame,
+    *,
+    reference_scenario: str,
     commit_message: str | None = None,
-    reference_scenario: str = _REFERENCE_SCENARIO,
 ) -> None:
     """Write replacement building demands to *scen* in place.
 
@@ -474,8 +484,7 @@ def apply_building_cids(
     for the buildings-component substitution, writes the merged demand
     back, and persists the resolved CID demand as scenario timeseries
     under ``Final Energy|Residential and Commercial|{Cooling,Heating}``
-    in ``EJ/yr``
-    so downstream reporting can retrieve it via standard
+    in ``EJ/yr`` so downstream reporting can retrieve it via standard
     :meth:`scen.timeseries() <message_ix.Scenario.timeseries>` calls.
 
     Parameters
@@ -490,7 +499,7 @@ def apply_building_cids(
     commit_message
         Parameter-write commit message. Default ``"Inject building CIDs"``.
     reference_scenario
-        SSP scenario for sector fractions (``"SSP2"`` or ``"SSP3"``).
+        SSP scenario for sector fractions.
     """
     demand = scen.par("demand")
 
