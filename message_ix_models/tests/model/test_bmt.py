@@ -1,8 +1,14 @@
 """Tests for the BMT workflow (Buildings, Materials, Transport).
 
-Covers workflow steps and build functions in :mod:`message_ix_models.model.bmt`:
-- BM built / build_B (buildings), in :mod:`.model.buildings.build`
-- BMTX built / build_PM (power sector materials), in :mod:`.model.bmt.utils`
+Covers :mod:`message_ix_models.model.bmt.workflow` and linked sector builds:
+
+- After ``M reported``, :func:`message_ix_models.model.transport.workflow.add_steps`
+  uses the transport scenario code from BMT config (``context.transport.code``) to add
+  MESSAGEix-Transport steps, including ``<transport code> T built`` with
+  :func:`message_ix_models.model.transport.build.main`; ``MT built`` then clones that
+  branch and calls :func:`message_ix_models.model.bmt.workflow._set_as_default``.
+- ``BMT built``: :func:`message_ix_models.model.buildings.build.main`.
+- ``BMTX built``: :func:`message_ix_models.model.bmt.utils.build_PM`.
 
 Coverage notes:
 - prepare_data_B and build_B: tested with and without materials
@@ -181,20 +187,23 @@ def _add_materials_commodities(scenario):
     scenario.commit("Add materials commodities for with_materials=True test")
 
 
-# --- Tests for workflow (BM built step) ---
+# --- Tests for workflow (MT built and BMT built steps) ---
 
 
-def test_bmt_workflow_has_bm_built_step(test_context: Context) -> None:
-    """The BMT workflow includes the 'BM built' step that calls build_B."""
+def test_bmt_workflow_has_mt_and_bmt_built_steps(test_context: Context) -> None:
+    """The BMT workflow includes MT built and BMT built steps."""
+    from message_ix_models.model.bmt.workflow import _set_as_default
     from message_ix_models.model.buildings import build
 
-    ctx = test_context
-    wf = generate(ctx)
-    assert "BM built" in wf.graph
-    # Graph: (step, "context", base_name); step.action = build_B
-    task = wf.graph["BM built"]
-    step = task[0] if isinstance(task, tuple) else task
-    assert step.action is build.main
+    wf = generate(test_context)
+
+    mt_task = wf.graph["MT built"]
+    mt_step = mt_task[0] if isinstance(mt_task, tuple) else mt_task
+    assert mt_step.action is _set_as_default
+
+    bmt_task = wf.graph["BMT built"]
+    bmt_step = bmt_task[0] if isinstance(bmt_task, tuple) else bmt_task
+    assert bmt_step.action is build.main
 
 
 # --- Tests for build_PM (BMTX built step) ---
@@ -325,12 +334,12 @@ def test_generate_vetting_csv(tmp_path):
         "commodity",
         "original_demand",
         "modified_demand",
-        "subtracted_amount",
-        "subtraction_percentage",
+        "gap",
+        "gap_share",
     ]
     assert len(df) == 2
-    assert df["subtracted_amount"].tolist() == [3.0, 5.0]
-    assert df["subtraction_percentage"].tolist() == [30.0, 25.0]
+    assert df["gap"].tolist() == [3.0, 5.0]
+    assert df["gap_share"].tolist() == [30.0, 25.0]
 
 
 def test_generate_vetting_csv_zero_original(tmp_path):
@@ -347,7 +356,7 @@ def test_generate_vetting_csv_zero_original(tmp_path):
 
     assert out.exists()
     df = pd.read_csv(out)
-    assert df["subtraction_percentage"].iloc[0] == 0.0
+    assert df["gap_share"].iloc[0] == 0.0
 
 
 # --- Tests for BMT CLI (cli.py) ---
@@ -361,4 +370,4 @@ def test_bmt_cli_help(mix_models_cli):
 
 def test_bmt_run_dry_run(mix_models_cli):
     """bmt run --dry-run TARGET runs workflow in dry-run (writes SVG, no execution)."""
-    mix_models_cli.assert_exit_0(["bmt", "run", "--dry-run", "BM built"])
+    mix_models_cli.assert_exit_0(["bmt", "run", "--dry-run", "BMT built"])
