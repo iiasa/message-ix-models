@@ -9,10 +9,22 @@ SPARCCLE
 Overview
 ========
 
-The SPARCCLE workflow applies physical climate-impact damage drivers to
-solved MESSAGE starter scenarios. It reads starter-specific MAGICC GSAT
-ensembles, evaluates the packaged RIME impact emulators, and writes
-buildings and cooling impacts to project-side scenario clones.
+The SPARCCLE protocol combines socioeconomic starter scenarios with
+climate-impact variants and project-specific clone naming.
+
+Economic impacts
+================
+
+Economic and GDP-based impacts are part of the broader SPARCCLE protocol.
+They are not implemented by the physical-impact workflow described below.
+
+Physical climate impacts
+========================
+
+The physical-impact workflow applies climate-impact damage drivers to solved
+MESSAGE starter scenarios. It reads starter-specific GSAT ensembles, evaluates
+the packaged RIME impact emulators, and writes buildings and cooling impacts
+to project-side scenario clones.
 
 Prerequisites
 =============
