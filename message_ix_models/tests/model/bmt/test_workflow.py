@@ -15,15 +15,21 @@ def test_generate(test_context: Context) -> None:
 
     assert re.match(
         r"""'BMT built':
-- <Step load -> MESSAGEix-GLOBIOM 2.2-BMT-R12/baseline_BMT>
+- <Step main\(\) -> MESSAGEix-GLOBIOM-GAINS 2\.1-BMT-R12/baseline_BMT>
 - 'context':
   - <Context object at .* with \w+ keys>
-- 'M SSP2 T incu adjusted':
-  - <Step <lambda>\(\)>
+- 'MT solved':
+  - <Step solve\(\)>
   - 'context' \(above\)
-  - 'M SSP2 T built':
-    - <Step main\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12/SSP_2024.2 baseline>
+  - 'MT built':
+    - <Step _set_as_default\(\) -> MESSAGEix-GLOBIOM-GAINS 2\.1-BMT-R12/baseline_MT>
     - 'context' \(above\)
-    - 'BM reported'""",
+    - 'SSP2 T incu adjusted':
+      - <Step <lambda>\(\)>
+      - 'context' \(above\)
+      - 'SSP2 T built':
+        - <Step main\(\) -> MESSAGEix-GLOBIOM 1\.1-T-R12/SSP_2024\.2 baseline>
+        - 'context' \(above\)
+        - 'M reported'""",
         result,
     )
