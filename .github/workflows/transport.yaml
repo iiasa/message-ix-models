@@ -34,14 +34,22 @@ env:
       "SSP2 tax"
     ]
 
+# Run the workflow…
 on:
-  # Uncomment these lines for debugging, but leave them commented on 'main'
-  # pull_request:
-  #   branches: [ main ]
-  # push:
-  #   branches: [ main ]
+  # …on pushes to certain branches…
+  push:
+    branches:
+    # …with names starting "transport-runs-202…
+    - transport-runs-202*
+    # …with names starting "transport/*"
+      # NB Uncomment this for debugging only.
+    # - transport/*
+
+  # …on a daily schedule
   schedule:
   - cron: "0 1 * * *"  # 01:00 UTC = 02:00 CET = 03:00 CEST
+
+  # …if dispatched manually from the GitHub website or CLI
   workflow_dispatch: {}
 
 # Cancel previous runs that have not completed
