@@ -74,12 +74,45 @@ reduces air-cooled plant performance, so the application derates
 ``capacity_factor`` rows for ``__air`` technologies. Saline cooling is not
 represented in the packaged RIME cooling dataset and is left unchanged.
 
+The wet-cooling relation is constructed so that, given the regional freshwater
+share, total freshwater-cooled activity from a parent power technology cannot
+exceed the warming-impaired capacity factor times that parent's activity.
+Dry cooling is represented directly as a multiplicative derating of air-cooled
+capacity factors.
+
+The impact kernels are based on:
+
+- Wet cooling: Li et al. (2025), "Global hydroclimatic risks and strategic
+  decommissioning pathways for thermal power units." *Nature Sustainability*.
+  doi:10.1038/s41893-025-01692-9
+- Dry cooling: Qin et al. (2023), "Global assessment of the carbon-water
+  tradeoff of dry cooling for thermal power generation." *Nature Water*.
+  doi:10.1038/s44221-023-00120-6
+
 Water availability
 ==================
 
 Basin-level water impacts use RIME datasets at native 157-basin resolution.
+The packaged water datasets store GWL-indexed conditional summaries for
+``qtot_mean`` and ``qr`` from CWatM ISIMIP3b realizations. The stored
+variables are the expected value plus selected spread summaries
+(``std``, ``p10``, ``p50``, and ``p90``). The source realizations span five GCMs
+(``gfdl-esm4``, ``ipsl-cm6a-lr``, ``mpi-esm1-2-hr``, ``mri-esm2-0``,
+``ukesm1-0-ll``) and three SSP-RCP climate scenarios (``ssp126``,
+``ssp370``, ``ssp585``). The future CWatM runs use
+``2015soc-from-histsoc`` direct human forcing, so runs differ by climate
+forcing rather than by changing socioeconomic water-use assumptions. The
+RIME datasets are binned with an 11-year centered time window.
+
 The water application expands those predictions to the MESSAGE basin-region
 rows used by the water module, including transboundary basin splits. This is
 also a domain application layer: :mod:`message_ix_models.tools.impacts`
 predicts emulator values, while :mod:`message_ix_models.model.water.data.impacts`
 owns the basin mapping and water-specific output shapes.
+
+The current transform preserves the RIME prediction values while changing the
+spatial index from native emulator basins to MESSAGE basin-region rows. Future
+water-CID application work is expected to add the MESSAGE-side hydrology
+semantics on top of that mapping, including groundwater-share construction,
+km3-to-MCM conversion, and the sign convention needed when water availability
+is represented through MESSAGE demand-like parameters.

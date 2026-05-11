@@ -1,15 +1,6 @@
-"""Water-domain RIME impact transformations.
+"""Transform water-domain RIME predictions to MESSAGE basin rows.
 
-Transforms raw RIME predictions (native 157-basin emulator resolution)
-to MESSAGE-compatible arrays (217 basin-region rows). Basin geometry
-utilities live in :mod:`message_ix_models.model.water.utils`; this module
-owns the RIME-specific index mapping and the domain-level prediction entry
-point.
-
-Future additions:
-- Groundwater share formula: ``gw_share = 0.95 * qr / (qtot + qr)``
-- Unit conversion: km3 -> MCM (multiply by 1000)
-- Sign convention: negate for MESSAGE demand semantics
+See :doc:`/impacts/index` for the water-impact representation.
 """
 
 import functools

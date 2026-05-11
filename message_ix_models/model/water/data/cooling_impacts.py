@@ -1,23 +1,7 @@
-"""Cooling CID: thermoelectric capacity-factor degradation under warming.
+"""Apply thermoelectric cooling CIDs to MESSAGE cooling technologies.
 
-Wet cooling enters as ``relation_activity`` bounds on freshwater cooling
-technologies — the bound is constructed so that, given the regional
-freshwater share, total freshwater-cooled activity from a parent power
-technology cannot exceed the warming-impaired capacity factor times that
-parent's activity. Dry cooling enters as a multiplicative ``capacity_factor``
-derating on ``__air`` technologies.
-
-Source dataset: ``r12_thermoelectric_gwl.nc`` — regional capacity-factor
-ratios as a function of GWL, for wet and dry cooling.
-
-Impact-kernel citations:
-
-- Wet cooling: Li et al. (2025), "Global hydroclimatic risks and strategic
-  decommissioning pathways for thermal power units." *Nature Sustainability*.
-  doi:10.1038/s41893-025-01692-9
-- Dry cooling: Qin et al. (2023), "Global assessment of the carbon-water
-  tradeoff of dry cooling for thermal power generation." *Nature Water*.
-  doi:10.1038/s44221-023-00120-6
+See :doc:`/impacts/index` for the wet/dry cooling representation and impact
+kernel citations.
 """
 
 import functools
