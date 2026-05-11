@@ -30,15 +30,6 @@ SSP coverage
 Buildings calibration data ships for SSP1, SSP2, and SSP3. Cooling impacts
 do not depend on SSP-specific buildings calibration.
 
-Cooling data
-============
-
-Cooling impacts use
-:file:`message_ix_models/data/impacts/rime/r12_thermoelectric_gwl.nc`. The
-file is R12-coded and has two cooling categories: ``wet`` for freshwater
-once-through and closed-loop cooling, and ``dry`` for air cooling. The CID is
-applied as a ratio to the 1.0 °C GWL capacity factor.
-
 Running the pipeline
 ====================
 
@@ -66,4 +57,5 @@ Each target writes a suffixed clone:
   ``Physical Climate Impact|Thermoelectric Cooling|*`` timeseries.
 - ``<scenario>_cooling_CI_bp`` — both, in one workflow step.
 
-See :doc:`/api/tools-impacts` for the underlying GMT-to-impact toolkit.
+See :doc:`/impacts/index` for the impact application modules and
+:doc:`/api/tools-impacts` for the underlying GMT-to-impact toolkit.

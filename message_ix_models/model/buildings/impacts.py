@@ -1,9 +1,19 @@
 """Building energy CID: replace fixed-EI rc_spec/rc_therm with RIME EI.
 
-Replacement demand ``E(t,r) = theta(r,t) * gamma(r,a) * EI(r,a, GSAT(t)) *
-F(r,a,t)``, where theta bridges the calibrated STURM baseline to the
-RIME-emulated EI at the reference GWL and gamma/F are the STURM correction
-coefficients and floor area.
+Replacement demand is built in three calibration layers:
+
+1. Archetype demand:
+   ``raw(r,a,t) = gamma(r,a,t) * EI(r,a,GSAT(t)) * F(r,a,t)``.
+   ``gamma`` is stored as ``correction_coeff`` in the correction-coefficient
+   CSVs. ``F`` is STURM floor area. Together they convert RIME/CHILLED energy
+   intensity into STURM-consistent archetype energy demand.
+2. Node/year calibration:
+   ``theta(node,t)`` scales the raw aggregate so the reference-GWL result
+   matches the calibrated buildings baseline for the selected SSP.
+3. MESSAGE demand substitution:
+   ``rc_sector_fractions`` identify the buildings climate component already
+   present in aggregate ``rc_spec``/``rc_therm``. That component is removed
+   before the replacement CID demand is added.
 """
 
 import logging
@@ -33,7 +43,7 @@ _MJ_MM2_TO_EJ = 1e-6
 # MESSAGE demand parameter expects GWa
 _EJ_TO_GWA = registry("1 EJ").to("GW * year").magnitude
 
-_CORRECTION_COEFFICIENT_SCENARIO = "SSP2"
+_CORRECTION_COEFFICIENT_SCENARIO = "SSP2"  # gamma tables are SSP2-derived
 _FINAL_ENERGY_UNIT = "EJ/yr"
 
 
@@ -54,7 +64,11 @@ def load_correction_coefficients(
     mode: Literal["cool", "heat"],
     sector: Literal["resid", "comm"] = "resid",
 ) -> pd.DataFrame:
-    """Load gamma and F per (region, arch, urt, year)."""
+    """Load gamma and floor-area terms for archetype-level STURM calibration.
+
+    The CSV column ``correction_coeff`` is gamma:
+    STURM energy / (reference-GWL EI * STURM floor area).
+    """
     path = _buildings_data_path(
         "correction_coefficients",
         "correction_coefficients_"

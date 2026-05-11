@@ -118,6 +118,7 @@ Other submodules are documented on their respective pages:
    :caption: Model variants
 
    buildings/index
+   impacts/index
    material/index
    transport/index
    water/index
