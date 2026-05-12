@@ -52,11 +52,10 @@ def pyam_df_from_rep(
     base_tec_set = set(base_tec_list)
     for bt in base_tec_list:
         base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates()
-        base_rows = mapping_df.loc[base_index].copy()  # snapshot before inner loop mutates mapping_df
         for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i and i != bt and i not in base_tec_set) or (bt in base_tec_dom and bt == i)]:
-            add_index = [(*item[:-1], nt) for item in base_index]
-            add_index = pd.MultiIndex.from_tuples(add_index, names = mapping_df.index.names)
             new_rows = mapping_df.loc[base_index].copy().drop_duplicates()
+            add_index = [(*item[:-1], nt) for item in new_rows.index]
+            add_index = pd.MultiIndex.from_tuples(add_index, names=mapping_df.index.names)
             new_rows.index = add_index
             mapping_df = pd.concat([mapping_df, new_rows])
         if bt not in new_tec_list:
