@@ -5,17 +5,19 @@ MESSAGEix-Buildings
 
 MESSAGEix-Buildings refers to a set of models including a specific configuration of MESSAGEix-GLOBIOM.
 
-Code is maintained in the `iiasa/MESSAGE_Buildings <https://github.com/iiasa/MESSAGE_Buildings>`_ repository.
+Code is maintained in the `iiasa/message-ix-buildings <https://github.com/iiasa/message-ix-buildings>`_ repository.
+Since 2023, development and installation use this public repository.
+The older `iiasa/MESSAGE_Buildings <https://github.com/iiasa/MESSAGE_Buildings>`_ repository was the predecessor; the models and workflows below still refer to it where setups for previous projects apply.
 
 Function
 ========
 
-This section briefly describes how the contents of the MESSAGE_Buildings repo and :mod:`message_data` interact, as a guide to reading the code.
+This section briefly describes how the contents of the buildings model repositories and :mod:`message_data` interact, as a guide to reading the code.
 
 ACCESS and STURM
 ----------------
 
-The MESSAGE_Buildings contains two models (collectively the **“buildings models”**):
+The buildings models (historically in MESSAGE_Buildings; now in `message-ix-buildings <https://github.com/iiasa/message-ix-buildings>`_) are:
 
 - **ACCESS**: includes cooking end-use in the residential sector.
 - **STURM**: includes some residential and other end-uses, as well as the construction and demolition of buildings.
@@ -45,7 +47,7 @@ These are handled by :func:`.buildings.build_and_solve`.
 
    These steps are handled by :func:`.buildings.pre_solve`.
 
-   When the buildings module is run as part of the :doc:`/bmt/index` workflow,
+   When the buildings module is run as part of the :doc:`BMT workflow </api/model-bmt>`,
    it calls :func:`.buildings.build.build_B`,
    which loads inputs (prices, STURM outputs, static demand) specified in :attr:`context.buildings`
    or from :file:`data/bmt/config.yaml`,
@@ -106,8 +108,9 @@ Reporting for MESSAGEix-Buildings involves the following pieces:
 Usage
 =====
 
-1. Clone the main MESSAGE_Buildings repo, linked above.
+1. Install or clone the `message-ix-buildings <https://github.com/iiasa/message-ix-buildings>`_ repository (since 2023).
 
+   For legacy setups, clone the `MESSAGE_Buildings <https://github.com/iiasa/MESSAGE_Buildings>`_ repository instead.
    Either use a directory named :file:`buildings` in the same directory containing :mod:`message_data`; or, note the path and set this in the :ref:`ixmp configuration file <ixmp:configuration>`::
 
      ixmp config set "message buildings dir" /path/to/cloned/message-buildings/repo
@@ -197,6 +200,15 @@ Values given in code or on the command line will override these.
 
 .. autoclass:: message_ix_models.model.buildings.Config
    :members:
+
+Demand-Price feedback
+=====================
+
+:func:`~.buildings.sturm.call_sturm` updates STURM price inputs in the installed ``message-ix-buildings`` package (or a legacy ``MESSAGE_Buildings`` clone) from a solved scenario's ``PRICE_COMMODITY`` results, then runs the STURM R scripts. STURM writes demand files under :file:`message_ix_buildings/sturm/temp/`.
+
+:func:`~.buildings.sturm.call_buildings_demand` reads that output and adds the filtered demand to the scenario.
+
+The two functions are used for scenarios with constraints on emissions in order to include the necessary feedback between energy commodity prices and residential and commercial energy demand. This is achieved by running ``MESSAGEix-Buildings`` with the updated energy commodity prices solved by the MESSAGEix model and feeding the updated residential and commercial energy demandback to MESSAGEix. At least one iteration is required. 
 
 Code reference
 ==============
