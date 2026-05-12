@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Callable, Hashable
 from functools import cache
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -9,6 +10,7 @@ import pytest
 from genno import Computer
 from message_ix import Scenario
 
+from message_ix_models import Context
 from message_ix_models.model.transport.testing import MARK as MARK_TRANSPORT
 from message_ix_models.project.ssp.transport import (
     METHOD,
@@ -39,11 +41,12 @@ METHOD_PARAM = (
 V1 = "SSP_dev_SSP2_v0.1_Blv0.18_baseline_prep_lu_bkp_solved_materials_2025_macro.csv"
 V2 = "SSP_LED_v2.3.1_baseline.csv"
 V3 = "SSP_SSP2_v6.2_SSP2_-_Low_Emissions.csv"
+V4 = "SSP_SSP5_v6.5_SSP5_-_Medium-Low_Emissions_a.csv"
 
 
 @pytest.fixture(scope="module")
 def input_csv_path() -> "pathlib.Path":
-    return package_data_path("test", "report", V3)
+    return package_data_path("test", "report", V4)
 
 
 @pytest.fixture(scope="module")
@@ -70,9 +73,6 @@ I_O = IN_ | OUT  # Both
 #: *different* from those internal to the model.
 SPECIES = {"CH4", "BC", "CO", "CO2", "N2O", "NH3", "NOx", "OC", "Sulfur", "VOC"}
 
-#: Species for which no aviation-specific emission factor values are available.
-SPECIES_WITHOUT_EF: set[str] = set()
-
 
 def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     """Common checks for :func:`test_process_df` and :func:`test_process_file`."""
@@ -88,10 +88,21 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
             .sort_values(dims)
         )
 
-    # df_out.to_csv("debug-out.csv")  # DEBUG Dump to file
-
     df_in = _to_long(df_in)
     df_out = _to_long(df_out)
+
+    # Diff data:
+    # - Outer merge.
+    # - Fill NaNs resulting from insert_nans()
+    # - Compute diff and select rows where diff is larger than a certain value
+    df = (
+        df_in.merge(df_out, how="outer", on=dims, suffixes=("_in", "_out"))
+        .fillna(0)
+        .query("abs(value_out - value_in) > 1e-16")
+    )
+
+    # df_out.to_csv("debug-out.csv", index=False)  # DEBUG Dump to file
+    # df.to_csv("debug-diff.csv", index=False)  # DEBUG Dump to file
 
     # Input data already contains the variable names to be modified
     assert expected_variables(IN_, method) <= set(df_in["Variable"].unique())
@@ -121,16 +132,6 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
     # Output has the same set of region codes as input
     assert region == set(df_out["Region"].unique())
 
-    # Diff data:
-    # - Outer merge.
-    # - Fill NaNs resulting from insert_nans()
-    # - Compute diff and select rows where diff is larger than a certain value
-    df = (
-        df_in.merge(df_out, how="outer", on=dims, suffixes=("_in", "_out"))
-        .fillna(0)
-        .query("abs(value_out - value_in) > 1e-16")
-    )
-
     # All regions and "World" have modified values
     N_reg = {METHOD.A: 13, METHOD.B: 9, METHOD.C: 13}[method]
     assert N_reg <= len(df["Region"].unique())
@@ -155,27 +156,27 @@ def check(df_in: pd.DataFrame, df_out: pd.DataFrame, method: METHOD) -> None:
 def expected_variables(flag: int, method: METHOD) -> set[str]:
     """Set of expected ‘Variable’ codes according to `flag` and `method`."""
     # Shorthand
-    edb, edt = "Energy|Demand|Bunkers", "Energy|Demand|Transportation"
+    edb = "Energy|Demand|Bunkers"
 
     result = set()
 
     # Emissions
     for e in SPECIES:
-        # Expected data flows in which these variable codes appear
-        exp = IN_ if (e in SPECIES_WITHOUT_EF and method != METHOD.A) else I_O
-        if flag & exp:
-            result |= {
-                f"Emissions|{e}|{edb}",
-                f"Emissions|{e}|{edb}|International Aviation",
-            } | (
-                {
-                    f"Emissions|{e}|{edt}",
-                    # NB Present up to input data format V2; not in V3
-                    # f"Emissions|{e}|{edt}|Road Rail and Domestic Shipping",
+        result |= {
+            f"Emissions|{e}|{edb}",
+            f"Emissions|{e}|{edb}|International Aviation",
+        }
+        if e == "CO2":
+            result.add(f"Emissions|{e}|Energy|Demand|Transportation")
+        else:
+            result.add(f"Emissions|{e}|Energy|Demand")
+            if not (method == METHOD.A and e in {"CH4", "N2O", "NH3"}):
+                result |= {
+                    f"Emissions|{e}",
+                    f"Emissions|{e}|Energy",
+                    f"Emissions|{e}|Energy|Combustion",
+                    f"Emissions|{e}|Fossil Fuels and Industry",
                 }
-                if method == METHOD.C
-                else set()
-            )
 
     # Final Energy
     if method != METHOD.A:
@@ -207,8 +208,11 @@ def insert_nans(
     )
 
 
+@MARK_TRANSPORT[10]
 @get_computer.minimum_version
-def test_cli(tmp_path, mix_models_cli, test_context, input_xlsx_path) -> None:
+def test_cli(
+    tmp_path: Path, mix_models_cli, test_context: Context, input_xlsx_path: Path
+) -> None:
     """Code can be invoked from the command-line."""
     from shutil import copyfile
 
@@ -362,6 +366,10 @@ def test_track_GAINS() -> None:
         (
             "Emissions|CH4|Energy|Demand|Transportation|Foo",
             {"e": "CH4", "s": "Energy|Demand", "t": "Transportation|Foo"},
+        ),
+        (
+            "Emissions|CO2|Energy|Demand|Transportation",
+            {"e": "CO2", "s": "Energy|Demand", "t": "Transportation"},
         ),
     ),
 )

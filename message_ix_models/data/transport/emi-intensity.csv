@@ -30,55 +30,57 @@
 #    - https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1744277852653529
 #    - https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1750938340070669
 #
+#    Further updated 2026-03-13.
+#
 # Units: g / MJ
 #
 technology, commodity, emission, value
 
-AIR,        lightoil,  BC,       0.001497 # (4)
+AIR,        lightoil,  BC,       0.00193362  # (4)
 
 # (3) is used because the (4) is (nearly) zero.
-AIR,        lightoil,  CH4,      0.0005   # (3)
-# AIR,      lightoil,  CH4,      0.000000 # (4)
+AIR,        lightoil,  CH4,      0.0005      # (3)
+# AIR,      lightoil,  CH4,      0.000000    # (4)
 
 # (4) is used because (2) values are too large and yield negative totals.
 #
-# AIR,      lightoil,  CO,      13.95     # (2)  600    g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  CO,      27.90     # (2) 1200    g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  CO,      55.81     # (2) 2400    g/kg “Calculated using Tier 2 method”
-AIR,        lightoil,  CO,       0.091096 # (4)
+# AIR,      lightoil,  CO,      13.95        # (2)  600    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  CO,      27.90        # (2) 1200    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  CO,      55.81        # (2) 2400    g/kg “Calculated using Tier 2 method”
+AIR,        lightoil,  CO,       0.132087    # (4)
 
-AIR,        lightoil,  CO2,    118.077374 # (4)
+AIR,        lightoil,  CO2,    152.705981    # (4)
 
-AIR,        lightoil,  N2O,      0.0031   # (3)
-# AIR,      lightoil,  N2O,      3.808586 # (4)
+# AIR,      lightoil,  N2O,      0.0031      # (3)
+AIR,        lightoil,  N2O,      0.00490115  # (4)
 
-AIR,        lightoil,  NH3,      0.006133 # (4)
+AIR,        lightoil,  NH3,      0.00792780  # (4)
 
 # NOx:
 # - (2) is used because (1) and (4) values are too large and yield negative totals.
 #
-# AIR,      lightoil,  NOx,      0.3284   # (1)   14.12 g/kg, lower end of confidence interval
-# AIR,      lightoil,  NOx,      0.3521   # (1)   15.14 g/kg, upper end of confidence interval
-# AIR,      lightoil,  NOx,      0.0465   # (2)    2    g/kg “Calculated using Tier 2 method”
-AIR,        lightoil,  NOx,      0.0930   # (2)    4    g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  NOx,      0.1860   # (2)    8    g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  NOx,      0.479172 # (4)
+# AIR,      lightoil,  NOx,      0.3284      # (1)   14.12 g/kg, lower end of confidence interval
+# AIR,      lightoil,  NOx,      0.3521      # (1)   15.14 g/kg, upper end of confidence interval
+# AIR,      lightoil,  NOx,      0.0465      # (2)    2    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  NOx,      0.0930      # (2)    4    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  NOx,      0.1860      # (2)    8    g/kg “Calculated using Tier 2 method”
+AIR,        lightoil,  NOx,      0.611969    # (4)
 
-AIR,        lightoil,  OC,       0.000743 # (4)
+AIR,        lightoil,  OC,       0.000961207 # (4)
 
-AIR,        lightoil,  Sulfur,   0.0279   # (1)    1.2  g/kg
-# AIR,      lightoil,  Sulfur,   0.041980 # (4) “Sulfur” in upstream data with “SO2” in units
+# AIR,      lightoil,  Sulfur,   0.0279      # (1)    1.2  g/kg
+AIR,        lightoil,  Sulfur,   0.0567318   # (4) “Sulfur” in upstream data with “SO2” in units
 
-# AIR,      lightoil,  SOx,      0.0116   # (2)    0.5  g/kg “Assuming 0.05% S by mass”
-AIR,        lightoil,  SOx,      0.0233   # (2)    1    g/kg “Assuming 0.05% S by mass”
-# AIR,      lightoil,  SOx,      0.0465   # (2)    2    g/kg “Assuming 0.05% S by mass”
+# AIR,      lightoil,  SOx,      0.0116      # (2)    0.5  g/kg “Assuming 0.05% S by mass”
+AIR,        lightoil,  SOx,      0.0233      # (2)    1    g/kg “Assuming 0.05% S by mass”
+# AIR,      lightoil,  SOx,      0.0465      # (2)    2    g/kg “Assuming 0.05% S by mass”
 
 # VOC:
 # - (2) were provided with the code 'NMVOC', but we use the label 'VOC' to align with
 #   MESSAGEix-GLOBIOM, even though these are not strictly the same.
 # - (4) is used because (2) values are too large and yield negative totals.
 #
-# AIR,      lightoil,  VOC,      0.2209   # (2)    9.5  g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  VOC,      0.4419   # (2)   19    g/kg “Calculated using Tier 2 method”
-# AIR,      lightoil,  VOC,      0.8837   # (2)   38    g/kg “Calculated using Tier 2 method”
-AIR,        lightoil,  VOC,      0.013759 # (4)
+# AIR,      lightoil,  VOC,      0.2209      # (2)    9.5  g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  VOC,      0.4419      # (2)   19    g/kg “Calculated using Tier 2 method”
+# AIR,      lightoil,  VOC,      0.8837      # (2)   38    g/kg “Calculated using Tier 2 method”
+AIR,        lightoil,  VOC,      0.0167551   # (4)

@@ -208,11 +208,11 @@ intersphinx_mapping = {
     "genno": ("https://genno.readthedocs.io/en/stable", None),
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
     "message-ix": ("https://docs.messageix.org/en/latest/", None),
-    "m-data": (
-        f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",
-        # Use a local copy of objects.inv, if the user has one
-        local_inv("message_data"),
-    ),
+    # "m-data": (
+    #     f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",
+    #     # Use a local copy of objects.inv, if the user has one
+    #     local_inv("message_data"),
+    # ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pint": ("https://pint.readthedocs.io/en/stable/", None),
     "platformdirs": ("https://platformdirs.readthedocs.io/en/latest", None),

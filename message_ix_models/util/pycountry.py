@@ -1,13 +1,15 @@
 from functools import lru_cache
 
-from pycountry import countries, historic_countries
-
 #: Mapping from common, non-standard country names to exact field values occurring in
 #: the ISO 3166-1 database.
 #:
 #: Other code **may** extend this mapping before calling :func:`iso_3166_alpha_3`.
 COUNTRY_NAME = {
+    "Cape Verde": "Cabo Verde",
     "Korea": "Korea, Republic of",
+    "Libyan Arab Jamahiriya": "Libya",
+    "Macedonia, the former Yugoslav Republic of": "North Macedonia",
+    "Palestinian Territory, Occupied": "Palestine, State of",
     "Republic of Korea": "Korea, Republic of",
     "Russia": "Russian Federation",
     "South Korea": "Korea, Republic of",
@@ -31,6 +33,8 @@ def iso_3166_alpha_3(name: str) -> str | None:
     -------
     str or None
     """
+    from pycountry import countries, historic_countries
+
     # Maybe map a known, non-standard value to a standard value
     name = COUNTRY_NAME.get(name, name)
 

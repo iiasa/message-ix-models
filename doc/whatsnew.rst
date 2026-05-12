@@ -5,6 +5,20 @@ Next release
 ============
 
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
+- New module :ref:`tools-newclimate` (:pull:`499`).
+- Add :doc:`/api/model-bmt` (:pull:`433`).
+
+  - Add
+    :data:`.buildings.config.DEFAULT_DATA_PATHS`,
+    :class:`~.buildings.config.METHOD`,
+    :attr:`.buildings.Config.data_paths`, and
+    :attr:`~.buildings.Config.method`.
+  - Add :func:`.buildings.build.prepare_data_B`;
+    rename :py:`prepare_data()` to :func:`~.buildings.build.prepare_data_A`.
+
+- Adjust :mod:`.project.ssp.transport` (:pull:`485`):
+- Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
+- New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
 
 v2026.4.17
 ==========

@@ -119,6 +119,8 @@ Policies (:mod:`.tools.policy`)
 .. automodule:: message_ix_models.tools.policy
    :members:
 
+   See also :ref:`tools-newclimate`.
+
 .. _tools-wb:
 
 World Bank structures (:mod:`.tools.wb`)
@@ -126,7 +128,6 @@ World Bank structures (:mod:`.tools.wb`)
 
 .. automodule:: message_ix_models.tools.wb
    :members:
-
 
 Tools for scenario manipulation
 ===============================
