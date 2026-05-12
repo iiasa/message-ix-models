@@ -159,6 +159,12 @@ def get_spec(context: Context, filter_relations: list[str] = []) -> Spec:
 
     if context.buildings.with_materials:
         s.require.set["commodity"].extend(MATERIALS)
+        s.add.set["balance_equality"].extend(
+            [
+                ["resid_floor_demolition", "demand"],
+                ["comm_floor_demolition", "demand"],
+            ]
+        )
 
     # commented: See docstring of bio_backstop and comments in prepare_data, below
     # s.add.set["technology"].append(Code(id="bio_backstop"))

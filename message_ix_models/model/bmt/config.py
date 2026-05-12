@@ -50,6 +50,7 @@ def apply_bmt_config(context: "Context", path: "Path | None" = None) -> None:
 
     # Create a buildings Config
     result = BuildingsConfig(sturm_scenario="NONE", method=METHOD.B)
+    context.buildings = result
 
     # Update from the "buildings:" key in the YAML file
     result.read_file(p, key="buildings")
