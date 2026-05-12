@@ -51,7 +51,6 @@ def pyam_df_from_rep(
 
     base_tec_set = set(base_tec_list)
     for bt in base_tec_list:
-<<<<<<< HEAD
         base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates()
         base_rows = mapping_df.loc[base_index].copy()  # snapshot before inner loop mutates mapping_df
         for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i and i != bt and i not in base_tec_set) or (bt in base_tec_dom and bt == i)]:
