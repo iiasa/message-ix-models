@@ -33,8 +33,10 @@ def configure(context: "Context") -> None:
             sturm_r=Path("report_MESSAGE_resid_SSP2_nopol_20250318.csv"),
             sturm_c=Path("report_MESSAGE_comm_SSP2_nopol_20250318.csv"),
             demand_static=Path("static_20251227.csv"),
+            sturm_c_ref=Path("report_MESSAGE_comm_SSP2_nopol_20250318.csv"),
+            sturm_r_ref=Path("report_MESSAGE_resid_SSP2_nopol_20250318.csv"),
         ),
-        method=METHOD.B,
+        method=METHOD.C,
         with_materials=True,
     )
 
