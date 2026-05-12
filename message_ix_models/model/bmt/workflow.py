@@ -114,45 +114,14 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         scenario.check_out(timeseries_only=True)
     except ValueError:
         log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
-    df = _materials_report(scenario, region="R12_GLB", upload_ts=True)
+
+    _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
-    del df
 
     # 3. Legacy reporting
     _legacy_report(scenario)
 
     return scenario
-
-
-def build_T(
-    context: Context, scenario: message_ix.Scenario, **kwargs
-) -> message_ix.Scenario:
-    """Build MESSAGEix-Transport with material module enabled.
-
-    This wrapper function modifies the context to include the "material" module
-    in the transport config, then calls the main transport build function.
-    """
-    from message_ix_models.model.transport.config import Config
-
-    # Ensure transport config exists in context
-    if "transport" not in context:
-        # Create transport config from context if it doesn't exist
-        context.transport = Config.from_context(context)
-
-    if context.transport._code is None:
-        # Get SSP from context if available, default to "SSP2"
-        ssp = getattr(context, "ssp", "SSP2")
-        # Ensure it is in the format "SSP2", "SSP3", etc. (code IDs in
-        # CL_TRANSPORT_SCENARIO)
-        if not ssp.startswith("SSP"):
-            ssp = f"SSP{ssp}"
-        context.transport.code = ssp
-
-    # Add "material" module to the transport config
-    context.transport.use_modules("material")
-
-    # Call the main transport build function with modified context
-    return transport_build(context, scenario, **kwargs)
 
 
 def prep_for_macro(
@@ -185,7 +154,6 @@ def prep_for_macro(
             scenario.remove_set("sector", to_remove)
 
     solve(context, scenario, model="MESSAGE")
-
     return scenario
 
 
@@ -291,27 +259,6 @@ def generate(context: Context) -> Workflow:
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
 
-    wf.add_step(
-        "MT solved",
-        "MT built",
-        solve,
-    )
-
-    # Transport report step (from .model.transport.workflow: callback + "transport all")
-    wf.add_step(
-        "MT reported",
-        "MT solved",
-        report,
-    )
-
-    wf.add_step(
-        "BMT built",
-        "MT solved",
-        build_B,
-        target=f"{model_name}/baseline_BMT",
-        clone=dict(keep_solution=False),
-    )
-
     name = wf.add_step("MT solved", name, solve)
 
     # Transport report step (from .model.transport.workflow: callback + "transport all")
@@ -330,7 +277,6 @@ def generate(context: Context) -> Workflow:
         prep_for_macro,
         target=f"{url}BMTX_message",
         clone=dict(shift_first_model_year=2030),
-        # make sure the scenario before this step is reported
     )
 
     # the add_macro generate another target scenario with the suffix _macro
