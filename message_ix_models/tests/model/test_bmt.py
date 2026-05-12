@@ -190,6 +190,7 @@ def _add_materials_commodities(scenario):
 # --- Tests for workflow (MT built and BMT built steps) ---
 
 
+@generate.minimum_version
 def test_bmt_workflow_has_mt_and_bmt_built_steps(test_context: Context) -> None:
     """The BMT workflow includes MT built and BMT built steps."""
     from message_ix_models.model.bmt.workflow import _set_as_default
@@ -209,6 +210,7 @@ def test_bmt_workflow_has_mt_and_bmt_built_steps(test_context: Context) -> None:
 # --- Tests for build_PM (BMTX built step) ---
 
 
+@generate.minimum_version
 def test_bmt_workflow_has_bmtx_built_step(test_context: Context) -> None:
     """The BMT workflow includes the 'BMTX built' step that calls build_PM."""
 
@@ -220,70 +222,48 @@ def test_bmt_workflow_has_bmtx_built_step(test_context: Context) -> None:
     assert step.action is build_PM
 
 
-def test_build_PM_returns_scenario(test_context, request):
-    """build_PM returns the scenario and skips when input_cap_new already has cement."""
+def test_build_PM_returns_scenario(test_context, request, monkeypatch):
+    """build_PM returns the scenario when power-sector material data already exists.
+
+    Bare RES scenarios may not define ``input_cap_new`` in the linked MESSAGE/MACRO
+    model, so this test exercises the early-return branch via the scenario API.
+    """
     scenario = bare_res(request, test_context)
-    # Add minimal input_cap_new with cement so build_PM takes the early-return path.
-    # Bare RES may not have 'cement' or 'product'; add set elements and unit as needed.
-    scenario.check_out()
-    for elem, set_name in [("cement", "commodity"), ("product", "level")]:
-        try:
-            scenario.add_set(set_name, elem)
-        except Exception:
-            pass  # already present
-    unit = "t/kW"
-    try:
-        scenario.platform.add_unit(unit, "")
-    except Exception:
-        pass  # already exists
-    if "input_cap_new" not in scenario.par_list():
-        scenario.init_par(
-            "input_cap_new",
-            idx_sets=[
-                "node",
-                "technology",
-                "year",
-                "node",
-                "commodity",
-                "level",
-                "time",
-            ],
-            idx_names=[
-                "node_loc",
-                "technology",
-                "year_vtg",
-                "node_origin",
-                "commodity",
-                "level",
-                "time_origin",
-            ],
-        )
     nodes = scenario.set("node")
     years = scenario.set("year")
-    techs = scenario.set("technology")
-    if not (len(nodes) and len(years) and len(techs)):
-        pytest.skip("Scenario has no nodes/years/techs, cannot add input_cap_new row")
+    if not (len(nodes) and len(years)):
+        pytest.skip("Scenario has no nodes/years, cannot add input_cap_new row")
     node = nodes[0]
     y = int(years[0])
-    tech = techs[0]
-    df = pd.DataFrame(
-        [
-            {
-                "node_loc": node,
-                "technology": tech,
-                "year_vtg": y,
-                "node_origin": node,
-                "commodity": "cement",
-                "level": "product",
-                "time": "year",
-                "time_origin": "year",
-                "value": 0.1,
-                "unit": unit,
-            }
-        ]
+    existing = make_df(
+        "input_cap_new",
+        node_loc=node,
+        technology="coal_adv",
+        year_vtg=y,
+        node_origin=node,
+        commodity="cement",
+        level="product",
+        time="year",
+        time_origin="year",
+        value=0.1,
+        unit="t/kW",
     )
-    scenario.add_par("input_cap_new", df)
-    scenario.commit("Add minimal input_cap_new for build_PM test")
+    original_par = scenario.par
+    original_par_list = scenario.par_list
+
+    def par_list():
+        parameters = list(original_par_list())
+        if "input_cap_new" not in parameters:
+            return [*parameters, "input_cap_new"]
+        return parameters
+
+    def par(name, filters=None, **kwargs):
+        if name == "input_cap_new":
+            return existing
+        return original_par(name, filters=filters, **kwargs)
+
+    monkeypatch.setattr(scenario, "par_list", par_list)
+    monkeypatch.setattr(scenario, "par", par)
 
     result = build_PM(test_context, scenario)
 
@@ -368,6 +348,7 @@ def test_bmt_cli_help(mix_models_cli):
     mix_models_cli.assert_exit_0(["bmt", "run", "--help"])
 
 
+@generate.minimum_version
 def test_bmt_run_dry_run(mix_models_cli):
     """bmt run --dry-run TARGET runs workflow in dry-run (writes SVG, no execution)."""
     mix_models_cli.assert_exit_0(["bmt", "run", "--dry-run", "BMT built"])
