@@ -98,7 +98,11 @@ def test_prepare_building_demand_substitution_arithmetic():
 def test_prepare_building_demand_missing_cid_zerofills():
     """When CID has no rows for a (node, year), its contribution is zero."""
     empty_cids = pd.DataFrame(
-        {"node": pd.Series(dtype=str), "year": pd.Series(dtype=int), "value": pd.Series(dtype=float)}
+        {
+            "node": pd.Series(dtype=str),
+            "year": pd.Series(dtype=int),
+            "value": pd.Series(dtype=float),
+        }
     )
 
     new_spec, new_therm = prepare_building_demand(
