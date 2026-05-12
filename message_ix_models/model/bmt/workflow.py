@@ -8,6 +8,7 @@ from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
 from message_ix_models.model.material.data_util import add_macro_materials
+from message_ix_models.util import minimum_version
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T
@@ -178,6 +179,7 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     return scenario
 
 
+@minimum_version("message_ix 3.11")
 def generate(context: Context) -> Workflow:
     """Create the BMT workflow.
 

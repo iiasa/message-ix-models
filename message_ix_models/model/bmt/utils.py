@@ -254,7 +254,26 @@ def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
     **kwargs
         Additional keyword arguments (ignored, for workflow compatibility).
     """
-    # TODO: check if the power sector material data already exists
+
+    # Check if the power sector material data already exists
+    marker_commodity = "cement"
+    marker_technology = "coal_adv"
+    if "input_cap_new" in scenario.par_list():
+        existing = scenario.par(
+            "input_cap_new",
+            filters={
+                "commodity": marker_commodity,
+                "technology": marker_technology,
+            },
+        )
+        if existing is not None and len(existing) > 0:
+            log.info(
+                "Power sector material data already exists for %s / %s; "
+                "skipping build_PM.",
+                marker_technology,
+                marker_commodity,
+            )
+            return scenario
 
     log.info("Adding material intensity for power capacities...")
     scenario.check_out()
