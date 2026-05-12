@@ -177,9 +177,19 @@ def _add_buildings_tech_set(scenario):
 
 
 def _add_materials_commodities(scenario):
-    """Add steel, cement, aluminum so get_spec(with_materials=True) succeeds."""
+    """Add commodities required before buildings ``with_materials=True``."""
+    from message_ix_models.model.buildings.build import BUILD_COMM_CONVERT, MATERIALS
+
     scenario.check_out()
-    for c in ("steel", "cement", "aluminum"):
+    commodities = [
+        *MATERIALS,
+        "resid_floor_construction",
+        "comm_floor_construction",
+        "resid_floor_demolition",
+        "comm_floor_demolition",
+        *BUILD_COMM_CONVERT,
+    ]
+    for c in dict.fromkeys(commodities):
         try:
             scenario.add_set("commodity", c)
         except ValueError:
