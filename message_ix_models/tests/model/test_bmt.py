@@ -177,7 +177,7 @@ def _add_buildings_tech_set(scenario):
 
 
 def _add_materials_commodities(scenario):
-    """Add commodities required before buildings ``with_materials=True``."""
+    """Add index sets required before buildings ``with_materials=True``."""
     from message_ix_models.model.buildings.build import BUILD_COMM_CONVERT, MATERIALS
 
     scenario.check_out()
@@ -194,7 +194,12 @@ def _add_materials_commodities(scenario):
             scenario.add_set("commodity", c)
         except ValueError:
             pass  # already present
-    scenario.commit("Add materials commodities for with_materials=True test")
+    for level in ("demand", "product", "end_of_life"):
+        try:
+            scenario.add_set("level", level)
+        except ValueError:
+            pass  # already present
+    scenario.commit("Add materials index sets for with_materials=True test")
 
 
 # --- Tests for workflow (MT built and BMT built steps) ---
@@ -245,18 +250,21 @@ def test_build_PM_returns_scenario(test_context, request, monkeypatch):
         pytest.skip("Scenario has no nodes/years, cannot add input_cap_new row")
     node = nodes[0]
     y = int(years[0])
-    existing = make_df(
-        "input_cap_new",
-        node_loc=node,
-        technology="coal_adv",
-        year_vtg=y,
-        node_origin=node,
-        commodity="cement",
-        level="product",
-        time="year",
-        time_origin="year",
-        value=0.1,
-        unit="t/kW",
+    existing = pd.DataFrame(
+        [
+            {
+                "node_loc": node,
+                "technology": "coal_adv",
+                "year_vtg": y,
+                "node_origin": node,
+                "commodity": "cement",
+                "level": "product",
+                "time": "year",
+                "time_origin": "year",
+                "value": 0.1,
+                "unit": "t/kW",
+            }
+        ]
     )
     original_par = scenario.par
     original_par_list = scenario.par_list
