@@ -296,6 +296,7 @@ def test_materials(request, bmt_context_with_materials, tmp_path):
     # check that adjusted total demand is all zero
     new_total_demand = par_dict["demand"]
     assert (new_total_demand["value"] == 0).all()
+    assert "balance_equality" in par_dict.keys()
 
 
 def test_report3() -> None:

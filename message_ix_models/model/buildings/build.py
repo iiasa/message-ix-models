@@ -1438,6 +1438,11 @@ def materials(
                     ),
                 ]
             )
+            # Make sure demolition activity cannot exceed demolition demand from STURM
+            # Required to avoid over-supply of scrap
+            data["balance_equality"] = make_df(
+                "balance_equality", commodity=f"{rc}_floor_demolition", level="demand"
+            )
 
         for name, df in data.items():
             result[name].append(df)
@@ -1483,7 +1488,7 @@ def materials(
     result["demand"].append(mat_demand)
 
     # Concatenate data frames together
-    return {k: pd.concat(v) for k, v in result.items()}
+    return {k: pd.concat(v).drop_duplicates() for k, v in result.items()}
 
 
 _BOUND_PARAMS = [
