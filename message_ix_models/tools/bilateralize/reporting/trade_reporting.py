@@ -24,23 +24,18 @@ def load_config(name: str) -> "Config":
     return Config.from_files(name)
 
 def pyam_df_from_rep(
-    rep: message_ix.Reporter, 
-    reporter_var: str, 
-    mapping_df: pd.DataFrame,
-    scenario: message_ix.Scenario
+    rep: message_ix.Reporter, scenario: message_ix.Scenario, reporter_var: str, mapping_df: pd.DataFrame
 ) -> pd.DataFrame:
     """Queries data from Reporter and maps to IAMC variable names.
 
     Parameters
     ----------
-    rep: message_ix.Reporter
+    rep
         message_ix.Reporter to query
-    reporter_var: str
+    reporter_var
         Registered key of Reporter to query, e.g. "out", "in", "ACT", "emi", "CAP"
-    mapping_df: pd.DataFrame
+    mapping_df
         DataFrame mapping Reporter dimension values to IAMC variable names
-    scenario: message_ix.Scenario
-        Scenario to query
     """
     filters_dict = {
         col: list(mapping_df.index.get_level_values(col).unique())
@@ -49,11 +44,11 @@ def pyam_df_from_rep(
     base_tec_list = filters_dict['t']
     base_tec_exp = [v for v in base_tec_list if v.endswith('_exp')]
     base_tec_dom = [v for v in base_tec_list if v not in base_tec_exp]
-    
+
     new_tec_list = [v for v in scenario.set('technology')
                         if any(v.startswith(prefix) for prefix in base_tec_list)]
     filters_dict['t'] = new_tec_list
-    
+
     for bt in base_tec_list:
         base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates()
         base_rows = mapping_df.loc[base_index].copy()  # snapshot before inner loop mutates mapping_df
@@ -65,26 +60,27 @@ def pyam_df_from_rep(
             mapping_df = pd.concat([mapping_df, new_rows])
         if bt not in new_tec_list:
             mapping_df = mapping_df.drop(base_index)
-    
+
     rep.set_filters(**filters_dict)
-    
+
     if reporter_var == 'out':
         df_hist = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-yv-m-c-l:historical+current"))
         df_model = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-m-c-l"))
 
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
-            df = (
-                    dfv.join(mapping_df[["iamc_name", "unit"]])
-                    .dropna()
-                    .groupby(["nl", "nd", "ya", "iamc_name"])
-                    .sum(numeric_only=True)
+            df = dfv.join(mapping_df[['iamc_name', 'unit']])
+            df = (df.dropna()
+                  .groupby(["nl", "nd", "ya", "t", "iamc_name"])
+                  .sum(numeric_only=True)
                 )
-            # Adjust df to include exporters in iamc_name for trade variables
             dfn = df.index.to_frame(index = False)
+            dfn = dfn.drop(columns = ['t'])
+
+            # Adjust df to include exporters in iamc_name for trade variables
             ndiff = dfn['nl'] != dfn['nd']
-            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name']
-            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nl'] + ">" +dfn.loc[ndiff, 'nd']
+            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
+            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd']  # We are looking at imports to dest
             df.index = pd.MultiIndex.from_frame(dfn)
             df_out = pd.concat([df_out, df])
     else:
@@ -94,10 +90,10 @@ def pyam_df_from_rep(
             .dropna()
             .groupby(["nl", "ya", "iamc_name"])
             .sum(numeric_only=True)
-        ) 
-        
+        )
+
     rep.set_filters()
-    
+
     return df_out
 
 # Full reporting output for gas supply
@@ -107,7 +103,7 @@ def bilat_trade_reporting(rep: Reporter,
     supply_config = load_config(config_name)
     full_df = pd.DataFrame()
     for var in ['out']:
-        rdf = pyam_df_from_rep(rep, var, supply_config.mapping, scenario)
+        rdf = pyam_df_from_rep(rep, scenario, var, supply_config.mapping)
         rdf = rdf.reset_index()
         rdf = rdf.drop_duplicates()
         full_df = pd.concat([full_df, rdf])
@@ -126,8 +122,8 @@ def bilat_trade_reporting(rep: Reporter,
     # Make wide
     df = df.pivot(index = ['Model', 'Scenario', 'Region', 'Variable', 'Unit'], columns = 'year', values = 'value')
     df = df.drop_duplicates()
-    
-    return df 
+
+    return df
 
 # Call reporter
 def trade_reporting(mp: ixmp.Platform,
@@ -140,7 +136,7 @@ def trade_reporting(mp: ixmp.Platform,
     print(f"--------------------------------")
 
     rep = Reporter.from_scenario(scenario)
-    
+
     primarydf = bilat_trade_reporting(rep, scenario, 'primary_energy_trade')
     secondarydf = bilat_trade_reporting(rep, scenario, 'secondary_energy_trade')
     df = pd.concat([primarydf, secondarydf])
