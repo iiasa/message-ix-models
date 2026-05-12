@@ -34,16 +34,16 @@ prepare_edit_files(project_name = 'sparccle_trade',
                    P_access = True)
 
 # Add scenario updates for project
-print("Add scenario updates for project")
-for tec in config['update_tec']:
-    print(f"...{tec}")
-    if os.path.exists(package_data_path("sparccle_trade", "scenario_updates", tec)):
-        for file in os.listdir(package_data_path("sparccle_trade", "scenario_updates", tec)):
-            base_file = package_data_path("sparccle_trade", "scenario_updates", tec, file)
-            if ".csv" in str(base_file):
-                dest_file = os.path.join(data_path, tec, "bare_files", file)
-                shutil.copy2(base_file, dest_file)
-                print(f"Copied file from scenario_updates to bare: {file}")
+#print("Add scenario updates for project")
+#for tec in config['update_tec']:
+#    print(f"...{tec}")
+#    if os.path.exists(package_data_path("sparccle_trade", "scenario_updates", tec)):
+#        for file in os.listdir(package_data_path("sparccle_trade", "scenario_updates", tec)):
+#            base_file = package_data_path("sparccle_trade", "scenario_updates", tec, file)
+#            if ".csv" in str(base_file):
+#                dest_file = os.path.join(data_path, tec, "bare_files", file)
+#                shutil.copy2(base_file, dest_file)
+#                print(f"Copied file from scenario_updates to bare: {file}")
                 
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'sparccle_trade', 
@@ -85,19 +85,18 @@ for model_scen in models_scenarios.keys():
         with out_scenario.transact(f"remove relation {p}"):
             out_scenario.remove_par(p, remdf)
 
-    print("Add balance equality sets")
-    be_df = out_scenario.par("output", filters = {"technology": config['covered_trade_technologies']})
-    be_df = be_df[be_df['level'].isin(['piped', 'shipped'])]
-    be_df = be_df[['commodity', 'level']].drop_duplicates()
-
-    with out_scenario.transact("add balance equality sets"):
-        out_scenario.add_set("balance_equality", be_df)
-
+    print("Remove balance equalities on piped/shipped")
+    with out_scenario.transact("Remove balance equality"):
+        bedf = out_scenario.set("balance_equality")
+        bedf = bedf[bedf['level'].isin(['piped', 'shipped', 'import', 'export'])]
+        print(bedf)
+        out_scenario.remove_set("balance_equality", bedf)
+        
     print("Adjust re-exports for lightoil and fueloil")
     adjust_reexports(base_scenario = out_scenario,
                      trade_commodity_list = ['lightoil', 'fueloil'],
                      base_level = 'secondary')
 
     print("Solve scenario")
-    out_scenario.solve(quiet = False, solve_options={"scaind": "-1", "lpmethod": "1"})
+    out_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
     mp.close_db()

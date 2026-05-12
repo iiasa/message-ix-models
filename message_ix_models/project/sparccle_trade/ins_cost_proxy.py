@@ -23,7 +23,7 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     mp = ixmp.Platform()
     
     base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-    out_scenario = base_scenario.clone('sparccle_trade', base_scen + "_inscost", keep_solution = False)
+    out_scenario = base_scenario.clone('sparccle_trade', base_scen + "_ins10", keep_solution = False)
     
     print("Increase shipping costs to proxy for insurance")
     cdf = out_scenario.par("var_cost")

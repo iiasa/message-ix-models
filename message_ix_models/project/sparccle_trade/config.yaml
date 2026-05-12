@@ -18,15 +18,15 @@ models_scenarios:
   #SSP1_NPiREF:
   #  model: SSP_SSP1_v6.5_sp
   #  scenario: NPiREF
-  SSP2_NPiREF:
-    model: SSP_SSP2_v6.5_sp
-    scenario: NPiREF
+  #SSP2_NPiREF:
+  #  model: SSP_SSP2_v6.5_sp
+  #  scenario: NPiREF
   #SSP3_NPiREF:
   #  model: SSP_SSP3_v6.6_sp
   #  scenario: NPiREF
-  #SSP3_STS3:
-  #  model: SSP_SSP3_STS3
-  #  scenario: v6.6_sp_glasgow
+  SSP3_STS3:
+    model: SSP_SSP3_STS3_v6.6_sp
+    scenario: glasgow
   
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:

@@ -447,7 +447,7 @@ def load_and_solve(
     remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=MESSAGEix_GLOBIOM)
 
     # Ensure balance equality
-    ensure_balance_equality(scen=scen, log=log, covered_tec=covered_tec)
+    #ensure_balance_equality(scen=scen, log=log, covered_tec=covered_tec)
 
     # Solve or save scenario
     solve_or_save(
