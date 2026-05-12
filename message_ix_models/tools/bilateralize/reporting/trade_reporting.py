@@ -79,8 +79,8 @@ def pyam_df_from_rep(
 
             # Adjust df to include exporters in iamc_name for trade variables
             ndiff = dfn['nl'] != dfn['nd']
-            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
-            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
+            dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name']
+            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nl'] + ">" + dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
             df.index = pd.MultiIndex.from_frame(dfn)
             df_out = pd.concat([df_out, df])
     else:
