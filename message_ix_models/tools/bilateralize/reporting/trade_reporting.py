@@ -44,24 +44,25 @@ def pyam_df_from_rep(
     base_tec_list = filters_dict['t']
     base_tec_exp = [v for v in base_tec_list if v.endswith('_exp')]
     base_tec_dom = [v for v in base_tec_list if v not in base_tec_exp]
-    
+
     new_tec_list = [v for v in scenario.set('technology')
                         if any(v.startswith(prefix) for prefix in base_tec_list)]
     filters_dict['t'] = new_tec_list
 
     for bt in base_tec_list:
-        base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates() #gas_piped_exp
-        for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i) or (bt in base_tec_dom and bt == i)]:
+        base_index = mapping_df.index[mapping_df.index.get_level_values('t') == bt].drop_duplicates()
+        base_rows = mapping_df.loc[base_index].copy()  # snapshot before inner loop mutates mapping_df
+        for nt in [i for i in new_tec_list if (bt in base_tec_exp and bt in i and i != bt) or (bt in base_tec_dom and bt == i)]:
             add_index = [(*item[:-1], nt) for item in base_index]
             add_index = pd.MultiIndex.from_tuples(add_index, names = mapping_df.index.names)
-            new_rows = mapping_df.loc[base_index].copy().drop_duplicates()
+            new_rows = base_rows.copy()
             new_rows.index = add_index
             mapping_df = pd.concat([mapping_df, new_rows])
         if bt not in new_tec_list:
             mapping_df = mapping_df.drop(base_index)
 
     rep.set_filters(**filters_dict)
-    
+
     if reporter_var == 'out':
         df_hist = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-yv-m-c-l:historical+current"))
         df_model = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-m-c-l"))
@@ -79,7 +80,7 @@ def pyam_df_from_rep(
             # Adjust df to include exporters in iamc_name for trade variables
             ndiff = dfn['nl'] != dfn['nd']
             dfn.loc[ndiff, 'iamc_name'] = dfn.loc[ndiff, 'iamc_name'] + dfn.loc[ndiff, 'nl']
-            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd'] # We are looking at imports to dest
+            dfn.loc[ndiff, 'nl'] = dfn.loc[ndiff, 'nd']  # We are looking at imports to dest
             df.index = pd.MultiIndex.from_frame(dfn)
             df_out = pd.concat([df_out, df])
     else:
@@ -89,10 +90,10 @@ def pyam_df_from_rep(
             .dropna()
             .groupby(["nl", "ya", "iamc_name"])
             .sum(numeric_only=True)
-        ) 
-        
+        )
+
     rep.set_filters()
-    
+
     return df_out
 
 # Full reporting output for gas supply
@@ -121,8 +122,8 @@ def bilat_trade_reporting(rep: Reporter,
     # Make wide
     df = df.pivot(index = ['Model', 'Scenario', 'Region', 'Variable', 'Unit'], columns = 'year', values = 'value')
     df = df.drop_duplicates()
-    
-    return df 
+
+    return df
 
 # Call reporter
 def trade_reporting(mp: ixmp.Platform,
@@ -135,7 +136,7 @@ def trade_reporting(mp: ixmp.Platform,
     print(f"--------------------------------")
 
     rep = Reporter.from_scenario(scenario)
-    
+
     primarydf = bilat_trade_reporting(rep, scenario, 'primary_energy_trade')
     secondarydf = bilat_trade_reporting(rep, scenario, 'secondary_energy_trade')
     df = pd.concat([primarydf, secondarydf])
