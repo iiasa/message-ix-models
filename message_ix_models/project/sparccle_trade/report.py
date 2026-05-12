@@ -12,7 +12,7 @@ from message_ix_models.tools.bilateralize.reporting.full_reporting import report
 from message_ix_models.util import package_data_path
 
 def combined_legacy_trade_reporting():
-    LEGACY_CONFIG  = package_data_path("bilateralize", "reporting", "legacy", "legacy_config.yaml")
+    LEGACY_CONFIG  = package_data_path("sparccle_trade", "configs", "legacy_config.yaml")
     LEGACY_OUT_DIR = package_data_path("sparccle_trade", "reporting", "legacy")
     TRADE_OUT_DIR  = package_data_path("sparccle_trade", "reporting", "trade")
     REPORT_OUT_DIR = package_data_path("sparccle_trade", "reporting")
