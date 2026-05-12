@@ -4,6 +4,7 @@ from message_ix_models import Context
 from message_ix_models.model.bmt.workflow import generate
 
 
+@generate.minimum_version
 def test_generate(test_context: Context) -> None:
     # Workflow can be generated successfully
     wf = generate(test_context)
