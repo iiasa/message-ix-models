@@ -19,7 +19,7 @@ def combined_legacy_trade_reporting():
 
     # Call all scenarios for analysis
     mp = ixmp.Platform()
-    for scen in ['SSP3_NPiREF_ins10', 'SSP3_STS3_ins10']:
+    for scen in ['SSP3_NPiREF', 'SSP3_STS3', 'SSP3_NPiREF_ins10', 'SSP3_STS3_ins10']:
         report_combine(scenario    = message_ix.Scenario(mp, model="sparccle_trade", scenario=scen),
                     legacy_config  = LEGACY_CONFIG,
                     legacy_out_dir = LEGACY_OUT_DIR,
