@@ -64,6 +64,26 @@ def test_regions(mix_models_cli):
     assert "ZMB" == result.output.strip()
 
 
+def test_scenario_param_preserves_outer_value(mix_models_cli):
+    """An unset inner option does not overwrite the outer command's value."""
+
+    @click.group()
+    @scenario_param("--ssp", default="SSP2")
+    def outer():
+        pass
+
+    @outer.command()
+    @scenario_param("--ssp")
+    @click.pass_obj
+    def inner(context):
+        print(context.ssp)
+
+    with temporary_command(cli_test_group, outer):
+        result = mix_models_cli.assert_exit_0(["_test", "outer", "--ssp=SSP1", "inner"])
+
+    assert "SSP1" == result.output.strip()
+
+
 @pytest.mark.parametrize(
     "args, command, expected",
     [

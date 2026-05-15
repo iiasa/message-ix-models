@@ -211,11 +211,17 @@ def store_context(context: click.Context | Context, param, value):
     Use this for parameters that are not used directly in a @click.command() function,
     but need to be carried by the Context for later use.
     """
-    setattr(
-        context.obj if isinstance(context, click.Context) else context,
-        param.name,
-        value,
-    )
+    target = context.obj if isinstance(context, click.Context) else context
+
+    # In nested commands, an omitted inner option should not clear a value already set
+    # by an outer command.
+    if value is None and (
+        (isinstance(target, Context) and param.name in target)
+        or (not isinstance(target, Context) and hasattr(target, param.name))
+    ):
+        return value
+
+    setattr(target, param.name, value)
     return value
 
 
