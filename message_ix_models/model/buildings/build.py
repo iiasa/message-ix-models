@@ -992,19 +992,40 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
     elif context.buildings.method is METHOD.B:
         from pathlib import Path
 
-        def _load_csv(attr: str, index_col=None):
-            """Resolve path from context.buildings or defaults and load CSV."""
+        # MESSAGE demand tables; extra columns (e.g. saved row index) are dropped.
+        _DEMAND_CSV_COLUMNS = (
+            "node",
+            "commodity",
+            "year",
+            "level",
+            "time",
+            "unit",
+            "value",
+        )
+
+        def _data_path(attr: str) -> Path:
             val = context.buildings.data_paths[attr]
             path = Path(val)
             # TODO Move this path logic into .buildings.Config
-            path = path if path.is_absolute() else private_data_path("buildings", val)
-            return pd.read_csv(path, index_col=index_col)
+            return (
+                path if path.is_absolute() else private_data_path("buildings", val)
+            )
+
+        def _load_csv(attr: str) -> pd.DataFrame:
+            path = _data_path(attr)
+            df = pd.read_csv(path)
+            missing = set(_DEMAND_CSV_COLUMNS) - set(df.columns)
+            if missing:
+                raise ValueError(
+                    f"{path}: missing demand columns {sorted(missing)}"
+                )
+            return df.loc[:, _DEMAND_CSV_COLUMNS]
 
         # Inputs for prepare_data_B from context.buildings or defaults
-        prices = _load_csv("prices")
-        sturm_r = _load_csv("sturm_r", index_col=0)
-        sturm_c = _load_csv("sturm_c", index_col=0)
-        demand_static = _load_csv("demand_static", index_col=0)
+        prices = pd.read_csv(_data_path("prices"))
+        sturm_r = _load_csv("sturm_r")
+        sturm_c = _load_csv("sturm_c")
+        demand_static = _load_csv("demand_static")
         demand_static.loc[
             demand_static["commodity"].str.contains("afofio", na=False), "value"
         ] = 0  # Temporary fix to remove AFOFIO demand from demand_static
