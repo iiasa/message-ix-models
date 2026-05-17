@@ -304,15 +304,14 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     lvl_scenario = df_updated["lvl_new"].fillna(df_updated["lvl"])
 
     # Calculate the factor (ratio) between scenario and original values for analysis
-    # Factor = scenario / original
-    # Factor < 1 means scenario is lower than original
+    # Factor = scenario / original; factor < 1 means scenario is below STURM reference.
     factor = np.where(lvl_original != 0, lvl_scenario / lvl_original, np.nan)
 
-    # For rows where factor < 1 (scenario < original), use original value
-    # Otherwise, use scenario value
-    df_updated["lvl"] = np.where(
-        (factor < 1) & (df_updated["lvl_new"].notna()), lvl_original, lvl_scenario
-    )
+    has_scenario = df_updated["lvl_new"].notna()
+    below_reference = (factor < 1) & has_scenario
+    # Floor non-electricity prices at the STURM reference; allow lower electr prices.
+    use_reference_floor = below_reference & (df_updated["commodity"] != "electr")
+    df_updated["lvl"] = np.where(use_reference_floor, lvl_original, lvl_scenario)
     df_updated = df_updated.drop(columns=["lvl_new"])
 
     # Save the updated prices to the default price input file in STURM
@@ -322,7 +321,10 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     log.info("Rows with updated prices: %d", rows_updated)
 
     # Run STURM (via Rscript)
-    for name in ("run_STURM_bmt_resid.R", "run_STURM_bmt_comm.R"):
+    for name in (
+        "run_STURM_bmt_resid.R", 
+        "run_STURM_bmt_comm.R",
+        "run_MIXB_aligner.R",):
         script = sturm_dir.joinpath(name)
         if not script.is_file():
             raise FileNotFoundError(f"STURM BMT R script not found: {script}")
