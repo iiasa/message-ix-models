@@ -458,7 +458,8 @@ class Config(ConfigHelper):
                     except ValueError:
                         pass
                 else:
-                    self.modules.append(m)
+                    if m not in self.modules:
+                        self.modules.append(m)
 
 
 @dataclass
