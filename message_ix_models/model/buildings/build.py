@@ -6,6 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from copy import deepcopy
 from itertools import product
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import message_ix
@@ -990,21 +991,25 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             afofi_demand=None,  # Use calculated AFOFI demand
         )
     elif context.buildings.method is METHOD.B:
-        from pathlib import Path
+        # MESSAGE demand tables; extra columns (e.g. saved row index) are dropped.
+        demand_columns = ["node", "commodity", "year", "level", "time", "unit", "value"]
 
-        def _load_csv(attr: str, index_col=None):
-            """Resolve path from context.buildings or defaults and load CSV."""
-            val = context.buildings.data_paths[attr]
-            path = Path(val)
-            # TODO Move this path logic into .buildings.Config
-            path = path if path.is_absolute() else private_data_path("buildings", val)
-            return pd.read_csv(path, index_col=index_col)
+        def _load_csv(attr: str, columns: list[str] | None = None) -> pd.DataFrame:
+            path = Path(context.buildings.data_paths[attr])
+            path = path if path.is_absolute() else private_data_path("buildings", attr)
+            df = pd.read_csv(path)
+            columns = columns or df.columns.tolist()
+            try:
+                return df.loc[:, columns]
+            except KeyError:
+                missing = sorted(set(columns) - set(df.columns))
+                raise ValueError(f"{path}: missing demand columns {sorted(missing)}")
 
         # Inputs for prepare_data_B from context.buildings or defaults
         prices = _load_csv("prices")
-        sturm_r = _load_csv("sturm_r", index_col=0)
-        sturm_c = _load_csv("sturm_c", index_col=0)
-        demand_static = _load_csv("demand_static", index_col=0)
+        sturm_r = _load_csv("sturm_r", demand_columns)
+        sturm_c = _load_csv("sturm_c", demand_columns)
+        demand_static = _load_csv("demand_static", demand_columns)
         demand_static.loc[
             demand_static["commodity"].str.contains("afofio", na=False), "value"
         ] = 0  # Temporary fix to remove AFOFIO demand from demand_static
