@@ -3,17 +3,17 @@
 import logging
 import re
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from genno import Computer
 from ixmp.util import parse_url
-from message_ix import Scenario
-
-from message_ix_models.util.context import Context
 
 if TYPE_CHECKING:
     from click import Command
     from ixmp.types import PlatformInfo, TimeSeriesIdentifiers
+    from message_ix import Scenario
+
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,9 @@ class WorkflowStep:
         self.clone = clone
         self.kwargs = kwargs
 
-    def __call__(self, context: Context, scenario: Scenario | None = None) -> Scenario:
+    def __call__(
+        self, context: "Context", scenario: "Scenario | None" = None
+    ) -> "Scenario":
         """Execute the workflow step."""
         if scenario is None:
             # No base scenario
@@ -147,7 +149,7 @@ class Workflow(Computer):
         Context object with settings common to the entire workflow.
     """
 
-    def __init__(self, context: Context):
+    def __init__(self, context: "Context") -> None:
         super().__init__()
         self.add_single("context", context)
 
@@ -196,15 +198,15 @@ class Workflow(Computer):
         # Add to the Computer; return the name of the added step
         return str(self.add_single(name, step, "context", base, strict=True))
 
-    def run(self, name_or_names: str | list[str]):
-        """Run all workflow steps necessary to produce `name_or_names`.
+    def run(self, name: str) -> Any:
+        """Run all workflow steps necessary to produce `name`.
 
         Parameters
         ----------
-        name_or_names: str or list of str
-            Identifier(s) of steps to run.
+        name: str
+            Identifier of step to run.
         """
-        return self.get(name_or_names)
+        return self.get(name)
 
     def truncate(self, name: str) -> None:
         """Truncate the workflow at the step `name`.
@@ -384,6 +386,6 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     return _func
 
 
-def solve(context, scenario, **kwargs):
+def solve(context: "Context", scenario: "Scenario", **kwargs) -> "Scenario":
     scenario.solve(**kwargs)
     return scenario
