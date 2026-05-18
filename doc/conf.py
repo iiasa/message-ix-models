@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from message_ix_models.util import HAS_MESSAGE_DATA
+
 if TYPE_CHECKING:
     import sphinx.application
 
@@ -65,6 +67,8 @@ nitpick_ignore_regex = {
     # These are a consequence of autosummary-class.rst
     ("py:(obj|meth)", r".*\.Test.*\.test_.*"),
 }
+if not HAS_MESSAGE_DATA:
+    nitpick_ignore_regex.add(("py:mod", "message_data"))
 
 # A string of reStructuredText included at the beginning of every source file
 rst_prolog = r"""
