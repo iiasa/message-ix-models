@@ -41,6 +41,8 @@ GWa_KM3_TO_GWa_MCM = registry("GWa/km^3").to("GWa/m^3").magnitude * 1e6
 ANNUAL_CAPACITY_FACTOR = 5  # Convert 5-year capacity to annual
 # Convert km³ to MCM: 1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000
 KM3_TO_MCM = registry("1 km^3").to("meter^3").magnitude / 1e6  # km³ to MCM conversion
+# Convert m³/day to km³/year using 365-day calendar year
+M3DAY_TO_KM3YR = registry("1 m^3").to("km^3").magnitude * 365
 kWh_m3_TO_GWa_MCM = registry("kWh/m^3").to("GWa/m^3").magnitude * 1e6
 
 # Convert m3/GJ to MCM/GWa
