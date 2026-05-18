@@ -64,7 +64,7 @@ buildings = ["jaydebeapi"]
 docs = [
   # sphinx.ext.autosummary covers the test suite, so all test requirements
   "message_ix_models[tests]",
-  "sphinx >= 4",
+  "sphinx >= 9",  # requires python >= 3.11
   "sphinx_rtd_theme",
   "sphinxcontrib-bibtex",
 ]
