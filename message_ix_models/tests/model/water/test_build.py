@@ -25,7 +25,7 @@ def test_build(request, test_context):
     nodes = list(map(str, nodes[nodes.index("World")].child))
     map_ISO_c = {test_context.regions: nodes[0]}
     cfg.map_ISO_c = map_ISO_c
-    cfg.RCP = "6p0"
+    cfg.RCP = "7p0"
     cfg.REL = "med"
     test_context["water build info"] = ScenarioInfo(scenario_obj=scenario)
 
