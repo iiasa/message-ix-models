@@ -72,11 +72,33 @@ LED,      LDV,        R12_WEU,  2110,     19.55
 
 *,        2W,         *,        1990,     15
 *,        2W,         *,        2110,     15
-*,        AIR,        *,        1990,     15
-*,        AIR,        *,        2110,     15
-*,        BUS,        *,        1990,     15
-*,        BUS,        *,        2110,     15
-*,        F RAIL,     *,        1990,     15
-*,        F RAIL,     *,        2110,     15
-*,        F ROAD,     *,        1990,     15
-*,        F ROAD,     *,        2110,     15
+*,        AIR,        *,        1990,     25
+*,        AIR,        *,        2110,     25
+*,        BUS,        *,        1990,     20
+*,        BUS,        *,        2110,     20
+*,        F RAIL,     *,        1990,     30
+*,        F RAIL,     *,        2110,     30
+*,        F ROAD, R12_AFR,      1990,     20
+*,        F ROAD, R12_AFR,      2110,     15
+*,        F ROAD, R12_CHN,      1990,     12
+*,        F ROAD, R12_CHN,      2110,     12
+*,        F ROAD, R12_EEU,      1990,     12
+*,        F ROAD, R12_EEU,      2110,     12
+*,        F ROAD, R12_FSU,      1990,     12
+*,        F ROAD, R12_FSU,      2110,     12
+*,        F ROAD, R12_LAM,      1990,     12
+*,        F ROAD, R12_LAM,      2110,     12
+*,        F ROAD, R12_MEA,      1990,     12
+*,        F ROAD, R12_MEA,      2110,     12
+*,        F ROAD, R12_NAM,      1990,     12
+*,        F ROAD, R12_NAM,      2110,     12
+*,        F ROAD, R12_PAO,      1990,     12
+*,        F ROAD, R12_PAO,      2110,     12
+*,        F ROAD, R12_PAS,      1990,     20
+*,        F ROAD, R12_PAS,      2110,     15
+*,        F ROAD, R12_RCPA,     1990,     12
+*,        F ROAD, R12_RCPA,     2110,     12
+*,        F ROAD, R12_SAS,      1990,     20
+*,        F ROAD, R12_SAS,      2110,     15
+*,        F ROAD, R12_WEU,      1990,     12
+*,        F ROAD, R12_WEU,      2110,     12
