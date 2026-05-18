@@ -38,10 +38,10 @@ def test_add_infrastructure_techs(
 @pytest.mark.parametrize(
     "water_context",
     [
-        water_params("R11", RCP="6p0"),
-        water_params("R12", RCP="7p0"),
-        water_params("ZMB", RCP="7p0"),
-        water_params("R12", reduced_basin=True, RCP="7p0"),
+        water_params("R11", RCP="6p0", ssp="SSP2"),
+        water_params("R12", RCP="7p0", ssp="SSP2"),
+        water_params("ZMB", RCP="7p0", ssp="SSP2"),
+        water_params("R12", reduced_basin=True, RCP="7p0", ssp="SSP2"),
     ],
     indirect=True,
 )
