@@ -208,7 +208,7 @@ jobs:
           "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.version.upstream }}" \
           "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.version.upstream }}" \
           "message-ix-buildings @ git+https://github.com/iiasa/message-ix-buildings@main" \
-          .[docs,tests]
+          .[tests]
         uv pip install ${{ steps.dependencies.outputs.extra }}
 
     - name: Configure local data path
