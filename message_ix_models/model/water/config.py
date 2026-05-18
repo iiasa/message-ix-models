@@ -52,7 +52,11 @@ class Config(ConfigHelper):
 
     @classmethod
     def from_context(cls, context: "Context") -> "Config":
-        """Return ``context.water``, creating it if needed."""
+        """Return the shared water configuration for `context`.
+
+        Create `context.water` if missing, or convert a mapping to `Config`.
+        Repeated calls return the same `Config` instance.
+        """
         if "water" not in context:
             context["water"] = cls()
         elif isinstance(context["water"], dict):
