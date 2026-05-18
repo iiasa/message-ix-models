@@ -29,10 +29,9 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "sphinx.ext.viewcode",
     # Others
     "genno.compat.sphinx.rewrite_refs",
-    # "ixmp.util.sphinx_linkcode_github",  # TODO Address build errors, then enable
+    "ixmp.util.sphinx_linkcode_github",
     "sphinxcontrib.bibtex",
 ]
 
