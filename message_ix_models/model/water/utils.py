@@ -29,6 +29,11 @@ METADATA = [
     ("water", "technology"),
 ]
 
+# Basins that are 100% NaN across all 5 CWaTM GCMs in the refreshed hydro
+# source. The generator emits zero rows for them; the water build excludes
+# them at filter time.
+_PROBLEM_BASINS = ("30|FSU", "51|FSU", "154|FSU")
+
 # Conversion factors used in the water module
 
 MONTHLY_CONVERSION = (
@@ -123,6 +128,12 @@ def filter_basins_by_region(
 
     cfg = Config.from_context(context)
 
+    # 30|FSU, 51|FSU, 154|FSU are 100% NaN across all 5 CWaTM GCMs in the
+    # refreshed hydro source; the generator emits zero rows for them. Exclude
+    # them from the build basin set unconditionally so the water module never
+    # sees zero-availability rows for those basins.
+    df_basins = df_basins[~df_basins["BCU_name"].isin(_PROBLEM_BASINS)]
+
     if not cfg.reduced_basin:
         # No filtering, return original dataframe
         log.info("Basin filtering disabled, returning all basins")
@@ -214,23 +225,21 @@ def compute_basin_demand_ratio(
         )
     )
 
-    # Supply: surface + groundwater, mean across year columns, km3 -> MCM
+    # Supply: surface + groundwater, mean across year columns, km3 -> MCM.
+    # Basin ranking uses 2p6 low-reliability as a stable cross-RCP baseline so
+    # the filtered basin set does not shift with the run's RCP choice.
     qtot = pd.read_csv(
-        package_data_path(
-            "water", "availability", f"qtot_5y_no_climate_low_{regions}.csv"
-        )
+        package_data_path("water", "availability", f"qtot_5y_2p6_low_{regions}.csv")
     ).drop(columns=["Unnamed: 0"], errors="ignore")
     qr = pd.read_csv(
-        package_data_path(
-            "water", "availability", f"qr_5y_no_climate_low_{regions}.csv"
-        )
+        package_data_path("water", "availability", f"qr_5y_2p6_low_{regions}.csv")
     ).drop(columns=["Unnamed: 0"], errors="ignore")
     supply_mcm = (qtot.mean(axis=1) + qr.mean(axis=1)) * KM3_TO_MCM
 
     # Demand: urban + rural + manufacturing withdrawals at demand_year
     demand_path = package_data_path("water", "demands", "harmonized", regions)
     demand_files = [
-        f"{ssp_label}_regional_urban_withdrawal2_baseline.csv",
+        f"{ssp_label}_regional_urban_withdrawal_domestic_baseline.csv",
         f"{ssp_label}_regional_rural_withdrawal_baseline.csv",
         f"{ssp_label}_regional_manufacturing_withdrawal_baseline.csv",
     ]
