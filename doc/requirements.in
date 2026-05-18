@@ -1,6 +1,9 @@
 # Input file for pip-compile
 # Only specify the packages necessary for [docs]
 
+# Work around for https://github.com/iiasa/message-ix-models/issues/507
+ixmp4<0.15.0
+
 pandas==2.2.3
 sphinx==8.2.3
 sphinx-rtd-theme==3.0.2
