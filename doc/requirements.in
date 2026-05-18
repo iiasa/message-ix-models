@@ -1,10 +1,6 @@
-# Input file for pip-compile
-# Only specify the packages necessary for [docs]
-
 # Work around for https://github.com/iiasa/message-ix-models/issues/507
 ixmp4<0.15.0
+pyam-iamc>=3.2.0
 
-pandas==2.2.3
-sphinx==8.2.3
-sphinx-rtd-theme==3.0.2
-sphinxcontrib-bibtex==2.6.3
+ixmp @ git+https://github.com/iiasa/ixmp.git@main
+message-ix @ git+https://github.com/iiasa/message_ix.git@main
