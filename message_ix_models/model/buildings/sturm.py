@@ -225,24 +225,49 @@ def _message_buildings_install_dir() -> Path:
     return Path(message_buildings_dir).expanduser().resolve()
 
 
+# MIXB demand CSV basenames under ``sturm/message_linking``
+# ({code} = context.buildings.code).
+_MIXB_DEMAND_CSV = (
+    "resid_sturm_aligned_{code}.csv",
+    "comm_sturm_aligned_{code}.csv",
+    "resid_comm_glance_aligned_{code}.csv",
+)
+
+
+def _pass_scen_config_to_mixb(sturm_dir: Path, scenarios: list[str]) -> None:
+    """Write ``scenario_config.yaml`` for MESSAGEix-Buildings STURM runners."""
+    import yaml
+
+    path = sturm_dir.joinpath("scenario_config.yaml")
+    payload = {"scenarios": scenarios}
+    header = (
+        "# Shared STURM scenario list\n"
+        "# Used by STURM / MIXB runner scripts (see message_ix_buildings/sturm)\n"
+    )
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(header)
+        yaml.dump(payload, f, default_flow_style=False, sort_keys=False)
+    log.info("Wrote STURM scenarios %s to %s", scenarios, path)
+
+
 def call_sturm(context: Context, scenario: Scenario) -> Scenario:
-    """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM."""
+    """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM.
+
+    Read reference levels from ``input_prices_R12_default.csv``, apply scenario
+    ``PRICE_COMMODITY`` (with floors), write ``input_prices_R12.csv``, update
+    ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
+    """
     buildings_root = _message_buildings_install_dir()
     sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
     price_dir = sturm_dir.joinpath("data")
 
-    # Duplicate the original energy price input file in STURM
-    original_price_input_file = price_dir.joinpath("input_prices_R12.csv")
+    price_default = price_dir.joinpath("input_prices_R12_default.csv")
+    price_input = price_dir.joinpath("input_prices_R12.csv")
 
-    if not original_price_input_file.exists():
-        raise FileNotFoundError(
-            f"Original price input file not found: {original_price_input_file}"
-        )
+    if not price_default.exists():
+        raise FileNotFoundError(f"STURM reference prices not found: {price_default}")
 
-    original_price_input_backup = price_dir.joinpath("input_prices_R12_ori.csv")
-    df_prices_ori = pd.read_csv(original_price_input_file)
-    df_prices_ori.to_csv(original_price_input_backup, index=False)
-    log.info("Saved copy of original STURM prices to %s", original_price_input_backup)
+    df_prices_ori = pd.read_csv(price_default)
 
     # Retrieve new energy commodity prices from the scenario
     df_prices = scenario.var(
@@ -264,6 +289,7 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     # R12_CHN -> R11_CHN
     # R12_RCPA -> R11_CPA
     # Other R12_* -> R11_* (replace R12_ with R11_)
+    # TODO: maybe suggest MixB colleagues to update to avoid this
     def map_r12_to_r11(node):
         """Map R12 region codes to R11 region codes"""
         if node == "R12_CHN":
@@ -314,17 +340,21 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     df_updated["lvl"] = np.where(use_reference_floor, lvl_original, lvl_scenario)
     df_updated = df_updated.drop(columns=["lvl_new"])
 
-    # Save the updated prices to the default price input file in STURM
-    df_updated.to_csv(original_price_input_file, index=False)
-    log.info("Updated prices saved to %s", original_price_input_file)
+    # STURM R scripts read input_prices_R12.csv; default file is left unchanged.
+    df_updated.to_csv(price_input, index=False)
+    log.info("Updated prices written to %s (reference: %s)", price_input, price_default)
     log.info("Total rows: %d", len(df_updated))
     log.info("Rows with updated prices: %d", rows_updated)
 
+    _pass_scen_config_to_mixb(sturm_dir, [context.buildings.code])
+
     # Run STURM (via Rscript)
     for name in (
-        "run_STURM_bmt_resid.R", 
-        "run_STURM_bmt_comm.R",
-        "run_MIXB_aligner.R",):
+        "run_STURM_Circular_resid_glo.R",
+        "run_STURM_Circular_comm_glo.R",
+        "run_GLANCE_placeholder.R",
+        "run_MIXB_aligner.R",
+    ):
         script = sturm_dir.joinpath(name)
         if not script.is_file():
             raise FileNotFoundError(f"STURM BMT R script not found: {script}")
@@ -339,30 +369,37 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
 
 
 def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
-    """Retrieve buildings demand from message_buildings_dir and add to scenario."""
-    # Support both key spellings in local ixmp config.
+    """Retrieve MIXB buildings demand from ``sturm/message_linking`` and add it."""
     buildings_root = _message_buildings_install_dir()
-
-    temp_dir = buildings_root.joinpath("message_ix_buildings", "sturm", "temp")
-    if not temp_dir.exists():
-        raise FileNotFoundError(f"Buildings demand directory not found: {temp_dir}")
-
+    linking_dir = buildings_root.joinpath(
+        "message_ix_buildings", "sturm", "message_linking"
+    )
+    code = context.buildings.code
     demand = pd.concat(
         [
-            pd.read_csv(temp_dir / name)
-            for name in ("resid_sturm.csv", "comm_sturm.csv")
+            pd.read_csv(linking_dir / name.format(code=code))
+            for name in _MIXB_DEMAND_CSV
         ],
         ignore_index=True,
     )
 
-    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
+    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|non-comm"
     # TODO: do we need dynamic materials demand for CircEUlar too?
     demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
     demand["level"] = "useful"
     # TODO: "useful" to match build; consider unifying demand levels to "final"
 
-    with scenario.transact("Add Buildings demand from message_ix_buildings/sturm/temp"):
+    with scenario.transact(
+        "Add Buildings demand from message_ix_buildings/sturm/message_linking"
+    ):
         scenario.add_par("demand", demand)
 
-    log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
+    log.info(
+        "Added %d demand rows to %s/%s (code=%r, %s)",
+        len(demand),
+        scenario.model,
+        scenario.scenario,
+        code,
+        linking_dir,
+    )
     return scenario
