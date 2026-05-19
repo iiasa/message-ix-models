@@ -7,6 +7,7 @@
 model_name: "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12"
 
 buildings:
+  code: "R"
   data_paths:
       # Input file names under private_data_path("buildings")
       prices: "input_prices_R12.csv"
