@@ -15,8 +15,8 @@ keys:
 
 Loads :file:`data/bmt/config.yaml` once into :attr:`context.bmt`, then sets:
 
-- :attr:`context.buildings` — ``SimpleNamespace`` of file stems for :func:`build_B`
-  (defaults merged with the ``buildings`` mapping).
+- :attr:`context.buildings` — :class:`~.buildings.config.Config` (``data_paths``,
+  ``code`` for STURM, etc.) from the ``buildings`` mapping.
 - :attr:`context.macro` — ``macro`` string (macro calibration workbook).
 - :attr:`context.transport` — full
   :class:`message_ix_models.model.transport.config.Config` from
