@@ -8,6 +8,7 @@ Next release
 - New module :ref:`tools-newclimate` (:pull:`499`).
 - Add :class:`.model.water.Config` to collect water module settings (:pull:`509`).
 - Retire urban/rural unconnected water technologies and disable CPLEX scaling in water-ix solves (:pull:`510`).
+- Refresh R12 water module input data and replace legacy pre-processing scripts (:pull:`513`).
 - Add :doc:`/api/model-bmt` (:pull:`433`).
 
   - Add
