@@ -2,7 +2,8 @@
 
 Add-on technologies
 ===================
-Add-on technologies in the global model refer to a distinct formulation in |MESSAGEix|. The formulation is used to represent two main types of technical extensions/options for technologies. Add-on technologies provide additional modes of operation for a single or multiple technologies. They can also be used to depict emission mitigation options.
+Add-on technologies in |name| refer to a distinct formulation in |MESSAGEix|.
+The formulation is used to represent two main types of technical extensions/options for technologies. Add-on technologies provide additional modes of operation for a single or multiple technologies. They can also be used to depict emission mitigation options.
 
 General description of add-on technologies
 ------------------------------------------
