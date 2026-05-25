@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 from message_ix import make_df
@@ -210,37 +211,71 @@ def aas_co2_storage_growth(
     technologies: list[str] = ["co2_stor"],
     *,
     start_year: int = 2035,
-    end_year: int = 2080,
-    limit: float = 0.047,
+    midpoint_year: int = 2055,
+    end_year: int = 2110,
+    limit_early: float = 0.028,
+    limit_late: float = 0.01,
 ):
-    """Add ``growth_activity_up`` for CO2 storage technologies."""
-    info = ScenarioInfo(scenario)
-    years = [y for y in info.Y if start_year <= y <= end_year]
+    """Add ``growth_activity_up`` for CO2 storage technologies.
 
-    df = make_df(
-        "growth_activity_up",
-        technology=technologies,
-        time="year",
-        value=limit,
-        unit="???",
-    ).pipe(
-        broadcast,
-        node_loc=nodes_ex_world(info.N),
-        year_act=years,
-    )
+    ``limit_early`` applies for ``start_year`` <= ``year_act`` < ``midpoint_year``;
+    ``limit_late`` applies for ``midpoint_year`` <= ``year_act`` <= ``end_year``.
+    """
+    if not (start_year < midpoint_year <= end_year):
+        raise ValueError(
+            f"Require start_year < midpoint_year <= end_year; got "
+            f"{start_year}, {midpoint_year}, {end_year}"
+        )
+
+    info = ScenarioInfo(scenario)
+    nodes = nodes_ex_world(info.N)
+    years_all = [y for y in info.Y if start_year <= y <= end_year]
+    years_early = [y for y in years_all if y < midpoint_year]
+    years_late = [y for y in years_all if y >= midpoint_year]
+
+    common = dict(technology=technologies, time="year", unit="???")
+    parts: list[pd.DataFrame] = []
+    if years_early:
+        parts.append(
+            make_df("growth_activity_up", value=limit_early, **common).pipe(
+                broadcast, node_loc=nodes, year_act=years_early
+            )
+        )
+    if years_late:
+        parts.append(
+            make_df("growth_activity_up", value=limit_late, **common).pipe(
+                broadcast, node_loc=nodes, year_act=years_late
+            )
+        )
+    if not parts:
+        log.warning(
+            "No model years in [%s, %s] for %s/%s; skipping growth_activity_up",
+            start_year,
+            end_year,
+            scenario.model,
+            scenario.scenario,
+        )
+        return scenario
+
+    df = pd.concat(parts, ignore_index=True)
 
     with scenario.transact("Add growth_activity_up for CO2 storage technologies."):
         scenario.add_par("growth_activity_up", df)
 
     log.info(
-        "Added growth_activity_up=%s for technologies %s, "
-        "year_act %s–%s, all regions (%d nodes, %d periods)",
-        limit,
+        "Added growth_activity_up for technologies %s: "
+        "%s in [%s, %s) (%d periods), %s in [%s, %s] (%d periods), "
+        "all regions (%d nodes)",
         technologies,
+        limit_early,
         start_year,
+        midpoint_year,
+        len(years_early),
+        limit_late,
+        midpoint_year,
         end_year,
-        len(nodes_ex_world(info.N)),
-        len(years),
+        len(years_late),
+        len(nodes),
     )
 
     return scenario
@@ -298,7 +333,7 @@ def aas_co2_storage_share_mode(
     share: str = "co2_stor_aas1",
 ):
     """Add ``share_mode_up`` for ``co2_stor`` mode shares ``co2_stor_aas1``."""
-    m2_limit = 0.52
+    m2_limit = 0.72
     m3_limit = 0.14
     m3_limit_near_term = 0.01
     m3_near_start = 2020
@@ -494,15 +529,15 @@ def _transport_emission_factor_csv_path() -> Path:
 # Global ``bound_emission`` trajectory for ``type_emission`` CO2_t_truck (Mt CO2/yr).
 _CO2_T_TRUCK_BOUND_EMISSION: tuple[tuple[int, float], ...] = (
     (2030, 1777.41),
-    (2035, 1580.00),
-    (2040, 1405.00),
-    (2045, 1250.00),
-    (2050, 1115.00),
-    (2055, 1000.00),
-    (2060, 920.00),
-    (2070, 860.00),
-    (2080, 825.00),
-    (2090, 800.00),
+    (2035, 1680.00),
+    (2040, 1580.00),
+    (2045, 1470.00),
+    (2050, 1360.00),
+    (2055, 1260.00),
+    (2060, 1170.00),
+    (2070, 1020.00),
+    (2080, 910.00),
+    (2090, 835.00),
     (2100, 790.00),
     (2110, 785.00),
 )
@@ -615,24 +650,46 @@ def aas_bound_emission_transport(context, scenario):
     return scenario
 
 
-# AAS5, loosen regional TCE emission bounds for two periods after bottleneck years
+# AAS5, loosen regional TCE emission bounds around bottleneck years
 # (node, anchor type_year) — edit placeholders as needed
 _LOOSE_BOTTLENECK_YEAR_BOUND_EMISS: tuple[tuple[str, int], ...] = (
     ("R12_WEU", 2055),
     ("R12_CHN", 2060),
     ("R12_SAS", 2070),
-    ("R12_EEU", 2070),
+    ("R12_EEU", 2050),
 )
 
 
-def aas_loose_bottleneck_year_tce(context, scenario):
+def aas_loose_bottleneck_year_tce(
+    context,
+    scenario,
+    direction: Literal["before", "after"] = "after",
+    type_emission: str = "TCE",
+):
+    """Adjust regional ``bound_emission`` around bottleneck anchor years (AAS5).
+
+    For each configured (node, anchor year), ``direction`` selects disjoint edits:
+
+    - ``"before"``: set the anchor year bound to 50 % of the bound in the single model
+      year before the anchor; that earlier year is unchanged. No other years are changed.
+    - ``"after"``: loosen the two model years after the anchor to 50 % and 25 % of
+      the anchor bound. Anchor and earlier years are unchanged.
+
+    Parameters
+    ----------
+    direction : {"after", "before"}, optional
+        Side of the anchor to adjust (default ``"after"``).
+    type_emission : str, optional
+        Emission type to adjust (default ``"TCE"``).
+    """
     info = ScenarioInfo(scenario)
     model_years = sorted(int(y) for y in info.Y)
 
-    bound = scenario.par("bound_emission", filters={"type_emission": "TCE"})
+    bound = scenario.par("bound_emission", filters={"type_emission": type_emission})
     if bound.empty:
         log.warning(
-            "No TCE bound_emission in %s/%s; skipping loose bottleneck bounds",
+            "No %s bound_emission in %s/%s; skipping loose bottleneck bounds",
+            type_emission,
             scenario.model,
             scenario.scenario,
         )
@@ -640,6 +697,7 @@ def aas_loose_bottleneck_year_tce(context, scenario):
 
     new_rows: list[dict] = []
     remove_mask = pd.Series(False, index=bound.index)
+    side_factors = (0.5, 0.25)
 
     for node, anchor_year in _LOOSE_BOTTLENECK_YEAR_BOUND_EMISS:
         try:
@@ -652,21 +710,13 @@ def aas_loose_bottleneck_year_tce(context, scenario):
             )
             continue
 
-        target_years = model_years[anchor_idx + 1 : anchor_idx + 3]
-        if not target_years:
-            log.warning(
-                "No following model years after %s for %s",
-                anchor_year,
-                node,
-            )
-            continue
-
         anchor_rows = bound.loc[
             (bound["node"] == node) & (bound["type_year"].astype(int) == anchor_year)
         ]
         if anchor_rows.empty:
             log.warning(
-                "No TCE bound_emission at %s, %s; skipping",
+                "No %s bound_emission at %s, %s; skipping",
+                type_emission,
                 node,
                 anchor_year,
             )
@@ -674,35 +724,211 @@ def aas_loose_bottleneck_year_tce(context, scenario):
 
         ref = anchor_rows.iloc[0]
         base_value = float(ref["value"])
-        factors = (0.5, 0.25)
+        updates: dict[int, tuple[float, pd.Series]] = {}
 
-        for type_year, factor in zip(target_years, factors):
+        if direction == "after":
+            side_years = model_years[anchor_idx + 1 : anchor_idx + 3]
+            if len(side_years) < 2:
+                log.warning(
+                    "Fewer than 2 model years after %s for %s; skipping",
+                    anchor_year,
+                    node,
+                )
+            for type_year, factor in zip(side_years, side_factors):
+                updates[type_year] = (base_value * factor, ref)
+        else:
+            if anchor_idx == 0:
+                log.warning(
+                    "No model year before anchor %s for %s; skipping",
+                    anchor_year,
+                    node,
+                )
+            else:
+                prev_year = model_years[anchor_idx - 1]
+                prev_rows = bound.loc[
+                    (bound["node"] == node)
+                    & (bound["type_year"].astype(int) == prev_year)
+                ]
+                if prev_rows.empty:
+                    log.warning(
+                        "No %s bound_emission at %s, %s; skipping anchor adjust",
+                        type_emission,
+                        node,
+                        prev_year,
+                    )
+                else:
+                    prev_value = float(prev_rows.iloc[0]["value"])
+                    updates[anchor_year] = (0.5 * prev_value, ref)
+
+        for type_year, (value, row_ref) in updates.items():
             new_rows.append(
                 {
                     "node": node,
-                    "type_emission": "TCE",
-                    "type_tec": ref["type_tec"],
+                    "type_emission": type_emission,
+                    "type_tec": row_ref["type_tec"],
                     "type_year": type_year,
-                    "unit": ref["unit"],
-                    "value": base_value * factor,
+                    "unit": row_ref["unit"],
+                    "value": value,
                 }
             )
             remove_mask |= (
                 (bound["node"] == node)
                 & (bound["type_year"].astype(int) == type_year)
-                & (bound["type_tec"] == ref["type_tec"])
+                & (bound["type_tec"] == row_ref["type_tec"])
             )
 
     df_add = pd.DataFrame(new_rows)
+    df_remove = bound.loc[remove_mask]
 
-    with scenario.transact("Loosen TCE bound_emission after bottleneck years (AAS5)"):
-        scenario.add_par("bound_emission", df_add)
+    side = "after" if direction == "after" else "before"
+    with scenario.transact(
+        f"Adjust {type_emission} bound_emission around bottleneck years ({side}, AAS5)"
+    ):
+        if len(df_remove):
+            scenario.remove_par("bound_emission", df_remove)
+        if len(df_add):
+            scenario.add_par("bound_emission", df_add)
 
     log.info(
-        "AAS5: added %d loose bottleneck TCE bound_emission rows for %s/%s",
+        "AAS5: updated %d %s bound_emission rows (%s anchor, %s/%s)",
         len(df_add),
+        type_emission,
+        side,
         scenario.model,
         scenario.scenario,
     )
+
+    return scenario
+
+
+# Freight-road truck technologies (F ROAD) — edit placeholders as needed
+_TRUCK_TECHNOLOGIES: tuple[str, ...] = (
+    "f road electr",
+    "f road gas fc",
+    "f road gas ic",
+    "f road methanol",
+    "FR_FCH",
+    "FR_ICAe",
+    "FR_ICE_H",
+    "FR_ICE_L",
+    "FR_ICE_M",
+    "FR_ICH",
+)
+
+
+def freeze_truck_history(context, scenario, year_freeze: int = 2030):
+    """Temporary function to freeze truck activity, deprecated after MixT update.
+
+    Option A (commented): equality bounds from solved ``ACT`` in year_freeze.
+    Option B (active): copy all ``bound_activity_up`` rows for truck techs to
+    ``bound_activity_lo`` in year_freeze.
+    """
+    del context
+    del year_freeze  # used by Option A only
+
+    # Option B
+    bound_up = scenario.par(
+        "bound_activity_up",
+        filters={"technology": list(_TRUCK_TECHNOLOGIES)},
+    )
+    if bound_up.empty:
+        log.warning(
+            "No bound_activity_up for truck technologies in %s/%s; skipping",
+            scenario.model,
+            scenario.scenario,
+        )
+        return scenario
+
+    bound_lo = bound_up.copy()
+
+    scenario.remove_solution()
+
+    with scenario.transact("Freeze truck activity from bound_activity_up (option B)"):
+        scenario.add_par("bound_activity_lo", bound_lo)
+
+    log.info(
+        "freeze_truck_history (B): added %d bound_activity_lo rows from bound_activity_up "
+        "(%d technologies) for %s/%s",
+        len(bound_lo),
+        len(_TRUCK_TECHNOLOGIES),
+        scenario.model,
+        scenario.scenario,
+    )
+
+    return scenario
+
+    # Option A
+    # if not scenario.has_solution():
+    #     log.warning(
+    #         "No solution on %s/%s; skipping freeze_truck_history",
+    #         scenario.model,
+    #         scenario.scenario,
+    #     )
+    #     return scenario
+
+    # fmy = int(scenario.firstmodelyear)
+    # if year_freeze < fmy:
+    #     raise ValueError(
+    #         f"year_freeze={year_freeze} must be >= firstmodelyear ({fmy})"
+    #     )
+
+    # act = scenario.var("ACT", filters={"technology": list(_TRUCK_TECHNOLOGIES)})
+    # act = act.loc[
+    #     (act["year_act"].astype(int) >= fmy)
+    #     & (act["year_act"].astype(int) <= year_freeze)
+    # ]
+    # if act.empty:
+    #     log.warning(
+    #         "No ACT in [%s, %s] for truck technologies in %s/%s; skipping",
+    #         fmy,
+    #         year_freeze,
+    #         scenario.model,
+    #         scenario.scenario,
+    #     )
+    #     return scenario
+
+    # unit = "???"
+    # for tech in _TRUCK_TECHNOLOGIES:
+    #     for par_name in ("bound_activity_up", "bound_activity_lo", "output"):
+    #         sample = scenario.par(par_name, filters={"technology": tech})
+    #         if len(sample):
+    #             unit = sample.iloc[0]["unit"]
+    #             break
+    #     if unit != "???":
+    #         break
+
+    # act = act.loc[act["lvl"] != 0]
+    # if act.empty:
+    #     log.warning(
+    #         "No non-zero ACT in [%s, %s] for truck technologies in %s/%s; skipping",
+    #         fmy,
+    #         year_freeze,
+    #         scenario.model,
+    #         scenario.scenario,
+    #     )
+    #     return scenario
+
+    # bound = act[
+    #     ["node_loc", "technology", "mode", "time", "year_act"]
+    # ].assign(value=act["lvl"].astype(float), unit=unit)
+
+    # scenario.remove_solution()
+
+    # with scenario.transact(
+    #     f"Freeze truck activity [{fmy}, {year_freeze}] from solved ACT"
+    # ):
+    #     scenario.add_par("bound_activity_lo", bound)
+    #     scenario.add_par("bound_activity_up", bound.copy())
+
+    # log.info(
+    #     "freeze_truck_history: added %d bound_activity rows per bound "
+    #     "(%s technologies, year_act %s–%s) for %s/%s",
+    #     len(bound),
+    #     len(_TRUCK_TECHNOLOGIES),
+    #     fmy,
+    #     year_freeze,
+    #     scenario.model,
+    #     scenario.scenario,
+    # )
 
     return scenario
