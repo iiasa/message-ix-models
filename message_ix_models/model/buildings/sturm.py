@@ -389,6 +389,12 @@ def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
     demand["level"] = "useful"
     # TODO: "useful" to match build; consider unifying demand levels to "final"
 
+    if 2110 not in demand["year"].values and 2100 in demand["year"].values:
+        df_2110 = demand[demand["year"] == 2100].copy()
+        df_2110["year"] = 2110
+        demand = pd.concat([demand, df_2110], ignore_index=True)
+        log.info("Added 2110 demand rows by copying from 2100")
+
     with scenario.transact(
         "Add Buildings demand from message_ix_buildings/sturm/message_linking"
     ):
