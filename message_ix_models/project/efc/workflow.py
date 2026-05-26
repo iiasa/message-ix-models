@@ -8,7 +8,15 @@ import logging
 import message_ix  # type: ignore
 
 from message_ix_models import Context
+from message_ix_models.model.hydrogen.data_hydrogen import add_hydrogen_techs
+from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parity
 from message_ix_models.workflow import Workflow
+
+# Hyway electrolyser techs that take over h2_elec's role as
+# methanol_synthesis_addon parents after the hydrogen build removes h2_elec.
+# h2_pyro_elec and h2_ct are excluded — pyro is a separate turquoise framing;
+# h2_ct consumes H2.
+METHANOL_ADDON_PARENTS = ["h2_elec_alk", "h2_elec_pem", "h2_elec_soe"]
 
 log = logging.getLogger(__name__)
 
@@ -91,17 +99,82 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
-    # 3. Hydrogen reporting
-    # _placeholder
-
-    # 4. Legacy reporting
+    # 3. Legacy reporting (runs first; uploads zero rows for any hydrogen
+    # variables that still query the now-absent legacy h2_elec technology —
+    # see docs/reporting/coexistence.md in the EFC_2026 project repo).
     _legacy_report(scenario)
+
+    # 4. Genno hydrogen reporting — overwrites the hydrogen IAMC rows the
+    # legacy step just wrote with values derived from the five hyway techs
+    # (h2_elec_alk/pem/soe, h2_pyro_elec, h2_ct). ixmp.add_timeseries
+    # overwrites by design; that is the coexistence mechanism. Skipped on
+    # scenarios where none of the hyway techs are present (e.g. the "base
+    # reported" step that runs before "hydrogen added").
+    hyway_techs = {
+        "h2_elec_alk",
+        "h2_elec_pem",
+        "h2_elec_soe",
+        "h2_pyro_elec",
+        "h2_ct",
+    }
+    scenario_techs = set(scenario.set("technology").tolist())
+    if not (hyway_techs & scenario_techs):
+        log.info(
+            "Genno hydrogen reporting skipped: no hyway H2 techs in scenario."
+        )
+        return scenario
+
+    from message_ix.report import Reporter
+
+    from message_ix_models.report.hydrogen.h2_reporting import run_h2_reporting
+
+    rep = Reporter.from_scenario(scenario)
+    iam_df = run_h2_reporting(rep, scenario.model, scenario.scenario)
+    try:
+        scenario.check_out(timeseries_only=True)
+    except ValueError:
+        log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
+    scenario.add_timeseries(iam_df.timeseries().reset_index())
+    scenario.commit("Add Genno hydrogen reporting")
 
     return scenario
 
 
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Placeholder function that does nothing, just for building workflow."""
+    return scenario
+
+
+def build_hydrogen(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Add the hyway hydrogen techs and apply Yoga's meth_h2 mode-parity port.
+
+    Two-step composition:
+
+    1. ``add_hydrogen_techs`` populates the new techs (h2_elec_alk/pem/soe,
+       h2_pyro_elec, h2_ct, carbon_black_*) from per-tech CSVs and removes
+       h2_elec from the technology set. Each electrolyser receives addon_*
+       parameters in pre-Yoga feedstock/fuel modes and input/output/var_cost
+       in M1.
+    2. ``apply_meth_h2_mode_parity`` ports Yoga's mode broadcast onto the
+       chosen parent techs so meth_h2 (which already has the 6 split modes
+       in the BMT base) can bind via methanol_synthesis_addon. Without this
+       step ADDON_ACTIVITY_UP collapses against the missing h2_elec and
+       meth_h2 silently zeros.
+    """
+    # add_hydrogen_techs assumes the global region exists.
+    if "R12_GLB" not in list(scenario.platform.regions()["region"]):
+        log.info("Adding global region R12_GLB")
+        scenario.platform.add_region("R12_GLB", "region", "World")
+
+    add_hydrogen_techs(scenario)
+
+    with scenario.transact(
+        message="Yoga meth_h2 mode-parity port for hyway electrolysers"
+    ):
+        apply_meth_h2_mode_parity(scenario, METHANOL_ADDON_PARENTS)
+
     return scenario
 
 
@@ -161,7 +234,7 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step(
         "hydrogen added",
         name,
-        placeholder,
+        build_hydrogen,
         target=f"{url}baseline",
         clone=c,
     )
