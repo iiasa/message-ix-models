@@ -40,6 +40,9 @@ and add them to message_ix default workflow.
 def add_hydrogen_techs(scenario: Scenario):
     """
     this method simply calls the four methods from message_ix_models.model.hydrogen.utils
+
+    Each inner ``load_*`` helper manages its own check_out/commit cycle, so no
+    outer transaction wrapper is used.
     """
     from message_ix_models.model.hydrogen.utils import (
         load_commodity_sets,
@@ -49,12 +52,11 @@ def add_hydrogen_techs(scenario: Scenario):
         remove_deprecated_sets,
     )
 
-    with scenario.transact(commit_message="Adding hydrogen sets"):
-        load_commodity_sets(scenario)
-        load_emission_sets(scenario)
-        load_hydrogen_sets(scenario)
-        load_hydrogen_parameters(scenario)
-        remove_deprecated_sets(scenario)
+    load_commodity_sets(scenario)
+    load_emission_sets(scenario)
+    load_hydrogen_sets(scenario)
+    load_hydrogen_parameters(scenario)
+    remove_deprecated_sets(scenario)
 
 
 def read_data_hydrogen(

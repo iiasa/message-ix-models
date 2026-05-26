@@ -393,7 +393,10 @@ def _filter_years(
     else:
         df = df[df["year"] >= first_model_year]
     if df.empty:
-        return pyam.IamDataFrame()
+        # df already carries the IAMC schema columns (model/scenario/region/
+        # variable/unit/year/value) — current pyam requires the data= arg even
+        # for an empty DataFrame; old pyam accepted IamDataFrame() with no args.
+        return pyam.IamDataFrame(df)
     return pyam.IamDataFrame(df)
 
 
