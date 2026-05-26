@@ -58,6 +58,13 @@ The ``rc_sector_fractions`` files identify the residential and commercial
 buildings components already present in aggregate ``rc_spec`` and
 ``rc_therm`` so they can be removed before the replacement demand is added.
 
+Packaged SSP coverage differs across the calibration layers. ``theta`` and
+``rc_sector_fractions`` ship for SSP1, SSP2, and SSP3. ``gamma`` (the
+``correction_coefficients`` files) and the STURM floor-area projections are
+SSP2-only, pending additional STURM runs. Buildings impacts under SSP1 or
+SSP3 therefore use SSP-specific ``theta`` and ``rc_sector_fractions`` on top
+of an SSP2 STURM baseline and SSP2 ``gamma``.
+
 Thermoelectric cooling
 ======================
 
