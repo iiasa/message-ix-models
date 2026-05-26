@@ -10,7 +10,7 @@
 # (e.g., methanol from coal/bio/ng: 0.937 vs. methanol from H2: 1.124).
 
 var: out
-iamc_prefix: Production|Hydrogen|
+iamc_prefix: Secondary Energy|Hydrogen|
 unit: EJ/yr
 
 level_1:

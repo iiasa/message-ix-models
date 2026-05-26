@@ -176,3 +176,5 @@ message_ix_models/data/hydrogen/debug_utils/
 /hyway_*.xlsx
 /SSP_*.csv
 /SSP_*.xlsx
+/_*.xlsx
+/*_check.xlsx

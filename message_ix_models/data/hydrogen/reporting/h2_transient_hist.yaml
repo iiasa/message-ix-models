@@ -13,7 +13,7 @@ var:
   out_hist
 
 iamc_prefix:
-  Production|Hydrogen|
+  Secondary Energy|Hydrogen|
 
 unit: EJ/yr
 

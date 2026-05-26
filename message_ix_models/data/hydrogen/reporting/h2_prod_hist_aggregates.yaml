@@ -6,11 +6,11 @@
 # The aggregation happens at the IAMC variable level (after processing), not at the MESSAGE data level.
 
 var: out_hist
-iamc_prefix: Production|
+iamc_prefix: Secondary Energy|
 unit: EJ/yr
 
 level_1:
-  Hydrogen|Gas:
+  Hydrogen|Gases:
     short: prod_h2_gas
     components: [ prod_h2_smr_wo_ccs, prod_h2_smr_w_ccs, prod_h2_pyro ]
   Hydrogen|Coal:
@@ -26,10 +26,23 @@ level_1:
   #   short: prod_h2_refinery
   #   components: [ prod_h2_refinery ]
 
+  # Climate-class roll-up: SMR + coal routes only.
+  # h2_pyro_elec (turquoise) is excluded — solid carbon_black co-product means
+  # carbon never reaches the atmosphere, so it does not belong under Fossil.
+  Hydrogen|Fossil|w/ CCS:
+    short: prod_h2_fossil_w_ccs
+    components: [ prod_h2_smr_w_ccs, prod_h2_coal_w_ccs ]
+  Hydrogen|Fossil|w/o CCS:
+    short: prod_h2_fossil_wo_ccs
+    components: [ prod_h2_smr_wo_ccs, prod_h2_coal_wo_ccs ]
+
 level_2:
   Hydrogen:
     short: prod_h2
     # components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec, prod_h2_refinery ]
     components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec ]
+  Hydrogen|Fossil:
+    short: prod_h2_fossil
+    components: [ prod_h2_fossil_w_ccs, prod_h2_fossil_wo_ccs ]
 
 

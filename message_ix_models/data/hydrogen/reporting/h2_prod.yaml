@@ -6,28 +6,28 @@ var:
   out
 
 iamc_prefix:
-  Production|
+  Secondary Energy|
 
 unit: EJ/yr
 
 vars:
   # hydrogen production
   # gas
-  Hydrogen|Gas|SMR w/o CCS:
+  Hydrogen|Gases|SMR w/o CCS:
     filter:
       { technology: h2_smr, mode: M1, commodity: hydrogen, level: secondary}
     original_unit: GWa
     short:
       prod_h2_smr_wo_ccs
 
-  Hydrogen|Gas|SMR w/ CCS:
+  Hydrogen|Gases|SMR w/ CCS:
     filter:
       {technology: h2_smr_ccs, mode: M1, commodity: hydrogen, level: secondary}
     original_unit: GWa
     short:
       prod_h2_smr_w_ccs
 
-  Hydrogen|Gas|Pyrolysis:
+  Hydrogen|Gases|Pyrolysis:
     filter:
       {technology: h2_pyro_elec, mode: M1, commodity: hydrogen, level: secondary}
     original_unit: GWa
