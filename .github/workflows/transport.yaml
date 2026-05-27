@@ -29,8 +29,8 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-     "LED-SSP2",
-     "LED-SSP2 tax"
+      "SSP2",
+      "SSP2 tax"
     ]
 
 # Run the workflow…
