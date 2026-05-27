@@ -4,6 +4,7 @@ import ixmp
 import message_ix
 from message_ix import make_df
 
+from message_ix_models import ScenarioInfo
 from message_ix_models.project.digsy.sensitivity import (
     adjust_electrification_constraint,
     adjust_rooftop_constraint,
@@ -14,14 +15,12 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
 
-def lower_cv_cost(scenario: "Scenario", scaler: float):
+def lower_cv_cost(scenario: "Scenario"):
+    scale_map = {"BESTEST": 0.666, "WORSTEST": 1.25}
     wind_tecs = ["wind_cv1", "wind_cv2", "wind_cv3", "wind_cv4"]
     sol_tecs = ["solar_cv1", "solar_cv2", "solar_cv3", "solar_cv4"]
-    df = scenario.par(
-        "var_cost",
-        filters={"technology": sol_tecs + wind_tecs},
-    )
-    df.value *= scaler
+    df = scenario.par("var_cost", filters={"technology": sol_tecs + wind_tecs})
+    df.value *= scale_map.get(scenario.scenario.split("_")[-1], 1)
     with scenario.transact():
         scenario.add_par("var_cost", df)
 
@@ -59,45 +58,34 @@ def relax_steel_constraints(scen) -> None:
         scen.add_par("initial_activity_up", ini)
 
 
-def fix_best_scenario():
+def fix_best_scenario() -> None:
     mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "DIGSY_SSP2_BEST", "INDC2030i_weak_SSP2 - Low Emissions_b"
-    ).clone(
-        "DIGSY_SSP2_BEST", "INDC2030i_weak_SSP2 - Low Emissions_b", keep_solution=False
-    )
+    m = "DIGSY_SSP2_BEST"
+    s = "INDC2030i_weak_SSP2 - Low Emissions_b"
+    scen = message_ix.Scenario(mp, m).clone(m, s, keep_solution=False)
     adjust_electrification_constraint(scen)
-    adjust_rooftop_constraint(scen, 0.4)
+    adjust_rooftop_constraint("BEST", ScenarioInfo(scen))
     scen.solve("MESSAGE-MACRO")
     scen.set_as_default()
 
 
-def fix_worstest():
+def fix_worstest() -> None:
     mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "DIGSY_SSP2_WORSTEST", "INDC2030i_weak_SSP2 - Low Emissions_b"
-    ).clone(
-        "DIGSY_SSP2_WORSTEST",
-        "INDC2030i_weak_SSP2 - Low Emissions_b",
-        keep_solution=False,
-    )
-    adjust_electrification_constraint(scen)
-    adjust_rooftop_constraint(scen, 0.5)
-    lower_cv_cost(scen, 1.25)
+    m = "DIGSY_SSP2_WORSTEST"
+    s = "INDC2030i_weak_SSP2 - Low Emissions_b"
+    scen = message_ix.Scenario(mp, m).clone(m, s, keep_solution=False)
+    lower_cv_cost(scen)
     scen.solve("MESSAGE-MACRO")
+    scen.set_as_default()
 
 
-def fix_bestest():
+def fix_bestest() -> None:
     mp = ixmp.Platform("ixmp_dev")
-    scen = message_ix.Scenario(
-        mp, "DIGSY_SSP2_BESTEST", "INDC2030i_weak_SSP2 - Low Emissions_b"
-    ).clone(
-        "DIGSY_SSP2_BESTEST",
-        "INDC2030i_weak_SSP2 - Low Emissions_b",
-        keep_solution=False,
-    )
+    m = "DIGSY_SSP2_BESTEST"
+    s = "INDC2030i_weak_SSP2 - Low Emissions_b"
+    scen = message_ix.Scenario(mp, m).clone(m, s, keep_solution=False)
     adjust_electrification_constraint(scen)
     adjust_rooftop_constraint(scen, 0.45)
-    lower_cv_cost(scen, 0.666)
+    lower_cv_cost(scen)
     scen.solve("MESSAGE-MACRO")
     scen.set_as_default()

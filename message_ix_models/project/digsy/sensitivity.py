@@ -93,13 +93,11 @@ def expand_reserve(scenario: "Scenario"):
 
 
 def adjust_rooftop_constraint(
-    digsy_scen,
-    s_info: "ScenarioInfo",
+    digsy_scen: str, s_info: "ScenarioInfo"
 ) -> "ParameterData":
-    val_map = {
-        "BEST": 0.4,
-        "BESTEST": 0.45,
-    }
+    val_map = {"BEST": 0.4, "BESTEST": 0.45}
+    if not val_map.get(digsy_scen, None):
+        return {}
     df = (
         make_df(
             "share_commodity_up",
@@ -114,12 +112,15 @@ def adjust_rooftop_constraint(
     return {"share_commodity_up": df}
 
 
-def adjust_electrification_constraint(scenario: "Scenario"):
+def adjust_electrification_constraint(scenario: "Scenario") -> "ParameterData":
+    val_map = {"BEST": 0.01, "BESTEST": 0.01}
+    if not val_map.get(scenario.scenario.split("_")[-1], None):
+        return {}
     df = scenario.par(
         "growth_activity_up",
         filters={"technology": ["elec_trp", "hp_el_rc", "elec_rc"]},
     )
-    df.value += 0.01
+    df.value += val_map.get(scenario.scenario.split("_")[-1])
     return {"growth_activity_up": df}
 
 
