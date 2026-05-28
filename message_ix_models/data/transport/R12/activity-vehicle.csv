@@ -16,90 +16,32 @@
 # Unit: kilometre / year
 #
 scenario, technology, node,     year, value
-# *,      LDV,        R12_AFR,  2020, 11000  # TH low
-# *,      LDV,        R12_AFR,  2110, 11000  # TH low
+scenario, technology, node,     year, value
 *,        LDV,        R12_AFR,  2020, 15500
-*,        LDV,        R12_AFR,  2110, 15500
-# *,      LDV,        R12_AFR,  2020, 19000  # TH high
-# *,      LDV,        R12_AFR,  2110, 19000  # TH high
-
-# *,      LDV,        R12_CHN,  2020,  9500  # TH low
-# *,      LDV,        R12_CHN,  2110,  9500  # TH low
+*,        LDV,        R12_AFR,  2065, 22000
 *,        LDV,        R12_CHN,  2020, 15000  # TH high
-*,        LDV,        R12_CHN,  2110, 15000  # TH high
-# *,      LDV,        R12_CHN,  2020, 16000  # Previous value
-# *,      LDV,        R12_CHN,  2110, 16000  # Previous value
-
-# *,      LDV,        R12_EEU,  2020,  8962  # Previous value
-# *,      LDV,        R12_EEU,  2110,  8962  # Previous value
+*,        LDV,        R12_CHN,  2065, 22000  # TH high
 *,        LDV,        R12_EEU,  2020,  9000  # TH low
-*,        LDV,        R12_EEU,  2110,  9000  # TH low
-# *,      LDV,        R12_EEU,  2020, 10000  # TH high
-# *,      LDV,        R12_EEU,  2110, 10000  # TH high
-# *,      LDV,        R12_EEU,  2020, 12500  # Experimental #392
-# *,      LDV,        R12_EEU,  2110, 15000  # Experimental #392
-
-# *,      LDV,        R12_FSU,  2020, 11000  # TH low
-# *,      LDV,        R12_FSU,  2110, 11000  # TH low
+*,        LDV,        R12_EEU,  2065, 22000  # TH low
 *,        LDV,        R12_FSU,  2020, 13000  # TH high = previous value
-*,        LDV,        R12_FSU,  2110, 13000  # TH high = previous value
-
-# *,      LDV,        R12_LAM,  2020, 13000  # TH low
-# *,      LDV,        R12_LAM,  2110, 13000  # TH low
+*,        LDV,        R12_FSU,  2065, 22000  # TH high = previous value
 *,        LDV,        R12_LAM,  2020, 13500
-*,        LDV,        R12_LAM,  2110, 13500
-# *,      LDV,        R12_LAM,  2020, 15000  # TH high
-# *,      LDV,        R12_LAM,  2110, 15000  # TH high
-
-# *,      LDV,        R12_MEA,  2020, 13000  # TH low
-# *,      LDV,        R12_MEA,  2110, 13000  # TH low
+*,        LDV,        R12_LAM,  2065, 22000
 *,        LDV,        R12_MEA,  2020, 14500
-*,        LDV,        R12_MEA,  2110, 14500
-# *,      LDV,        R12_MEA,  2020, 16000  # TH high
-# *,      LDV,        R12_MEA,  2110, 16000  # TH high
-
-# *,      LDV,        R12_NAM,  2020, 16000  # TH low
-# *,      LDV,        R12_NAM,  2110, 16000  # TH low
+*,        LDV,        R12_MEA,  2065, 22000
 *,        LDV,        R12_NAM,  2020, 18400
-*,        LDV,        R12_NAM,  2110, 18400
-# *,      LDV,        R12_NAM,  2020, 19000  # TH high
-# *,      LDV,        R12_NAM,  2110, 19000  # TH high
-
+*,        LDV,        R12_NAM,  2065, 22000
 *,        LDV,        R12_PAO,  2020,  9000  # TH low = previous value
-*,        LDV,        R12_PAO,  2110,  9000  # TH low = previous value
-# *,      LDV,        R12_PAO,  2020, 10000  # TH high
-# *,      LDV,        R12_PAO,  2110, 10000  # TH high
-# *,      LDV,        R12_PAO,  2020, 10000  # Experimental #392
-# *,      LDV,        R12_PAO,  2110, 13000  # Experimental #392
-
-# *,      LDV,        R12_PAS,  2020, 11000  # TH low
-# *,      LDV,        R12_PAS,  2110, 11000  # TH low
+*,        LDV,        R12_PAO,  2065, 22000  # TH low = previous value
 *,        LDV,        R12_PAS,  2020, 13000  # TH high = previous value
-*,        LDV,        R12_PAS,  2110, 13000  # TH high = previous value
-
-# *,      LDV,        R12_RCPA, 2020, 11000  # TH low
-# *,      LDV,        R12_RCPA, 2110, 11000  # TH low
+*,        LDV,        R12_PAS,  2065, 22000  # TH high = previous value
 *,        LDV,        R12_RCPA, 2020, 12000  # TH high
-*,        LDV,        R12_RCPA, 2110, 12000  # TH high
-# *,      LDV,        R12_RCPA, 2020, 15000  # Experimental #392
-# *,      LDV,        R12_RCPA, 2110, 15000  # Experimental #392
-# *,      LDV,        R12_RCPA, 2020, 16000  # Previous value
-# *,      LDV,        R12_RCPA, 2110, 16000  # Previous value
-
+*,        LDV,        R12_RCPA, 2065, 22000  # TH high
 *,        LDV,        R12_SAS,  2020, 12000  # TH low = previous value
-*,        LDV,        R12_SAS,  2110, 12000  # TH low = previous value
-# *,      LDV,        R12_SAS,  2020, 15000  # TH high
-# *,      LDV,        R12_SAS,  2110, 15000  # TH high
-# *,      LDV,        R12_SAS,  2020, 18000  # Experimental #392
-# *,      LDV,        R12_SAS,  2110, 18000  # Experimental #392
-
-# *,      LDV,        R12_WEU,  2020, 11000  # TH low
-# *,      LDV,        R12_WEU,  2110, 11000  # TH low
+*,        LDV,        R12_SAS,  2065, 22000  # TH low = previous value
 *,        LDV,        R12_WEU,  2020, 11700
-*,        LDV,        R12_WEU,  2110, 11700
-# *,      LDV,        R12_WEU,  2020, 12000  # TH high
-# *,      LDV,        R12_WEU,  2110, 12000  # TH high
-# *,      LDV,        R12_WEU,  2110, 15000  # Experimental #392
+*,        LDV,        R12_WEU,  2065, 22000
+
 
 LED,      LDV,        R12_AFR,  2020, 15500
 LED,      LDV,        R12_AFR,  2050, 15113
@@ -141,11 +83,11 @@ LED,      LDV,        R12_WEU,  2110, 14087
 *,        AIR,        *,        2020, 100000
 *,        AIR,        *,        2110, 100000
 *,        2W,         *,        2020, 8000
-*,        2W,         *,        2110, 8000
+*,        2W,         *,        2065, 10000
 *,        2W,         R12_NAM,  2020, 4000
-*,        2W,         R12_NAM,  2110, 4000
+*,        2W,         R12_NAM,  2065, 8000
 *,        2W,         R12_WEU,  2020, 5000
-*,        2W,         R12_WEU,  2110, 5000
+*,        2W,         R12_WEU,  2065, 8000
 
 *,        P RAIL,   R12_AFR,    2020, 100000
 *,        P RAIL,   R12_AFR,    2110, 100000
