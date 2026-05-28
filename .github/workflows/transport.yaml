@@ -30,10 +30,7 @@ env:
   labels: >-
     [
       "SSP2",
-      "SSP2 exo price 2e17",
-      "LED-SSP2 exo price 1aa5",
-      "LED-SSP2",
-       "LED-SSP2 exo price 2e17"
+      "SSP2 exo price 2e17"
     ]
 
 # Run the workflow…
