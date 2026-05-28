@@ -102,7 +102,7 @@ class TestCL_SCENARIO:
         result = CL_SCENARIO.get(force=True)
 
         # Code list has the expected length
-        assert 366 == len(result)
+        assert 386 == len(result)
 
         # Code list contains codes with the expected IDs
         assert {
@@ -134,6 +134,7 @@ class TestCL_SCENARIO:
         assert "material" in cfg.modules
 
         # Codes with policies discovered in the data dir are present
+        c = result["LED-SSP2 exo price 1aa5"]
         c = result["M SSP2 exo price 2e17"]
 
         assert "SSP_SSP2_v5.3.1/SSP2 - Low Emissions#2" in str(
