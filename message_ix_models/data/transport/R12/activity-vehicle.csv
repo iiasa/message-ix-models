@@ -16,7 +16,6 @@
 # Unit: kilometre / year
 #
 scenario, technology, node,     year, value
-scenario, technology, node,     year, value
 *,        LDV,        R12_AFR,  2020, 15500
 *,        LDV,        R12_AFR,  2065, 22000
 *,        LDV,        R12_CHN,  2020, 15000  # TH high
