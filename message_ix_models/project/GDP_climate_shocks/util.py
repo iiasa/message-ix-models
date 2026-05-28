@@ -83,7 +83,6 @@ def load_gdp_data():
     return gdp_df
 
 
-
 def run_legacy_reporting(sc=False, mp=False):
     # lazy import to allow tests pass
     from message_data.tools.post_processing.iamc_report_hackathon import (
@@ -112,6 +111,26 @@ def run_emi_reporting(sc=False, mp=False):
         merge_ts=False,
         run_config="GDP_shock_emiss_run_config.yaml",
     )
+
+
+def clear_non_historical_reporting(scenario):
+    """
+    Remove all reporting timeseries for optimization/model years.
+
+    Keeps historical timeseries intact and removes non-historical results
+    before running full legacy reporting on the same scenario instance.
+    """
+    from message_ix_models.report.operator import remove_ts
+
+    try:
+        remove_ts(scenario, after=scenario.firstmodelyear)
+    except Exception as e:
+        log.warning(
+            "Could not clear non-historical reporting timeseries for %s/%s: %s",
+            scenario.model,
+            scenario.scenario,
+            e,
+        )
 
 
 ## SECTION 3: APPLY CHANGES

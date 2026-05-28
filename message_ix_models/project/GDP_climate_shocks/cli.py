@@ -28,6 +28,7 @@ from message_ix_models.project.GDP_climate_shocks.report import report_damages
 from message_ix_models.project.GDP_climate_shocks.util import (
     add_slack_ix,
     apply_growth_rates,
+    clear_non_historical_reporting,
     load_config_from_path,
     maybe_shift_year,
     regional_gdp_impacts,
@@ -206,7 +207,10 @@ def iterate_with_climate_impacts(
         delta = abs(meanT[it - 1] - meanT[it])
         log.info(f"Delta after iteration {it}: {delta:.3f}")
 
-    logging.info(f"Convergence with scenario {scs.scenario}. Run full reporting")
+    logging.info(
+        f"Convergence with scenario {scs.scenario}. Clearing old non-historical reporting and running full reporting"
+    )
+    clear_non_historical_reporting(scs)
     run_legacy_reporting(scs, scs.platform)
     log.info("Running damage cost reporting")
     report_damages(
