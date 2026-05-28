@@ -9,29 +9,29 @@
 #
 scenario, technology, node_loc, year_vtg, value
 *,        LDV,        R12_AFR,  1990,     25
-*,        LDV,        R12_AFR,  2065,     30
+*,        LDV,        R12_AFR,  2065,     14
 *,        LDV,        R12_CHN,  1990,     18
-*,        LDV,        R12_CHN,  2065,     30
+*,        LDV,        R12_CHN,  2065,     14
 *,        LDV,        R12_EEU,  1990,     22
-*,        LDV,        R12_EEU,  2065,     30
+*,        LDV,        R12_EEU,  2065,     14
 *,        LDV,        R12_FSU,  1990,     15
-*,        LDV,        R12_FSU,  2065,     30
+*,        LDV,        R12_FSU,  2065,     14
 *,        LDV,        R12_LAM,  1990,     25
-*,        LDV,        R12_LAM,  2065,     30
+*,        LDV,        R12_LAM,  2065,     14
 *,        LDV,        R12_MEA,  1990,     15
-*,        LDV,        R12_MEA,  2065,     30
+*,        LDV,        R12_MEA,  2065,     14
 *,        LDV,        R12_NAM,  1990,     18
-*,        LDV,        R12_NAM,  2065,     30
+*,        LDV,        R12_NAM,  2065,     14
 *,        LDV,        R12_PAO,  1990,     15
-*,        LDV,        R12_PAO,  2065,     30
+*,        LDV,        R12_PAO,  2065,     14
 *,        LDV,        R12_PAS,  1990,     15
-*,        LDV,        R12_PAS,  2065,     30
+*,        LDV,        R12_PAS,  2065,     14
 *,        LDV,        R12_RCPA, 1990,     15
-*,        LDV,        R12_RCPA, 2065,     30
+*,        LDV,        R12_RCPA, 2065,     14
 *,        LDV,        R12_SAS,  1990,     25
-*,        LDV,        R12_SAS,  2065,     30
+*,        LDV,        R12_SAS,  2065,     14
 *,        LDV,        R12_WEU,  1990,     20
-*,        LDV,        R12_WEU,  2065,     30
+*,        LDV,        R12_WEU,  2065,     14
                       
 LED,      LDV,        R12_AFR,  1990,     25
 LED,      LDV,        R12_AFR,  2050,     19.36
@@ -71,34 +71,34 @@ LED,      LDV,        R12_WEU,  2050,     19.55
 LED,      LDV,        R12_WEU,  2110,     19.55
 
 *,        2W,         *,        1990,     15
-*,        2W,         *,        2065,     20
+*,        2W,         *,        2065,     10
 *,        AIR,        *,        1990,     25
-*,        AIR,        *,        2065,     40
+*,        AIR,        *,        2110,     25
 *,        BUS,        *,        1990,     20
-*,        BUS,        *,        2065,     30
+*,        BUS,        *,        2110,     20
 *,        F RAIL,     *,        1990,     30
-*,        F RAIL,     *,        2065,     40
+*,        F RAIL,     *,        2110,     30
 *,        F ROAD, R12_AFR,      1990,     20
-*,        F ROAD, R12_AFR,      2065,     20
+*,        F ROAD, R12_AFR,      2110,     15
 *,        F ROAD, R12_CHN,      1990,     12
-*,        F ROAD, R12_CHN,      2065,     20
+*,        F ROAD, R12_CHN,      2110,     12
 *,        F ROAD, R12_EEU,      1990,     12
-*,        F ROAD, R12_EEU,      2065,     20
+*,        F ROAD, R12_EEU,      2110,     12
 *,        F ROAD, R12_FSU,      1990,     12
-*,        F ROAD, R12_FSU,      2065,     20
+*,        F ROAD, R12_FSU,      2110,     12
 *,        F ROAD, R12_LAM,      1990,     12
-*,        F ROAD, R12_LAM,      2065,     20
+*,        F ROAD, R12_LAM,      2110,     12
 *,        F ROAD, R12_MEA,      1990,     12
-*,        F ROAD, R12_MEA,      2065,     20
+*,        F ROAD, R12_MEA,      2110,     12
 *,        F ROAD, R12_NAM,      1990,     12
-*,        F ROAD, R12_NAM,      2065,     20
+*,        F ROAD, R12_NAM,      2110,     12
 *,        F ROAD, R12_PAO,      1990,     12
-*,        F ROAD, R12_PAO,      2065,     20
+*,        F ROAD, R12_PAO,      2110,     12
 *,        F ROAD, R12_PAS,      1990,     20
-*,        F ROAD, R12_PAS,      2065,     20
+*,        F ROAD, R12_PAS,      2110,     15
 *,        F ROAD, R12_RCPA,     1990,     12
-*,        F ROAD, R12_RCPA,     2065,     20
+*,        F ROAD, R12_RCPA,     2110,     12
 *,        F ROAD, R12_SAS,      1990,     20
-*,        F ROAD, R12_SAS,      2065,     20
+*,        F ROAD, R12_SAS,      2110,     15
 *,        F ROAD, R12_WEU,      1990,     12
-*,        F ROAD, R12_WEU,      2065,     20
+*,        F ROAD, R12_WEU,      2110,     12
