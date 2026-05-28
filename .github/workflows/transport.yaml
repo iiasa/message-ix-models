@@ -30,7 +30,7 @@ env:
   labels: >-
     [
       "DIGSY-BEST-C",
-      "DIGSY-BEST-C exo price"
+      "DIGSY-BEST-C exo price c59e"
     ]
 
 # Run the workflow…
