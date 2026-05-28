@@ -611,6 +611,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
 
         # Baselines and policy scenarios for each SSP
         te = TaxEmission(1000.0)
+        _ep = " with exogenous emission price"
         for ssp in "12345":
             id_ = name = f"SSP{ssp}"
             _append_codes(id_, name + " baseline", ssp)
@@ -620,13 +621,17 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
 
             # PRICE_EMISSION from exogenous data file
             for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
-                name += " with exogenous price"
-                _append_codes(f"{id_} exo price {hash}", name, ssp, policy=eep)
+                _append_codes(f"{id_} exo price {hash}", name + _ep, ssp, policy=eep)
 
         # LED
-        name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
         for ssp in "12":
-            _append_codes(f"LED-SSP{ssp}", name.format(ssp), ssp, led=True)
+            id_ = f"LED-SSP{ssp}"
+            name = f"Low Energy Demand/High-with-Low with SSP{ssp} socioeconomics"
+            _append_codes(id_, name + ", baseline", ssp, led=True)
+
+            # PRICE_EMISSION from exogenous data file
+            for eep, hash in iter_price_emission("R12", "LED"):
+                _append_codes(f"{id_} exo price {hash}", name + _ep, ssp, policy=eep)
 
         # DIGSY
         ssp, name = "2", "DIGSY {!r} scenario with SSP2"
