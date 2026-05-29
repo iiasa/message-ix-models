@@ -1,0 +1,121 @@
+# yaml file to report concrete hydrogen production INPUT energy flows
+# (the in| family): how much of each commodity every production technology
+# consumes. var: in -> ACT x input coefficient. Each variable specifies a list
+# of filters for genno.operator.select().
+#
+# Display labels follow the EFC mapping_clean convention (e.g. "electricity"),
+# while the genno filters reference the MODEL commodity names (electr, gas,
+# coal, biomass, ht_heat). Hard-zero electr placeholders on h2_smr/coal/bio are
+# intentionally omitted — those technologies do not consume electricity (they
+# emit it as a byproduct), so they are not input flows.
+
+var:
+  in
+
+iamc_prefix:
+  "in|"
+
+unit: EJ/yr
+
+vars:
+  # biomass feedstock
+  h2_bio|biomass:
+    filter:
+      {technology: h2_bio, mode: M1, commodity: biomass, level: primary}
+    original_unit: GWa
+    short:
+      in_h2_bio_biomass
+
+  h2_bio_ccs|biomass:
+    filter:
+      {technology: h2_bio_ccs, mode: M1, commodity: biomass, level: primary}
+    original_unit: GWa
+    short:
+      in_h2_bio_ccs_biomass
+
+  # coal feedstock
+  h2_coal|coal:
+    filter:
+      {technology: h2_coal, mode: M1, commodity: coal, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_coal_coal
+
+  h2_coal_ccs|coal:
+    filter:
+      {technology: h2_coal_ccs, mode: M1, commodity: coal, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_coal_ccs_coal
+
+  # gas feedstock
+  h2_smr|gas:
+    filter:
+      {technology: h2_smr, mode: M1, commodity: gas, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_smr_gas
+
+  h2_smr_ccs|gas:
+    filter:
+      {technology: h2_smr_ccs, mode: M1, commodity: gas, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_smr_ccs_gas
+
+  # gas feedstock for electric pyrolysis (methane pyrolysed to H2 + carbon black).
+  # NOTE: absent from mapping_clean; added as a genuine feedstock flow.
+  h2_pyro_elec|gas:
+    filter:
+      {technology: h2_pyro_elec, mode: M1, commodity: gas, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_pyro_gas
+
+  # electricity (electrolysers carry the 7 Yoga meth_h2 split modes)
+  h2_elec_alk|electricity:
+    filter:
+      {technology: h2_elec_alk, mode: [M1, feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: electr, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_elec_alk_electr
+
+  h2_elec_pem|electricity:
+    filter:
+      {technology: h2_elec_pem, mode: [M1, feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: electr, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_elec_pem_electr
+
+  h2_elec_soe|electricity:
+    filter:
+      {technology: h2_elec_soe, mode: [M1, feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: electr, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_elec_soe_electr
+
+  h2_pyro_elec|electricity:
+    filter:
+      {technology: h2_pyro_elec, mode: M1, commodity: electr, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_pyro_electr
+
+  # SMR-CCS capture electricity penalty (small but nonzero, 0.0145 GWa/GWa).
+  # NOTE: absent from mapping_clean; added per the "all electricity to hydrogen"
+  # aggregate decision.
+  h2_smr_ccs|electricity:
+    filter:
+      {technology: h2_smr_ccs, mode: M1, commodity: electr, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_smr_ccs_electr
+
+  # high-temperature heat consumed by SOEC. NOTE: absent from mapping_clean;
+  # added as a genuine input flow.
+  h2_elec_soe|ht_heat:
+    filter:
+      {technology: h2_elec_soe, mode: [M1, feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: ht_heat, level: secondary}
+    original_unit: GWa
+    short:
+      in_h2_elec_soe_htheat

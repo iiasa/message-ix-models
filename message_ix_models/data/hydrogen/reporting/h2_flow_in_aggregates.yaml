@@ -1,0 +1,18 @@
+# Aggregation rules for the hydrogen production INPUT flow reporting (in| family).
+#
+# Total electricity consumed by hydrogen production: the sum of the per-tech
+# in|...|electricity leaves over the producers that ACTUALLY consume electricity
+# — the three electrolysers, electric pyrolysis, and the SMR-CCS capture penalty.
+# h2_smr/h2_coal/h2_coal_ccs/h2_bio/h2_bio_ccs are excluded: their electr input
+# coefficient is a hard zero (they emit electricity as a byproduct instead).
+#
+# Aggregates sum already-converted IAMC values, so no original_unit/factors here.
+
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+level_1:
+  hydrogen|total electricity:
+    short: in_h2_total_electricity
+    components: [ in_h2_elec_alk_electr, in_h2_elec_pem_electr, in_h2_elec_soe_electr, in_h2_pyro_electr, in_h2_smr_ccs_electr ]
