@@ -323,9 +323,6 @@ def format_reporting_df(
         .rename(columns={"iamc_name": "variable", "nl": "region", "ya": "Year"})
         .assign(
             variable=lambda x: variable_prefix + x["variable"],
-            region=lambda x: x["region"].str.replace(
-                "R12_", "", regex=False
-            ),  # Remove R12_ prefix
             Model=model_name,
             Scenario=scenario_name,
             Unit=unit,  # Set target unit
@@ -654,8 +651,14 @@ def run_h2_reporting(
     # Concatenate all dataframes
     py_df = pyam.concat(dfs)
 
-    # Add World region as sum of all other regions
+    # Aggregate across regions for the global total. Upload under the R12_GLB
+    # technical node ID so it flows through the same synonym path as legacy
+    # (resolves to "GLB region (R12)" canonical) and overwrites legacy's global
+    # row at the same key per the EFC coexistence design. Safe for H2 variables
+    # because none of the hydrogen reporter's variables carry R12_GLB activity
+    # (bunkers/non-allocated) — pyam's aggregate_region is summing 12 regional
+    # rows regardless of the output label.
     if add_world:
-        py_df.aggregate_region(py_df.variable, region="World", append=True)
+        py_df.aggregate_region(py_df.variable, region="R12_GLB", append=True)
 
     return py_df
