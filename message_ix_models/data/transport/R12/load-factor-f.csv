@@ -1,9 +1,10 @@
-# Load factor of freight vehicles,,,,
-#,,,,
-# Units: tonne / vehicle,,,,
-#,,,,
-# Source: F RAIL--Low values from https://iiasahub.sharepoint.com/:x:/r/sites/eceprog/Shared%20Documents/Transport/Data/Mix-T%20Non-LDV%20param.%20%26%20calib/MixT%20implementation/background%20files/f%20rail%20summary.xlsx?d=wdb53977215d94ccda167da7d19e7975c&csf=1&web=1&e=zdqVhY,,,,
-# Truck: placeholder for now. Construct,,,,
+# Load factor of freight vehicles
+#
+# Units: tonne / vehicle
+#
+# Source: F RAIL--Low values from f Rail summary file
+# Truck: placeholder
+#
 scenario,node,technology,year, value
 *,R12_AFR,F RAIL,2020,57600
 *,R12_CHN,F RAIL,2020,143500
