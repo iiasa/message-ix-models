@@ -281,14 +281,14 @@ def add_hydrogen_sets(scen, ssp="SSP2"):
     reqs = get_requirements()
 
     # extract the technologies:
-    tecs = reqs["technology"]["add"]
+    tecs = reqs["hydrogen"]["technology"]["add"]
     techs_to_add = check_sets_in_scenario(scen, tecs, "technology")
     with scen.transact("Adding hydrogen Techs"):
         for tec in techs_to_add:
             scen.add_set("technology", tec)
 
     # we also need to add the black carbon commodity
-    commodities = reqs["commodity"]["add"]
+    commodities = reqs["hydrogen"]["commodity"]["add"]
     commodities_to_add = check_sets_in_scenario(scen, commodities, "commodity")
 
     with scen.transact("Adding hydrogen Commodities"):
@@ -296,7 +296,7 @@ def add_hydrogen_sets(scen, ssp="SSP2"):
             scen.add_set("commodity", com)
 
     # finally, we need to add the leakage emissions
-    emissions = reqs["emission"]["add"]
+    emissions = reqs["hydrogen"]["emission"]["add"]
     emissions_to_add = check_sets_in_scenario(scen, emissions, "emission")
     with scen.transact("Adding hydrogen Emissions"):
         for em in emissions_to_add:
