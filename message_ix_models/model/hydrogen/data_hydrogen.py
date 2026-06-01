@@ -45,6 +45,7 @@ def add_hydrogen_techs(scenario: Scenario):
     outer transaction wrapper is used.
     """
     from message_ix_models.model.hydrogen.utils import (
+        add_hydrogen_sets,
         load_commodity_sets,
         load_emission_sets,
         load_hydrogen_parameters,
@@ -52,6 +53,12 @@ def add_hydrogen_techs(scenario: Scenario):
         remove_deprecated_sets,
     )
 
+    # Register all hydrogen techs/commodities/emissions in the base sets BEFORE
+    # load_hydrogen_sets adds technology-indexed sets. Otherwise an indexed set
+    # referencing a tech (e.g. h2_pyro_elec) can be added before that tech is in
+    # the 'technology' set, which stricter ixmp versions reject (the older ixmp
+    # on UNICC; the newer laptop wheel tolerated it). Matches Yiyi's working order.
+    add_hydrogen_sets(scenario)
     load_commodity_sets(scenario)
     load_emission_sets(scenario)
     load_hydrogen_sets(scenario)
