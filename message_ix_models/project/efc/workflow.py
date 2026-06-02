@@ -76,7 +76,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         try:
             _run_transport_report(context, scenario)
         except Exception as e:
-            log.warning("Transport reporting skipped: %s", e)
+            log.warning("Transport reporting skipped: %s", e, exc_info=True)
     else:
         log.info("Transport reporting skipped (no transport pax demand).")
 
@@ -217,6 +217,16 @@ def generate(context: Context) -> Workflow:
     wf = Workflow(context)
     context.ssp = "SSP2"
     context.model.regions = "R12"
+
+    # Build context.transport (and the rest of the BMT config) before any report
+    # step runs. Without this the CLI path never configures transport, so
+    # _run_transport_report -> prepare_reporter builds the transport graph against
+    # an unconfigured context and raises — surfacing as an empty
+    # "Transport reporting skipped:" message. Mirrors the call in
+    # scripts/verify/report_efc_workflow.py.
+    from message_ix_models.model.bmt.config import apply_bmt_config
+
+    apply_bmt_config(context)
 
     # EFC workflow: clone from parent BMT-R12 baseline on ixmp-dev into EFC model name.
     model_name = "ixmp://ixmp-dev/" + EFC_MODEL_NAME
