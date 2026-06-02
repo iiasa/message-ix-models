@@ -385,6 +385,11 @@ def add_structure(c: Computer) -> None:
         (K.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
         ("y::y0", lambda v: dict(y=v[0]), "y::model"),
+        (
+            K.coord.yv_1plus,
+            lambda years: dict(yv=[y for y in years if y >= years[1]]),
+            "y::model",
+        ),
     ):
         try:
             c.add(*task, strict=True)
