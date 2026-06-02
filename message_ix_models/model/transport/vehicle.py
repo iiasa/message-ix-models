@@ -77,13 +77,23 @@ def prepare_computer(c: "Computer") -> None:
 def capacity_factor(c: "Computer", mode: str) -> None:
     """Add data for MESSAGE parameter ``capacity_factor``."""
     cf = "capacity_factor"
-    k = Key(cf, K.exo.activity_vehicle.dims, mode)
+    k = Keys(
+        cf=Key(cf, K.exo.activity_vehicle.dims, mode),
+        bcast_y=f"broadcast:y-yv-ya:{cf}+{mode}",
+        coords_y=f"coords:yv:{cf}+{mode}",
+    )
+
+    # Use only vintages from the maximum technical lifetime (1995)
+    # This reduces the result size from 195k to about 90k observations
+    c.add(k.coords_y, lambda years: dict(yv=[y for y in years if y >= 1995]), "y")
+    c.add(k.bcast_y, "select", K.bcast_y.all, k.coords_y)
 
     # Expand from "t" modes to all actual technologies
-    c.add(k[0], "call", "t::transport map", K.exo.activity_vehicle[mode])
+    # TODO Move this into ActivityVehicle
+    c.add(k.cf[0], "call", "t::transport map", K.exo.activity_vehicle[mode])
 
     # Broadcast y → (yV, yA)
-    prev = c.add(k[1], "mul", k[0], K.bcast_y.all)
+    prev = c.add(k.cf[1], "mul", k.cf[0], k.bcast_y)
 
     # Convert to MESSAGE data structure
     dims = DIMS | dict(node_loc="n")
