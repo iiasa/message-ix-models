@@ -20,6 +20,10 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: Modes or groups of modes to handle in :func:`.prepare_computer`,
+#: :func:`capacity_factor`, and :func:`stock`.
+MODE = ["F", "P ex LDV", "LDV"]
+
 # Shorthand
 Vi = "vehicle+ixmp"
 
@@ -39,7 +43,7 @@ def prepare_computer(c: "Computer") -> None:
     techs = context.transport.spec.add.set["technology"]
     k = K.exo.activity_vehicle
 
-    for mode in "F", "P ex LDV", "LDV":
+    for mode in MODE:
         # Select only the "t" dimension coords according to `mode`
         mode_code = techs[techs.index(mode)]
         modes = ["LDV"] if mode == "LDV" else list(map(str, mode_code.child))
@@ -86,11 +90,24 @@ def capacity_factor(c: "Computer", mode: str) -> None:
     collect(f"{cf}::{mode}", "as_message_df", prev, name=cf, dims=dims, common=COMMON)
 
 
+#: 2-:class:`tuple` of keys for each :data:`MODE`:
+#:
+#: 1. Key for total service activity, dimensions (n, y) or (n, y, t).
+#: 2. Key for load factor or occupancy.
+STOCK_KEYS = {
+    "F": (K.fv, K.exo.load_factor_f),
+    "P ex LDV": (K.pdt_nyt, K.exo.load_factor_p),
+    "LDV": (K.ldv_ny + "total", K.exo.load_factor_ldv),
+}
+
+
 def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     """Prepare `c` to compute base-period stock and historical sales for `mode`.
 
     Parameters
     ----------
+    mode :
+        An element of :data:`MODE`.
     margin :
         Fractional margin by which to increase the resulting sales values. Because these
         values are used to compute ``historical_new_capacity`` and
@@ -107,19 +124,16 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
         sales=f"sales:nl-t-yv:{mode}",
     )
 
-    k_total_activity, k_load_factor = {
-        "F": (K.fv, K.exo.load_factor_f),
-        "P ex LDV": (K.pdt_nyt, K.exo.load_factor_p),
-        "LDV": (K.ldv_ny + "total", K.exo.load_factor_ldv),
-    }[mode]
+    # Retrieve starting keys specific to `mode`
+    k.total_activity, k.load_factor = STOCK_KEYS[mode]
 
     # - Divide total activity by (1) annual driving distance per vehicle and (2) load
     #   factor (occupancy) to obtain implied stock.
     # - Correct units: "load factor ldv:n-y" is dimensionless, should be
     #   passenger/vehicle
     # - Select only the base-period value.
-    c.add(k.stock[0], "div", k_total_activity, K.exo.activity_vehicle[mode])
-    c.add(k.stock[1], "div", k.stock[0], k_load_factor)
+    c.add(k.stock[0], "div", k.total_activity, K.exo.activity_vehicle[mode])
+    c.add(k.stock[1], "div", k.stock[0], k.load_factor)
     c.add(k.stock[2] / "y", "select", k.stock[1], "y0::coord", sums=True)
 
     if mode != "LDV":
