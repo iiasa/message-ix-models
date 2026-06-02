@@ -1,12 +1,15 @@
 # historical_new_capacity and bound_new_capacity_{lo,up} values for LDVs
 #
-# Source: these were prepared by VK using some R/IPython scripts shared
-# in the IIASA ECE #transport Slack channel on 2024-01-11
-# https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1704965143599229 and
-# updated on 2024-02-23
+# See .transport.vehicle.stock for usage. As of 2026-06-02, only values
+# from 2025 onwards are used.
 #
-# They are derived from (1) an IEA EV data set and (2) data from the OICA
-# website.
+# Source:
+# - Initial values for LDV technologies prepared by VK using R/IPython scripts
+#   shared in the IIASA ECE #transport Slack channel on 2024-01-11 as two files
+#   named in comments below. See
+#   https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1704965143599229.
+# - Derived from (1) an IEA EV data set and (2) data from the OICA website.
+# - Updated on 2024-02-23.
 #
 # Units: Mvehicle
 #
