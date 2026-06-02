@@ -63,7 +63,12 @@ IEA_EWEB_FLOW = [
 
 
 class ActivityVehicle(ExoDataSource):
-    """Activity (distance) per vehicle per year."""
+    """Activity (distance) per vehicle per year.
+
+    Values from :attr:`filename` are processed, including:
+
+    - Extrapolate along the |y| dimension to all periods, including historical periods.
+    """
 
     @dataclass
     class Options(BaseOptions):
