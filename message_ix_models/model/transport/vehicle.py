@@ -62,16 +62,10 @@ def prepare_computer(c: "Computer") -> None:
         f"{tl}::vehicle", "as_message_df", K.exo.lifetime, name=tl, dims=DIMS, common={}
     )
 
+    # commented: handle data from stock-cap.csv; currently unused.
     # # total stock = stock per capita × total population
     # stock_total = exo.stock_cap - "cap"
     # c[stock_total] = "mul", exo.stock_cap, pop
-    #
-    # # Convert to data for MESSAGE parameters "bound_total_capacity_{lo,up}"
-    # keys = []
-    # kw = dict(dims=util.DIMS | dict(node_loc="n", year_act="y"), common=util.COMMON)
-    # for par_name in "bound_total_capacity_lo", "bound_total_capacity_up":
-    #     keys.append(Key(par_name, (), Vi))
-    #     c[keys[-1]] = "as_message_df", stock_total, dict(name=par_name) | kw
 
 
 def capacity_factor(c: "Computer", mode: str) -> None:
@@ -146,15 +140,28 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     c.add(k.stock[1], "div", k.stock[0], k.load_factor)
     c.add(k.stock[2] / "y", "select", k.stock[1], "y0::coord", sums=True)
 
-    if mode != "LDV":
-        return
+    if mode == "LDV":
+        # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
+        c.add(k.stock, "mul", k.stock[2] / ("t", "y"), K.exo.t_share_ldv)
 
-    # Multiply by exogenous technology shares to obtain stock with (n, t) dimensions
-    c.add(k.stock, "mul", k.stock[2] / ("t", "y"), K.exo.t_share_ldv)
+        # Age of vehicles as of the model base period
+        k.age = K.exo.age_ldv
+
+        # Subset of values from ldv-new-capacity.csv for 1 period after the model base
+        # period (e.g. 2025 for 2020 base period)
+        c.add(k.sales["exo"], "select", K.exo.cap_new_ldv, K.coord.yv_1plus)
+    else:
+        # Total stock: no data flow for exogenous technology shares
+        c.add(k.stock, k.stock[2])
+
+        k.age = K.exo.lifetime
+
+        # Remainder not yet implemented for non-LDV
+        return
 
     # Fraction of sales in preceding years (annual, not MESSAGE 'year' referring to
     # multi-year periods)
-    c.add(k.sales_nty[0], "sales_fraction_annual", K.exo.age_ldv)
+    c.add(k.sales_nty[0], "sales_fraction_annual", k.age)
     # Absolute sales in preceding years
     c.add(k.sales_nty[1], "mul", k.stock, k.sales_nty[0], 1.0 + margin)
     # Aggregate to model periods; total sales across the period
@@ -184,8 +191,11 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     #   largest share and avoid setting constraints on it.
     # - Add both upper and lower constraints to ensure the solution contains exactly
     #   the given value.
+    # - Concatenate data from ldv-new-capacity.csv
     c.add(k.sales[2], "select", k.sales[0], indexers=dict(yv=info.Y))
     indexers = dict(t=["ICE_conv"])
     c.add(k.sales[3], "select", k.sales[2], indexers=indexers, inverse=True)
+    c.add(k.sales[4], "concat", k.sales[3], k.sales["exo"])
+
     for kw["name"] in map("bound_new_capacity_{}".format, ("lo", "up")):
-        collect(f"{kw['name']}::{mode}", "as_message_df", k.sales[3], **kw)
+        collect(f"{kw['name']}::{mode}", "as_message_df", k.sales[4], **kw)
