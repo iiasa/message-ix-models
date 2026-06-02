@@ -147,17 +147,6 @@ def prepare_computer(c: Computer):
             fix_cost=Key("fix_cost:n-t-y:LDV+exo"),
         )
 
-    # Calculate base-period CAP_NEW and historical_new_capacity (‘sales’)
-    if config.ldv_stock_method == "A":
-        # Data from file ldv-new-capacity.csv
-        try:
-            k.stock = Key(c.full_key("cap_new::ldv+exo"))
-        except KeyError:
-            k.stock = Key("")  # No such file in this configuration
-    elif config.ldv_stock_method == "B":
-        # Now handled in .vehicle
-        pass
-
 
 def prepare_tech_econ(
     c: Computer, *, efficiency: Key, inv_cost: Key, fix_cost: Key

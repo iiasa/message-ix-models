@@ -2,7 +2,7 @@ import logging
 import re
 from collections.abc import Iterator
 from dataclasses import InitVar, dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from genno import Quantity
 from genno.operator import as_quantity
@@ -168,12 +168,6 @@ class Config(ConfigHelper):
     #: Period in which LDV costs match those of a reference region.
     #: Dimensions: (node,).
     ldv_cost_catch_up_year: dict = field(default_factory=dict)
-
-    #: Method for calibrating LDV stock and sales:
-    #:
-    #: - :py:`"A"`: use data from :file:`ldv-new-capacity.csv`, if it exists.
-    #: - :py:`"B"`: use func:`.ldv.stock`; see the function documentation.
-    ldv_stock_method: Literal["A", "B"] = "B"
 
     #: Tuples of (node, technology (transport mode), commodity) for which minimum
     #: activity should be enforced. See :func:`.non_ldv.bound_activity_lo`.
