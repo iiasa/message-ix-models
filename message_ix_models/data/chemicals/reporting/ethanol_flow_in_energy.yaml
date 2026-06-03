@@ -1,0 +1,101 @@
+# EFC Chemicals-sector ethanol INPUT energy flows: in|Chemicals|<tech>|ethanol (EJ/yr).
+# Ethanol CONSUMPTION (all energy, GWa -> EJ/yr): transport, industry furnaces, the
+# ethanol-to-olefins feedstock input, and shipping bunker. ethanol_to_ethylene_petro's ethanol
+# INPUT is energy (final level); its ethylene OUTPUT (Mt) lives in the olefins files.
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  # Transport (final level, mode "all")
+  Chemicals|FR_ICAe|ethanol:
+    filter: {technology: FR_ICAe, commodity: ethanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_FR_ICAe_ethanol
+
+  Chemicals|IAHe_ptrp|ethanol:
+    filter: {technology: IAHe_ptrp, commodity: ethanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_IAHe_ptrp_ethanol
+
+  Chemicals|ICAe_bus|ethanol:
+    filter: {technology: ICAe_bus, commodity: ethanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICAe_bus_ethanol
+
+  Chemicals|ICAe_ffv|ethanol:
+    filter: {technology: ICAe_ffv, commodity: ethanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICAe_ffv_ethanol
+
+  Chemicals|conE_ar|ethanol:
+    filter: {technology: conE_ar, commodity: ethanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_conE_ar_ethanol
+
+  # Other final-level energy uses (mode M1)
+  Chemicals|eth_afofio|ethanol:
+    filter: {technology: eth_afofio, commodity: ethanol, level: final, mode: M1}
+    original_unit: GWa
+    short: in_eth_afofio_ethanol
+
+  Chemicals|eth_i|ethanol:
+    filter: {technology: eth_i, commodity: ethanol, level: final, mode: M1}
+    original_unit: GWa
+    short: in_eth_i_ethanol
+
+  Chemicals|sp_eth_I|ethanol:
+    filter: {technology: sp_eth_I, commodity: ethanol, level: final, mode: M1}
+    original_unit: GWa
+    short: in_sp_eth_I_ethanol
+
+  # Industry furnaces (final; refining at secondary)
+  Chemicals|furnace_ethanol_steel|ethanol:
+    filter: {technology: furnace_ethanol_steel, commodity: ethanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_ethanol_steel_ethanol
+
+  Chemicals|furnace_ethanol_cement|ethanol:
+    filter: {technology: furnace_ethanol_cement, commodity: ethanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_ethanol_cement_ethanol
+
+  Chemicals|furnace_ethanol_petro|ethanol:
+    filter: {technology: furnace_ethanol_petro, commodity: ethanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_ethanol_petro_ethanol
+
+  Chemicals|furnace_ethanol_resins|ethanol:
+    filter: {technology: furnace_ethanol_resins, commodity: ethanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_ethanol_resins_ethanol
+
+  Chemicals|furnace_ethanol_aluminum|ethanol:
+    filter: {technology: furnace_ethanol_aluminum, commodity: ethanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_ethanol_aluminum_ethanol
+
+  Chemicals|furnace_ethanol_refining|ethanol:
+    filter: {technology: furnace_ethanol_refining, commodity: ethanol, level: secondary, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_ethanol_refining_ethanol
+
+  # Ethanol-to-olefins feedstock (energy input; ethylene output is in the olefins files)
+  Chemicals|ethanol_to_ethylene_petro|ethanol:
+    filter: {technology: ethanol_to_ethylene_petro, commodity: ethanol, level: final, mode: M1}
+    original_unit: GWa
+    short: in_ethanol_to_ethylene_petro_ethanol
+
+  # Shipping bunker — unit unverified (#284, Florian)
+  Chemicals|eth_bunker|ethanol:
+    filter:
+      technology: eth_bunker
+      commodity: ethanol
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_eth_bunker_ethanol

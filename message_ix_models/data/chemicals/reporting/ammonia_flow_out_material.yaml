@@ -1,0 +1,56 @@
+# EFC Chemicals-sector ammonia OUTPUT material flows: out|Chemicals|<tech>|ammonia (Mt/yr).
+# Ammonia PRODUCTION by route. Ammonia is an intrinsically MASS commodity in this model: it
+# has no energy level — producers output NH3@secondary_material at coeff 1.0, and the
+# downstream NH3_to_N_fertil consumes at 1.21429 = 17/14 (the NH3/N molecular-weight ratio),
+# confirming a mass basis. So every ammonia flow is Mt/yr (no GWa->EJ conversion); there is no
+# *_t_d energy->mass bridge as there is for methanol. Filter commodity = NH3 (model name);
+# display label = ammonia.
+var: out
+iamc_prefix: "out|"
+unit: Mt/yr
+
+vars:
+  Chemicals|biomass_NH3|ammonia:
+    filter: {technology: biomass_NH3, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_biomass_NH3_ammonia
+
+  Chemicals|biomass_NH3_ccs|ammonia:
+    filter: {technology: biomass_NH3_ccs, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_biomass_NH3_ccs_ammonia
+
+  Chemicals|coal_NH3|ammonia:
+    filter: {technology: coal_NH3, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_coal_NH3_ammonia
+
+  Chemicals|coal_NH3_ccs|ammonia:
+    filter: {technology: coal_NH3_ccs, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_coal_NH3_ccs_ammonia
+
+  Chemicals|electr_NH3|ammonia:
+    filter: {technology: electr_NH3, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_electr_NH3_ammonia
+
+  Chemicals|gas_NH3|ammonia:
+    filter: {technology: gas_NH3, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_gas_NH3_ammonia
+
+  Chemicals|gas_NH3_ccs|ammonia:
+    filter: {technology: gas_NH3_ccs, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_gas_NH3_ccs_ammonia
+
+  Chemicals|fueloil_NH3|ammonia:
+    filter: {technology: fueloil_NH3, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_fueloil_NH3_ammonia
+
+  Chemicals|fueloil_NH3_ccs|ammonia:
+    filter: {technology: fueloil_NH3_ccs, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_fueloil_NH3_ccs_ammonia

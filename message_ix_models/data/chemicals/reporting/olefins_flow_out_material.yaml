@@ -1,0 +1,42 @@
+# EFC Chemicals-sector olefins/petrochem OUTPUT material flows:
+#   out|Chemicals|<tech>|<ethylene|propylene|BTX> (Mt/yr).
+# High-value-chemical PRODUCTION. Olefins are intrinsically MASS commodities: ethylene,
+# propylene and BTX are produced only at final_material (Mt). Producers:
+#   - steam_cracker_petro: multi-feedstock (atm_gasoil/vacuum_gasoil/naphtha/propane/ethane);
+#     modes summed give the route total per product.
+#   - MTO_petro: methanol-to-olefins (0.4 ethylene + 0.4 propylene per unit activity), M1.
+#   - ethanol_to_ethylene_petro: ethanol-to-ethylene, M1.
+var: out
+iamc_prefix: "out|"
+unit: Mt/yr
+
+vars:
+  Chemicals|steam_cracker_petro|ethylene:
+    filter: {technology: steam_cracker_petro, commodity: ethylene, level: final_material, mode: [atm_gasoil, vacuum_gasoil, naphtha, propane, ethane]}
+    original_unit: Mt/yr
+    short: out_steam_cracker_petro_ethylene
+
+  Chemicals|steam_cracker_petro|propylene:
+    filter: {technology: steam_cracker_petro, commodity: propylene, level: final_material, mode: [atm_gasoil, vacuum_gasoil, naphtha, propane, ethane]}
+    original_unit: Mt/yr
+    short: out_steam_cracker_petro_propylene
+
+  Chemicals|steam_cracker_petro|BTX:
+    filter: {technology: steam_cracker_petro, commodity: BTX, level: final_material, mode: [atm_gasoil, vacuum_gasoil, naphtha, propane]}
+    original_unit: Mt/yr
+    short: out_steam_cracker_petro_BTX
+
+  Chemicals|MTO_petro|ethylene:
+    filter: {technology: MTO_petro, commodity: ethylene, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_MTO_petro_ethylene
+
+  Chemicals|MTO_petro|propylene:
+    filter: {technology: MTO_petro, commodity: propylene, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_MTO_petro_propylene
+
+  Chemicals|ethanol_to_ethylene_petro|ethylene:
+    filter: {technology: ethanol_to_ethylene_petro, commodity: ethylene, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_ethanol_to_ethylene_petro_ethylene

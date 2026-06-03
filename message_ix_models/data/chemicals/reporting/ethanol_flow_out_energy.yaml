@@ -1,0 +1,36 @@
+# EFC Chemicals-sector ethanol OUTPUT energy flows: out|Chemicals|<tech>|ethanol (EJ/yr).
+# Ethanol PRODUCTION. Ethanol is an intrinsically ENERGY commodity here: it has NO *_material
+# level — producers output ethanol@primary at coeff 1.0 (GWa), eth_t_d distributes to final
+# with only a ~1% T&D loss (1.01010, not a unit bridge). The energy->mass conversion only
+# happens at ethanol_to_ethylene_petro (whose Mt ethylene output belongs to the olefins files).
+# So every ethanol flow is GWa -> EJ/yr.
+var: out
+iamc_prefix: "out|"
+unit: EJ/yr
+
+vars:
+  Chemicals|eth_bio|ethanol:
+    filter: {technology: eth_bio, commodity: ethanol, level: primary, mode: M1}
+    original_unit: GWa
+    short: out_eth_bio_ethanol
+
+  Chemicals|eth_bio_ccs|ethanol:
+    filter: {technology: eth_bio_ccs, commodity: ethanol, level: primary, mode: M1}
+    original_unit: GWa
+    short: out_eth_bio_ccs_ethanol
+
+  Chemicals|liq_bio|ethanol:
+    filter: {technology: liq_bio, commodity: ethanol, level: primary, mode: M1}
+    original_unit: GWa
+    short: out_liq_bio_ethanol
+
+  Chemicals|liq_bio_ccs|ethanol:
+    filter: {technology: liq_bio_ccs, commodity: ethanol, level: primary, mode: M1}
+    original_unit: GWa
+    short: out_liq_bio_ccs_ethanol
+
+  # Distribution output (final level) — the delivered ethanol after the ~1% T&D loss
+  Chemicals|eth_t_d|ethanol:
+    filter: {technology: eth_t_d, commodity: ethanol, level: final, mode: M1}
+    original_unit: GWa
+    short: out_eth_t_d_ethanol
