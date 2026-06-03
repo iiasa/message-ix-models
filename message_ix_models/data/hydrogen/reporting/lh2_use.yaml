@@ -22,7 +22,7 @@ vars:
 
   LH2|Transportation|Shipping:
     filter:
-      { technology: LH2_bunker, mode: [shp_bulk_short_future,shp_bulk_long_future, shp_container_short_future, shp_container_long_future, shp_general_short_future, shp_general_long_future, shp_roro_short_future, shp_roro_long_future, shp_chemical], commodity: lh2, level: primary}
+      { technology: LH2_bunker, mode: [shp_bulk_short_future,shp_bulk_long_future, shp_container_short_future, shp_container_long_future, shp_general_short_future, shp_general_long_future, shp_roro_short_future, shp_roro_long_future, shp_chemical], commodity: lh2, level: final}
     original_unit: GWa
     short:
       use_lh2_bunker
