@@ -1,0 +1,83 @@
+# EFC Chemicals-sector methanol INPUT energy flows: in|Chemicals|<tech>|methanol (EJ/yr).
+# Energy/fuel CONSUMPTION of methanol (GWa -> EJ/yr): industry furnaces, transport, and
+# shipping bunker, all drawing methanol at the (energy) final level — except
+# furnace_methanol_refining, which draws at secondary. These are upstream of any energy->mass
+# conversion, so they stay energy. The plain "methanol" commodity label marks EJ/yr (vs the
+# Mt "methanol feedstock material" in methanol_flow_in_material.yaml).
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  # Industry furnaces (final level; high/low temperature modes)
+  Chemicals|furnace_methanol_steel|methanol:
+    filter: {technology: furnace_methanol_steel, commodity: methanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_methanol_steel_methanol
+
+  Chemicals|furnace_methanol_cement|methanol:
+    filter: {technology: furnace_methanol_cement, commodity: methanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_methanol_cement_methanol
+
+  Chemicals|furnace_methanol_petro|methanol:
+    filter: {technology: furnace_methanol_petro, commodity: methanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_methanol_petro_methanol
+
+  Chemicals|furnace_methanol_resins|methanol:
+    filter: {technology: furnace_methanol_resins, commodity: methanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_methanol_resins_methanol
+
+  Chemicals|furnace_methanol_aluminum|methanol:
+    filter: {technology: furnace_methanol_aluminum, commodity: methanol, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_methanol_aluminum_methanol
+
+  # Refining furnace draws at secondary (not final)
+  Chemicals|furnace_methanol_refining|methanol:
+    filter: {technology: furnace_methanol_refining, commodity: methanol, level: secondary, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_methanol_refining_methanol
+
+  # Transport (final level, mode "all")
+  Chemicals|FCm_bus|methanol:
+    filter: {technology: FCm_bus, commodity: methanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_FCm_bus_methanol
+
+  Chemicals|IAHm_ptrp|methanol:
+    filter: {technology: IAHm_ptrp, commodity: methanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_IAHm_ptrp_methanol
+
+  Chemicals|ICAm_ptrp|methanol:
+    filter: {technology: ICAm_ptrp, commodity: methanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICAm_ptrp_methanol
+
+  Chemicals|conm_ar|methanol:
+    filter: {technology: conm_ar, commodity: methanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_conm_ar_methanol
+
+  Chemicals|f road methanol|methanol:
+    filter: {technology: "f road methanol", commodity: methanol, level: final, mode: all}
+    original_unit: GWa
+    short: in_f_road_methanol_methanol
+
+  # Shipping bunker (final level). Unit unverified pending Florian / #284; methanol bunker
+  # draws at the energy final level (GWa) like other fuel uses, so reported in EJ/yr for now.
+  Chemicals|meth_bunker|methanol:
+    filter:
+      technology: meth_bunker
+      commodity: methanol
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_meth_bunker_methanol

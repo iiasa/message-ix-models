@@ -132,7 +132,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 
     rep = Reporter.from_scenario(scenario)
     iam_df = run_sectoral_reporting(
-        rep, scenario.model, scenario.scenario, domains=["hydrogen", "power"]
+        rep, scenario.model, scenario.scenario, domains=["hydrogen", "power", "chemicals"]
     )
     try:
         scenario.check_out(timeseries_only=True)

@@ -1,0 +1,25 @@
+# EFC Chemicals-sector methanol INPUT material flows: in|Chemicals|<tech>|... (Mt/yr).
+# Material-methanol CONSUMPTION: the chemical-feedstock end uses that draw methanol at
+# level final_material (mass, Mt) — downstream of the meth_t_d energy->mass conversion.
+# Sum of these balances out|Chemicals|meth_t_d|methanol feedstock material. The
+# "methanol feedstock material" commodity label marks the Mt unit (vs the EJ/yr energy
+# "methanol" in methanol_flow_in_energy.yaml).
+var: in
+iamc_prefix: "in|"
+unit: Mt/yr
+
+vars:
+  Chemicals|MTO_petro|methanol feedstock material:
+    filter: {technology: MTO_petro, commodity: methanol, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: in_MTO_petro_methanol_feedstock_material
+
+  Chemicals|CH2O_synth|methanol feedstock material:
+    filter: {technology: CH2O_synth, commodity: methanol, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: in_CH2O_synth_methanol_feedstock_material
+
+  Chemicals|meth_ind_fs|methanol feedstock material:
+    filter: {technology: meth_ind_fs, commodity: methanol, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: in_meth_ind_fs_methanol_feedstock_material

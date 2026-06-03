@@ -1,0 +1,16 @@
+# EFC Chemicals-sector methanol OUTPUT material flows: out|Chemicals|<tech>|... (Mt/yr).
+# Material-methanol SUPPLY. meth_t_d (transport & distribution) is the energy->mass bridge:
+# its FEEDSTOCK mode consumes methanol@secondary_material at coeff 0.697615 GWa/Mt
+# (= methanol heating value ~22 GJ/kg) and OUTPUTS methanol@final_material at 1.0 — i.e. the
+# total material-methanol delivered to chemical feedstock uses, denominated in mass (Mt).
+# It balances the in|Chemicals|*|methanol material consumers. The FUEL mode of the same tech
+# stays energy and lives in methanol_flow_out_energy.yaml as "...|methanol fuel".
+var: out
+iamc_prefix: "out|"
+unit: Mt/yr
+
+vars:
+  Chemicals|meth_t_d|methanol feedstock material:
+    filter: {technology: meth_t_d, commodity: methanol, level: final_material, mode: feedstock}
+    original_unit: Mt/yr
+    short: out_meth_t_d_methanol_feedstock_material

@@ -1,0 +1,58 @@
+# EFC Chemicals-sector methanol OUTPUT energy flows: out|Chemicals|<tech>|methanol.
+# Methanol PRODUCTION by route. Producers are energy (GWa -> EJ/yr): verified on the
+# local baseline GDX that meth_* producers have identical input/output coefficients
+# across fuel and feedstock modes — the only difference is the output level label
+# (primary [fuel destination] vs primary_material [feedstock destination]), NOT the unit.
+# The GWa->Mt conversion happens downstream at meth_t_d, not here. Both levels are summed
+# into one per-route production figure. (A fuel-vs-feedstock destination split is a
+# one-line filter change if Yiyi later wants it.)
+var: out
+iamc_prefix: "out|"
+unit: EJ/yr
+
+vars:
+  Chemicals|meth_bio|methanol:
+    filter: {technology: meth_bio, commodity: methanol, level: [primary, primary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_bio_methanol
+
+  Chemicals|meth_bio_ccs|methanol:
+    filter: {technology: meth_bio_ccs, commodity: methanol, level: [primary, primary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_bio_ccs_methanol
+
+  Chemicals|meth_coal|methanol:
+    filter: {technology: meth_coal, commodity: methanol, level: [primary, primary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_coal_methanol
+
+  Chemicals|meth_coal_ccs|methanol:
+    filter: {technology: meth_coal_ccs, commodity: methanol, level: [primary, primary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_coal_ccs_methanol
+
+  Chemicals|meth_ng|methanol:
+    filter: {technology: meth_ng, commodity: methanol, level: [primary, primary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_ng_methanol
+
+  Chemicals|meth_ng_ccs|methanol:
+    filter: {technology: meth_ng_ccs, commodity: methanol, level: [primary, primary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_ng_ccs_methanol
+
+  # meth_h2 carries the 6 CO2-source split modes (biogenic / DAC / fossil x fuel/feedstock)
+  Chemicals|meth_h2|methanol:
+    filter: {technology: meth_h2, commodity: methanol, level: [primary, primary_material], mode: [fuel_bic, fuel_dac, fuel_fic, feedstock_bic, feedstock_dac, feedstock_fic]}
+    original_unit: GWa
+    short: out_meth_h2_methanol
+
+  # meth_t_d distribution, FUEL mode only -> methanol@final stays energy (GWa). The feedstock
+  # mode of the SAME tech outputs methanol@final_material in Mt and lives in the _material file
+  # as "methanol feedstock material" (the 0.697615 GWa/Mt conversion is on meth_t_d's
+  # feedstock-mode INPUT). The names carry "fuel" vs "feedstock material" so the reader never
+  # has to infer the unit from context.
+  Chemicals|meth_t_d|methanol fuel:
+    filter: {technology: meth_t_d, commodity: methanol, level: final, mode: fuel}
+    original_unit: GWa
+    short: out_meth_t_d_methanol_fuel

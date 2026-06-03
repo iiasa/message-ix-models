@@ -1,0 +1,7 @@
+# Unit conversion factors for chemicals reporting.
+# Complete table for this domain so it does not fall back to the hydrogen table.
+# Energy flows convert GWa -> EJ/yr; material flows use original_unit == target (Mt/yr),
+# so they pass through unconverted (no GWa<->Mt factor is applied in reporting — the
+# energy<->mass bridge already happened inside the model at the *_t_d conversion tech).
+conversions:
+  GWa_to_EJ/yr: 0.03154
