@@ -1,0 +1,14 @@
+# EFC Power-sector input energy flows: in|<Sector>|<tech>|<commodity>.
+# Hydrogen consumed by the hydrogen combustion turbine (h2_ct), which burns H2 to make
+# electricity. Energy commodity -> GWa, converted to EJ/yr.
+# Filter verified against the v5 baseline scenario: h2_ct input = hydrogen/secondary/M1
+# (input coefficient 2.5 GWa-H2 per GWa-electricity).
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  Power|h2_ct|hydrogen:
+    filter: {technology: h2_ct, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short: in_power_h2_ct_hydrogen

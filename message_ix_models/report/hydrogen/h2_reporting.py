@@ -174,16 +174,31 @@ def pyam_df_from_rep(
     return df
 
 
-def _load_unit_conversions() -> dict:
-    """Load unit conversion factors from YAML file.
+def _load_unit_conversions(domain: str = "hydrogen") -> dict:
+    """Load unit conversion factors for a reporting domain.
+
+    Uses ``data/<domain>/reporting/unit_conversions.yaml``. If that domain ships no
+    conversions file of its own, the shared hydrogen table is used as the common
+    fallback (``GWa->EJ/yr`` etc.) — and the fallback is **logged with the domain
+    name** so it is never silent. A missing *domain directory* is caught earlier and
+    loudly by :func:`fetch_variables`.
 
     Returns
     -------
     dict
         Dictionary mapping (source_unit, target_unit) tuples to conversion factors
     """
-    try:
+    path = package_data_path(domain, "reporting", "unit_conversions.yaml")
+    if not path.exists():
+        if domain != "hydrogen":
+            LOG.info(
+                "Reporting domain %r ships no unit_conversions.yaml; using the shared "
+                "hydrogen conversions table.",
+                domain,
+            )
         path = package_data_path("hydrogen", "reporting", "unit_conversions.yaml")
+
+    try:
         with open(path) as f:
             data = yaml.safe_load(f)
 
@@ -198,11 +213,13 @@ def _load_unit_conversions() -> dict:
         return conversions
 
     except Exception as e:
-        LOG.warning("Could not load unit conversions from YAML: %s", e)
+        LOG.warning("Could not load unit conversions from %s: %s", path, e)
         return {}
 
 
-def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFrame:
+def convert_units_from_mapping(
+    df: pd.DataFrame, target_unit: str, domain: str = "hydrogen"
+) -> pd.DataFrame:
     """Convert units in DataFrame using iam_units.registry.
 
     Conversion uses the ``original_unit`` column. Stoichiometric factors (when
@@ -233,7 +250,7 @@ def convert_units_from_mapping(df: pd.DataFrame, target_unit: str) -> pd.DataFra
     original_units = df.reset_index()["original_unit"].unique()
 
     # Load conversion factors from YAML file
-    yaml_conversions = _load_unit_conversions()
+    yaml_conversions = _load_unit_conversions(domain)
 
     for orig_unit in original_units:
         if orig_unit == target_unit:
@@ -290,6 +307,7 @@ def format_reporting_df(
     unit: str,
     mappings,
     year_filter=None,
+    domain: str = "hydrogen",
 ) -> pyam.IamDataFrame:
     """Formats a DataFrame created with :func:pyam_df_from_rep to pyam.IamDataFrame."""
     # If DataFrame is empty, return empty pyam.IamDataFrame immediately
@@ -311,7 +329,7 @@ def format_reporting_df(
     df.columns = ["value"]
 
     # Apply unit conversions using iam_units.registry
-    df = convert_units_from_mapping(df, unit)
+    df = convert_units_from_mapping(df, unit, domain=domain)
 
     # Prepare list of columns to drop
     cols_to_drop = ["original_unit"]
@@ -488,12 +506,12 @@ def compute_aggregates_from_iamc(
     return pyam.IamDataFrame(df_work)
 
 
-def load_config(name: str) -> "Config":
+def load_config(name: str, domain: str = "hydrogen") -> "Config":
     """Load a config for a given reporting variable category from the YAML files.
 
     This is a thin wrapper around :meth:`.Config.from_files`.
     """
-    return Config.from_files(name)
+    return Config.from_files(name, domain=domain)
 
 
 def run_h2_fgt_reporting(
@@ -558,7 +576,7 @@ def run_h2_prod_reporting(
 
 
 def run_reporting(
-    var: str, rep: Reporter, model_name: str, scen_name: str
+    var: str, rep: Reporter, model_name: str, scen_name: str, domain: str = "hydrogen"
 ) -> pyam.IamDataFrame:
     """Generate reporting for any given variable.
 
@@ -569,14 +587,20 @@ def run_reporting(
     # Ensure historical reporter keys are available
     ensure_historical_keys(rep)
 
-    config = load_config(var)
+    config = load_config(var, domain=domain)
 
     # Get leaf variables only (config.mapping only contains leaves now)
     df = pyam_df_from_rep(rep, config.var, config.mapping)
 
     # Format and convert units/factors for leaf variables
     py_df = format_reporting_df(
-        df, config.iamc_prefix, model_name, scen_name, config.unit, config.mapping
+        df,
+        config.iamc_prefix,
+        model_name,
+        scen_name,
+        config.unit,
+        config.mapping,
+        domain=domain,
     )
 
     first_model_year = get_first_model_year(rep)
@@ -604,14 +628,27 @@ def run_reporting(
     return py_df
 
 
-def fetch_variables() -> List[str]:
-    """Fetch all variables from the data/hydrogen/reporting directory."""
+def fetch_variables(domain: str = "hydrogen") -> List[str]:
+    """Fetch all reporting variable categories from ``data/<domain>/reporting``.
+
+    Fails loudly (naming the domain) if the directory is missing or contains no
+    variable YAMLs, so a misspelled or unbuilt reporting domain raises instead of
+    silently producing zero variables.
+    """
     from message_ix_models.util import package_data_path
 
-    path = package_data_path("hydrogen", "reporting")
+    path = package_data_path(domain, "reporting")
+    if not path.is_dir():
+        raise FileNotFoundError(
+            f"No reporting directory for domain {domain!r}: {path} does not exist"
+        )
     variables = [f.stem for f in path.glob("*.yaml") if f.stem != "unit_conversions"]
     # we need to remove the _aggregates files
     variables = [var for var in variables if not var.endswith("_aggregates")]
+    if not variables:
+        raise FileNotFoundError(
+            f"Reporting domain {domain!r} has no variable YAMLs in {path}"
+        )
     return variables
 
 
@@ -644,20 +681,53 @@ def run_h2_reporting(
     pyam.IamDataFrame
         Combined dataframe with all hydrogen reporting variables
     """
-    variables = fetch_variables()
-    LOG.debug("Fetched hydrogen reporting variables: %s", variables)
-    dfs = [run_reporting(var, rep, model_name, scen_name) for var in variables]
+    return run_sectoral_reporting(
+        rep, model_name, scen_name, domains=["hydrogen"], add_world=add_world
+    )
 
-    # Concatenate all dataframes
+
+def run_sectoral_reporting(
+    rep: Reporter,
+    model_name: str,
+    scen_name: str,
+    domains: Optional[List[str]] = None,
+    add_world: bool = True,
+) -> pyam.IamDataFrame:
+    """Run reporting across one or more ``data/<domain>/reporting`` directories.
+
+    Each domain's variable YAMLs are discovered and run through the same generic
+    pipeline as the hydrogen reporting (the engine is commodity-agnostic; the sector
+    lives in the data, not the code). Results are concatenated and an optional World
+    (R12_GLB) total is appended.
+
+    Parameters
+    ----------
+    domains
+        Reporting domains to sweep, e.g. ``["hydrogen", "power"]``. Defaults to
+        ``["hydrogen"]``. A missing/misspelled domain raises in
+        :func:`fetch_variables` (no silent fallback).
+    add_world
+        If True, append a World total under the R12_GLB technical node ID.
+    """
+    if domains is None:
+        domains = ["hydrogen"]
+
+    # Historical keys are created once on the shared Reporter (idempotent).
+    ensure_historical_keys(rep)
+
+    dfs = [
+        run_reporting(var, rep, model_name, scen_name, domain=domain)
+        for domain in domains
+        for var in fetch_variables(domain)
+    ]
     py_df = pyam.concat(dfs)
 
     # Aggregate across regions for the global total. Upload under the R12_GLB
     # technical node ID so it flows through the same synonym path as legacy
     # (resolves to "GLB region (R12)" canonical) and overwrites legacy's global
-    # row at the same key per the EFC coexistence design. Safe for H2 variables
-    # because none of the hydrogen reporter's variables carry R12_GLB activity
-    # (bunkers/non-allocated) — pyam's aggregate_region is summing 12 regional
-    # rows regardless of the output label.
+    # row at the same key per the EFC coexistence design. NOTE: assumes the swept
+    # domains carry no native R12_GLB activity (true for hydrogen and power);
+    # revisit before adding domains with bunker/non-allocated R12_GLB rows (shipping).
     if add_world:
         py_df.aggregate_region(py_df.variable, region="R12_GLB", append=True)
 

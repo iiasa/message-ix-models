@@ -1,0 +1,15 @@
+# EFC Power-sector output energy flows: out|<Sector>|<tech>|<commodity>.
+# Electricity produced by the hydrogen combustion turbine (h2_ct). Energy -> GWa -> EJ/yr.
+# NOTE: not present in mapping_clean's out| list (which only carries out|electr_NH3|NH3);
+# added as a genuine flow so h2_ct's electricity output is reported alongside its H2 input
+# (mirrors how h2_flow_out.yaml added h2_pyro_elec beyond mapping_clean).
+# Filter verified against the v5 baseline scenario: h2_ct output = electr/secondary/M1.
+var: out
+iamc_prefix: "out|"
+unit: EJ/yr
+
+vars:
+  Power|h2_ct|electricity:
+    filter: {technology: h2_ct, mode: M1, commodity: electr, level: secondary}
+    original_unit: GWa
+    short: out_power_h2_ct_electricity

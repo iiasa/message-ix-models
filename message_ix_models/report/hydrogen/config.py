@@ -52,10 +52,10 @@ class Config:
     aggregates: dict = field(default_factory=dict)
 
     @classmethod
-    def from_files(cls, category: str) -> "Config":
+    def from_files(cls, category: str, domain: str = "hydrogen") -> "Config":
         """Create a Config instance from 1 or 2 YAML files.
 
-        A file like :file:`message_ix_models/data/hydrogen/reporting/{category}.yaml` is
+        A file like :file:`message_ix_models/data/{domain}/reporting/{category}.yaml` is
         read and used to populate a new instance. The file must have:
 
         - Top-level keys corresponding to :attr:`iamc_prefix`, :attr:`unit`, and
@@ -66,11 +66,14 @@ class Config:
         If a file exists in the same directory named like
         :file:`{category}_aggregates.yaml`, it is also read, and its contents passed to
         :meth:`use_aggregates_dict`.
+
+        ``domain`` selects the ``data/<domain>/reporting/`` directory; it defaults to
+        ``"hydrogen"`` so existing callers are unchanged.
         """
         import yaml
 
         # Handle basic configuration file
-        path = package_data_path("hydrogen", "reporting", f"{category}.yaml")
+        path = package_data_path(domain, "reporting", f"{category}.yaml")
         with open(path) as f:  # Raises FileNotFoundError on missing file
             kw = yaml.safe_load(f)  # Raises on invalid YAML
 

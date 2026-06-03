@@ -104,12 +104,14 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     # see docs/reporting/coexistence.md in the EFC_2026 project repo).
     _legacy_report(scenario)
 
-    # 4. Genno hydrogen reporting — overwrites the hydrogen IAMC rows the
-    # legacy step just wrote with values derived from the five hyway techs
-    # (h2_elec_alk/pem/soe, h2_pyro_elec, h2_ct). ixmp.add_timeseries
-    # overwrites by design; that is the coexistence mechanism. Skipped on
-    # scenarios where none of the hyway techs are present (e.g. the "base
-    # reported" step that runs before "hydrogen added").
+    # 4. Genno sectoral reporting (hydrogen + power in|/out| flows) — overwrites
+    # the hydrogen IAMC rows the legacy step just wrote with values derived from
+    # the five hyway techs (h2_elec_alk/pem/soe, h2_pyro_elec, h2_ct) and adds the
+    # power-sector in|/out| flows (e.g. in|Power|h2_ct|hydrogen). ixmp.add_timeseries
+    # overwrites by design; that is the coexistence mechanism. Skipped on scenarios
+    # where none of the hyway techs are present (e.g. the "base reported" step that
+    # runs before "hydrogen added"); the power flows ride the same gate since their
+    # only current tech, h2_ct, is in this set.
     hyway_techs = {
         "h2_elec_alk",
         "h2_elec_pem",
@@ -120,22 +122,24 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     scenario_techs = set(scenario.set("technology").tolist())
     if not (hyway_techs & scenario_techs):
         log.info(
-            "Genno hydrogen reporting skipped: no hyway H2 techs in scenario."
+            "Genno sectoral reporting skipped: no hyway H2 techs in scenario."
         )
         return scenario
 
     from message_ix.report import Reporter
 
-    from message_ix_models.report.hydrogen.h2_reporting import run_h2_reporting
+    from message_ix_models.report.hydrogen.h2_reporting import run_sectoral_reporting
 
     rep = Reporter.from_scenario(scenario)
-    iam_df = run_h2_reporting(rep, scenario.model, scenario.scenario)
+    iam_df = run_sectoral_reporting(
+        rep, scenario.model, scenario.scenario, domains=["hydrogen", "power"]
+    )
     try:
         scenario.check_out(timeseries_only=True)
     except ValueError:
         log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
     scenario.add_timeseries(iam_df.timeseries().reset_index())
-    scenario.commit("Add Genno hydrogen reporting")
+    scenario.commit("Add Genno sectoral reporting")
 
     return scenario
 
