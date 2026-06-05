@@ -16,6 +16,7 @@ Coverage notes:
   test_build_B_runs_with_minimal_data, test_build_B_runs_with_materials).
 - utils: build_PM (test_build_PM_*), _generate_vetting_csv (test_generate_vetting_csv*).
 - CLI: bmt group and run subcommand (test_bmt_cli_help, test_bmt_run_dry_run).
+- Common workflow step functions: _set_as_default, prep_for_macro, add_macro.
 """
 
 import logging
@@ -26,7 +27,12 @@ from message_ix import make_df
 
 from message_ix_models import Context
 from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
-from message_ix_models.model.bmt.workflow import generate
+from message_ix_models.model.bmt.workflow import (
+    _set_as_default,
+    add_macro,
+    generate,
+    prep_for_macro,
+)
 from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
@@ -208,7 +214,6 @@ def _add_materials_commodities(scenario):
 @generate.minimum_version
 def test_bmt_workflow_has_mt_and_bmt_built_steps(test_context: Context) -> None:
     """The BMT workflow includes MT built and BMT built steps."""
-    from message_ix_models.model.bmt.workflow import _set_as_default
     from message_ix_models.model.buildings import build
 
     wf = generate(test_context)
@@ -220,6 +225,71 @@ def test_bmt_workflow_has_mt_and_bmt_built_steps(test_context: Context) -> None:
     bmt_task = wf.graph["BMT built"]
     bmt_step = bmt_task[0] if isinstance(bmt_task, tuple) else bmt_task
     assert bmt_step.action is build.main
+
+
+# --- Tests for common workflow step functions ---
+
+
+def test_set_as_default(test_context, request):
+    """_set_as_default sets the scenario as default and returns it."""
+    scenario = bare_res(request, test_context)
+
+    result = _set_as_default(test_context, scenario)
+
+    assert result is scenario
+
+
+MACRO_SECTORS = ("i_spec", "i_therm")
+
+
+def test_prep_for_macro(test_context, request, monkeypatch):
+    """prep_for_macro removes macro sectors and calls solve."""
+    scenario = bare_res(request, test_context)
+    if "sector" not in scenario.set_list():
+        pytest.skip("Scenario has no sector set")
+        # TODO: later prepare a minimum MACRO excel example file
+        # and add it to the test data
+
+    scenario.check_out()
+    existing = set(scenario.set("sector").tolist())
+    for sector in MACRO_SECTORS:
+        if sector not in existing:
+            scenario.add_set("sector", sector)
+    scenario.commit("Add macro sectors for prep_for_macro test")
+
+    solve_calls = []
+    monkeypatch.setattr(
+        "message_ix_models.model.bmt.workflow.solve",
+        lambda ctx, scen, model="MESSAGE": solve_calls.append(model) or scen,
+    )
+
+    result = prep_for_macro(test_context, scenario)
+
+    assert result is scenario
+    assert set(MACRO_SECTORS) <= set(scenario.set("sector").tolist())
+    assert solve_calls == ["MESSAGE"]
+
+
+def test_add_macro(test_context, request, monkeypatch):
+    """add_macro updates macro calibration and solves with MESSAGE-MACRO."""
+    scenario = bare_res(request, test_context)
+    test_context.ssp = "SSP2"
+    test_context.bmt = {"macro": "custom_macro.xlsx"}
+    macro_calls = []
+
+    monkeypatch.setattr(
+        "message_ix_models.model.bmt.workflow.add_macro_materials",
+        lambda scen, macro_file: macro_calls.append(macro_file) or scen,
+    )
+    monkeypatch.setattr(
+        "message_ix_models.model.bmt.workflow.solve",
+        lambda ctx, scen, model="MESSAGE-MACRO": scen,
+    )
+
+    result = add_macro(test_context, scenario)
+
+    assert result is scenario
+    assert macro_calls == ["custom_macro.xlsx"]
 
 
 # --- Tests for build_PM (BMTX built step) ---

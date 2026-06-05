@@ -226,7 +226,9 @@ def generate(context: Context) -> Workflow:
     c = dict(keep_solution=False)
 
     name = wf.add_step("M", None, target=base_url)
-    name = wf.add_step("M cloned", name, target=f"{url}M", clone=dict(keep_solution=True))
+    name = wf.add_step(
+        "M cloned", name, target=f"{url}M", clone=dict(keep_solution=True)
+    )
     name = wf.add_step("M reported", name, report)
 
     # Retrieve a 'Code' object with 'Annotations' that identify a particular
