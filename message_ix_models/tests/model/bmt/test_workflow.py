@@ -1,7 +1,12 @@
 import re
 
 from message_ix_models import Context
-from message_ix_models.model.bmt.workflow import generate
+from message_ix_models.model.bmt.workflow import (
+    add_macro,
+    generate,
+    prep_for_macro,
+    report,
+)
 
 
 @generate.minimum_version
@@ -34,3 +39,29 @@ def test_generate(test_context: Context) -> None:
         - 'M reported'""",
         result,
     )
+
+
+@generate.minimum_version
+def test_generate_includes_macro_steps(test_context: Context) -> None:
+    """Macro-prep and macro-report steps are present with expected actions."""
+    wf = generate(test_context)
+
+    for step_name in (
+        "BMT reported",
+        "BMTX prep macro",
+        "BMTX baseline macro",
+        "BMTX baseline macro reported",
+    ):
+        assert step_name in wf
+
+    prep_task = wf.graph["BMTX prep macro"]
+    prep_step = prep_task[0] if isinstance(prep_task, tuple) else prep_task
+    assert prep_step.action is prep_for_macro
+
+    macro_task = wf.graph["BMTX baseline macro"]
+    macro_step = macro_task[0] if isinstance(macro_task, tuple) else macro_task
+    assert macro_step.action is add_macro
+
+    report_task = wf.graph["BMTX baseline macro reported"]
+    report_step = report_task[0] if isinstance(report_task, tuple) else report_task
+    assert report_step.action is report

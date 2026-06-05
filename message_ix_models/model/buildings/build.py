@@ -1007,18 +1007,14 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             val = context.buildings.data_paths[attr]
             path = Path(val)
             # TODO Move this path logic into .buildings.Config
-            return (
-                path if path.is_absolute() else private_data_path("buildings", val)
-            )
+            return path if path.is_absolute() else private_data_path("buildings", val)
 
         def _load_csv(attr: str) -> pd.DataFrame:
             path = _data_path(attr)
             df = pd.read_csv(path)
             missing = set(_DEMAND_CSV_COLUMNS) - set(df.columns)
             if missing:
-                raise ValueError(
-                    f"{path}: missing demand columns {sorted(missing)}"
-                )
+                raise ValueError(f"{path}: missing demand columns {sorted(missing)}")
             return df.loc[:, _DEMAND_CSV_COLUMNS]
 
         # Inputs for prepare_data_B from context.buildings or defaults
