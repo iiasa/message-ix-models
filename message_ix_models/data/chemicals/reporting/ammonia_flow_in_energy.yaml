@@ -1,0 +1,24 @@
+# EFC Chemicals-sector ammonia INPUT energy flow: in|Chemicals|NH3_bunker|ammonia (EJ/yr).
+# Ammonia is mass (Mt) everywhere EXCEPT the shipping-fuel pathway. NH3_tobunker converts
+# NH3@export (mass, Mt) -> NH3@final (energy, GWa) at 1/convert_nh3 = 1.67856 Mt/GWa
+# (LHV 18.8 MJ/kg; see message_data tools/utilities/update_shipping.py add_NH3_bunker).
+# NH3_bunker therefore draws NH3@final in ENERGY (GWa), exactly like meth_bunker / eth_bunker,
+# so it is reported in EJ/yr on the common marine-fuel energy basis. This resolves the #284
+# unit question: every *_bunker input is GWa; the sole mass quantity is NH3_tobunker's @export
+# input. Florian confirmed all bunkers are 1:1; LH2_bunker's 1.3 is an in-energy loss.
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  # Shipping bunker — NH3@final is energy (GWa) via the NH3_tobunker mass->energy bridge.
+  Chemicals|NH3_bunker|ammonia:
+    filter:
+      technology: NH3_bunker
+      commodity: NH3
+      level: final
+      mode: [shp_bulk_short_future, shp_bulk_long_future, shp_container_short_future, shp_container_long_future,
+             shp_general_short_future, shp_general_long_future, shp_roro_short_future, shp_roro_long_future,
+             shp_chemical]
+    original_unit: GWa
+    short: in_NH3_bunker_ammonia

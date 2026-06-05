@@ -1,10 +1,10 @@
 # EFC Chemicals-sector ammonia INPUT material flows: in|Chemicals|<tech>|ammonia (Mt/yr).
-# Ammonia CONSUMPTION (all mass, Mt/yr — ammonia has no energy representation):
+# Ammonia mass CONSUMPTION (Mt/yr) at the material level:
 #   - NH3_to_N_fertil: fertiliser feedstock (the dominant use), draws at secondary_material.
 #   - residual_NH3: residual / non-fertiliser industrial ammonia demand (secondary_material).
-#   - NH3_bunker: shipping fuel. UNIT UNVERIFIED pending Florian / #284 — in the model NH3
-#     bunker draws NH3@final at coeff 1.0 (mass), but the LH2-vs-NH3 maritime unit/conversion
-#     question is open, so this Mt figure may need re-expression as energy for fuel comparison.
+# The shipping-fuel bunker (NH3_bunker) is NOT reported here: it draws NH3@final, which the
+# NH3_tobunker mass->energy bridge makes energy (GWa), so it is reported in EJ/yr in
+# ammonia_flow_in_energy.yaml on the common marine-fuel basis. See that file and #284.
 var: in
 iamc_prefix: "in|"
 unit: Mt/yr
@@ -19,17 +19,3 @@ vars:
     filter: {technology: residual_NH3, commodity: NH3, level: secondary_material, mode: M1}
     original_unit: Mt/yr
     short: in_residual_NH3_ammonia
-
-  # Shipping bunker — unit unverified (#284, Florian)
-  Chemicals|NH3_bunker|ammonia:
-    filter:
-      technology: NH3_bunker
-      commodity: NH3
-      level: final
-      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
-             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
-             shp_container_short_future, shp_general_long_current, shp_general_long_future,
-             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
-             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
-    original_unit: Mt/yr
-    short: in_NH3_bunker_ammonia
