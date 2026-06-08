@@ -887,6 +887,18 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] >= firstyear]
 
+    # Backfill missing projected desal rows so missing basin-year capacity
+    # means zero, not an unconstrained extraction cap.
+    model_years = [y for y in info.Y if y >= firstyear]
+    full_grid = pd.DataFrame(
+        [(f"B{b}", y) for b in df_node["BCU_name"] for y in model_years],
+        columns=["node_loc", "year_act"],
+    )
+    bound_up = full_grid.merge(bound_up, on=["node_loc", "year_act"], how="left")
+    bound_up["technology"] = "extract_salinewater_basin"
+    bound_up["value"] = bound_up["value"].fillna(0.0)
+    bound_up["unit"] = "MCM/year"
+
     results["bound_total_capacity_up"] = bound_up
     # Investment costs
     inv_cost = make_df(
