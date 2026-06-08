@@ -59,6 +59,22 @@ kWh_m3_TO_GWa_MCM = registry("kWh/m^3").to("GWa/m^3").magnitude * 1e6
 m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
 # MCM not standard so have to remember to divide by 1e6 each time.
 
+# Electricity wiring for the basin extraction technologies. These feed both the
+# in-horizon supply build (add_water_supply) and the historical merit-order
+# dispatch seed (add_water_hist_dispatch); keeping them here is the single source
+# so the seed's merit order cannot drift from the supply technology's costs.
+# Surface-water extraction electricity intensity (GWa/km3, mid literature estimate).
+SW_ELEC_INTENSITY_GWA_KM3 = 0.018835616
+# Groundwater pumping electricity depth adder (GWa/km3).
+GW_ELEC_DEPTH_ADDER_GWA_KM3 = 0.043464579
+# Fossil-groundwater electricity multiplier over renewable groundwater.
+GW_FOSSIL_ELEC_MULTIPLIER = 5
+# Fossil-groundwater variable cost (USD/km3).
+GW_FOSSIL_VAR_COST_USD_KM3 = 1000
+# Reference electricity price for the historical merit-order dispatch:
+# 50 USD/MWh x 8766 MWh/GWa.
+HIST_DISPATCH_ELEC_PRICE_USD_GWA = 50.0 * 8766.0
+
 
 def read_config(context: Context | None = None):
     """Read the water model configuration / metadata from file.

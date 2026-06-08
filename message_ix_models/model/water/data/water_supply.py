@@ -9,7 +9,11 @@ from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import (
     ANNUAL_CAPACITY_FACTOR,
+    GW_ELEC_DEPTH_ADDER_GWA_KM3,
+    GW_FOSSIL_ELEC_MULTIPLIER,
+    GW_FOSSIL_VAR_COST_USD_KM3,
     KM3_TO_MCM,
+    SW_ELEC_INTENSITY_GWA_KM3,
     USD_KM3_TO_USD_MCM,
     GWa_KM3_TO_GWa_MCM,
     filter_basins_by_region,
@@ -291,7 +295,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "input",
                 technology="extract_surfacewater",
-                value=0.018835616 * GWa_KM3_TO_GWa_MCM,
+                value=SW_ELEC_INTENSITY_GWA_KM3 * GWa_KM3_TO_GWa_MCM,
                 unit="GWa/MCM",
                 level="final",
                 commodity="electr",
@@ -310,7 +314,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
             make_df(
                 "input",
                 technology="extract_groundwater",
-                value=(df_gwt["GW_per_km3_per_year"].mean() + 0.043464579)
+                value=(
+                    df_gwt["GW_per_km3_per_year"].mean() + GW_ELEC_DEPTH_ADDER_GWA_KM3
+                )
                 * GWa_KM3_TO_GWa_MCM,
                 unit="GWa/MCM",
                 level="final",
@@ -500,7 +506,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_surfacewater",
-                    value=0.018835616 * GWa_KM3_TO_GWa_MCM,
+                    value=SW_ELEC_INTENSITY_GWA_KM3 * GWa_KM3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -522,7 +528,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_groundwater",
-                    value=(df_gwt["GW_per_km3_per_year"] + 0.043464579)
+                    value=(df_gwt["GW_per_km3_per_year"] + GW_ELEC_DEPTH_ADDER_GWA_KM3)
                     * GWa_KM3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
@@ -545,7 +551,10 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "input",
                     technology="extract_gw_fossil",
-                    value=((df_gwt["GW_per_km3_per_year"] + 0.043464579) * 5)
+                    value=(
+                        (df_gwt["GW_per_km3_per_year"] + GW_ELEC_DEPTH_ADDER_GWA_KM3)
+                        * GW_FOSSIL_ELEC_MULTIPLIER
+                    )
                     * GWa_KM3_TO_GWa_MCM,  # reduced from 50 to 5
                     unit="GWa/MCM",
                     level="final",
@@ -937,7 +946,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         var_cost_fossil = make_df(
             "var_cost",
             technology="extract_gw_fossil",
-            value=1000 * USD_KM3_TO_USD_MCM,
+            value=GW_FOSSIL_VAR_COST_USD_KM3 * USD_KM3_TO_USD_MCM,
             # High variable cost to ensure it's only used as last resort
             unit="USD/MCM",
             mode="M1",
