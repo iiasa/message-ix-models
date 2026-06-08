@@ -1,0 +1,30 @@
+# EFC Chemicals-sector HVC (high-value chemicals) supply OUTPUT flows:
+#   out|Chemicals|<tech>|HVC (Mt/yr) at level=demand (export at level=export).
+# HVC supply-demand at the `demand` level (all coeffs verified 1.0 on baseline v8):
+#   production_HVC|HVC + import_petro|HVC == HVC demand + export_petro|HVC
+# - production_HVC: domestic HVC from ethylene/propylene/BTX (one output mode per olefin);
+#   numerically equals the olefin in-flows in olefins_flow_in_material.yaml.
+# - import_petro / export_petro: HVC imports / exports. These are the FIRST trade flows in
+#   the in|/out| family (the rest of the engine excludes trade); deliberate for HVC because
+#   imports are a first-class supply route. See board #288 (chemicals/sectoral trade flows).
+# - trade_petro (the global trade balancer) is deliberately EXCLUDED to avoid double-counting
+#   at the R12_GLB World aggregate.
+var: out
+iamc_prefix: "out|"
+unit: Mt/yr
+
+vars:
+  Chemicals|production_HVC|HVC:
+    filter: {technology: production_HVC, commodity: HVC, level: demand, mode: [BTX, ethylene, propylene]}
+    original_unit: Mt/yr
+    short: out_production_HVC_HVC
+
+  Chemicals|import_petro|HVC:
+    filter: {technology: import_petro, commodity: HVC, level: demand, mode: M1}
+    original_unit: Mt/yr
+    short: out_import_petro_HVC
+
+  Chemicals|export_petro|HVC:
+    filter: {technology: export_petro, commodity: HVC, level: export, mode: M1}
+    original_unit: Mt/yr
+    short: out_export_petro_HVC
