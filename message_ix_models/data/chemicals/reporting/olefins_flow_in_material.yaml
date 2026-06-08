@@ -2,7 +2,10 @@
 #   in|Chemicals|<tech>|<ethylene|propylene|BTX> (Mt/yr).
 # High-value-chemical CONSUMPTION. production_HVC aggregates the three olefins into the HVC
 # demand: it draws ethylene/propylene/BTX at final_material (Mt), one mode named per commodity.
-# Sum of these balances the olefin producers in olefins_flow_out_material.yaml.
+# BTX has a SECOND consumer, CH2O_to_resin (BTX -> resin), so the BTX balance is
+# steam_cracker_petro|BTX == production_HVC|BTX + CH2O_to_resin|BTX; ethylene/propylene
+# have production_HVC as their only consumer. Sum of these balances the olefin producers
+# in olefins_flow_out_material.yaml.
 var: in
 iamc_prefix: "in|"
 unit: Mt/yr
@@ -22,3 +25,8 @@ vars:
     filter: {technology: production_HVC, commodity: BTX, level: final_material, mode: BTX}
     original_unit: Mt/yr
     short: in_production_HVC_BTX
+
+  Chemicals|CH2O_to_resin|BTX:
+    filter: {technology: CH2O_to_resin, commodity: BTX, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: in_CH2O_to_resin_BTX
