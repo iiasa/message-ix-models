@@ -858,6 +858,22 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     return df_sw, df_gw
 
 
+def groundwater_share_floor(
+    df_sw: pd.DataFrame, df_gw: pd.DataFrame, buffer: float = 0.95
+) -> pd.Series:
+    """Lower-bound groundwater share per basin-year: ``gw / (sw + gw) * buffer``.
+
+    Single source for both the ``share_low_lim_GWat`` constraint
+    (:func:`add_water_availability`) and the hist_dispatch seed floor
+    (:func:`.add_water_hist_dispatch`), so the in-horizon constraint and the
+    historical anchor cannot drift apart. ``df_sw`` and ``df_gw`` are the
+    row-aligned availability frames from :func:`read_water_availability`.
+    The ``buffer`` leaves headroom against numerical error in the LP.
+    """
+    share = (df_gw["value"] / (df_sw["value"] + df_gw["value"]) * buffer).fillna(0)
+    return share.clip(lower=0, upper=1)
+
+
 def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water supply constraints
@@ -918,13 +934,9 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
         node_share="B" + df_gw["Region"].astype(str),
         year_act=df_gw["year"],
         time=df_gw["time"],
-        value=df_gw["value"]
-        / (df_sw["value"] + df_gw["value"])
-        * 0.95,  # 0.95 buffer factor to avoid numerical error
+        value=groundwater_share_floor(df_sw, df_gw),
         unit="-",
     )
-    df_share["value"] = df_share["value"].fillna(0)
-    df_share["value"] = np.clip(df_share["value"], 0, 1)
     results["share_commodity_lo"] = df_share
 
     return results
