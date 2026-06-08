@@ -371,10 +371,15 @@ def format_reporting_df(
 
     if py_df.empty:
         return py_df
+    # Strip only the leading prefix to recover the bare iamc_name. Must be a prefix
+    # strip, not str.replace (which also removes the prefix as an interior substring,
+    # e.g. "in|" inside "...|CH2O_to_resin|..." -> "...|CH2O_to_res|...", which would
+    # mis-flag a present variable as missing and zero-fill a duplicate).
+    present = [v.removeprefix(variable_prefix) for v in py_df.variable]
     missing = [
-        variable_prefix + i
-        for i in mappings.iamc_name.unique().tolist()
-        if i not in [i.replace(variable_prefix, "") for i in py_df.variable]
+        variable_prefix + name
+        for name in mappings.iamc_name.unique().tolist()
+        if name not in present
     ]
     if missing:
         zero_ts = pyam.IamDataFrame(
