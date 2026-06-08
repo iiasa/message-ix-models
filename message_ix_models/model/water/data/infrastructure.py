@@ -1121,8 +1121,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
         results["output"] = out_df
 
-    # putting a lower bound on desalination tecs based on hist capacities
-    df_bound = df_hist[df_hist["year"] == 2025]  # firstyear dataabsent
+    # Candidate lower bound on desal activity from 2025 historical capacity.
+    df_bound = df_hist[df_hist["year"] == 2025]  # 2025 is the carry-forward proxy
     bound_lo = make_df(
         "bound_activity_lo",
         node_loc="B" + df_bound["BCU_name"],
@@ -1135,23 +1135,24 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         year_act=year_wat,
         time=pd.Series(sub_time),
     )
+    # Pre-firstmodelyear activity is governed by historical_new_capacity.
+    bound_lo = bound_lo[
+        (bound_lo["year_act"] >= firstyear) & (bound_lo["year_act"] <= firstyear + 15)
+    ]
+    bound_lo["value"] = bound_lo["value"] / ANNUAL_CAPACITY_FACTOR
 
-    bound_lo = bound_lo[bound_lo["year_act"] <= firstyear + 15]
-    # Divide the histroical capacity by 5 since the existing data is summed over
-    # 5 years and model needs per year
-    bound_lo["value"] = bound_lo["value"] / 5
-
-    # Clip activity bounds to not exceed capacity bounds
+    # Scale membrane + distillation floors so their shared salinewater demand
+    # respects the basin-year extraction cap.
     bound_lo = bound_lo.merge(
-        bound_up[["node_loc", "year_act", "value"]],
+        bound_up[["node_loc", "year_act", "value"]].rename(columns={"value": "cap"}),
         on=["node_loc", "year_act"],
         how="left",
-        suffixes=("", "_cap"),
     )
-    bound_lo["value"] = np.minimum(
-        bound_lo["value"], bound_lo["value_cap"].fillna(np.inf)
-    )
-    bound_lo = bound_lo.drop("value_cap", axis=1)
+    bound_lo["cap"] = bound_lo["cap"].fillna(np.inf)
+    total = bound_lo.groupby(["node_loc", "year_act"])["value"].transform("sum")
+    scale = np.minimum(1.0, bound_lo["cap"] / total.where(total > 0, 1.0))
+    bound_lo["value"] = bound_lo["value"] * scale
+    bound_lo = bound_lo.drop(columns="cap")
 
     results["bound_activity_lo"] = bound_lo
 
