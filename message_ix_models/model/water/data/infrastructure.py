@@ -1168,6 +1168,23 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
     results["bound_activity_lo"] = bound_lo
 
+    # Smooth the vintage-replacement sawtooth on desal CAP_NEW.
+    desal_growth_rate = 0.10
+    growth_year_index = pd.Series([y for y in info.Y if y >= firstyear])
+    growth_tecs = pd.Series(["membrane", "distillation"])
+
+    growth_new_capacity_up = make_df(
+        "growth_new_capacity_up",
+        value=desal_growth_rate,
+        unit="-",
+    ).pipe(
+        broadcast,
+        technology=growth_tecs,
+        year_vtg=growth_year_index,
+        node_loc=df_node["node"],
+    )
+    results["growth_new_capacity_up"] = growth_new_capacity_up
+
     # # Add soft constraints for desalination bound_activity_lo
     # # Parameters for soft constraints
     # relaxation_factor = 10  # Effectively allow complete relaxation at penalty
