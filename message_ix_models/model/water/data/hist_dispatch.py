@@ -135,10 +135,10 @@ def cap_surfacewater_for_gw_floor(
 
     The cost-only merit order fills surface water first, which can seed total
     groundwater (renewable + fossil) below the ``share_low_lim_GWat`` share the
-    LP enforces in-horizon. Capping surface water at ``(1 - gw_floor) * demand``
-    reserves the rest of demand for groundwater, so total GW >= ``gw_floor`` after
-    dispatch. Returns ``min(sw_cap, (1 - gw_floor) * demand)`` per node; the cap
-    only tightens where surface water would otherwise serve more than its share.
+    LP enforces in-horizon. Capping surface water reserves the rest of demand
+    for groundwater, so total GW >= ``gw_floor`` after dispatch. Returns
+    ``min(sw_cap, (1 - gw_floor) * demand)`` per node; the cap only tightens
+    where surface water would otherwise serve more than its share.
     """
     idx = sw_cap.index
     gw_floor = gw_floor.reindex(idx).fillna(0.0).clip(lower=0, upper=1)
@@ -286,10 +286,7 @@ def add_water_hist_dispatch(context: "Context") -> dict[str, pd.DataFrame]:
     demand.index = "B" + demand.index.astype(str)
     demand = demand.reindex(df_hist["BCU_name"].to_numpy()).fillna(0)
 
-    # Reserve groundwater its sustainability-floor share before merit-ordering,
-    # mirroring the share_low_lim_GWat lower bound the LP enforces in-horizon.
-    # The floor is sourced from the same availability data as the constraint
-    # (groundwater_share_floor) so the seed and the constraint cannot drift.
+    # Reserve groundwater its share_low_lim_GWat floor share before merit-ordering.
     # Availability has no pre-horizon row, so use the firstmodelyear value.
     df_sw_av, df_gw_av = read_water_availability(context)
     floor_all = groundwater_share_floor(df_sw_av, df_gw_av)
