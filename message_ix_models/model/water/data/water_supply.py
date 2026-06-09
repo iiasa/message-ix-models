@@ -962,14 +962,16 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         else:
             results["var_cost"] = var_cost_fossil
 
-        # Add growth constraint for extract_surfacewater (10% annual growth limit)
+        # Surface and renewable groundwater now share historical_activity
+        # anchors; apply the same growth ceiling to both. Fossil groundwater
+        # remains the residual backstop.
         growth_activity_up = make_df(
             "growth_activity_up",
-            technology="extract_surfacewater",
             value=0.02,
             unit="-",
         ).pipe(
             broadcast,
+            technology=pd.Series(["extract_surfacewater", "extract_groundwater"]),
             year_act=year_wat,
             node_loc=df_node["node"],
             time=pd.Series(sub_time),
