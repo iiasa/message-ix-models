@@ -555,7 +555,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                         (df_gwt["GW_per_km3_per_year"] + GW_ELEC_DEPTH_ADDER_GWA_KM3)
                         * GW_FOSSIL_ELEC_MULTIPLIER
                     )
-                    * GWa_KM3_TO_GWa_MCM,  # reduced from 50 to 5
+                    * GWa_KM3_TO_GWa_MCM,
                     unit="GWa/MCM",
                     level="final",
                     commodity="electr",
@@ -962,9 +962,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         else:
             results["var_cost"] = var_cost_fossil
 
-        # Surface and renewable groundwater now share historical_activity
-        # anchors; apply the same growth ceiling to both. Fossil groundwater
-        # remains the residual backstop.
+        # Surface water and renewable groundwater share historical_activity
+        # anchors and get the same growth ceiling; fossil groundwater is the
+        # residual backstop.
         growth_activity_up = make_df(
             "growth_activity_up",
             value=0.02,
