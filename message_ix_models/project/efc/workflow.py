@@ -26,6 +26,51 @@ EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 EFC"
 # Functions for individual workflow steps
 
 
+def _write_report_xlsx(scenario: message_ix.Scenario) -> None:
+    """Write IAMC Excel from the scenario's full timeseries.
+
+    Legacy reporting (step 3) writes ``reporting_output/{model}_{scenario}.xlsx``
+    before genno sectoral reporting runs. Re-export here so in|/out| sectoral
+    variables (hydrogen, power, chemicals) are included in the local file.
+    """
+    from message_ix_models.report.legacy import pp_utils
+    from message_ix_models.util import package_data_path
+    from message_ix_models.util.compat.message_data.utilities import (
+        retrieve_region_mapping,
+    )
+
+    _, reg_ts = retrieve_region_mapping(
+        scenario, scenario.platform, include_region_id=False
+    )
+
+    df = scenario.timeseries(iamc=True)
+    df = df.rename(
+        columns={
+            "model": "Model",
+            "scenario": "Scenario",
+            "region": "Region",
+            "variable": "Variable",
+            "unit": "Unit",
+        }
+    )
+    df["Model"] = scenario.model
+    df["Scenario"] = scenario.scenario
+    df["Region"] = df["Region"].map(reg_ts)
+
+    if "subannual" in df.columns:
+        df = df.drop(columns=["subannual"])
+
+    out_dir = package_data_path("report", "legacy", "reporting_output")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pp_utils.model_nm = scenario.model
+    pp_utils.scen_nm = scenario.scenario
+    pp_utils.write_xlsx(df, out_dir)
+    log.info(
+        "Wrote post-sectoral IAMC Excel to %s",
+        out_dir / f"{scenario.model}_{scenario.scenario}.xlsx",
+    )
+
+
 def _run_transport_report(
     context: Context, scenario: message_ix.Scenario
 ) -> message_ix.Scenario:
@@ -99,9 +144,8 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
-    # 3. Legacy reporting (runs first; uploads zero rows for any hydrogen
-    # variables that still query the now-absent legacy h2_elec technology —
-    # see docs/reporting/coexistence.md in the EFC_2026 project repo).
+    # 3. Legacy reporting; writes reporting_output/{model}_{scenario}.xlsx (step 5
+    # writes another file after hydrogen sectoral reporting).
     _legacy_report(scenario)
 
     # 4. Genno sectoral reporting (hydrogen + power in|/out| flows) — overwrites
@@ -140,6 +184,10 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
     scenario.add_timeseries(iam_df.timeseries().reset_index())
     scenario.commit("Add Genno sectoral reporting")
+
+    # 5. Re-write local IAMC Excel so it includes step-4 sectoral variables.
+    # Step 3 legacy report already wrote the same path before genno ran.
+    _write_report_xlsx(scenario)
 
     return scenario
 
