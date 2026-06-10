@@ -727,13 +727,17 @@ def run_sectoral_reporting(
     ]
     py_df = pyam.concat(dfs)
 
-    # Aggregate across regions for the global total. Upload under the R12_GLB
-    # technical node ID so it flows through the same synonym path as legacy
-    # (resolves to "GLB region (R12)" canonical) and overwrites legacy's global
-    # row at the same key per the EFC coexistence design. NOTE: assumes the swept
-    # domains carry no native R12_GLB activity (true for hydrogen and power);
-    # revisit before adding domains with bunker/non-allocated R12_GLB rows (shipping).
+    # Sum regional nodes → R12_GLB only for variables without native GLB rows
+    # (chemicals bunkers already report at R12_GLB).
     if add_world:
-        py_df.aggregate_region(py_df.variable, region="R12_GLB", append=True)
+        glb = "R12_GLB"
+        native = set(py_df.filter(region=glb).variable)
+        to_sum = py_df.filter(variable=list(native), keep=False).filter(
+            region=glb, keep=False
+        )
+        if not to_sum.empty:
+            py_df = pyam.concat(
+                [py_df, to_sum.aggregate_region(to_sum.variable, region=glb)]
+            )
 
     return py_df

@@ -21,7 +21,7 @@ METHANOL_ADDON_PARENTS = ["h2_elec_alk", "h2_elec_pem", "h2_elec_soe"]
 log = logging.getLogger(__name__)
 
 # EFC ixmp model name (single source of truth for cloned scenario targets).
-EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 EFC"
+EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
 
 # Functions for individual workflow steps
 
@@ -102,7 +102,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         "demand", filters={"commodity": "transport pax UREAM"}
     )
     run_config = (
-        "materials_daccs_bmt_run_config.yaml"
+        "materials_daccs_mt_run_config.yaml"
         if report_config_check is not None and len(report_config_check) > 0
         else "materials_daccs_run_config.yaml"
     )
@@ -145,7 +145,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     scenario.commit("Add materials reporting")
 
     # 3. Legacy reporting; writes reporting_output/{model}_{scenario}.xlsx (step 5
-    # writes another file after hydrogen sectoral reporting).
+    # overwrites that file from full timeseries).
     _legacy_report(scenario)
 
     # 4. Genno sectoral reporting (hydrogen + power in|/out| flows) — overwrites
@@ -163,31 +163,36 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         "h2_pyro_elec",
         "h2_ct",
     }
-    scenario_techs = set(scenario.set("technology").tolist())
-    if not (hyway_techs & scenario_techs):
-        log.info(
-            "Genno sectoral reporting skipped: no hyway H2 techs in scenario."
+    if hyway_techs <= set(scenario.set("technology").tolist()):
+        from message_ix.report import Reporter
+
+        from message_ix_models.report.hydrogen.h2_reporting import (
+            run_sectoral_reporting,
         )
-        return scenario
 
-    from message_ix.report import Reporter
+        rep = Reporter.from_scenario(scenario)
+        iam_df = run_sectoral_reporting(
+            rep,
+            scenario.model,
+            scenario.scenario,
+            domains=["hydrogen", "power", "chemicals"],
+        )
+        try:
+            scenario.check_out(timeseries_only=True)
+        except ValueError:
+            log.debug(
+                "Scenario %s/%s already checked out",
+                scenario.model,
+                scenario.scenario,
+            )
+        scenario.add_timeseries(iam_df.timeseries().reset_index())
+        scenario.commit("Add Genno sectoral reporting")
 
-    from message_ix_models.report.hydrogen.h2_reporting import run_sectoral_reporting
-
-    rep = Reporter.from_scenario(scenario)
-    iam_df = run_sectoral_reporting(
-        rep, scenario.model, scenario.scenario, domains=["hydrogen", "power", "chemicals"]
-    )
-    try:
-        scenario.check_out(timeseries_only=True)
-    except ValueError:
-        log.debug(f"Scenario {scenario.model}/{scenario.scenario} already checked out")
-    scenario.add_timeseries(iam_df.timeseries().reset_index())
-    scenario.commit("Add Genno sectoral reporting")
-
-    # 5. Re-write local IAMC Excel so it includes step-4 sectoral variables.
-    # Step 3 legacy report already wrote the same path before genno ran.
-    _write_report_xlsx(scenario)
+        # Re-write xlsx so in|/out| sectoral variables are included (step 3 wrote
+        # before genno ran).
+        _write_report_xlsx(scenario)
+    else:
+        log.info("Genno sectoral reporting skipped: no new hydrogen techs build.")
 
     return scenario
 
@@ -279,7 +284,7 @@ def generate(context: Context) -> Workflow:
     # EFC workflow: clone from parent BMT-R12 baseline on ixmp-dev into EFC model name.
     model_name = "ixmp://ixmp-dev/" + EFC_MODEL_NAME
     url = model_name + "/"
-    base_url = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12/baseline_BMT#3"
+    base_url = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12/baseline_MT#6"
 
     # Common keyword argument for cloning (without solution; smaller DB writes)
     c = dict(keep_solution=False)
