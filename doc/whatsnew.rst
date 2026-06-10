@@ -19,6 +19,15 @@ Next release
   - Exclude three basins that are entirely missing from the refreshed hydrological source.
   - Drop the climate cooling-impact branch from the cooling-technology build.
 
+- Fix water-nexus supply constraints in :mod:`.model.water` (:pull:`522`).
+
+  - Default saline extraction capacity to zero where no desalination projection exists,
+    and clip desalination activity floors to that cap.
+  - Limit desalination new-capacity growth to 10% per year.
+  - Seed historical extraction activity by merit-order dispatch across the basin's supply sources.
+  - Cap renewable groundwater activity growth to match the dispatch seed.
+  - Price fossil groundwater at a 20% premium over renewable groundwater.
+
 - Add :doc:`/api/model-bmt` (:pull:`433`, :pull:`486`).
 - :doc:`/project/circeular`:
   Distinguish :class:`~.circeular.structure.CL_SCENARIO`
