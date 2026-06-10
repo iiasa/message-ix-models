@@ -117,7 +117,7 @@ gas_t/d,Transmission/Distribution of gas,Final,Gas Secondary,Gas Final,yes,Gas,
 gas_t/d_ch4,Transmission/Distribution of gas with CH4 mitigation,Final,Gas Secondary,Gas Final,yes,Gas,
 gas_trp,gas-based transport,Useful,Gas Final ,Transport Useful,,Transport,
 geo_hpl,Geothermal heat plant,Secondary,-,D_Heat Secondary,yes,Heat,
-geo_ppl,Geothermal power plant,Secondary,-,Electricity Secondary,yes,Electricity,NA
+geo_ppl,Geothermal power plant,Secondary,-,Electricity Secondary,yes,Electricity,
 gfc_co2scr,New co2 scrubber for gas fuel cells,Secondary,-,Exports Secondary,yes,Gas,
 glb_coal_exp,Global net export of coal,Imports,-,Coal Imports,,Solids,
 glb_coal_imp,Global net import of coal,Exports,Electricity Exports,Total Exports,,Solids,
