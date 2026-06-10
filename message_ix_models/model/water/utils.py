@@ -65,10 +65,10 @@ m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
 SW_ELEC_INTENSITY_GWA_KM3 = 0.018835616
 # Groundwater pumping electricity depth adder (GWa/km3).
 GW_ELEC_DEPTH_ADDER_GWA_KM3 = 0.043464579
-# Fossil-groundwater electricity multiplier over renewable groundwater.
-GW_FOSSIL_ELEC_MULTIPLIER = 5
-# Fossil-groundwater variable cost (USD/km3).
-GW_FOSSIL_VAR_COST_USD_KM3 = 1000
+# Fossil-groundwater cost premium over renewable groundwater: fossil is priced
+# 20% above renewable on every dimension (electricity here, inv_cost and
+# lifetime in add_water_supply), instead of an arbitrary discouragement penalty.
+GW_FOSSIL_ELEC_MULTIPLIER = 1.2
 # Reference electricity price for the historical merit-order dispatch:
 # 50 USD/MWh x 8766 MWh/GWa.
 HIST_DISPATCH_ELEC_PRICE_USD_GWA = 50.0 * 8766.0
