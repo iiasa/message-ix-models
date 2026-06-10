@@ -11,7 +11,6 @@ from message_ix_models.model.water.utils import (
     ANNUAL_CAPACITY_FACTOR,
     GW_ELEC_DEPTH_ADDER_GWA_KM3,
     GW_FOSSIL_ELEC_MULTIPLIER,
-    GW_FOSSIL_VAR_COST_USD_KM3,
     KM3_TO_MCM,
     SW_ELEC_INTENSITY_GWA_KM3,
     USD_KM3_TO_USD_MCM,
@@ -882,7 +881,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "technical_lifetime",
                     technology="extract_gw_fossil",
-                    value=5,  # 5 Year TL to further discourage use.
+                    value=20,  # match renewable groundwater
                     unit="y",
                 )
                 .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
@@ -918,8 +917,8 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
                 make_df(
                     "inv_cost",
                     technology="extract_gw_fossil",
-                    value=7808.22 * USD_KM3_TO_USD_MCM,
-                    # 50% higher than membrane desalination (5205.48 * 1.5)
+                    value=54.52 * 1.2 * USD_KM3_TO_USD_MCM,
+                    # 20% above renewable groundwater (extract_groundwater 54.52)
                     unit="USD/MCM",
                 ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"]),
             ]
@@ -932,36 +931,6 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         results["inv_cost"] = pd.concat(
             [results["inv_cost"], saline_water_cool_inv_cost]
         )
-        fix_cost = make_df(
-            "fix_cost",
-            technology="extract_gw_fossil",
-            value=6780.83 * USD_KM3_TO_USD_MCM,
-            # 50% higher than distillation fix_cost (4520.55 * 1.5)
-            unit="USD/MCM",
-        ).pipe(broadcast, yv_ya_gw, node_loc=df_node["node"])
-
-        results["fix_cost"] = fix_cost
-
-        # Add variable cost for fossil groundwater to make it truly expensive
-        var_cost_fossil = make_df(
-            "var_cost",
-            technology="extract_gw_fossil",
-            value=GW_FOSSIL_VAR_COST_USD_KM3 * USD_KM3_TO_USD_MCM,
-            # High variable cost to ensure it's only used as last resort
-            unit="USD/MCM",
-            mode="M1",
-        ).pipe(
-            broadcast,
-            yv_ya_gw,
-            node_loc=df_node["node"],
-            time=pd.Series(sub_time),
-        )
-
-        if "var_cost" in results:
-            results["var_cost"] = pd.concat([results["var_cost"], var_cost_fossil])
-        else:
-            results["var_cost"] = var_cost_fossil
-
         # Surface water and renewable groundwater share historical_activity
         # anchors and get the same growth ceiling; fossil groundwater is the
         # residual backstop.

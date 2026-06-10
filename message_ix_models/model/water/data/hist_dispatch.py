@@ -16,11 +16,9 @@ from message_ix_models.model.water.data.demands import (
 from message_ix_models.model.water.utils import (
     GW_ELEC_DEPTH_ADDER_GWA_KM3,
     GW_FOSSIL_ELEC_MULTIPLIER,
-    GW_FOSSIL_VAR_COST_USD_KM3,
     HIST_DISPATCH_ELEC_PRICE_USD_GWA,
     KM3_TO_MCM,
     SW_ELEC_INTENSITY_GWA_KM3,
-    USD_KM3_TO_USD_MCM,
     GWa_KM3_TO_GWa_MCM,
 )
 from message_ix_models.util import broadcast, package_data_path
@@ -308,13 +306,14 @@ def add_water_hist_dispatch(context: "Context") -> dict[str, pd.DataFrame]:
         "extract_groundwater": {"electr": gw_elec_intensity},
         "extract_gw_fossil": {"electr": gw_elec_intensity * GW_FOSSIL_ELEC_MULTIPLIER},
     }
-    var_cost = {"extract_gw_fossil": GW_FOSSIL_VAR_COST_USD_KM3 * USD_KM3_TO_USD_MCM}
     commodity_prices = {"electr": HIST_DISPATCH_ELEC_PRICE_USD_GWA}
 
+    # Fossil ranks above renewable GW by its 1.2x electricity multiplier alone;
+    # no separate var_cost is needed to keep the merit order SW < GW < fossil.
     activity = merit_order_dispatch(
         capacity=capacity,
         inputs=inputs,
-        var_cost=var_cost,
+        var_cost={},
         demand=demand,
         commodity_prices=commodity_prices,
     )
