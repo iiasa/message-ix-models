@@ -48,7 +48,9 @@ level_2:
     components: [ prod_h2_transient_nh3_biomass_total, prod_h2_transient_nh3_electricity, prod_h2_transient_nh3_gas_total, prod_h2_transient_nh3_coal_total, prod_h2_transient_nh3_oil_total ]
   Transient|Methanol:
     short: prod_h2_transient_meth
-    components: [ prod_h2_transient_meth_bio_total, prod_h2_transient_meth_coal_total, prod_h2_transient_meth_ng_total, prod_h2_transient_meth_h2 ]
+    # prod_h2_transient_meth_h2 removed from components 2026-06-10 (meth_h2 var
+    # commented out in h2_transient_hist.yaml: merchant H2, not captive)
+    components: [ prod_h2_transient_meth_bio_total, prod_h2_transient_meth_coal_total, prod_h2_transient_meth_ng_total ]
 
 level_3:
   Transient:

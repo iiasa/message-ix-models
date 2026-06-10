@@ -153,12 +153,14 @@ vars:
   
   # Methanol from hydrogen - higher transient hydrogen content
   # Factor: 1.124 EJ H2 per EJ methanol (0.18 kg H2/kg methanol × HHV ratio)
-  
-  Transient|Methanol|Electrolysis:
-    filter:
-      {technology: meth_h2, mode: [feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: methanol, level: [primary_material, primary]}
-    original_unit: GWa
-    stoichiometric_factor: 1.124
-    short:
-      prod_h2_transient_meth_h2
+  # Commented out 2026-06-10: meth_h2 consumes MERCHANT grid hydrogen (already
+  # reported as electrolyser production + in-flow), so counting it as transient
+  # double-counts in merchant+captive totals. Pending factor-vs-input review.
+  # Transient|Methanol|Electrolysis:
+  #   filter:
+  #     {technology: meth_h2, mode: [feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: methanol, level: [primary_material, primary]}
+  #   original_unit: GWa
+  #   stoichiometric_factor: 1.124
+  #   short:
+  #     prod_h2_transient_meth_h2
 
