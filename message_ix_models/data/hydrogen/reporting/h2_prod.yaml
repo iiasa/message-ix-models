@@ -85,12 +85,6 @@ vars:
     original_unit: GWa
     short:
       prod_h2_elec_soe
-  Hydrogen|Electricity|h2_elec_legacy:
-      filter:
-        {technology: h2_elec, mode: [M1, feedstock_dac, feedstock_fic, feedstock_bic, fuel_dac, fuel_bic, fuel_fic], commodity: hydrogen, level: secondary}
-      original_unit: GWa
-      short:
-        prod_h2_elec_legacy
 
   # geological (white) hydrogen
   Hydrogen|Geological:

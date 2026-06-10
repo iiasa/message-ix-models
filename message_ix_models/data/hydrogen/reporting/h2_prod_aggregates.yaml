@@ -21,7 +21,7 @@ level_1:
     components: [ prod_h2_bio_wo_ccs, prod_h2_bio_w_ccs ]
   Hydrogen|Electricity:
     short: prod_h2_elec
-    components: [ prod_h2_elec_alkaline, prod_h2_elec_pem, prod_h2_elec_soe, prod_h2_elec_legacy ]
+    components: [ prod_h2_elec_alkaline, prod_h2_elec_pem, prod_h2_elec_soe ]
   # Hydrogen|Refinery:
   #   short: prod_h2_refinery
   #   components: [ prod_h2_refinery ]
