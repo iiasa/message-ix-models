@@ -117,7 +117,7 @@ gas_t/d,Transmission/Distribution of gas,Final,Gas Secondary,Gas Final,yes,Gas,
 gas_t/d_ch4,Transmission/Distribution of gas with CH4 mitigation,Final,Gas Secondary,Gas Final,yes,Gas,
 gas_trp,gas-based transport,Useful,Gas Final ,Transport Useful,,Transport,
 geo_hpl,Geothermal heat plant,Secondary,-,D_Heat Secondary,yes,Heat,
-geo_ppl,Geothermal power plant,Secondary,-,Electricity Secondary,yes,Electricity,
+geo_ppl,Geothermal power plant,Secondary,-,Electricity Secondary,yes,Electricity,NA
 gfc_co2scr,New co2 scrubber for gas fuel cells,Secondary,-,Exports Secondary,yes,Gas,
 glb_coal_exp,Global net export of coal,Imports,-,Coal Imports,,Solids,
 glb_coal_imp,Global net import of coal,Exports,Electricity Exports,Total Exports,,Solids,
@@ -294,17 +294,39 @@ solar_cv3,quadratic systems integration costs added to solar PV,Dummy,-,Dummy Re
 solar_cv4,quadratic systems integration costs added to solar PV,Dummy,-,Dummy Renewable Secondary,,Electricity,
 solar_i,solar thermal in industry sector,Useful,-,Industry TH Useful,yes,Industry,
 solar_pv_I,On-site solar photovoltaic power plant (no storage) in industry,Useful,-,Industry Useful,yes,Industry,
-solar_pv_ppl,Solar photovoltaic power plant (no storage),Dummy,-,Dummy Renewable Secondary,yes,Electricity,Solar|PV
+solar_pv_ppl,Solar photovoltaic power plant (no storage),Dummy,-,Dummy Renewable Secondary,yes,Electricity,
 solar_pv_RC,On-site solar photovoltaic power plant (no storage) in residential/commercial,Useful,-,RC_Useful,yes,Residential/Commercial,
+solar_pv_rt_ppl,,Dummy,-,Dummy Renewable Secondary,yes,Electricity,
 solar_rc,Solar thermal in residential/commercial sector,Useful,-,RC_Thermal Useful,,Residential/Commercial,
-solar_res1,maximum solar electricity potential 1,Secondary,-,Electricity Secondary,,Electricity,
-solar_res2,maximum solar electricity potential 2,Secondary,-,Electricity Secondary,,Electricity,
-solar_res3,maximum solar electricity potential 3,Secondary,-,Electricity Secondary,,Electricity,
-solar_res4,maximum solar electricity potential 4,Secondary,-,Electricity Secondary,,Electricity,
-solar_res5,maximum solar electricity potential 5,Secondary,-,Electricity Secondary,,Electricity,
-solar_res6,maximum solar electricity potential 6,Secondary,-,Electricity Secondary,,Electricity,
-solar_res7,maximum solar electricity potential 7,Secondary,-,Electricity Secondary,,Electricity,
-solar_th_ppl,Solar thermal power plant with storage,Secondary,-,Electricity Secondary,yes,Electricity,
+solar_res1,maximum solar electricity potential 1,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res2,maximum solar electricity potential 2,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res3,maximum solar electricity potential 3,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res4,maximum solar electricity potential 4,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res5,maximum solar electricity potential 5,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res6,maximum solar electricity potential 6,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res7,maximum solar electricity potential 7,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res8,maximum solar electricity potential 7,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_hist_2000,maximum solar electricity potential 1,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_hist_2005,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_hist_2010,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_hist_2015,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_hist_2020,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_hist_2025,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT1,maximum solar electricity potential 1,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT2,maximum solar electricity potential 2,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT3,maximum solar electricity potential 3,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT4,maximum solar electricity potential 4,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT5,maximum solar electricity potential 5,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT6,maximum solar electricity potential 6,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT7,maximum solar electricity potential 7,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_RT8,maximum solar electricity potential 7,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_rt_hist_2000,maximum solar electricity potential 1,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_rt_hist_2005,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_rt_hist_2010,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_rt_hist_2015,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_rt_hist_2020,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_res_rt_hist_2025,,Secondary,-,Electricity Secondary,,Electricity,Solar|PV
+solar_th_ppl,Solar thermal power plant with storage,Secondary,-,Electricity Secondary,yes,Electricity,NA
 sp_coal_I,specific use of coal in industry,Useful,Coal Final ,Industry Useful,,Industry,
 sp_el_I,specific use of electricity in industry,Useful,Electricity Final ,Industry Useful,,Industry,
 sp_el_RC,specific use of electricity in residential/commercial,Useful,Electricity Final ,RC_Useful,,Residential/Commercial,
@@ -337,17 +359,29 @@ wind_cv1,"wind flexibility requirement and firm capacity contribution, quadratic
 wind_cv2,"wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind",Dummy,-,Dummy Renewable Secondary,,Electricity,
 wind_cv3,"wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind",Dummy,-,Dummy Renewable Secondary,,Electricity,
 wind_cv4,"wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind",Dummy,-,Dummy Renewable Secondary,,Electricity,
-wind_ppl,wind power plant onshore (provides capacity only),Dummy,-,Dummy Renewable Secondary,yes,Electricity,Wind|onshore
-wind_res1,wind onshore potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,
-wind_res2,wind onshore potential and generation 2,Secondary,-,Electricity Secondary,,Electricity,
-wind_res3,wind onshore potential and generation 3,Secondary,-,Electricity Secondary,,Electricity,
-wind_res4,wind onshore potential and generation 4,Secondary,-,Electricity Secondary,,Electricity,
-wind_ppf,wind power plant offshore (provides capacity only),Secondary,-,Dummy Renewable Secondary,yes,Electricity,Wind|offshore
-wind_ref1,wind offshore potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,
-wind_ref2,wind offshore potential and generation 2,Secondary,-,Electricity Secondary,,Electricity,
-wind_ref3,wind offshore potential and generation 3,Secondary,-,Electricity Secondary,,Electricity,
-wind_ref4,wind offshore potential and generation 4,Secondary,-,Electricity Secondary,,Electricity,
-wind_ref5,wind offshore potential and generation 5,Secondary,-,Electricity Secondary,,Electricity,
+wind_ppl,wind power plant onshore (provides capacity only),Dummy,-,Dummy Renewable Secondary,yes,Electricity,
+wind_res1,wind onshore potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res2,wind onshore potential and generation 2,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res3,wind onshore potential and generation 3,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res4,wind onshore potential and generation 4,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res_hist_2000,wind onshore potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res_hist_2005,,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res_hist_2010,,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res_hist_2015,,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res_hist_2020,,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_res_hist_2025,,Secondary,-,Electricity Secondary,,Electricity,Wind|onshore
+wind_ppf,wind power plant offshore (provides capacity only),Secondary,-,Dummy Renewable Secondary,yes,Electricity,
+wind_ref1,wind offshore potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref2,wind offshore potential and generation 2,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref3,wind offshore potential and generation 3,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref4,wind offshore potential and generation 4,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref5,wind offshore potential and generation 5,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref_hist_2000,wind offshore potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref_hist_2005,,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref_hist_2010,,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref_hist_2015,,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref_hist_2020,,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
+wind_ref_hist_2025,,Secondary,-,Electricity Secondary,,Electricity,Wind|offshore
 csp_sm3_res,concentrating solar power (CSP) with solar multiple of 3 potential and generation 1,Secondary,-,Electricity Secondary,,Electricity,
 csp_sm3_res1,concentrating solar power (CSP) with solar multiple of 3 potential and generation 2,Secondary,-,Electricity Secondary,,Electricity,
 csp_sm3_res2,concentrating solar power (CSP) with solar multiple of 3 potential and generation 3,Secondary,-,Electricity Secondary,,Electricity,
