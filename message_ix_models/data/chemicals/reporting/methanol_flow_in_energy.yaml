@@ -81,3 +81,11 @@ vars:
              shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
     original_unit: GWa
     short: in_meth_bunker_methanol
+  Chemicals|meth_h2|methanol:
+    filter:
+      technology: meth_h2
+      commodity: hydrogen
+      level: secondary
+      mode: [feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic]
+    original_unit: GWa
+    short: in_meth_h2_methanol
