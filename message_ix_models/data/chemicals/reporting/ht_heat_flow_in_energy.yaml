@@ -1,0 +1,18 @@
+# EFC Chemicals-sector methanol INPUT energy flows: in|Chemicals|<tech>|methanol (EJ/yr).
+# Energy/fuel CONSUMPTION of methanol (GWa -> EJ/yr): industry furnaces, transport, and
+# shipping bunker, all drawing methanol at the (energy) final level — except
+# furnace_methanol_refining, which draws at secondary. These are upstream of any energy->mass
+# conversion, so they stay energy. The plain "methanol" commodity label marks EJ/yr (vs the
+# Mt "methanol feedstock material" in methanol_flow_in_material.yaml).
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  # Industry furnaces (final level; high/low temperature modes)
+  Chemicals|MTO_petro|ht_heat:
+    filter: {technology: MTO_petro, commodity: ht_heat, level: useful_petro, mode: M1}
+    original_unit: GWa
+    short: in_MTO_petro_lht_heat
+
+  
