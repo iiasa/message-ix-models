@@ -1,8 +1,9 @@
 import logging
+
 import ixmp
-import message_ix
 from message_ix import Scenario
 from message_ix.report import Reporter
+
 from message_ix_models.report.hydrogen.h2_reporting import run_h2_reporting
 
 # Enable logging to see what's happening
@@ -10,10 +11,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 mp = ixmp.Platform("ixmp-dev")
 
-model = "hyway_SSP_SSP2_v6.4"
-scenario = "SSP2 - Low Emissions_gains"
+model_name = "hyway_SSP_SSP2_v6.4"
+scenario_name = "SSP2 - Low Emissions_gains"
 
-scenario = Scenario(mp, model, scenario)
+scenario = Scenario(mp, model_name, scenario_name)
 
 rep = Reporter.from_scenario(scenario)
 
@@ -37,7 +38,7 @@ has_historical_activity = any(
 )
 has_emission_factor = any("emission_factor" == str(k).split(":")[0] for k in rep.keys())
 
-print(f"\nReporter keys:")
+print("\nReporter keys:")
 print(f"  output: {has_output}")
 print(f"  ref_activity: {has_ref_activity}")
 print(f"  historical_activity: {has_historical_activity}")
@@ -53,7 +54,7 @@ print("=" * 70 + "\n")
 
 print("Running H2 reporting...")
 try:
-    h2_df = run_h2_reporting(rep, model, scenario.scenario)
+    h2_df = run_h2_reporting(rep, model_name, scenario.scenario)
     print(f"\n✓ Reporting complete! Got {len(h2_df)} data points")
 
     # Convert to timeseries

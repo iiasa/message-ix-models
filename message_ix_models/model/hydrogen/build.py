@@ -5,7 +5,7 @@ parametrization to MESSAGE-IX scenarios following the specification in set.yaml.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import message_ix
 
@@ -181,9 +181,9 @@ def get_spec() -> dict[str, Any]:
     # Load configuration
     context = read_config()
 
-    require = {}
-    add = {}
-    remove = {}
+    require: dict[str, list[str]] = {}
+    add: dict[str, list[str]] = {}
+    remove: dict[str, list[str]] = {}
 
     # Process hydrogen configuration
     hydrogen_config = context.get("hydrogen", {})
