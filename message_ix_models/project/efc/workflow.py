@@ -24,6 +24,11 @@ log = logging.getLogger(__name__)
 # EFC ixmp model name (single source of truth for cloned scenario targets).
 EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
 
+# Donor scenario for 1p5c ``bound_emission`` / ``tax_emission`` policy data.
+_1P5C_SOURCE_MODEL = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C2"
+_1P5C_SOURCE_SCENARIO = "o_1p5c_locdr_t3"
+_EMISSION_CONSTRAINT_PARAMETERS = ("bound_emission", "tax_emission")
+
 # Functions for individual workflow steps
 
 
@@ -236,6 +241,51 @@ def build_hydrogen(
     return scenario
 
 
+def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Copy 1p5c emission constraints from donor scenarios.
+
+    Adds ``bound_emission`` and ``tax_emission`` data with the
+    corresponding parameters from specified source scenarios.
+    """
+    del context
+
+    source = message_ix.Scenario(
+        scenario.platform,
+        _1P5C_SOURCE_MODEL,
+        _1P5C_SOURCE_SCENARIO,
+    )
+
+    from message_ix_models.tools.remove_emission_bounds import (
+        main as remove_emission_bounds,
+    )
+
+    remove_emission_bounds(scenario, remove_all=True)
+
+    with scenario.transact("Copy bound_emission and tax_emission from donor scenario"):
+        for par_name in _EMISSION_CONSTRAINT_PARAMETERS:
+            df = source.par(par_name)
+            if df.empty:
+                log.warning(
+                    "No %s in %s/%s; skipping",
+                    par_name,
+                    _1P5C_SOURCE_MODEL,
+                    _1P5C_SOURCE_SCENARIO,
+                )
+                continue
+            scenario.add_par(par_name, df)
+
+    log.info(
+        "add_1p5c: copied %s from %s/%s to %s/%s",
+        ", ".join(_EMISSION_CONSTRAINT_PARAMETERS),
+        _1P5C_SOURCE_MODEL,
+        _1P5C_SOURCE_SCENARIO,
+        scenario.model,
+        scenario.scenario,
+    )
+
+    return scenario
+
+
 def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
 ) -> message_ix.Scenario:
@@ -260,9 +310,9 @@ def solve(
 # EFC scenarios:
 _scen_all = [
     "cpol",
-    "chn_full_2060_1p5c",
-    # "chn_full_2060_2c",
-    # "chn_partial_2060_2c",
+    "chn_refpol_2060_1p5c",
+    # "chn_fullpol_2060_2c",
+    # "chn_partpol_2060_2c",
 ]
 
 
@@ -328,8 +378,8 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step(
         "1p5c added",
         "baseline reported",
-        placeholder,
-        target=f"{url}chn_full_2060_1p5c",
+        add_1p5c,
+        target=f"{url}chn_refpol_2060_1p5c",
         clone=c,
     )
     name = wf.add_step("1p5c solved", name, solve)
