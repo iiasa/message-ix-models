@@ -10,6 +10,7 @@ import message_ix  # type: ignore
 from message_ix_models import Context
 from message_ix_models.model.hydrogen.data_hydrogen import add_hydrogen_techs
 from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parity
+from message_ix_models.project.efc import freeze_truck_history
 from message_ix_models.workflow import Workflow
 
 # Hyway electrolyser techs that take over h2_elec's role as
@@ -62,8 +63,8 @@ def _write_report_xlsx(scenario: message_ix.Scenario) -> None:
 
     out_dir = package_data_path("report", "legacy", "reporting_output")
     out_dir.mkdir(parents=True, exist_ok=True)
-    pp_utils.model_nm = scenario.model
-    pp_utils.scen_nm = scenario.scenario
+    pp_utils.model_nm = scenario.model  # type: ignore[assignment]
+    pp_utils.scen_nm = scenario.scenario  # type: ignore[assignment]
     pp_utils.write_xlsx(df, out_dir)
     log.info(
         "Wrote post-sectoral IAMC Excel to %s",
@@ -297,7 +298,13 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=True),
     )
     name = wf.add_step("base reported", name, report)
-
+    name = wf.add_step(
+        "truck fixed",
+        name,
+        freeze_truck_history,
+        target=f"{url}base_truck_fixed",
+        clone=c,
+    )
     name = wf.add_step(
         "hydrogen added",
         name,
