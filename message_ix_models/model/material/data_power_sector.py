@@ -5,20 +5,28 @@ Provides functions to read material intensities and generate parameter data
 for power-sector-related technologies and their use of materials.
 """
 
+import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import pint
-from message_ix import make_df
+from message_ix import Reporter, make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import load_package_data, package_data_path, same_node
+from message_ix_models.util import (
+    load_package_data,
+    merge_data,
+    package_data_path,
+    same_node,
+)
 
 if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models.types import ParameterData
+
+log = logging.getLogger(__name__)
 
 
 def gen_data_power_sector(
@@ -27,6 +35,8 @@ def gen_data_power_sector(
     """Generate data for materials representation of power industry."""
     info = ScenarioInfo(scenario)
     int_dict = gen_cap_par_data(read_material_intensities(info), scenario, info)
+    # calculate adjusted material demand
+    merge_data(int_dict, get_reconciliated_mat_demand(scenario))
 
     # create new parameters input_cap_new, output_cap_new, input_cap_ret,
     # output_cap_ret, input_cap and output_cap if they don't exist
@@ -318,12 +328,135 @@ def maybe_init_pars(scenario: "Scenario") -> None:
 
 
 def guess_model_version(s_info: "ScenarioInfo") -> int:
-    # determine MESSAGEix-GLOBIOM version based on technology proxy
-    # to read correct technology mapping
-    # (until we have a more robust way to handle different versions)
+    """Determine MESSAGEix-GLOBIOM version based on technology proxy."""
     # TODO: move version handling to build config and remove hardcoded technology check
     if "solar_res_hist_2000" in s_info.set["technology"]:
         # Scenario is likely a ScenarioMIP derivative
         return 2
     else:
         return 1
+
+
+def read_mat_demand_estimate() -> pd.DataFrame:
+    """Read baseline material demand estimate for power sector technologies."""
+    pm_baseline = pd.read_csv(
+        package_data_path(
+            "material", "power_sector", "material_demand_baseline_estimate.csv"
+        ),
+        comment="#",
+    ).drop(columns="unit")
+    return pm_baseline
+
+
+def get_reconciliated_mat_demand(
+    scenario: "Scenario", pm_baseline=None
+) -> "ParameterData":
+    """Compute and return "power sector-adjusted" material demand.
+
+    Retrieve exogenous demand projection and
+    subtract endogenous demand from power sector.
+
+    Parameters
+    ----------
+    scenario :
+        Scenario to retrieve exogenous demand projection from.
+    pm_baseline :
+        Power sector material demand projection. If not given,
+        uses baseline estimate from `read_mat_demand_estimate()`.
+    """
+    target_commodities = ["cement", "steel", "aluminum"]
+    mat_demand = scenario.par("demand", {"commodity": target_commodities})
+    if pm_baseline is None:
+        pm_baseline = read_mat_demand_estimate()
+    pm = pm_baseline.set_index(
+        [i for i in mat_demand.columns if i not in ["unit", "value"]]
+    )
+    tot = mat_demand.set_index([i for i in mat_demand.columns if i != "value"])
+    tot_adjusted = tot.sub(pm).reset_index()
+    return {"demand": tot_adjusted}
+
+
+def determine_endo_mat_demand(scenario: "Scenario", version=2) -> pd.DataFrame:
+    """Compute material demand from power sector technologies from model solution.
+
+    Parameters
+    ----------
+    scenario :
+        Scenario to retrieve endogenous material demand from.
+    version :
+        MESSAGEix-GLOBIOM version to use for technology mapping. Defaults to 2.
+
+    Returns
+    -------
+    DataFrame with endogenous material demand from power sector technologies.
+    """
+    if scenario.has_solution():
+        scenario.remove_solution()
+    scenario.solve("MESSAGE", cap_comm=True)
+    rep = Reporter.from_scenario(scenario)
+    path = package_data_path("material", "power_sector")
+    tec_map = pd.read_csv(
+        path.joinpath(f"MESSAGE_global_model_technologies_v{version}.csv"),
+        usecols=[0, 7],
+        comment="#",
+    ).dropna()
+    p_tecs = tec_map[tec_map.columns[0]].to_list()
+    rep.set_filters(t=p_tecs)
+    demand = rep.get("in_cap_new:nl-yv-c")
+    result = (
+        (
+            pd.Series(demand)
+            .reset_index()
+            .rename(columns={"yv": "year", "nl": "node", 0: "value", "c": "commodity"})
+        )
+        .round(5)
+        .assign(level="demand", time="year")
+    )
+    scenario.remove_solution()
+    return result
+
+
+def update_material_demand_estimate(scenario: "Scenario", version: int = 2) -> None:
+    """Find material demand estimate of power sector for demand reconciliation.
+
+    Start with initial material demand estimate and
+    solve the model to retrieve actual endogenous material demand.
+    Correct total demand by the difference between the two and
+    repeat until demand from previous solution and actual demand converge.
+    """
+    convergence = False
+    pm_ref = read_mat_demand_estimate()
+    ctr = 0
+    while not convergence:
+        pm_new = determine_endo_mat_demand(scenario, version=version)[pm_ref.columns]
+        pm_ref.set_index(
+            [i for i in pm_ref.columns if i not in ["value"]], inplace=True
+        )
+        pm_new.set_index(
+            [i for i in pm_new.columns if i not in ["value"]], inplace=True
+        )
+        diff_rel = pm_ref.div(pm_new)
+        diff = pm_ref.sub(pm_new).round(5)
+        min, max = diff_rel.min(), diff_rel.max()
+        if (min < 0.975).all() or (max > 1.025).all():
+            log.info("Values deviate by more than 2.5%. Starting new iteration.")
+            new_tot = get_reconciliated_mat_demand(
+                scenario, pm_baseline=diff.reset_index()
+            )
+            with scenario.transact():
+                scenario.add_par("demand", new_tot["demand"])
+            pm_ref = pm_new.reset_index()
+        else:
+            log.info(
+                f"Values are within tolerance. "
+                f"Demands converged after {ctr} iterations."
+            )
+            convergence = True
+        ctr += 1
+        if ctr > 4:
+            log.warning(
+                "Maximum number of iterations reached."
+                "Stopping iteration without convergence."
+            )
+            break
+    return
