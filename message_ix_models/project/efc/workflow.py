@@ -203,6 +203,37 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return scenario
 
 
+def generic_flow(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Write generic reporting to a local Excel file.
+
+    in and out flows for all technologies are reported.
+    No unit column.
+    """
+    from message_ix.report import Reporter
+
+    from message_ix_models.project.efc.generic_report import genno_generic
+
+    rep = Reporter.from_scenario(scenario)
+    df = genno_generic(
+        rep,
+        scenario.model,
+        scenario.scenario,
+        firstmodelyear=scenario.firstmodelyear,
+    )
+
+    out_path = context.get_local_path(
+        "efc",
+        f"{scenario.model}_{scenario.scenario}_generic_flows.xlsx",
+    )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_excel(out_path, index=False)
+    log.info("Wrote generic in|/out| flow report to %s (%d rows)", out_path, len(df))
+
+    return scenario
+
+
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Placeholder function that does nothing, just for building workflow."""
     return scenario
@@ -364,6 +395,11 @@ def generate(context: Context) -> Workflow:
     )
     name = wf.add_step("baseline solved", name, solve)
     name = wf.add_step("baseline reported", name, report)
+    name = wf.add_step(
+        "baseline generic reported",
+        "baseline solved",
+        generic_flow,
+    )
 
     name = wf.add_step(
         "cpol added",
@@ -384,5 +420,10 @@ def generate(context: Context) -> Workflow:
     )
     name = wf.add_step("1p5c solved", name, solve)
     name = wf.add_step("1p5c reported", name, report)
+    name = wf.add_step(
+        "1p5c generic reported",
+        "1p5c solved",
+        generic_flow,
+    )
 
     return wf
