@@ -30,11 +30,11 @@ def configure(context: "Context") -> None:
         data_paths=dict(
             # Input file names under private_data_path("buildings")
             prices=Path("input_prices_R12.csv"),
-            sturm_r=Path("report_MESSAGE_resid_SSP2_nopol_20250318.csv"),
-            sturm_c=Path("report_MESSAGE_comm_SSP2_nopol_20250318.csv"),
-            demand_static=Path("static_20251227.csv"),
-            sturm_c_ref=Path("report_MESSAGE_comm_SSP2_nopol_20250318.csv"),
-            sturm_r_ref=Path("report_MESSAGE_resid_SSP2_nopol_20250318.csv"),
+            sturm_r=Path("resid_sturm_aligned_{code}.csv"),
+            sturm_c=Path("comm_sturm_aligned_{code}.csv"),
+            demand_static=Path("resid_comm_glance_aligned_R.csv"),
+            sturm_c_ref=Path("comm_sturm_aligned_R.csv"),
+            sturm_r_ref=Path("resid_sturm_aligned_R.csv"),
         ),
         method=METHOD.C,
         with_materials=True,
@@ -62,7 +62,8 @@ def generate(context: "Context") -> Workflow:
 
     # TODO Move this to a .Config.base_url setting on an appropriate config class
     #      (probably .model.workflow.Config).
-    base_url = "ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14"
+    p = context.core.platform_info["name"]
+    base_url = f"ixmp://{p}/SSP_SSP2_v6.5/baseline_DEFAULT_step_14"
 
     # Load the base scenario
     base_step = wf.add_step("M", None, target=base_url)
