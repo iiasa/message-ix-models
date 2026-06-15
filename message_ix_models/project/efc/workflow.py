@@ -380,7 +380,7 @@ def generate(context: Context) -> Workflow:
         "baseline reported",
         add_1p5c,
         target=f"{url}chn_refpol_2060_1p5c",
-        clone=c,
+        clone=dict(keep_solution=False, shift_first_model_year=2030),
     )
     name = wf.add_step("1p5c solved", name, solve)
     name = wf.add_step("1p5c reported", name, report)
