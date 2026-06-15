@@ -13,6 +13,7 @@ from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parit
 from message_ix_models.project.efc import (
     aas_co2_storage_growth,
     aas_co2_storage_share_mode,
+    aas_coal_growth_near_term,
     freeze_truck_history,
 )
 from message_ix_models.workflow import Workflow
@@ -238,6 +239,14 @@ def generic_flow(
     return scenario
 
 
+def calibrate_base(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    scenario = freeze_truck_history(context, scenario)
+    scenario = aas_coal_growth_near_term(context, scenario)
+    return scenario
+
+
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Placeholder function that does nothing, just for building workflow."""
     return scenario
@@ -390,10 +399,10 @@ def generate(context: Context) -> Workflow:
     )
     name = wf.add_step("base reported", name, report)
     name = wf.add_step(
-        "truck fixed",
+        "base calibrated",
         name,
-        freeze_truck_history,
-        target=f"{url}base_truck_fixed",
+        calibrate_base,
+        target=f"{url}base_calibrated",
         clone=c,
     )
     name = wf.add_step(
