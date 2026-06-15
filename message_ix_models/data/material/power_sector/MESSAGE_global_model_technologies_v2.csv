@@ -1,3 +1,4 @@
+# mapping for MESSAGEix-GLOBIOM versions with ScenarioMIP renewables update
 Type of Technology,Description,Type ,Input ,Output,Vintage Tracking,Sector,LCA mapping
 adipic_thermal,Thermal destruction tech for adipic acid sector,Dummy,-,Dummy Primary,,Non-CO2,
 ammonia_secloop,Ammonia Secondary Loop Systems,Dummy,-,Dummy Primary,,Non-CO2,

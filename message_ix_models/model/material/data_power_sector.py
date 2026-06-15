@@ -38,11 +38,13 @@ def gen_data_power_sector(
 def read_material_intensities(s_info: "ScenarioInfo") -> pd.DataFrame:
     """Read and process material intensity data for power sector technologies."""
     path = package_data_path("material", "power_sector")
+    v = guess_model_version(s_info)
     # read technology, region and commodity mappings
     tec_map = (
         pd.read_csv(
-            path.joinpath("MESSAGE_global_model_technologies.csv"),
+            path.joinpath(f"MESSAGE_global_model_technologies_v{v}.csv"),
             usecols=[0, 7],
+            comment="#",
         )
         .dropna()
         .groupby("LCA mapping")["Type of Technology"]
@@ -313,3 +315,15 @@ def maybe_init_pars(scenario: "Scenario") -> None:
                 "time_dest",
             ],
         )
+
+
+def guess_model_version(s_info: "ScenarioInfo") -> int:
+    # determine MESSAGEix-GLOBIOM version based on technology proxy
+    # to read correct technology mapping
+    # (until we have a more robust way to handle different versions)
+    # TODO: move version handling to build config and remove hardcoded technology check
+    if "solar_res_hist_2000" in s_info.set["technology"]:
+        # Scenario is likely a ScenarioMIP derivative
+        return 2
+    else:
+        return 1
