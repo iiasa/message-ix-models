@@ -10,7 +10,11 @@ import message_ix  # type: ignore
 from message_ix_models import Context
 from message_ix_models.model.hydrogen.data_hydrogen import add_hydrogen_techs
 from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parity
-from message_ix_models.project.efc import freeze_truck_history
+from message_ix_models.project.efc import (
+    aas_co2_storage_growth,
+    aas_co2_storage_share_mode,
+    freeze_truck_history,
+)
 from message_ix_models.workflow import Workflow
 
 # Hyway electrolyser techs that take over h2_elec's role as
@@ -273,13 +277,11 @@ def build_hydrogen(
 
 
 def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Copy 1p5c emission constraints from donor scenarios.
+    """Copy 1p5c emission constraints and add CO2 storage AAS parameters.
 
-    Adds ``bound_emission`` and ``tax_emission`` data with the
-    corresponding parameters from specified source scenarios.
+    Adds ``bound_emission`` and ``tax_emission`` data from the donor scenario, then
+    applies ``growth_activity_up`` and ``share_mode_up`` for CO2 storage.
     """
-    del context
-
     source = message_ix.Scenario(
         scenario.platform,
         _1P5C_SOURCE_MODEL,
@@ -310,6 +312,14 @@ def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scen
         ", ".join(_EMISSION_CONSTRAINT_PARAMETERS),
         _1P5C_SOURCE_MODEL,
         _1P5C_SOURCE_SCENARIO,
+        scenario.model,
+        scenario.scenario,
+    )
+
+    scenario = aas_co2_storage_growth(context, scenario)
+    scenario = aas_co2_storage_share_mode(context, scenario)
+    log.info(
+        "add_1p5c: additional assumptions added to %s/%s",
         scenario.model,
         scenario.scenario,
     )
