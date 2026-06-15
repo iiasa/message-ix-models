@@ -29,6 +29,11 @@ from sdmx.model.v21 import Annotation, Code
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
 from message_ix_models.model.bmt.utils import subtract_material_demand
+from message_ix_models.model.buildings.sturm import (
+    _message_buildings_install_dir,
+    call_buildings_demand,
+    call_sturm,
+)
 from message_ix_models.model.structure import (
     generate_set_elements,
     get_codes,
@@ -898,7 +903,6 @@ def prepare_data_C(  # noqa: C901
     sturm_r_ref: pd.DataFrame,
     sturm_c_ref: pd.DataFrame,
     demand_static: pd.DataFrame,
-    with_materials: bool,
     relations: list[str],
 ) -> "ParameterData":
     """Derive data for MESSAGEix-Buildings from `scenario`.
@@ -918,57 +922,12 @@ def prepare_data_C(  # noqa: C901
 
     # Data frames for each parameter
     result: "MutableParameterData" = dict()
+    result["demand"] = pd.DataFrame()
 
-    # Reset index
-    for df in [sturm_r, sturm_c, demand_static]:
-        if df is not None and "node" not in df.columns:
-            df.reset_index(inplace=True)
-
-    # Add 2110 data by copying from 2100 if missing
-    for df_name, df in [
-        ("sturm_r", sturm_r),
-        ("sturm_c", sturm_c),
-        ("demand_static", demand_static),
-    ]:
-        if df is not None and "year" in df.columns:
-            if 2110 not in df["year"].values and 2100 in df["year"].values:
-                # Copy 2100 data to 2110
-                df_2100 = df[df["year"] == 2100].copy()
-                df_2100["year"] = 2110
-                # Update the original dataframe
-                if df_name == "sturm_r":
-                    sturm_r = pd.concat([sturm_r, df_2100], ignore_index=True)
-                elif df_name == "sturm_c":
-                    sturm_c = pd.concat([sturm_c, df_2100], ignore_index=True)
-                elif df_name == "demand_static":
-                    demand_static = pd.concat(
-                        [demand_static, df_2100], ignore_index=True
-                    )
-                log.info(f"Added 2110 data by copying from 2100 for {df_name}")
-
-    # Step 1: new techs/commodities for Buildings demands (part A, B)
-    # Prepare demand data
     commodity_info = cast(
         "MutableMapping", load_package_data("buildings", "commodity.yaml")
     )
     buildings_commodities = set(commodity_info.keys())
-    # TODO: another way is to use the add in set.yaml
-    demand = pd.concat([sturm_r, sturm_c, demand_static], ignore_index=True)
-    demand = demand[demand["commodity"].isin(buildings_commodities)]
-
-    result["demand"] = demand
-
-    # Quit building if the scenario already has Buildings demands
-    try:
-        existing_commodities = set(scenario.par("demand")["commodity"].unique())
-        if existing_commodities & buildings_commodities:
-            log.info(
-                "Scenario already has Buildings demands. "
-                "Skipping technology generation."
-            )
-            return result
-    except (KeyError, ValueError):
-        pass
 
     # Mapping from commodity to base model's *_rc technology
     rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
@@ -985,7 +944,7 @@ def prepare_data_C(  # noqa: C901
 
         # Create the technologies for the new commodities
         for commodity in filter(
-            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
+            re.compile(f"[_-]{fuel}").search, buildings_commodities
         ):
             # Fix for lightoil gas included
             if "lightoil-gas" in commodity:
@@ -1108,13 +1067,11 @@ def prepare_data_C(  # noqa: C901
     )
 
     # Step 4: build materials for new constructions and demolitions (part D)
-    # May need iteration later for projects deepdive into material flows
-    if with_materials:
-        # Set up buildings-materials linkage
-        merge_data(
-            result,
-            materials(scenario, info, sturm_r, sturm_c, sturm_r_ref, sturm_c_ref),
-        )
+    # Set up buildings-materials linkage
+    merge_data(
+        result,
+        materials(scenario, info, sturm_r, sturm_c, sturm_r_ref, sturm_c_ref),
+    )
 
     # Step 5: other format check and adjustments
     for key, df in result.items():
@@ -1161,7 +1118,9 @@ def prune_spec(spec: Spec, data: "ParameterData") -> None:
             )
 
 
-def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -> None:
+def main(
+    context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame, **kwargs
+) -> None:
     """Set up the structure and data for MESSAGE_Buildings on `scenario`.
 
     The function responds to a :class:`.buildings.Config` instance at
@@ -1256,18 +1215,14 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             val = context.buildings.data_paths[attr]
             path = Path(val)
             # TODO Move this path logic into .buildings.Config
-            return (
-                path if path.is_absolute() else private_data_path("buildings", val)
-            )
+            return path if path.is_absolute() else private_data_path("buildings", val)
 
         def _load_csv(attr: str) -> pd.DataFrame:
             path = _data_path(attr)
             df = pd.read_csv(path)
             missing = set(_DEMAND_CSV_COLUMNS) - set(df.columns)
             if missing:
-                raise ValueError(
-                    f"{path}: missing demand columns {sorted(missing)}"
-                )
+                raise ValueError(f"{path}: missing demand columns {sorted(missing)}")
             return df.loc[:, _DEMAND_CSV_COLUMNS]
 
         # Inputs for prepare_data_B from context.buildings or defaults
@@ -1293,24 +1248,40 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
     elif context.buildings.method is METHOD.C:
         from pathlib import Path
 
+        context_b = deepcopy(context)
+        context_b.buildings.code = kwargs.get("code", "R").strip()
+        call_sturm(context_b, scenario)
+
+        def format_sturm_code(code: str, sturm_scen="r") -> str:
+            return code + "_" + sturm_scen if code != "R" else code
+
         def _load_csv(attr: str, index_col=None):
             """Resolve path from context.buildings or defaults and load CSV."""
             val = context.buildings.data_paths[attr]
             path = Path(val)
             # TODO Move this path logic into .buildings.Config
-            path = path if path.is_absolute() else private_data_path("buildings", val)
+            if not path.is_absolute():
+                path = (
+                    _message_buildings_install_dir()
+                    .joinpath("message_ix_buildings", "sturm", "message_linking")
+                    .joinpath(
+                        context.buildings.data_paths[attr]
+                        .__str__()
+                        .format(code=format_sturm_code(context_b.buildings.code))
+                    )
+                )
             return pd.read_csv(path, index_col=index_col)
 
-        # Inputs for prepare_data_B from context.buildings or defaults
+        # Inputs for prepare_data_C from context.buildings or defaults
         prices = _load_csv("prices")
-        sturm_r = _load_csv("sturm_r", index_col=0)
-        sturm_c = _load_csv("sturm_c", index_col=0)
+        sturm_r = _load_csv("sturm_r")
+        sturm_c = _load_csv("sturm_c")
         demand_static = _load_csv("demand_static", index_col=0)
         demand_static.loc[
             demand_static["commodity"].str.contains("afofio", na=False), "value"
         ] = 0  # Temporary fix to remove AFOFIO demand from demand_static
-        sturm_r_ref = _load_csv("sturm_r_ref", index_col=0)
-        sturm_c_ref = _load_csv("sturm_c_ref", index_col=0)
+        sturm_r_ref = _load_csv("sturm_r_ref")
+        sturm_c_ref = _load_csv("sturm_c_ref")
 
         # Prepare data based on the contents of `scenario`
         data = prepare_data_C(
@@ -1322,7 +1293,6 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             sturm_r_ref,
             sturm_c_ref,
             demand_static,
-            context.buildings.with_materials,
             relations=spec.require.set["relation"],
         )
 
@@ -1339,6 +1309,7 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
     build.apply_spec(scenario, spec, _add_data, **options)
 
     if context.buildings.method in [METHOD.B, METHOD.C]:
+        call_buildings_demand(context_b, scenario)
         _remove_rc_bounds(scenario)
         _replace_ue_rt_share_with_share_mode(scenario)
 
@@ -1476,7 +1447,12 @@ def materials(
     a, b = tuple(args) if len(args) == 2 else (sturm_c, sturm_r)
     sturm_c_sub, sturm_r_sub = a, b
     mat_demand = subtract_material_demand(
-        scenario, info, sturm_r_sub, sturm_c_sub, method="bm_subtraction"
+        scenario,
+        info,
+        sturm_r_sub,
+        sturm_c_sub,
+        method="bm_subtraction",
+        generate_vetting_csv=False,
     )
 
     # Add the modified demand to results

@@ -346,7 +346,9 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     log.info("Total rows: %d", len(df_updated))
     log.info("Rows with updated prices: %d", rows_updated)
 
-    _pass_scen_config_to_mixb(sturm_dir, [context.buildings.code])
+    _pass_scen_config_to_mixb(
+        sturm_dir, [i + "_r" if i != "R" else i for i in [context.buildings.code]]
+    )
 
     # Run STURM (via Rscript)
     for name in (
@@ -374,7 +376,11 @@ def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
     linking_dir = buildings_root.joinpath(
         "message_ix_buildings", "sturm", "message_linking"
     )
-    code = context.buildings.code
+
+    def format_sturm_code(code: str, sturm_scen="r") -> str:
+        return code + "_" + sturm_scen if code != "R" else code
+
+    code = format_sturm_code(context.buildings.code)
     demand = pd.concat(
         [
             pd.read_csv(linking_dir / name.format(code=code))
