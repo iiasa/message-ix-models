@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from message_ix_models.model.material.data_power_sector import gen_data_power_sector
+from message_ix_models.model.material.data_power_sector import (
+    gen_data_power_sector,
+    guess_model_version,
+    update_material_demand_estimate,
+)
 from message_ix_models.util import add_par_data
 
 if TYPE_CHECKING:
@@ -276,10 +280,13 @@ def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
             return scenario
 
     log.info("Adding material intensity for power capacities...")
-    scenario.check_out()
     try:
         power_data = gen_data_power_sector(scenario, dry_run=False)
-        add_par_data(scenario, power_data, dry_run=False)
+        with scenario.transact():
+            add_par_data(scenario, power_data, dry_run=False)
+        if kwargs.get("iterate", False) is True:
+            version = guess_model_version(ScenarioInfo(scenario))
+            update_material_demand_estimate(scenario, version)
         # but actually do not know how to provide log info while adding those parameters
         log.info("Successfully added power sector material intensity data.")
     except Exception as e:
