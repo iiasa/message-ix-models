@@ -229,6 +229,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
+    # TODO Transfer this to a MultiFlow subclass in .transport.data; select path based
+    #      on .project.transport_futures values in Config.project_scenario_code.
     Dataflow(
         module=__name__,
         key="mode share:n-t:exo",
