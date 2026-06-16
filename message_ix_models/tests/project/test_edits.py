@@ -3,10 +3,13 @@ from shutil import copyfile
 import pytest
 
 from message_ix_models.project.edits import gen_demand, pasta_native_to_sdmx
-from message_ix_models.project.edits.structure import SCENARIO, get_cl_scenario
+from message_ix_models.project.edits.structure import CL_SCENARIO_EDITS_MCE, SCENARIO
 from message_ix_models.util import package_data_path
 
-URN = "urn:sdmx:org.sdmx.infomodel.codelist.Code=IIASA_ECE:EDITS_MCE_SCENARIO(0.1).CA"
+URN = (
+    "urn:sdmx:org.sdmx.infomodel"
+    ".codelist.Code=IIASA_ECE:CL_SCENARIO_EDITS_MCE(0.2.0).CA"
+)
 
 
 @pytest.fixture
@@ -16,6 +19,18 @@ def test_pasta_data(test_context):
     target = test_context.get_local_path(*parts)
     target.parent.mkdir(parents=True, exist_ok=True)
     copyfile(package_data_path("test", *parts), target)
+
+
+class TestCL_SCENARIO_EDITS_MCE:
+    def test_create(self) -> None:
+        # Code list can be generated
+        result = CL_SCENARIO_EDITS_MCE.get(force=True)
+
+        # Code list has expected number of members
+        assert 3 == len(result)
+
+        # Items have URNs that can be referenced
+        assert URN == result["CA"].urn
 
 
 class TestSCENARIO:
@@ -53,14 +68,3 @@ def test_gen_demand(test_context, test_pasta_data):
 
     result = gen_demand(test_context)
     assert 3 == len(result)
-
-
-def test_get_cl_scenario() -> None:
-    # Code list can be generated
-    result = get_cl_scenario()
-
-    # Code list has expected number of members
-    assert 3 == len(result)
-
-    # Items have URNs that can be referenced
-    assert URN == result["CA"].urn
