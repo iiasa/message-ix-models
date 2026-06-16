@@ -209,6 +209,9 @@ class Config(ConfigHelper):
         )
     )
 
+    #: Full URN of a particular scenario.
+    project_scenario_code: "common.Code | None" = None
+
     #: Scaling factors for production function [0]
     scaling: float = 1.0
 
@@ -345,8 +348,8 @@ class Config(ConfigHelper):
 
     @code.setter
     def code(self, value: "str | common.Code") -> None:
-        from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
-        from message_ix_models.project.edits.structure import SCENARIO as EDITS
+        from message_ix_models.project.digsy.structure import CL_SCENARIO_DIGSY
+        from message_ix_models.project.edits.structure import CL_SCENARIO_EDITS_MCE
 
         c = self._code = CL_SCENARIO.get()[value] if isinstance(value, str) else value
 
@@ -363,8 +366,19 @@ class Config(ConfigHelper):
 
         # Update `project`
         self.project["LED"] = sca.is_LED_scenario
-        self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
-        self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
+
+        # Update `project_scenario_code`
+        # TODO Avoid branching; use a lookup utility that locates the correct codelist
+        codelist = None
+        if "DIGSY" in sca.project_scenario_URN:
+            codelist = CL_SCENARIO_DIGSY.get()
+        elif "EDITS" in sca.project_scenario_URN:
+            codelist = CL_SCENARIO_EDITS_MCE.get()
+        if codelist:
+            # Identify the Code in the given codelist that matches the URN
+            self.project_scenario_code = next(
+                c for c in codelist if c.urn == sca.project_scenario_URN
+            )
 
         self.use_modules(sca.extra_modules)
 
@@ -490,11 +504,8 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
     #: :data:`True` if the scenario is a "Low Energy Demand" scenario.
     is_LED_scenario: bool
 
-    #: URN of a code from :class:`.digsy.structure.SCENARIO`.
-    DIGSY_scenario_URN: str
-
-    #: URN of a code from :class:`.edits.structure.SCENARIO`.
-    EDITS_scenario_URN: str
+    #: URN of a code from a project-specific list of codes.
+    project_scenario_URN: str
 
     #: :mod:`ixmp` URL of a base scenario on which the MESSAGEix-Transport scenario is
     #: to be built.
@@ -546,35 +557,25 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
     def create(cls) -> "common.Codelist":
         from sdmx.model import common
 
-        import message_ix_models.project.digsy.structure
-        import message_ix_models.project.edits.structure
+        from message_ix_models.project.digsy.structure import CL_SCENARIO_DIGSY
+        from message_ix_models.project.edits.structure import CL_SCENARIO_EDITS_MCE
         from message_ix_models.util.sdmx import read
 
         # Other data structures
-        IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
         cl_ssp_2024 = read("ICONICS:SSP(2024)")
-        cl_edits = message_ix_models.project.edits.structure.get_cl_scenario()
-        cl_digsy = message_ix_models.project.digsy.structure.get_cl_scenario()
 
         # Create an empty code list
-        cl: "common.Codelist" = common.Codelist(
-            id="CL_TRANSPORT_SCENARIO",
-            maintainer=IIASA_ECE,
-            version=cls.version,
-            is_external_reference=False,
-            is_final=True,
-        )
+        cl = cls.maintainable(common.Codelist)
 
         def _append_codes(
             id: str,
             name: str,
             ssp: str,
             led: bool = False,
-            edits: str = "_Z",
-            digsy: str = "_Z",
+            project_urn: str = "",
             policy: "Policy | None" = None,
         ) -> None:
-            """Shorthand to append Codes to `cl` with the given setttings.
+            """Shorthand to append Codes to `cl` with the given settings.
 
             For each call, 2 codes are appended. One has the ID ``"M {id}"``, and
             includes settings for using :mod:`.transport.material`.
@@ -583,8 +584,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             sca = ScenarioCodeAnnotations(
                 cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
                 led,
-                cl_digsy[digsy].urn,
-                cl_edits[edits].urn,
+                project_urn,
                 # Format base scenario URL
                 # - For SSP2 only, use v6.6 in the base model name
                 cls.base_url.format(ssp).replace(
@@ -628,23 +628,25 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
                 _append_codes(f"{id_} exo price {hash}", name + _ep, ssp, policy=eep)
 
         # DIGSY
-        ssp, name = "2", "DIGSY {!r} scenario with SSP2"
-        for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
-            _append_codes(f"DIGSY-{id_}", name.format(id_), ssp, digsy=id_)
+        ssp = "2"
+        name = "DIGSY {!r} scenario with SSP2"
+        for c in filter(lambda c: c.id not in ("BASE", "_Z"), CL_SCENARIO_DIGSY.get()):
+            _append_codes(f"DIGSY-{c.id}", name.format(c.id), ssp, project_urn=c.urn)
 
             # PRICE_EMISSION from exogenous data file
             for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
                 _append_codes(
-                    f"DIGSY-{id_} exo price {hash}",
-                    name.format(id_) + " with exogenous price",
+                    f"DIGSY-{c.id} exo price {hash}",
+                    name.format(c.id) + _ep,
                     ssp,
+                    project_urn=c.urn,
                     policy=eep,
                 )
 
         # EDITS
-        ssp, name = "2", "EDITS scenario with ITF PASTA {!r} activity"
-        for id_ in ("CA", "HA"):
-            _append_codes(f"EDITS-{id_}", name.format(id_), ssp, edits=id_)
+        name = "EDITS scenario with ITF PASTA {!r} activity"
+        for c in filter(lambda c: c.id != "_Z", CL_SCENARIO_EDITS_MCE.get()):
+            _append_codes(f"EDITS-{c.id}", name.format(c.id), ssp, project_urn=c.urn)
 
         return cl
 
