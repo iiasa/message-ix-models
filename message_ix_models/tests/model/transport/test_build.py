@@ -14,6 +14,7 @@ from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport import (
     CL_SCENARIO,
+    Config,
     build,
     check,
     report,
@@ -130,8 +131,8 @@ def test_bare_res(
 
 
 @mark.ci_linux_only
-@build.get_computer.minimum_version
 @mark.transport_build_data
+@build.get_computer.minimum_version
 @mark.parametrize(
     "regions, years, options",
     (
@@ -283,6 +284,67 @@ def test_existing(tmp_path, test_context, url, solve=False):
         assert result.all(), f"\n{result}"
 
     del mp
+
+
+@mark.ci_linux_only
+@mark.transport_build_data
+@build.get_computer.minimum_version
+@pytest.mark.parametrize(
+    "project_scenario_id, label, path_name",
+    (
+        ("R", "CircEUlar-R", "SSP_2024_2.csv"),
+        ("C", "CircEUlar-C", "DIGSY-BEST-C.csv"),
+        ("A", "CircEUlar-A", "DIGSY-BEST-C.csv"),
+    ),
+)
+def test_get_computer(
+    caplog: pytest.LogCaptureFixture,
+    request: pytest.FixtureRequest,
+    test_context: "Context",
+    scenario_code: "Code",
+    project_scenario_id: str,
+    label: str,
+    path_name: str,
+    regions: str = "R12",
+    years: str = "B",
+) -> None:
+    """Test set-up of the transport build.
+
+    This test does not actually *perform* the transport build; only prepares the
+    computer so that the graph or log messages can be inspected.
+    """
+    from message_ix_models.project.circeular.structure import CL_SCENARIO
+
+    # Retrieve the CircEUlar scenario codelist
+    cl = CL_SCENARIO.get()
+
+    # Generate the relevant bare RES
+    ctx = test_context
+    ctx.update(regions=regions, years=years)
+    scenario = bare_res(request, ctx)
+
+    options = {"code": scenario_code, "project_scenario_code": cl[project_scenario_id]}
+
+    # Function runs without error
+    c = build.get_computer(test_context, scenario=scenario, options=options)
+
+    # Retrieve the constructed .transport.Config
+    cfg: Config = c.graph["context"].transport
+
+    # project_scenario_code is as expected
+    assert cl[project_scenario_id] == cfg.project_scenario_code
+
+    # Scenario label is as expected
+    assert f"CircEUlar-{project_scenario_id}" == cfg.label
+
+    # Find a particular log message describing a file path used in the build
+    msg = next(filter(lambda m: "LoadFactorLDV data from " in m, caplog.messages))
+    # Identify the path
+    path = Path(msg.split()[-1])
+
+    # Specific file path is according to this scenario label
+    # NB the success of the build.get_computer() call also means that this file exists
+    assert path_name == path.name
 
 
 @mark.parametrize("years", [None, "A", "B"])
