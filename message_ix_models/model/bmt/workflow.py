@@ -34,7 +34,7 @@ def solve(
         "barcrossalg": 0,
     }
 
-    scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=1"])
+    scenario.solve(model, solve_options=solve_options, cap_comm=True)
     scenario.set_as_default()
 
     return scenario
