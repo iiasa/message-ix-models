@@ -4,7 +4,6 @@ See :ref:`transport-data-files` for documentation of the input data flows.
 """
 
 import logging
-import re
 from collections import defaultdict
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
@@ -23,6 +22,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource
 from message_ix_models.util import (
+    Substitutions,
     adapt_R11_R12,
     adapt_R11_R14,
     broadcast,
@@ -417,6 +417,27 @@ class MultiFile(ExoDataSource):
         return self.key
 
 
+#: Transform an :attr:`.transport.Config.label` to a filename by a sequence of string
+#: substitutions. This set is used for, among others, :class:`LoadFactorLDV`.
+#:
+#: 1. No distinction for material scenarios.
+#: 2. Use common 'LED' and remove a trailing suffix.
+#: 3. Use "SSP_2024_2" for CircEUlar scenarios, except "DIGSY-BEST-C" for CircEUlar
+#:    "narrow" and "all-in" scenarios.
+#: 4. Use corresponding SSP for "DIGSY-WORST-C" scenarios.
+#: 5. Convert to a filename-like with underscores, e.g.
+#:    "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1".
+#: 6. Remove trailing suffix (" foo").
+LABEL_STEM_A = Substitutions(
+    ("^M ", ""),
+    ("^CircEUlar-[RCS]", "SSP_2024_2"),
+    ("^CircEUlar-[NA]", "DIGSY-BEST-C"),
+    (r"^(LED)-SSP.( \w*)*$", r"\1"),
+    (r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)", r"SSP_\1_\2"),
+    (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),
+)
+
+
 class LoadFactorLDV(MultiFile):
     """Load factor (occupancy) of LDVs.
 
@@ -432,22 +453,11 @@ class LoadFactorLDV(MultiFile):
     @property
     def filename(self) -> str:
         assert self.options.config
-        label = self.options.config.label
 
+        # Use the respective SSP
+        subs = LABEL_STEM_A + ("^DIGSY-WORST-C", str(self.options.config.ssp))
         # Apply sequential replacements
-        for pattern, repl in (
-            ("^M ", ""),  # No distinction for materials scenarios
-            ("^DIGSY-WORST-C", str(self.options.config.ssp)),  # Use the respective SSP
-            (r"^(LED)-SSP.( \w*)*$", r"\1"),  # Use common 'LED'; remove trailing suffix
-            (  # "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1"
-                r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)",
-                r"SSP_\1_\2",
-            ),
-            (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),  # Remove trailing suffix (" foo")
-        ):
-            label = re.sub(pattern, repl, label)
-
-        return label + ".csv"
+        return f"{subs(self.options.config.label)}.csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         from . import factor
@@ -474,7 +484,7 @@ class PDT_CAP(MultiFile):
     @property
     def filename(self) -> str:
         assert self.options.config
-        return re.sub("^(LED)-SSP.$", r"\1", self.options.config.label) + ".csv"
+        return f"{LABEL_STEM_A(self.options.config.label)}.csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         # This is the key used by subsequent steps in demand.py

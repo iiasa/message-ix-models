@@ -382,8 +382,14 @@ class Config(ConfigHelper):
 
         Compared to :attr:`code.id <code>`, this is a longer, more explicit label,
         suitable for (part of) a :attr:`message_ix.Scenario.scenario` name in an
-        :mod:`ixmp` database, for instance "SSP_2024.3".
+        :mod:`ixmp` database, for instance "SSP_2024.3". It can also be used by used by
+        :class:`.transport.data.MultiFile` subclasses to identify specific input data
+        for a scenario.
         """
+        psc = self.project_scenario_code
+        if psc and psc.parent and "CIRCEULAR" in (psc.urn or ""):
+            # Specific label for CircEUlar scenarios
+            return f"CircEUlar-{psc.id}"
         return re.sub("^(M )?SSP", "SSP_2024.", self.code.id)
 
     def get_target_url(self, context: "Context") -> str:
