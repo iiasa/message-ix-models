@@ -10,7 +10,6 @@ from genno.operator import as_quantity
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
 from message_ix_models.project.ssp import SSP_2024, ssp_field
-from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
 from message_ix_models.util import package_data_path, short_hash
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.sdmx import AnnotationsMixIn, StructureFactory
@@ -149,6 +148,8 @@ class Config(ConfigHelper):
     #: passenger km / capita / year (Schafer & Victor 2000).
     #: Original comment (DLM): “Assume only half the speed (330 km/h) and not as steep a
     #: curve.”
+    #: For the :mod:`.transport_futures` scenario with ID "A---", the value 275000 km /
+    #: year is used.
     fixed_pdt: Quantity = quantity_field("132495 km / year")
 
     #: Load factors for vehicles [tonne km per vehicle km].
@@ -204,9 +205,7 @@ class Config(ConfigHelper):
     #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
     #: settings in documented ways.
     project: dict[str, Any] = field(
-        default_factory=lambda: dict(
-            futures=FUTURES_SCENARIO.BASE, navigate=NAVIGATE_SCENARIO.REF
-        )
+        default_factory=lambda: dict(navigate=NAVIGATE_SCENARIO.REF)
     )
 
     #: Full URN of a particular scenario.
@@ -247,19 +246,14 @@ class Config(ConfigHelper):
     #: :attr:`.modules`.
     extra_modules: InitVar[str | list[str]] = []
 
-    #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
-    #: :meth:`.ScenarioFlags.parse_futures`.
-    futures_scenario: InitVar[str] = None
-
     #: Identifiers of NAVIGATE T3.5 demand-side scenarios, used to update
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(self, extra_modules, futures_scenario, navigate_scenario) -> None:
+    def __post_init__(self, extra_modules, navigate_scenario) -> None:
         self.use_modules(extra_modules)
 
-        # Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`
-        self.set_futures_scenario(futures_scenario)
+        # Handle value for :attr:`navigate_scenario`
         self.set_navigate_scenario(navigate_scenario)
 
     @classmethod
@@ -392,14 +386,6 @@ class Config(ConfigHelper):
         """
         return re.sub("^(M )?SSP", "SSP_2024.", self.code.id)
 
-    def check(self):
-        """Check consistency of :attr:`project`."""
-        s1 = self.project["futures"]
-        s2 = self.project["navigate"]
-
-        if all(map(lambda s: s.value > 0, [s1, s2])):
-            raise ValueError(f"Scenario settings {s1} and {s2} are not compatible")
-
     def get_target_url(self, context: "Context") -> str:
         """Construct a target URL for a built MESSAGEix-Transport scenario.
 
@@ -444,36 +430,16 @@ class Config(ConfigHelper):
 
             return f"{model_name}/{scenario_name}"
 
-    def set_futures_scenario(self, value: str | None) -> None:
-        """Update :attr:`project` from a string indicating a Transport Futures scenario.
-
-        See :meth:`ScenarioFlags.parse_futures`. This method alters :attr:`mode_share`
-        and :attr:`fixed_demand` according to the `value` (if any).
-        """
-        if value is None:
-            return
-
-        s = FUTURES_SCENARIO.parse(value)
-        self.project.update(futures=s)
-        self.check()
-
-        self.mode_share = s.id()
-
-        if self.mode_share == "A---":
-            log.info(f"Set fixed demand for TF scenario {value!r}")
-            self.fixed_demand = as_quantity("275000 km / year")
-
     def set_navigate_scenario(self, value: str | None) -> None:
         """Update :attr:`project` from a string representing a NAVIGATE scenario.
 
-        See :meth:`ScenarioFlags.parse_navigate`.
+        See :class:`.navigate.T35_POLICY`.
         """
         if value is None:
             return
 
         s = NAVIGATE_SCENARIO.parse(value)
         self.project.update(navigate=s)
-        self.check()
 
     def use_modules(self, *module_names: str) -> None:
         """Handle extra_modules."""

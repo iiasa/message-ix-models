@@ -107,11 +107,7 @@ def test_exo_report(test_context: Context, tmp_path: Path) -> None:
     Separated from the above because the plotting step is slow.
     """
     c, info = testing.configure_build(
-        test_context,
-        tmp_path=tmp_path,
-        regions="R12",
-        years="B",
-        options=dict(futures_scenario="debug"),
+        test_context, tmp_path=tmp_path, regions="R12", years="B"
     )
 
     # Total demand by mode
