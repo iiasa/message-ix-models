@@ -193,7 +193,7 @@ def gen_demand(context: "Context") -> dict[str, "AnyQuantity"]:
     dm = cast(
         "DataMessage",
         sdmx.read_sdmx(
-            local_data_path("edits", "pasta-data.xml"), dsd=sm.structure["PASTA"]
+            local_data_path("edits", "pasta-data.xml"), structure=sm.structure["PASTA"]
         ),
     )
     q_all = dataset_to_quantity(dm.data[0]).pipe(
