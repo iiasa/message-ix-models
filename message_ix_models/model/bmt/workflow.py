@@ -8,6 +8,7 @@ from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
 from message_ix_models.model.material.data_util import add_macro_materials
+from message_ix_models.project.circeular.glomis import main as build_I
 from message_ix_models.util import minimum_version
 from message_ix_models.workflow import Workflow
 
@@ -166,6 +167,7 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     if macro_file is None:
         ssp = getattr(context, "ssp", "SSP2")
         macro_file = f"macro_calibration_input_{ssp}_bmt.xlsx"
+    # TODO: MACRO calibration input is static atm. Needs to be fixed for CircEUlar.
     log.info("Calibrating macro: updating %s and adding MACRO", macro_file)
 
     # basically even if the macro file contains more commodities than the scenario,
@@ -186,7 +188,7 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     """
     from message_ix_models.model.transport import workflow as transport
 
-    # Retrieve the Context instance associatd with `wf`
+    # Retrieve the Context instance associated with `wf`
     context = wf.graph["context"]
 
     # Define model name
@@ -200,8 +202,8 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     name = base_step
 
     # Clone the base scenario
-    name = wf.add_step(f"{prefix}M cloned", name, target=f"{url}M", clone=True)
-    name = wf.add_step(f"{prefix}M reported", name, report)
+    name = wf.add_step(f"{prefix}M cloned", name, target=f"{url}M", clone=c)
+    wf.add_step(f"{prefix}M reported", name, report)
 
     # Retrieve a 'Code' object with 'Annotations' that identify a particular
     # MESSAGEix-Transport configuration. For reference:
@@ -235,25 +237,43 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
 
-    name = wf.add_step(f"{prefix}MT solved", name, solve)
-
+    wf.add_step(f"{prefix}MT solved", name, solve)
     # Transport report step (from .model.transport.workflow: callback + "transport all")
-    name = wf.add_step(f"{prefix}MT reported", name, report)
+    wf.add_step(f"{prefix}MT reported", f"{prefix}MT solved", report)
+
     name = wf.add_step(
-        f"{prefix}BMT built", f"{prefix}MT solved", build_B, target=f"{url}BMT", clone=c
+        f"{prefix}BMT built",
+        name,
+        build_B,
+        target=f"{url}BMT",
+        clone=c,
+        code=prefix,
     )
-    name = wf.add_step(f"{prefix}BMT solved", name, solve)
+    wf.add_step(f"{prefix}BMT solved", name, solve)
+    wf.add_step(f"{prefix}BMT reported", f"{prefix}BMT solved", report)
     name = wf.add_step(
-        f"{prefix}BMTX built", name, build_PM, target=f"{url}BMTX", clone=c
+        f"{prefix}BMTP built",
+        name,
+        build_PM,
+        target=f"{url}BMTP",
+        clone=c,
     )
+    name = wf.add_step(
+        f"{prefix}BMTPI built",
+        name,
+        build_I,
+        target=f"{url}BMTPI",
+        clone=c,
+        code=prefix.strip(),
+    )
+    wf.add_step(f"{prefix}BMTPI baseline solved", f"{prefix}BMTPI built", solve)
     name = wf.add_step(f"{prefix}BMTX baseline solved", name, solve)
-    name = wf.add_step(f"{prefix}BMT reported", f"{prefix}BMT solved", report)
 
     # make sure the scenario before this step is reported
     name = wf.add_step(
         f"{prefix}BMTX prep macro",
-        # "BMTX baseline solved",
-        f"{prefix}BMT reported",
+        f"{prefix}BMTX baseline solved",
+        # f"{prefix}BMT reported",
         prep_for_macro,
         target=f"{url}BMTX_message",
         clone=dict(shift_first_model_year=2030),
