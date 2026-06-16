@@ -527,15 +527,15 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
 
 
 class CL_SCENARIO(StructureFactory["common.Codelist"]):
-    """SDMX code list ``IIASA_ECE:CL_TRANSPORT_SCENARIO``.
+    """SDMX code list ``IIASA_ECE:CL_SCENARIO_TRANSPORT``.
 
-    This code lists contains unique IDs for scenarios supported by the
+    This code list contains unique IDs for scenarios supported by the
     MESSAGEix-Transport workflow (:mod:`.transport.workflow`). Each code has the set
     of annotations described by :class:`ScenarioCodeAnnotations`.
     """
 
-    urn = "IIASA_ECE:CL_TRANSPORT_SCENARIO"
-    version = "1.4.0"
+    urn = "IIASA_ECE:CL_SCENARIO_TRANSPORT"
+    version = "1.5.0"
 
     #: Base scenario URL, including model name and scenario name.
     #:
