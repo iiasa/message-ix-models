@@ -1,6 +1,21 @@
-from message_ix_models.project.digsy.structure import SCENARIO, get_cl_scenario
+from message_ix_models.project.digsy.structure import CL_SCENARIO_DIGSY, SCENARIO
 
-URN = "urn:sdmx:org.sdmx.infomodel.codelist.Code=IIASA_ECE:DIGSY_SCENARIO(0.2).WORST-C"
+URN = (
+    "urn:sdmx:org.sdmx.infomodel.codelist.Code="
+    "IIASA_ECE:CL_SCENARIO_DIGSY(0.2.0).WORST-C"
+)
+
+
+class TestCL_SCENARIO_DIGSY:
+    def test_create(self) -> None:
+        # Code list can be generated
+        result = CL_SCENARIO_DIGSY.get(force=True)
+
+        # Code list has expected number of members
+        assert 6 == len(result)
+
+        # Items have URNs that can be referenced
+        assert URN == result["WORST-C"].urn
 
 
 class TestSCENARIO:
@@ -23,14 +38,3 @@ class TestSCENARIO:
     def test_urn(self) -> None:
         # Member URN can be retrieved
         assert URN == SCENARIO["WORST-C"].urn
-
-
-def test_get_cl_scenario() -> None:
-    # Code list can be generated
-    result = get_cl_scenario()
-
-    # Code list has expected number of members
-    assert 6 == len(result)
-
-    # Items have URNs that can be referenced
-    assert URN == result["WORST-C"].urn
