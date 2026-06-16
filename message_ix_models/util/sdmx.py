@@ -433,6 +433,11 @@ class StructureFactory(ABC, Generic[MaintainableT]):
     version: str
 
     @classmethod
+    @abstractmethod
+    def create(cls) -> MaintainableT:
+        """Create and return the artefact."""
+
+    @classmethod
     def get(cls, *, force: bool = False) -> MaintainableT:
         """Retrieve the artefact, possibly from file.
 
@@ -473,9 +478,22 @@ class StructureFactory(ABC, Generic[MaintainableT]):
             return existing
 
     @classmethod
-    @abstractmethod
-    def create(cls) -> MaintainableT:
-        """Create and return the artefact."""
+    def maintainable(cls, _type: type[MaintainableT]) -> MaintainableT:
+        """Shorthand to create an empty MaintainableArtefact.
+
+        - :attr:`urn` is parsed for a maintainer and artefact ID.
+        - :attr:`version` is used.
+        - A new instance of `_type` is created and returned.
+        """
+        agency_id, _, id_ = cls.urn.partition(":")
+
+        return _type(
+            id=id_,
+            maintainer=read("IIASA_ECE:AGENCIES")[agency_id],
+            version=cls.version,
+            is_final=True,
+            is_external_reference=False,
+        )
 
 
 T = TypeVar("T", bound=Enum)
