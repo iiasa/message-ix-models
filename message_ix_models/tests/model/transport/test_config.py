@@ -141,6 +141,15 @@ class TestCL_SCENARIO:
             c.get_annotation(id="policy").text
         )
 
+        # Codes with project-specific scenario information can be inspected
+        cfg = Config()
+        cfg.code = result["DIGSY-BEST-C"]
+
+        assert cfg.project_scenario_code is not None
+        assert "BEST-C" == cfg.project_scenario_code.id
+        assert cfg.project_scenario_code.parent is not None
+        assert "CL_SCENARIO_DIGSY" == cfg.project_scenario_code.parent.id
+
 
 @pytest.mark.parametrize(
     "ssp_or_led, N_exp",
