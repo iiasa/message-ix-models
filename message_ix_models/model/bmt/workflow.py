@@ -3,13 +3,13 @@
 import logging
 
 import message_ix
+import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
-from message_ix_models.model.material.data_util import add_macro_materials
 from message_ix_models.project.circeular.glomis import main as build_I
-from message_ix_models.util import minimum_version
+from message_ix_models.util import minimum_version, package_data_path
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T
@@ -173,7 +173,8 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     # basically even if the macro file contains more commodities than the scenario,
     # the update_macro_calib_file and add_macro_materials will only use the commodities
     # that are in the scenario
-    scenario = add_macro_materials(scenario, macro_file)
+    data = pd.read_excel(package_data_path("circeular", macro_file), sheet_name=None)
+    scenario = scenario.add_macro(data, check_convergence=False)
     scenario.set_as_default()
     log.info("MACRO calibrated, now solving with MACRO")
     solve(context, scenario, model="MESSAGE-MACRO")
