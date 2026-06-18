@@ -14,6 +14,7 @@ import pint
 
 from ._convert_units import convert_units
 from ._logging import mark_time, once, preserve_log_level, silence_log
+from ._re import Substitutions
 from .cache import cached
 from .common import (
     HAS_MESSAGE_DATA,
@@ -48,6 +49,7 @@ __all__ = [
     "MESSAGE_MODELS_PATH",
     "Adapter",
     "MappingAdapter",
+    "Substitutions",
     "WildcardAdapter",
     "adapt_R11_R12",
     "adapt_R11_R14",
