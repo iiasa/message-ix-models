@@ -299,7 +299,15 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
 
 
 def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
-    """Insert :data:`CHECKS` into `c`."""
+    """Insert :data:`CHECKS` into `c`.
+
+    Parameters
+    ----------
+    verbosity :
+        Passed to :func:`.verbose_check`.
+    path :
+        Passed to :func:`.verbose_check`.
+    """
     context: "Context" = c.graph["context"]  # noqa: F841
     info: "ScenarioInfo" = c.get("info")
 
