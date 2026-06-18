@@ -1,0 +1,57 @@
+# Load factor of freight vehicles
+#
+# Units: tonne / vehicle
+#
+# Sources:
+# - F RAIL--Low values in share, WEU to match literature value.
+# - F ROAD: placeholder.
+#
+scenario, node,     technology, year, value
+*,        R12_AFR,  F RAIL,     2020, 2880
+*,        R12_CHN,  F RAIL,     2020, 2110
+*,        R12_EEU,  F RAIL,     2020, 1029
+*,        R12_FSU,  F RAIL,     2020, 3467
+*,        R12_LAM,  F RAIL,     2020, 2735
+*,        R12_MEA,  F RAIL,     2020, 1333
+*,        R12_NAM,  F RAIL,     2020, 4442
+*,        R12_PAO,  F RAIL,     2020,  809
+*,        R12_PAS,  F RAIL,     2020,  743
+*,        R12_RCPA, F RAIL,     2020,  230
+*,        R12_SAS,  F RAIL,     2020, 3200
+*,        R12_WEU,  F RAIL,     2020, 1000
+*,        R12_AFR,  F ROAD,     2020,   25
+*,        R12_CHN,  F ROAD,     2020,   25
+*,        R12_EEU,  F ROAD,     2020,   25
+*,        R12_FSU,  F ROAD,     2020,   25
+*,        R12_LAM,  F ROAD,     2020,   25
+*,        R12_MEA,  F ROAD,     2020,   25
+*,        R12_NAM,  F ROAD,     2020,   25
+*,        R12_PAO,  F ROAD,     2020,   25
+*,        R12_PAS,  F ROAD,     2020,   25
+*,        R12_RCPA, F ROAD,     2020,   25
+*,        R12_SAS,  F ROAD,     2020,   25
+*,        R12_WEU,  F ROAD,     2020,   25
+*,        R12_AFR,  F RAIL,     2110, 2880
+*,        R12_CHN,  F RAIL,     2110, 2110
+*,        R12_EEU,  F RAIL,     2110, 1029
+*,        R12_FSU,  F RAIL,     2110, 3467
+*,        R12_LAM,  F RAIL,     2110, 2735
+*,        R12_MEA,  F RAIL,     2110, 1333
+*,        R12_NAM,  F RAIL,     2110, 4442
+*,        R12_PAO,  F RAIL,     2110,  809
+*,        R12_PAS,  F RAIL,     2110,  743
+*,        R12_RCPA, F RAIL,     2110,  230
+*,        R12_SAS,  F RAIL,     2110, 3200
+*,        R12_WEU,  F RAIL,     2110, 1000
+*,        R12_AFR,  F ROAD,     2110,   25
+*,        R12_CHN,  F ROAD,     2110,   25
+*,        R12_EEU,  F ROAD,     2110,   25
+*,        R12_FSU,  F ROAD,     2110,   25
+*,        R12_LAM,  F ROAD,     2110,   25
+*,        R12_MEA,  F ROAD,     2110,   25
+*,        R12_NAM,  F ROAD,     2110,   25
+*,        R12_PAO,  F ROAD,     2110,   25
+*,        R12_PAS,  F ROAD,     2110,   25
+*,        R12_RCPA, F ROAD,     2110,   25
+*,        R12_SAS,  F ROAD,     2110,   25
+*,        R12_WEU,  F ROAD,     2110,   25
