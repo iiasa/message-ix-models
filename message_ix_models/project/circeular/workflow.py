@@ -43,7 +43,12 @@ def configure(context: "Context") -> None:
     # Expected by .bmt.workflow.add_macro()
     context.macro = "macro_calibration_input.xlsx"
 
-    TransportConfig.from_context(context, options=dict(code="SSP2"))
+    from .structure import CL_SCENARIO
+
+    cl = CL_SCENARIO.get()
+    TransportConfig.from_context(
+        context, options=dict(code="M SSP2", project_scenario_code=cl["R"])
+    )
 
     # log.info(repr(context.asdict()))  # DEBUG
 

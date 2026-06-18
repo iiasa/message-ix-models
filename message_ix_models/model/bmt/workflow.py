@@ -225,6 +225,10 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     # - .model.workflow.from_codelist, which makes a similar call
     #
     # `name` is the name of the final step
+    from message_ix_models.project.circeular.structure import CL_SCENARIO
+
+    cl = CL_SCENARIO.get()
+    context.transport.project_scenario_code = cl[prefix.strip()]
     name = transport.add_steps(wf, name, context.transport.code, label=prefix.strip())
 
     # Clone to the URL desired for this workflow, at a step named "MT built".
