@@ -17,7 +17,7 @@ import genno
 from genno import Key, Keys
 from genno.core.key import single_key
 
-from message_ix_models.util import minimum_version
+from message_ix_models.util import Substitutions, minimum_version
 from message_ix_models.util.genno import Collector
 
 from . import key, util
@@ -61,6 +61,17 @@ DIMS = dict(
     node_origin="n",
     year_vtg="y",
     technology="t",
+)
+
+#: Conversion from :attr:`.transport.Config.label` to ``scenario`` dimension in
+#: :any:`input_cap_new`.
+#:
+#: - For "SSP_2024.[12345]" and "CircEUlar-[RS]" labels, select :py:`scenario="*"`.
+#: - For "CircEUlar-[AEN]", select :py:`scenario="CircEUlar-N"`.
+LABEL_SCENARIO = Substitutions(
+    ("SSP_2024.[12345]", "*"),
+    ("CircEUlar-[RS]", "*"),
+    ("CircEUlar-[AEN]", "CircEUlar-N"),
 )
 
 #: Portion of the ``input_cap_new`` that is available as ``output_cap_ret`` at the end
@@ -115,7 +126,7 @@ def get_groups(config: "Config") -> dict[str, dict[str, list[str]]]:
 def prepare_computer(c: "Computer") -> None:
     """Prepare `c` to calculate and add data for materiality of transport."""
     # Retrieve transport configuration
-    config = c.graph["context"].transport
+    config: "Config" = c.graph["context"].transport
 
     # Collect data in `TARGET` and connect to the "add transport data" key
     collect.computer = c
@@ -129,10 +140,8 @@ def prepare_computer(c: "Computer") -> None:
         demand=Key("demand", key.demand_base.dims, "MT"),
     )
 
-    # From input_cap_new.csv, select:
-    # - Only a single scenario
-    #   TODO Retrieve the CircEUlar scenario ID from config
-    indexers = dict(scenario="_CT_C_D_D")
+    # From input_cap_new.csv, select only a single scenario, using the Config.label
+    indexers = dict(scenario=LABEL_SCENARIO(config.label))
     c.add(k.exo[0], "select", key.exo.input_cap_new, indexers=indexers)
 
     # Transform VMI data labels to MESSAGE -MT- labels
