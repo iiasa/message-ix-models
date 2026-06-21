@@ -3,42 +3,106 @@
 # Units: dimensionless
 #
 scenario,      node,     technology, year, value
-DIGSY-BEST-C,   R12_AFR,  *,2020,1
-DIGSY-BEST-C,   R12_AFR,  *,2030,1
-DIGSY-BEST-C,   R12_AFR,  *,2110,1
-DIGSY-BEST-C,   R12_CHN,  *,2020,1
-DIGSY-BEST-C,   R12_CHN,  *,2030,0.8
-DIGSY-BEST-C,   R12_CHN,  *,2110,0.5
-DIGSY-BEST-C,   R12_EEU,  *,2020,1
-DIGSY-BEST-C,   R12_EEU,  *,2030,0.8
-DIGSY-BEST-C,   R12_EEU,  *,2110,0.8
-DIGSY-BEST-C,   R12_FSU,  *,2020,1
-DIGSY-BEST-C,   R12_FSU,  *,2030,0.48
-DIGSY-BEST-C,   R12_FSU,  *,2110,0.48
-DIGSY-BEST-C,   R12_LAM,  *,2020,1
-DIGSY-BEST-C,   R12_LAM,  *,2030,1
-DIGSY-BEST-C,   R12_LAM,  *,2110,1
-DIGSY-BEST-C,   R12_MEA,  *,2020,1
-DIGSY-BEST-C,   R12_MEA,  *,2030,1
-DIGSY-BEST-C,   R12_MEA,  *,2110,1
-DIGSY-BEST-C,   R12_NAM,  *,2020,1
-DIGSY-BEST-C,   R12_NAM,  *,2030,0.43
-DIGSY-BEST-C,   R12_NAM,  *,2110,0.43
-DIGSY-BEST-C,   R12_PAO,  *,2020,1
-DIGSY-BEST-C,   R12_PAO,  *,2030,0.8
-DIGSY-BEST-C,   R12_PAO,  *,2110,0.8
-DIGSY-BEST-C,   R12_PAS,  *,2020,1
-DIGSY-BEST-C,   R12_PAS,  *,2030,1
-DIGSY-BEST-C,   R12_PAS,  *,2110,0.6
-DIGSY-BEST-C,   R12_RCPA, *,2020,1
-DIGSY-BEST-C,   R12_RCPA, *,2030,1
-DIGSY-BEST-C,   R12_RCPA, *,2110,1
-DIGSY-BEST-C,   R12_SAS,  *,2020,1
-DIGSY-BEST-C,   R12_SAS,  *,2030,1
-DIGSY-BEST-C,   R12_SAS,  *,2110,1
-DIGSY-BEST-C,   R12_WEU,  *,2020,1
-DIGSY-BEST-C,   R12_WEU,  *,2030,0.8
-DIGSY-BEST-C,   R12_WEU,  *,2110,0.8
+DIGSY-BEST-C,  R12_AFR,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_AFR,  *,          2025, 1.00
+DIGSY-BEST-C,  R12_AFR,  *,          2030, 0.98
+DIGSY-BEST-C,  R12_AFR,  *,          2035, 0.91
+DIGSY-BEST-C,  R12_AFR,  *,          2040, 0.90
+DIGSY-BEST-C,  R12_AFR,  *,          2110, 0.90
+DIGSY-BEST-C,  R12_CHN,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_CHN,  *,          2025, 0.90
+DIGSY-BEST-C,  R12_CHN,  *,          2030, 0.77
+DIGSY-BEST-C,  R12_CHN,  *,          2035, 0.66
+DIGSY-BEST-C,  R12_CHN,  *,          2040, 0.65
+DIGSY-BEST-C,  R12_CHN,  *,          2045, 0.62
+DIGSY-BEST-C,  R12_CHN,  *,          2050, 0.61
+DIGSY-BEST-C,  R12_CHN,  *,          2055, 0.59
+DIGSY-BEST-C,  R12_CHN,  *,          2060, 0.58
+DIGSY-BEST-C,  R12_CHN,  *,          2070, 0.55
+DIGSY-BEST-C,  R12_CHN,  *,          2080, 0.51
+DIGSY-BEST-C,  R12_CHN,  *,          2090, 0.48
+DIGSY-BEST-C,  R12_CHN,  *,          2100, 0.45
+DIGSY-BEST-C,  R12_CHN,  *,          2110, 0.42
+DIGSY-BEST-C,  R12_EEU,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_EEU,  *,          2025, 0.90
+DIGSY-BEST-C,  R12_EEU,  *,          2030, 0.77
+DIGSY-BEST-C,  R12_EEU,  *,          2035, 0.67
+DIGSY-BEST-C,  R12_EEU,  *,          2040, 0.66
+DIGSY-BEST-C,  R12_EEU,  *,          2110, 0.66
+DIGSY-BEST-C,  R12_FSU,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_FSU,  *,          2025, 0.74
+DIGSY-BEST-C,  R12_FSU,  *,          2030, 0.46
+DIGSY-BEST-C,  R12_FSU,  *,          2035, 0.41
+DIGSY-BEST-C,  R12_FSU,  *,          2045, 0.41
+DIGSY-BEST-C,  R12_FSU,  *,          2050, 0.40
+DIGSY-BEST-C,  R12_FSU,  *,          2110, 0.40
+DIGSY-BEST-C,  R12_LAM,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_LAM,  *,          2025, 1.00
+DIGSY-BEST-C,  R12_LAM,  *,          2030, 0.97
+DIGSY-BEST-C,  R12_LAM,  *,          2035, 0.87
+DIGSY-BEST-C,  R12_LAM,  *,          2040, 0.86
+DIGSY-BEST-C,  R12_LAM,  *,          2045, 0.85
+DIGSY-BEST-C,  R12_LAM,  *,          2110, 0.85
+DIGSY-BEST-C,  R12_MEA,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_MEA,  *,          2025, 1.00
+DIGSY-BEST-C,  R12_MEA,  *,          2030, 0.97
+DIGSY-BEST-C,  R12_MEA,  *,          2035, 0.89
+DIGSY-BEST-C,  R12_MEA,  *,          2040, 0.88
+DIGSY-BEST-C,  R12_MEA,  *,          2045, 0.87
+DIGSY-BEST-C,  R12_MEA,  *,          2050, 0.86
+DIGSY-BEST-C,  R12_MEA,  *,          2110, 0.86
+DIGSY-BEST-C,  R12_NAM,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_NAM,  *,          2025, 0.72
+DIGSY-BEST-C,  R12_NAM,  *,          2030, 0.41
+DIGSY-BEST-C,  R12_NAM,  *,          2035, 0.35
+DIGSY-BEST-C,  R12_NAM,  *,          2040, 0.35
+DIGSY-BEST-C,  R12_NAM,  *,          2045, 0.34
+DIGSY-BEST-C,  R12_NAM,  *,          2110, 0.34
+DIGSY-BEST-C,  R12_PAO,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_PAO,  *,          2025, 0.90
+DIGSY-BEST-C,  R12_PAO,  *,          2030, 0.77
+DIGSY-BEST-C,  R12_PAO,  *,          2035, 0.67
+DIGSY-BEST-C,  R12_PAO,  *,          2040, 0.66
+DIGSY-BEST-C,  R12_PAO,  *,          2045, 0.66
+DIGSY-BEST-C,  R12_PAO,  *,          2050, 0.65
+DIGSY-BEST-C,  R12_PAO,  *,          2110, 0.65
+DIGSY-BEST-C,  R12_PAS,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_PAS,  *,          2025, 1.00
+DIGSY-BEST-C,  R12_PAS,  *,          2030, 0.96
+DIGSY-BEST-C,  R12_PAS,  *,          2035, 0.82
+DIGSY-BEST-C,  R12_PAS,  *,          2040, 0.79
+DIGSY-BEST-C,  R12_PAS,  *,          2045, 0.77
+DIGSY-BEST-C,  R12_PAS,  *,          2050, 0.74
+DIGSY-BEST-C,  R12_PAS,  *,          2055, 0.72
+DIGSY-BEST-C,  R12_PAS,  *,          2060, 0.70
+DIGSY-BEST-C,  R12_PAS,  *,          2070, 0.66
+DIGSY-BEST-C,  R12_PAS,  *,          2080, 0.62
+DIGSY-BEST-C,  R12_PAS,  *,          2090, 0.57
+DIGSY-BEST-C,  R12_PAS,  *,          2100, 0.53
+DIGSY-BEST-C,  R12_PAS,  *,          2110, 0.49
+DIGSY-BEST-C,  R12_RCPA, *,          2020, 1.00
+DIGSY-BEST-C,  R12_RCPA, *,          2025, 1.00
+DIGSY-BEST-C,  R12_RCPA, *,          2030, 0.97
+DIGSY-BEST-C,  R12_RCPA, *,          2035, 0.87
+DIGSY-BEST-C,  R12_RCPA, *,          2040, 0.86
+DIGSY-BEST-C,  R12_RCPA, *,          2045, 0.85
+DIGSY-BEST-C,  R12_RCPA, *,          2050, 0.84
+DIGSY-BEST-C,  R12_RCPA, *,          2110, 0.84
+DIGSY-BEST-C,  R12_SAS,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_SAS,  *,          2025, 1.00
+DIGSY-BEST-C,  R12_SAS,  *,          2030, 0.97
+DIGSY-BEST-C,  R12_SAS,  *,          2035, 0.87
+DIGSY-BEST-C,  R12_SAS,  *,          2040, 0.86
+DIGSY-BEST-C,  R12_SAS,  *,          2045, 0.85
+DIGSY-BEST-C,  R12_SAS,  *,          2110, 0.85
+DIGSY-BEST-C,  R12_WEU,  *,          2020, 1.00
+DIGSY-BEST-C,  R12_WEU,  *,          2025, 0.90
+DIGSY-BEST-C,  R12_WEU,  *,          2030, 0.85
+DIGSY-BEST-C,  R12_WEU,  *,          2035, 0.79
+DIGSY-BEST-C,  R12_WEU,  *,          2040, 0.74
+DIGSY-BEST-C,  R12_WEU,  *,          2045, 0.70
+DIGSY-BEST-C,  R12_WEU,  *,          2050, 0.68
+DIGSY-BEST-C,  R12_WEU,  *,          2110, 0.68
 
 DIGSY-BEST-S,  R12_AFR,  *,          2020, 1.00
 DIGSY-BEST-S,  R12_AFR,  *,          2025, 1.00
