@@ -71,7 +71,7 @@ jobs:
           ${{ secrets.MESSAGE_STATIC_DATA_PRIVATE_KEY }}
 
     - name: Check out message-static-data
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: iiasa/message-static-data
         path: message-static-data
@@ -230,7 +230,7 @@ jobs:
           --local-cache --jvmargs="-Xmx6G"
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}  # Required
 
@@ -239,7 +239,7 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with: { ref: "${{ needs.check.outputs.ref }}" }
     - uses: astral-sh/setup-uv@v7
       with: { python-version: "${{ env.python-version }}" }
