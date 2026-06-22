@@ -423,11 +423,22 @@ def get_rates_data(  # pragma: no cover
     if rates_path.exists():
         all_rates = pd.read_csv(rates_path)
     else:
+        ssp_lower = ssp.lower()
+        # Connection rates are keyed on the run's SSP; treatment and recycling
+        # rates are not differentiated across SSPs and ship only as ssp2 files,
+        # so every SSP reads them from ssp2 (mirrors demands.py).
+        rate_files = (
+            sorted(load_path.glob(f"{ssp_lower}_regional_*_connection_rate_*.csv"))
+            + sorted(load_path.glob("ssp2_regional_*_treatment_rate_*.csv"))
+            + sorted(load_path.glob("ssp2_regional_*_recycling_rate_*.csv"))
+        )
         frames = []
-        for path in sorted(load_path.glob(f"{ssp.lower()}_regional_*_rate_*.csv")):
+        for path in rate_files:
             df = pd.read_csv(path)
             year_col = df.columns[0]
-            variable = path.stem.removeprefix(f"{ssp.lower()}_regional_")
+            variable = path.stem.replace(f"{ssp_lower}_regional_", "", 1).replace(
+                "ssp2_regional_", "", 1
+            )
             frames.append(
                 df.rename(columns={year_col: "year"})
                 .melt(id_vars="year", var_name="node", value_name="value")
