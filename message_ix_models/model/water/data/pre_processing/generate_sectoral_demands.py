@@ -39,9 +39,7 @@ import pandas as pd
 from message_ix_models.model.water.utils import KM3_TO_MCM
 from message_ix_models.util import package_data_path
 
-SOURCE_R12 = Path(
-    "/mnt/p/ene.model/NEST/water_demands/Khan2022/withdrawals/annual/R12"
-)
+SOURCE_R12 = Path("/mnt/p/ene.model/NEST/water_demands/Khan2022/withdrawals/annual/R12")
 
 HARMONIZED_R12 = package_data_path("water", "demands", "harmonized", "R12")
 
@@ -91,9 +89,7 @@ def _load_withdrawal(ssp: int, source_file: str) -> pd.DataFrame:
     return raw.loc[list(available)] * KM3_TO_MCM
 
 
-def _apply_return_ratio(
-    withdrawal: pd.DataFrame, ratio: pd.DataFrame
-) -> pd.DataFrame:
+def _apply_return_ratio(withdrawal: pd.DataFrame, ratio: pd.DataFrame) -> pd.DataFrame:
     """Multiply withdrawal x ratio, aligning to withdrawal columns.
 
     The shipped return CSVs use a blank index header (``,0|EEU,...``)
