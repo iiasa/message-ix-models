@@ -38,7 +38,8 @@ excludes them at the runtime basin filter.
 
 Run::
 
-    uv run --no-sync python -m message_ix_models.model.water.data.pre_processing.generate_hydro_availability
+    uv run --no-sync python -m \
+        message_ix_models.model.water.data.pre_processing.generate_hydro_availability
 
 .. _ISI-MIP/isimip-protocol-3: https://github.com/ISI-MIP/isimip-protocol-3
 """
@@ -96,6 +97,7 @@ type Variable = Literal["qtot", "qr"]
 
 # ---------- Loading and monthly aggregation ----------
 
+
 def _load_csv(path: Path) -> pd.DataFrame:
     """Read a hydro_preprocess CSV; drop meta columns; index by BCU_name."""
     df = pd.read_csv(path)
@@ -151,7 +153,9 @@ def _zero_fill_all_nan_basins(panel: np.ndarray, basins: pd.Index, ssp: str) -> 
         panel[all_nan, :, :] = 0.0
 
 
-def load_gcm_panel(var: Variable, ssp: str) -> tuple[np.ndarray, pd.Index, pd.PeriodIndex]:
+def load_gcm_panel(
+    var: Variable, ssp: str
+) -> tuple[np.ndarray, pd.Index, pd.PeriodIndex]:
     """Load the 5-GCM monthly basin panel as ``(basin, gcm, month)`` array.
 
     Returns ``(panel, basins, months)`` where ``panel.shape ==
@@ -173,6 +177,7 @@ def load_gcm_panel(var: Variable, ssp: str) -> tuple[np.ndarray, pd.Index, pd.Pe
 
 
 # ---------- 5y aggregation ----------
+
 
 def _bin_masks(months: pd.PeriodIndex) -> dict[int, np.ndarray]:
     """Boolean column mask per sample year: months in (year-4) .. year."""
@@ -227,6 +232,7 @@ def seasonal_5y_monthly_mean(
 
 # ---------- Environmental flow (Variable-MF) ----------
 
+
 def variable_mf_monthly(monthly: np.ndarray, months: pd.PeriodIndex) -> np.ndarray:
     """Variable-MF environmental-flow reserve, applied per calendar year.
 
@@ -246,7 +252,9 @@ def variable_mf_monthly(monthly: np.ndarray, months: pd.PeriodIndex) -> np.ndarr
         maf = block.mean(axis=1, keepdims=True)
         high = block > 0.8 * maf
         med = (block > 0.4 * maf) & (block <= 0.8 * maf)
-        out[:, sl] = np.where(high, block * 0.2, np.where(med, block * 0.45, block * 0.6))
+        out[:, sl] = np.where(
+            high, block * 0.2, np.where(med, block * 0.45, block * 0.6)
+        )
     return np.abs(out)
 
 
@@ -261,9 +269,7 @@ def eflow_annual_from_monthly(
     return out
 
 
-def eflow_seasonal_5y(
-    eflow_monthly: np.ndarray, months: pd.PeriodIndex
-) -> np.ndarray:
+def eflow_seasonal_5y(eflow_monthly: np.ndarray, months: pd.PeriodIndex) -> np.ndarray:
     """Cross-month seasonal cycle of e-flow per 5y bin (mean, not quantile)."""
     masks = _bin_masks(months)
     month_of = months.month
@@ -283,6 +289,7 @@ def eflow_seasonal_5y(
 
 
 # ---------- Output formatting ----------
+
 
 def _annual_columns() -> pd.Index:
     return pd.Index(
@@ -308,6 +315,7 @@ def _monthly_frame(values: np.ndarray, basins: pd.Index) -> pd.DataFrame:
 
 # ---------- Filtering ----------
 
+
 def _filter_region_basins(df: pd.DataFrame, region: Region) -> pd.DataFrame:
     """Reorder rows to the region's delineation file (positional contract)."""
     delin = pd.read_csv(DELINEATION / f"basins_by_region_simpl_{region}.csv")
@@ -320,6 +328,7 @@ def _format_for_write(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------- Orchestration ----------
+
 
 def build_ssp_outputs(var: Variable = "qtot") -> dict[str, pd.DataFrame]:
     """Build all percentile + e-flow frames for the configured SSPs.
@@ -375,7 +384,9 @@ def write_outputs(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     for var in ("qtot", "qr"):
         frames = build_ssp_outputs(var=var)
         # ZMB delineation uses Zambian-province BCU names with zero overlap
