@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
+from pathlib import Path
 from typing import TYPE_CHECKING
 from warnings import warn
 
@@ -33,6 +34,10 @@ METADATA = [
 # source. The generator emits zero rows for them; the water build excludes
 # them at filter time.
 _PROBLEM_BASINS = ("30|FSU", "51|FSU", "154|FSU")
+
+# Treatment and recycling rates are not differentiated across SSPs; every SSP
+# reads them from the ssp2 files.
+SSP2_RATES = ("urban_treatment_rate", "rural_treatment_rate", "urban_recycling_rate")
 
 # Conversion factors used in the water module
 
@@ -85,6 +90,16 @@ def read_config(context: Context | None = None):
         context[key] = load_package_data(*_parts)
 
     return context
+
+
+def ssp2_rate_files(path: Path) -> list[Path]:
+    """Paths to the ssp2 treatment- and recycling-rate CSVs under *path*."""
+    return [path / f"ssp2_regional_{rate}_baseline.csv" for rate in SSP2_RATES]
+
+
+def variable_from_stem(stem: str) -> str:
+    """Variable name from a ``<ssp>_regional_<variable>`` filename stem."""
+    return stem.split("_regional_", 1)[1]
 
 
 def filter_basins_by_region(

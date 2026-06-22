@@ -10,7 +10,12 @@ import pyam
 from ixmp import Platform
 from message_ix import Reporter, Scenario
 
-from message_ix_models.model.water.utils import USD_KM3_TO_USD_MCM, m3_GJ_TO_MCM_GWa
+from message_ix_models.model.water.utils import (
+    USD_KM3_TO_USD_MCM,
+    m3_GJ_TO_MCM_GWa,
+    ssp2_rate_files,
+    variable_from_stem,
+)
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
@@ -425,20 +430,15 @@ def get_rates_data(  # pragma: no cover
     else:
         ssp_lower = ssp.lower()
         # Connection rates are keyed on the run's SSP; treatment and recycling
-        # rates are not differentiated across SSPs and ship only as ssp2 files,
-        # so every SSP reads them from ssp2 (mirrors demands.py).
-        rate_files = (
-            sorted(load_path.glob(f"{ssp_lower}_regional_*_connection_rate_*.csv"))
-            + sorted(load_path.glob("ssp2_regional_*_treatment_rate_*.csv"))
-            + sorted(load_path.glob("ssp2_regional_*_recycling_rate_*.csv"))
-        )
+        # rates come from the ssp2 files for every SSP.
+        rate_files = sorted(
+            load_path.glob(f"{ssp_lower}_regional_*_connection_rate_*.csv")
+        ) + ssp2_rate_files(load_path)
         frames = []
         for path in rate_files:
             df = pd.read_csv(path)
             year_col = df.columns[0]
-            variable = path.stem.replace(f"{ssp_lower}_regional_", "", 1).replace(
-                "ssp2_regional_", "", 1
-            )
+            variable = variable_from_stem(path.stem)
             frames.append(
                 df.rename(columns={year_col: "year"})
                 .melt(id_vars="year", var_name="node", value_name="value")
