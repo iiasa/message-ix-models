@@ -1,6 +1,5 @@
 """Prepare data for adding demands"""
 
-import os
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
@@ -10,7 +9,11 @@ import xarray as xr
 from message_ix import make_df
 
 from message_ix_models.model.water.config import Config
-from message_ix_models.model.water.utils import KM3_TO_MCM
+from message_ix_models.model.water.utils import (
+    KM3_TO_MCM,
+    ssp2_rate_files,
+    variable_from_stem,
+)
 from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
@@ -188,23 +191,11 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     sub_time = cfg.time
     ssp = context.ssp.lower()  # "SSP2" → "ssp2"
     path = package_data_path("water", "demands", "harmonized", region, ".")
-    # Treatment-rate and recycling-rate are not differentiated across SSPs;
-    # every SSP reads these from the SSP2 file.
-    rate_files = [
-        path / f"ssp2_regional_{rate}_baseline.csv"
-        for rate in ("urban_treatment_rate", "rural_treatment_rate", "urban_recycling_rate")
-    ]
+    rate_files = ssp2_rate_files(path)
     list_of_csvs = [
         p for p in path.glob(f"{ssp}_regional_*.csv") if p not in rate_files
     ] + rate_files
-    # Demand files carry the {ssp}_regional_ prefix; rate files (ssp2 for
-    # every ssp) carry ssp2_regional_. Strip whichever is present.
-    fns = [
-        os.path.splitext(os.path.basename(x))[0]
-        .replace(f"{ssp}_regional_", "", 1)
-        .replace("ssp2_regional_", "", 1)
-        for x in list_of_csvs
-    ]
+    fns = [variable_from_stem(x.stem) for x in list_of_csvs]
     # dictionary for reading csv files
     d: dict[str, pd.DataFrame] = {}
 
