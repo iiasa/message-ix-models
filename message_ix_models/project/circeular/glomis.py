@@ -29,7 +29,8 @@ scen_map = {
     "R": "BAU-SSP2-baseline-SSP2-CT-BAU",
     "N": "Narrow-digsyC-Medium-medSharing-CC-SSP2",
     "S": "Slow-SSP2-baseline-SSP2-CT-highLife",
-    "C": "Combined-digsyC-medRecycle-medSharing-CC-highLife",
+    "C": "BAU-SSP2-baseline-SSP2-CT-BAU",
+    "A": "Combined-digsyC-medRecycle-medSharing-CC-highLife",
 }
 
 
@@ -105,9 +106,9 @@ def calc_adjusted_total_demands(df_scen, scen) -> "ParameterData":
     df_par_demand.drop(columns=["Variable"], inplace=True)
     df_par_demand = df_par_demand.rename(
         columns={"Value": "value", "Region": "node", "Year": "year"}
-    ).assign(time="year", unit="t", level="demand")
+    ).assign(time="year", level="demand")
 
-    inf = df_par_demand.set_index([i for i in mat_demand.columns if i != "value"])
+    inf = df_par_demand.set_index([i for i in df_par_demand.columns if i != "value"])
     tot = mat_demand.set_index([i for i in mat_demand.columns if i != "value"])
     tot_adjusted = tot.sub(inf).assign(value=lambda x: x.clip(lower=0)).reset_index()
     return {"demand": tot_adjusted}
@@ -230,8 +231,12 @@ def main(context: Context, scenario: message_ix.Scenario, **kwargs) -> None:
     data = gen_data(input_data, s_info)
     merge_data(data, calc_adjusted_total_demands(input_data_ref, scenario))
 
-    options = dict(fast=True, dry_run=True)
-    apply_spec(scenario, spec, data, **options)
+    def ret_data(s, **kw) -> "ParameterData":
+        return data
+
+    options = dict(fast=True)
+    apply_spec(scenario, spec, ret_data, **options)
 
     scenario.set_as_default()
     log.info(f"Built GLOMIS soft-link on {scenario.url} and set as default")
+    return scenario

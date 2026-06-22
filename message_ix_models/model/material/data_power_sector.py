@@ -372,7 +372,7 @@ def get_reconciliated_mat_demand(
         [i for i in mat_demand.columns if i not in ["unit", "value"]]
     )
     tot = mat_demand.set_index([i for i in mat_demand.columns if i != "value"])
-    tot_adjusted = tot.sub(pm).reset_index()
+    tot_adjusted = tot.sub(pm).assign(value=lambda x: x.clip(lower=0)).reset_index()
     return {"demand": tot_adjusted}
 
 

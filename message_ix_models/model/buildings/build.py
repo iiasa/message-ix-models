@@ -1444,13 +1444,12 @@ def materials(
 
     # Check if extra STURM data is provided for the subtraction else use same data as
     # for the construction/demolition technologies
-    a, b = tuple(args) if len(args) == 2 else (sturm_c, sturm_r)
-    sturm_c_sub, sturm_r_sub = a, b
+    a, b = tuple(args) if len(args) == 2 else (sturm_r, sturm_c)
     mat_demand = subtract_material_demand(
         scenario,
         info,
-        sturm_r_sub,
-        sturm_c_sub,
+        a,
+        b,
         method="bm_subtraction",
         generate_vetting_csv=False,
     )
