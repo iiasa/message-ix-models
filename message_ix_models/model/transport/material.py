@@ -50,8 +50,8 @@ COMMODITY_INFO = {
     # "p": "",  # Missing
     # "plastics": "",  # Missing
     "stainless steel": "steel",
-    "al_wrought Al": "aluminum",
-    "al_extrus Al": "aluminum",   
+    "al_wrought": "aluminum",
+    "al_extrus": "aluminum",   
     # "zinc": "",  # Missing
 }
 
