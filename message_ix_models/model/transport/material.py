@@ -39,7 +39,7 @@ collect = Collector(TARGET, "{}::MT+ixmp".format)
 #   .model.materials
 COMMODITY_INFO = {
     "automotive steel": "steel",
-    "cast Al": "aluminum",
+    "al_cast": "aluminum",
     "cast iron": "pig_iron",  # NB Several other commodities exist
     # "co": "",  # Missing
     # "copper electric grade": "copper",  # Commented in material/set.yaml
@@ -50,7 +50,8 @@ COMMODITY_INFO = {
     # "p": "",  # Missing
     # "plastics": "",  # Missing
     "stainless steel": "steel",
-    "wrought Al": "aluminum",
+    "al_wrought": "aluminum",
+    "al_extrus": "aluminum",   
     # "zinc": "",  # Missing
 }
 
