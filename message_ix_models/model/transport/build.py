@@ -299,7 +299,7 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("n:n:ex world", lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}), K.n),
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
-    ("scenario::all", "scenario_codes"),
+    ("scenario::all", "scenario_codes", "config"),
 )
 
 
