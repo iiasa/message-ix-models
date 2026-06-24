@@ -15,14 +15,11 @@ from message_ix_models.util.genno import Collector
 
 from . import key as K
 from . import util
-from .data import LABEL_SUBS
 from .demand import _DEMAND_KW
 from .util import COMMON, EXTRAPOLATE, wildcard
 
 if TYPE_CHECKING:
     from genno import Computer
-
-    from message_ix_models.model.transport import Config
 
 
 #: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
@@ -40,9 +37,6 @@ collect = Collector(TARGET, "{}::F+ixmp".format)
 
 def demand(c: "Computer") -> None:
     """Prepare calculation of freight activity/``demand``."""
-    # Retrieve transport configuration
-    config: "Config" = c.graph["config"]["transport"]
-
     # commented: Base freight activity from IEA EEI
     # c.add("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config")
     # Base year freight activity from file (n, t), with modes for the 't' dimension
@@ -73,8 +67,7 @@ def demand(c: "Computer") -> None:
     c.add(k_e[0], "broadcast_wildcard", K.exo.elasticity_f, *coords, dim=dim)
 
     # Select values for the current scenario
-    indexers = dict(scenario=LABEL_SUBS["A"](config.label))
-    c.add(k_e[1], "select", k_e[0], indexers=indexers)
+    c.add(k_e[1], "select", k_e[0], K.coord.scenario_label_A)
 
     # Interpolate on "y" dimension
     c.add(k_e[2], "interpolate", k_e[1], "y::coords", **EXTRAPOLATE)
