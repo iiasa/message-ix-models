@@ -66,7 +66,8 @@ IEA_EWEB_FLOW = [
 #: Transform an :attr:`.transport.Config.label` by a sequence of string substitutions.
 #:
 #: Set "A"
-#:    This set is used in :class:`LoadFactorLDV` and :class:`PDT_CAP`.
+#:    This set is used in :class:`LoadFactorLDV`, :class:`PDT_CAP`, and
+#:    :func:`.freight.demand`.
 #:
 #:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2", i.e. no
 #:       distinct values for transport-materials or policy scenarios.
