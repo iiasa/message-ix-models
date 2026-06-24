@@ -769,28 +769,21 @@ def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
-def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"], str]:
+def indexer_scenario(config: dict) -> dict[Literal["scenario"], str]:
     """Indexer for the ``scenario`` dimension.
 
-    If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
-    "LED". Otherwise it is the final part of the :attr:`.transport.config.Config.ssp`
-    URN, e.g. "SSP(2024).1". In other words, this treats "LDV" as mutually exclusive
-    with an SSP scenario identifier (instead of orthogonal).
+    The final part of the :attr:`.transport.config.Config.ssp` URN, e.g. "SSP(2024).1".
 
     Parameters
     ----------
     config :
-        The genno.Computer "config" dictionary, with a key "transport" mapped to an
-        instance of :class:`.transport.Config`.
+        The :class:`genno.Computer` config dictionary, with a key "transport" mapped to
+        an instance of :class:`.transport.Config`.
     """
     # Retrieve the .transport.Config object from the genno.Computer "config" dict
     c: "Config" = config["transport"]
 
-    return dict(
-        scenario="LED"
-        if (with_LED and c.project.get("LED", False))
-        else c.ssp.urn.rpartition(":")[2]
-    )
+    return dict(scenario=c.ssp.urn.rpartition(":")[2])
 
 
 def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:

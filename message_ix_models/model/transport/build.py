@@ -29,7 +29,6 @@ from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, plot
 from . import key as K
-from .operator import indexer_scenario
 from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
@@ -292,8 +291,7 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
-    ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
-    ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
+    ("indexers:scenario", "indexer_scenario", "config"),
     ("indexers::usage", "indexers_usage", K.t),
     (K.n, "nodes_ex_world", "n"),
     ("n:n:ex world", lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}), K.n),
