@@ -66,6 +66,7 @@ def demand(c: "Computer") -> None:
     k_e = Key(K.exo.elasticity_f.name, "ny", "F")
 
     # Broadcast elasticity to all (node, technology, scenario)
+    # TODO Move scenario broadcasting/selection into a .data.ExoDataSource subclass
     freight_modes = ["F RAIL", "F ROAD"]
     coords = ["scenario::all", K.n, quote(freight_modes)]
     dim = ("scenario", "n", "t")
