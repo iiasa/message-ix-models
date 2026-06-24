@@ -39,6 +39,8 @@ from . import key as K
 from .util import EXTRAPOLATE, region_path_fallback
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import sdmx.message
     import sdmx.model.common
     from genno.types import AnyQuantity
@@ -126,9 +128,14 @@ class ActivityVehicle(ExoDataSource):
     filename = "activity-vehicle.csv"
     key = Key("activity:n-t-y:vehicle")
 
+    path: "Path"
+    indexers: dict[str, str]
+
     def __init__(self, *args, **kwargs) -> None:
         self.options = self.Options.from_args(self, *args, **kwargs)
         self.path = region_path_fallback(self.options.nodes, self.filename)
+        assert self.options.config
+        self.indexers = dict(scenario=LABEL_SUBS["C"](self.options.config.label))
 
     def get(self) -> "AnyQuantity":
         return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
@@ -141,11 +148,10 @@ class ActivityVehicle(ExoDataSource):
 
         # Broadcast to all scenarios and nodes
         coords = ["scenario::all", "n::ex world"]
-        dim = ("scenario", "n")
-        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=dim)
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "n"))
 
         # Select values for the current scenario; drop the 'scenario' dimension
-        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+        c.add(k[2], "select", k[1], indexers=self.indexers)
 
         # Interpolate on "y" dimension
         c.add(self.key, "interpolate", k[2], "y::coords", **EXTRAPOLATE)
@@ -286,9 +292,14 @@ class Lifetime(ExoDataSource):
     filename = "lifetime.csv"
     key = Key("lifetime:nl-t-yv:exo")
 
+    path: "Path"
+    indexers: dict[str, str]
+
     def __init__(self, *args, **kwargs) -> None:
         self.options = self.Options.from_args(self, *args, **kwargs)
         self.path = region_path_fallback(self.options.nodes, self.filename)
+        assert self.options.config
+        self.indexers = dict(scenario=LABEL_SUBS["B"](self.options.config.label))
 
     def get(self) -> "AnyQuantity":
         return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
@@ -304,7 +315,7 @@ class Lifetime(ExoDataSource):
         c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "nl"))
 
         # Select values for the current scenario; drop the 'scenario' dimension
-        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+        c.add(k[2], "select", k[1], indexers=self.indexers)
 
         # Expand from "t" modes to all actual technologies
         c.add(k[3], "call", "t::transport map", k[2])
