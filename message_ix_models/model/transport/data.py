@@ -61,6 +61,49 @@ IEA_EWEB_FLOW = [
     "WORLDMAR",
 ]
 
+#: Transform an :attr:`.transport.Config.label` by a sequence of string substitutions.
+#:
+#: Set "A"
+#:    This set is used in :class:`LoadFactorLDV` and :class:`PDT_CAP`.
+#:
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2", i.e. no
+#:       distinct values for transport-materials or policy scenarios.
+#:    2. Use "SSP_2024_2" for CircEUlar scenarios, except "DIGSY-BEST-C" for CircEUlar
+#:       "narrow" and "all-in" scenarios.
+#:    3. Use common 'LED'.
+#:    4. Convert to a filename-like with underscores, e.g.
+#:       "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1".
+#:
+#: Set "B"
+#:    This set is used in :class:`Lifetime`.
+#:
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2".
+#:    2. "CircEUlar-E" becomes "CircEUlar-A".
+#:    3. All besides "CircEUlar-[NSA]" become "*".
+#:
+#: Set "C"
+#:    This set is used in :class:`ActivityVehicle`. It is the same as set "B", except
+#:    "CircEUlar-S" becomes "*".
+LABEL_SUBS = dict(
+    A=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-[RCS]$", "SSP_2024_2"),
+        ("^CircEUlar-[NAE]$", "DIGSY-BEST-C"),
+        ("^LED-SSP.$", "LED"),
+        (r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)", r"SSP_\1_\2"),
+    ),
+    B=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-E$", "CircEUlar-A"),
+        (r"^(?!CircEUlar-[NSA]).*$", "*"),
+    ),
+    C=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-E$", "CircEUlar-A"),
+        (r"^(?!CircEUlar-[NA]).*$", "*"),
+    ),
+)
+
 
 class ActivityVehicle(ExoDataSource):
     """Activity (distance) per vehicle per year.
@@ -417,27 +460,6 @@ class MultiFile(ExoDataSource):
         return self.key
 
 
-#: Transform an :attr:`.transport.Config.label` to a filename by a sequence of string
-#: substitutions. This set is used for, among others, :class:`LoadFactorLDV`.
-#:
-#: 1. No distinction for material scenarios.
-#: 2. Use common 'LED' and remove a trailing suffix.
-#: 3. Use "SSP_2024_2" for CircEUlar scenarios, except "DIGSY-BEST-C" for CircEUlar
-#:    "narrow" and "all-in" scenarios.
-#: 4. Use corresponding SSP for "DIGSY-WORST-C" scenarios.
-#: 5. Convert to a filename-like with underscores, e.g.
-#:    "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1".
-#: 6. Remove trailing suffix (" foo").
-LABEL_STEM_A = Substitutions(
-    ("^M ", ""),
-    ("^CircEUlar-[RCS]", "SSP_2024_2"),
-    ("^CircEUlar-[NA]", "DIGSY-BEST-C"),
-    (r"^(LED)-SSP.( \w*)*$", r"\1"),
-    (r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)", r"SSP_\1_\2"),
-    (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),
-)
-
-
 class LoadFactorLDV(MultiFile):
     """Load factor (occupancy) of LDVs.
 
@@ -455,7 +477,7 @@ class LoadFactorLDV(MultiFile):
         assert self.options.config
 
         # Use the respective SSP
-        subs = LABEL_STEM_A + ("^DIGSY-WORST-C", str(self.options.config.ssp))
+        subs = LABEL_SUBS["A"] + ("^DIGSY-WORST-C", str(self.options.config.ssp))
         # Apply sequential replacements
         return f"{subs(self.options.config.label)}.csv"
 
@@ -484,7 +506,7 @@ class PDT_CAP(MultiFile):
     @property
     def filename(self) -> str:
         assert self.options.config
-        return f"{LABEL_STEM_A(self.options.config.label)}.csv"
+        return f"{LABEL_SUBS['A'](self.options.config.label)}.csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         # This is the key used by subsequent steps in demand.py
