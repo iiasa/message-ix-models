@@ -1,18 +1,40 @@
 import numpy as np
 import pytest
 from pytest import mark
+from sdmx.model.common import Code
 
 from message_ix_models import Context
 from message_ix_models.model.transport import CL_SCENARIO, Config, build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.data import (
+    LABEL_SUBS,
     LoadFactorLDV,
     MultiFile,
     collect_structures,
     read_structures,
 )
 from message_ix_models.model.transport.roadmap import get_roadmap_data
+from message_ix_models.project.circeular.structure import (
+    CL_SCENARIO as CL_SCENARIO_CIRCEULAR,
+)
 from message_ix_models.project.navigate import T35_POLICY
+
+
+@pytest.fixture(scope="module")
+def codes() -> list[tuple[Code, Code]]:
+    """All possible tuples of (:attr:`.Config.code`, :attr:`.project_scenario_code`).
+
+    These include:
+
+    1. Each of :class:`.transport.config.CL_SCENARIO` with no project-specific code.
+    2. "M SSP2" with each code from :class:`.circeular.structure.CL_SCENARIO`.
+    """
+    cl = CL_SCENARIO.get()
+    result = [(code, None) for code in cl] + [
+        (cl["M SSP2"], code) for code in CL_SCENARIO_CIRCEULAR.get()
+    ]
+    assert 392 == len(result)
+    return result
 
 
 class TestMultiFile:
@@ -148,6 +170,51 @@ def test_get_chn_ind_pop():
         "Value",
         "Variable",
     ]
+
+
+@pytest.mark.parametrize(
+    "subs, exp_all, exp",
+    (
+        (
+            "A",
+            # Existing files in R12/load-factor-ldv/*.csv
+            set(
+                """DIGSY-BEST-C DIGSY-BEST-S DIGSY-WORST-S DIGSY-WORST-C EDITS-CA
+                EDITS-HA LED SSP_2024_1 SSP_2024_2 SSP_2024_3 SSP_2024_4
+                SSP_2024_5""".split()
+            ),
+            {"CircEUlar-C": "SSP_2024_2", "CircEUlar-N": "DIGSY-BEST-C"},
+        ),
+        (
+            "B",
+            # Appearing in lifetime.csv
+            {"*", "CircEUlar-A", "CircEUlar-N", "CircEUlar-S"},
+            {"CircEUlar-C": "*", "CircEUlar-E": "CircEUlar-A", "SSP_2024.1": "*"},
+        ),
+        (
+            "C",
+            # Appearing in activity-vehicle.csv
+            {"*", "CircEUlar-A", "CircEUlar-N"},
+            {"CircEUlar-S": "*", "CircEUlar-E": "CircEUlar-A", "SSP_2024.2": "*"},
+        ),
+    ),
+)
+def test_label_subs(
+    codes: tuple[Code, Code],
+    subs: str,
+    exp_all: set[str],  # Resulting values must appear in this set
+    exp: dict[str, str],  # Specific mappings from Config.label to result
+) -> None:
+    """:any:`LABEL_SUBS` set `subs` maps to one of the expected values."""
+    cfg = Config()
+
+    for c in codes:
+        cfg.code, cfg.project_scenario_code = c
+        result = LABEL_SUBS[subs](cfg.label)
+        # Result is mapped to one of the expected set, and any specific result matches
+        assert result in exp_all and exp.pop(cfg.label, result) == result, c
+
+    assert not exp  # All expected values were seen
 
 
 @build.get_computer.minimum_version
