@@ -91,6 +91,10 @@ cg = Key("cg share:n-y-cg")
 coord = Keys(
     c="coords:c:T",
     t="coords:t:T",
+    scenario_label_A="coords:scenario:label+A",
+    scenario_label_B="coords:scenario:label+B",
+    scenario_label_C="coords:scenario:label+C",
+    scenario="coords:scenario:T",
     yv_hist="coords:yv:T+historical",
     yv_1plus="coords:yv:y1+",
 )
