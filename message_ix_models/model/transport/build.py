@@ -170,13 +170,13 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
 
     # Miscellaneous data
-    kw = dict(nodes=context.model.regions, config=config)
+    kw = dict(nodes=context.model.regions)
     data.ActivityVehicle.add_tasks(c, **kw, **c_s)
     data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
     data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
     data.InputVehicle.add_tasks(c, **kw, **c_s)
     data.Lifetime.add_tasks(c, **kw, **c_s)
-    data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
+    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **c_s)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
