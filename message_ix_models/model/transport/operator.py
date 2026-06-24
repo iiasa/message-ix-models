@@ -960,19 +960,30 @@ def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
     return result
 
 
-def scenario_codes() -> list[str]:
+def scenario_codes(config: dict) -> list[str]:
     """Return valid codes for a `scenario` dimension of some quantities.
 
     The list includes:
 
     - Values like "SSP(2024).1" for every member of the :data:`SSP_2024` enumeration.
     - The value "LED".
+    - :attr:`.transport.Config.label`
+    - :attr:`.transport.Config.label` as processed by every one of :data`.LABEL_SUBS`.
 
     For use with, for instance :func:`.broadcast_wildcard`.
     """
     from message_ix_models.project.ssp import SSP_2024
 
-    return [c.urn.rpartition(":")[2] for c in SSP_2024] + ["LED"]
+    from .data import LABEL_SUBS
+
+    cfg: Config = config["transport"]
+
+    return (
+        [c.urn.rpartition(":")[2] for c in SSP_2024]
+        + ["LED"]
+        + [cfg.label]
+        + [ls(cfg.label) for ls in LABEL_SUBS.values()]
+    )
 
 
 def share_weight(
