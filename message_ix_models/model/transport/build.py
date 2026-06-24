@@ -291,7 +291,7 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
-    ("indexers:scenario", "indexer_scenario", "config"),
+    (K.coord.scenario, "indexer_scenario", "config"),
     ("indexers::usage", "indexers_usage", K.t),
     (K.n, "nodes_ex_world", "n"),
     ("n:n:ex world", lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}), K.n),
@@ -326,9 +326,6 @@ def add_structure(c: Computer) -> None:
     - ``cg``: "consumer group" set elements.
     - ``indexers:cg``: ``cg`` as indexers.
     - ``nodes``: |n| in the base model.
-    - ``indexers:scenario``: :class:`dict` mapping "scenario" to the short form of
-      :attr:`Config.ssp <.transport.config.Config.ssp>` (for instance, "SSP1"), for
-      indexing.
     - ``t::transport``: all transport |t| to be added, :class:`list`.
     - ``t::transport agg``: :class:`dict` mapping "t" to the output of
       :func:`.get_technology_groups`. For use with operators like 'aggregate', 'select',
@@ -350,6 +347,7 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
+    from .data import LABEL_SUBS
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -452,6 +450,15 @@ def add_structure(c: Computer) -> None:
     ]
 
     # Multiple static and dynamic tasks generated in loops etc.
+    # Coordinates for "select" based on .Config.label
+    tasks.extend(
+        (
+            getattr(K.coord, f"scenario_label_{x}"),
+            quote(dict(scenario=subs(config.label))),
+        )
+        for x, subs in LABEL_SUBS.items()
+    )
+
     # Quantities for broadcasting (t,) to (t, c, l) dimensions
     tasks.extend(
         (
