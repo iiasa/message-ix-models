@@ -69,13 +69,12 @@ IEA_EWEB_FLOW = [
 #:    This set is used in :class:`LoadFactorLDV`, :class:`PDT_CAP`, and
 #:    :func:`.freight.demand`.
 #:
-#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2", i.e. no
-#:       distinct values for transport-materials or policy scenarios.
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2"—that is, do
+#:       not use distinct values for transport-materials or policy scenarios.
 #:    2. Use "SSP_2024_2" for CircEUlar scenarios, except "DIGSY-BEST-C" for CircEUlar
-#:       "narrow" and "all-in" scenarios.
-#:    3. Use common 'LED'.
-#:    4. Convert to a filename-like with underscores, e.g.
-#:       "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1".
+#:       "Narrow" and "All-in" scenarios.
+#:    3. Use common 'LED' regardless of which SSP.
+#:    4. Convert to a filename-like with underscores, e.g. "SSP_2024.1" → "SSP_2024_1".
 #:
 #: Set "B"
 #:    This set is used in :class:`Lifetime`.
@@ -93,7 +92,7 @@ LABEL_SUBS = dict(
         ("^CircEUlar-[RCS]$", "SSP_2024_2"),
         ("^CircEUlar-[NAE]$", "DIGSY-BEST-C"),
         ("^LED-SSP.$", "LED"),
-        (r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)", r"SSP_\1_\2"),
+        (r"\.", "_"),
     ),
     B=Substitutions(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
@@ -472,8 +471,11 @@ class LoadFactorLDV(MultiFile):
     def filename(self) -> str:
         assert self.options.config
 
-        # Use the respective SSP
-        subs = LABEL_SUBS["A"] + ("^DIGSY-WORST-C", str(self.options.config.ssp))
+        # For DIGSY-WORST-C, use the respective SSP
+        subs = LABEL_SUBS["A"] + (
+            "^DIGSY-WORST-C",
+            f"SSP_2024_{self.options.config.ssp.name}",
+        )
         # Apply sequential replacements
         return f"{subs(self.options.config.label)}.csv"
 

@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pytest
 from pytest import mark
@@ -44,13 +46,20 @@ class TestMultiFile:
 
 
 class TestLoadFactorLDV:
-    @mark.parametrize("code", CL_SCENARIO.get())
-    def test_filename(self, code) -> None:
+    def test_filename(
+        self, caplog: pytest.LogCaptureFixture, codes: list[tuple[Code, Code]]
+    ) -> None:
         """:attr:`LoadFactorLDV.filename` works for all defined scenario codes."""
-        obj = LoadFactorLDV(config=Config(_code=code), nodes="R12")
-        result = obj.filename
+        cfg: Config = Config()
 
-        assert result.endswith(".csv")
+        caplog.set_level(logging.INFO + 1, "message_ix_models.model.transport.data")
+        for cfg.code, cfg.project_scenario_code in codes:
+            try:
+                obj = LoadFactorLDV(config=cfg, nodes="R12")
+            except Exception:  # pragma: no cover
+                print(cfg.code, cfg.project_scenario_code)
+                raise
+            assert obj.filename.endswith(".csv")
 
 
 @mark.sdmx_230
