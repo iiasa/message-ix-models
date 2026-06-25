@@ -389,7 +389,7 @@ def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
         ignore_index=True,
     )
 
-    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|non-comm"
+    exclude_expr = r"_mat_|_floor_|v_no_heat|non-comm"
     # TODO: do we need dynamic materials demand for CircEUlar too?
     demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
     demand["level"] = "useful"
