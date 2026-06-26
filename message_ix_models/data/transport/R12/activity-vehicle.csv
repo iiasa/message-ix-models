@@ -65,8 +65,8 @@ scenario, technology, node,     year, value
 # *,      LDV,        R12_NAM,  2020, 19000  # TH high
 # *,      LDV,        R12_NAM,  2110, 19000  # TH high
 
-*,        LDV,        R12_PAO,  2020,  9000  # TH low = previous value
-*,        LDV,        R12_PAO,  2110,  9000  # TH low = previous value
+*,        LDV,        R12_PAO,  2020, 10000  # TH low = previous value
+*,        LDV,        R12_PAO,  2110, 10000  # TH low = previous value
 # *,      LDV,        R12_PAO,  2020, 10000  # TH high
 # *,      LDV,        R12_PAO,  2110, 10000  # TH high
 # *,      LDV,        R12_PAO,  2020, 10000  # Experimental #392
@@ -74,8 +74,8 @@ scenario, technology, node,     year, value
 
 # *,      LDV,        R12_PAS,  2020, 11000  # TH low
 # *,      LDV,        R12_PAS,  2110, 11000  # TH low
-*,        LDV,        R12_PAS,  2020, 13000  # TH high = previous value
-*,        LDV,        R12_PAS,  2110, 13000  # TH high = previous value
+*,        LDV,        R12_PAS,  2020, 15000  # TH high = previous value
+*,        LDV,        R12_PAS,  2110, 15000  # TH high = previous value
 
 # *,      LDV,        R12_RCPA, 2020, 11000  # TH low
 # *,      LDV,        R12_RCPA, 2110, 11000  # TH low
@@ -95,8 +95,8 @@ scenario, technology, node,     year, value
 
 # *,      LDV,        R12_WEU,  2020, 11000  # TH low
 # *,      LDV,        R12_WEU,  2110, 11000  # TH low
-*,        LDV,        R12_WEU,  2020, 13000
-*,        LDV,        R12_WEU,  2110, 13000
+*,        LDV,        R12_WEU,  2020, 15000
+*,        LDV,        R12_WEU,  2110, 15000
 # *,      LDV,        R12_WEU,  2020, 12000  # TH high
 # *,      LDV,        R12_WEU,  2110, 12000  # TH high
 # *,      LDV,        R12_WEU,  2110, 15000  # Experimental #392
@@ -276,8 +276,8 @@ CircEUlar-N,        LDV,        R12_PAO,  1990,  9000
 CircEUlar-N,        LDV,        R12_PAO,  2020,  9000
 CircEUlar-N,        LDV,        R12_PAO,  2050, 20000
 CircEUlar-N,        LDV,        R12_PAO,  2110, 30000
-CircEUlar-N,        LDV,        R12_PAS,  1990, 13000
-CircEUlar-N,        LDV,        R12_PAS,  2020, 13000
+CircEUlar-N,        LDV,        R12_PAS,  1990, 15000
+CircEUlar-N,        LDV,        R12_PAS,  2020, 15000
 CircEUlar-N,        LDV,        R12_PAS,  2050, 22000
 CircEUlar-N,        LDV,        R12_PAS,  2110, 30000
 CircEUlar-N,        LDV,        R12_RCPA, 1990, 12000
@@ -288,8 +288,8 @@ CircEUlar-N,        LDV,        R12_SAS,  1990, 12000
 CircEUlar-N,        LDV,        R12_SAS,  2020, 12000
 CircEUlar-N,        LDV,        R12_SAS,  2050, 22000
 CircEUlar-N,        LDV,        R12_SAS,  2110, 30000
-CircEUlar-N,        LDV,        R12_WEU,  1990, 12000
-CircEUlar-N,        LDV,        R12_WEU,  2020, 12000
+CircEUlar-N,        LDV,        R12_WEU,  1990, 15000
+CircEUlar-N,        LDV,        R12_WEU,  2020, 15000
 CircEUlar-N,        LDV,        R12_WEU,  2050, 22000
 CircEUlar-N,        LDV,        R12_WEU,  2110, 30000
 
@@ -325,7 +325,7 @@ CircEUlar-A,        LDV,        R12_PAO,  1990,  9000
 CircEUlar-A,        LDV,        R12_PAO,  2020,  9000
 CircEUlar-A,        LDV,        R12_PAO,  2050, 20000
 CircEUlar-A,        LDV,        R12_PAO,  2110, 30000
-CircEUlar-A,        LDV,        R12_PAS,  1990, 13000
+CircEUlar-A,        LDV,        R12_PAS,  1990, 15000
 CircEUlar-A,        LDV,        R12_PAS,  2020, 13000
 CircEUlar-A,        LDV,        R12_PAS,  2050, 22000
 CircEUlar-A,        LDV,        R12_PAS,  2110, 30000
@@ -337,7 +337,7 @@ CircEUlar-A,        LDV,        R12_SAS,  1990, 12000
 CircEUlar-A,        LDV,        R12_SAS,  2020, 12000
 CircEUlar-A,        LDV,        R12_SAS,  2050, 22000
 CircEUlar-A,        LDV,        R12_SAS,  2110, 30000
-CircEUlar-A,        LDV,        R12_WEU,  1990, 12000
-CircEUlar-A,        LDV,        R12_WEU,  2020, 12000
+CircEUlar-A,        LDV,        R12_WEU,  1990, 15000
+CircEUlar-A,        LDV,        R12_WEU,  2020, 15000
 CircEUlar-A,        LDV,        R12_WEU,  2050, 22000
 CircEUlar-A,        LDV,        R12_WEU,  2110, 30000
