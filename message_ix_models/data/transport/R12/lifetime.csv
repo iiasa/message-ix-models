@@ -70,116 +70,152 @@ LED,      LDV,        R12_WEU,  1990,     20
 LED,      LDV,        R12_WEU,  2050,     19.55
 LED,      LDV,        R12_WEU,  2110,     19.55
 
-CircEUlar-S,        LDV,        R12_AFR,  1990,     25
-CircEUlar-S,        LDV,        R12_AFR,  2050,     30
-CircEUlar-S,        LDV,        R12_AFR,  2110,     30
-CircEUlar-S,        LDV,        R12_CHN,  1990,     18
-CircEUlar-S,        LDV,        R12_CHN,  2050,     25
-CircEUlar-S,        LDV,        R12_CHN,  2110,     30
-CircEUlar-S,        LDV,        R12_EEU,  1990,     22
-CircEUlar-S,        LDV,        R12_EEU,  2050,     25
-CircEUlar-S,        LDV,        R12_EEU,  2110,     30
-CircEUlar-S,        LDV,        R12_FSU,  1990,     15
-CircEUlar-S,        LDV,        R12_FSU,  2050,     25
-CircEUlar-S,        LDV,        R12_FSU,  2110,     30
-CircEUlar-S,        LDV,        R12_LAM,  1990,     25
-CircEUlar-S,        LDV,        R12_LAM,  2050,     25
-CircEUlar-S,        LDV,        R12_LAM,  2110,     30
-CircEUlar-S,        LDV,        R12_MEA,  1990,     15
-CircEUlar-S,        LDV,        R12_MEA,  2050,     25
-CircEUlar-S,        LDV,        R12_MEA,  2110,     30
-CircEUlar-S,        LDV,        R12_NAM,  1990,     18
-CircEUlar-S,        LDV,        R12_NAM,  2050,     25
-CircEUlar-S,        LDV,        R12_NAM,  2110,     25
-CircEUlar-S,        LDV,        R12_PAO,  1990,     15
-CircEUlar-S,        LDV,        R12_PAO,  2050,     25
-CircEUlar-S,        LDV,        R12_PAO,  2110,     30
-CircEUlar-S,        LDV,        R12_PAS,  1990,     15
-CircEUlar-S,        LDV,        R12_PAS,  2050,     25
-CircEUlar-S,        LDV,        R12_PAS,  2110,     30
-CircEUlar-S,        LDV,        R12_RCPA, 1990,     15
-CircEUlar-S,        LDV,        R12_RCPA, 2050,     25
-CircEUlar-S,        LDV,        R12_RCPA, 2110,     30
-CircEUlar-S,        LDV,        R12_SAS,  1990,     25
-CircEUlar-S,        LDV,        R12_SAS,  2050,     30
-CircEUlar-S,        LDV,        R12_SAS,  2110,     30
-CircEUlar-S,        LDV,        R12_WEU,  1990,     20
-CircEUlar-S,        LDV,        R12_WEU,  2050,     30
-CircEUlar-S,        LDV,        R12_WEU,  2110,     30
+CircEUlar-A,        LDV,        R12_AFR,1990,25
+CircEUlar-A,        LDV,        R12_AFR,2020,25
+CircEUlar-A,        LDV,        R12_AFR,2050,18
+CircEUlar-A,        LDV,        R12_AFR,2110,16
+CircEUlar-A,        LDV,        R12_CHN,1990,18
+CircEUlar-A,        LDV,        R12_CHN,2020,18
+CircEUlar-A,        LDV,        R12_CHN,2050,18
+CircEUlar-A,        LDV,        R12_CHN,2110,16
+CircEUlar-A,        LDV,        R12_EEU,1990,22
+CircEUlar-A,        LDV,        R12_EEU,2020,22
+CircEUlar-A,        LDV,        R12_EEU,2050,18
+CircEUlar-A,        LDV,        R12_EEU,2110,16
+CircEUlar-A,        LDV,        R12_FSU,1990,15
+CircEUlar-A,        LDV,        R12_FSU,2020,15
+CircEUlar-A,        LDV,        R12_FSU,2050,18
+CircEUlar-A,        LDV,        R12_FSU,2110,16
+CircEUlar-A,        LDV,        R12_LAM,1990,25
+CircEUlar-A,        LDV,        R12_LAM,2020,25
+CircEUlar-A,        LDV,        R12_LAM,2050,18
+CircEUlar-A,        LDV,        R12_LAM,2110,16
+CircEUlar-A,        LDV,        R12_MEA,1990,15
+CircEUlar-A,        LDV,        R12_MEA,2020,15
+CircEUlar-A,        LDV,        R12_MEA,2050,18
+CircEUlar-A,        LDV,        R12_MEA,2110,16
+CircEUlar-A,        LDV,        R12_NAM,1990,18
+CircEUlar-A,        LDV,        R12_NAM,2020,18
+CircEUlar-A,        LDV,        R12_NAM,2050,18
+CircEUlar-A,        LDV,        R12_NAM,2110,16
+CircEUlar-A,        LDV,        R12_PAO,1990,15
+CircEUlar-A,        LDV,        R12_PAO,2020,15
+CircEUlar-A,        LDV,        R12_PAO,2050,18
+CircEUlar-A,        LDV,        R12_PAO,2110,16
+CircEUlar-A,        LDV,        R12_PAS,1990,15
+CircEUlar-A,        LDV,        R12_PAS,2020,15
+CircEUlar-A,        LDV,        R12_PAS,2050,18
+CircEUlar-A,        LDV,        R12_PAS,2110,16
+CircEUlar-A,        LDV,        R12_RCPA,1990,15
+CircEUlar-A,        LDV,        R12_RCPA,2020,15
+CircEUlar-A,        LDV,        R12_RCPA,2050,18
+CircEUlar-A,        LDV,        R12_RCPA,2110,16
+CircEUlar-A,        LDV,        R12_SAS,1990,25
+CircEUlar-A,        LDV,        R12_SAS,2020,25
+CircEUlar-A,        LDV,        R12_SAS,2050,18
+CircEUlar-A,        LDV,        R12_SAS,2110,16
+CircEUlar-A,        LDV,        R12_WEU,1990,20
+CircEUlar-A,        LDV,        R12_WEU,2020,20
+CircEUlar-A,        LDV,        R12_WEU,2050,18
+CircEUlar-A,        LDV,        R12_WEU,2110,16
 
-CircEUlar-N,        LDV,        R12_AFR,  1990,     25
-CircEUlar-N,        LDV,        R12_AFR,  2050,     14
-CircEUlar-N,        LDV,        R12_AFR,  2110,     12
-CircEUlar-N,        LDV,        R12_CHN,  1990,     18
-CircEUlar-N,        LDV,        R12_CHN,  2050,     14
-CircEUlar-N,        LDV,        R12_CHN,  2110,     12
-CircEUlar-N,        LDV,        R12_EEU,  1990,     22
-CircEUlar-N,        LDV,        R12_EEU,  2050,     14
-CircEUlar-N,        LDV,        R12_EEU,  2110,     12
-CircEUlar-N,        LDV,        R12_FSU,  1990,     15
-CircEUlar-N,        LDV,        R12_FSU,  2050,     14
-CircEUlar-N,        LDV,        R12_FSU,  2110,     12
-CircEUlar-N,        LDV,        R12_LAM,  1990,     25
-CircEUlar-N,        LDV,        R12_LAM,  2050,     14
-CircEUlar-N,        LDV,        R12_LAM,  2110,     12
-CircEUlar-N,        LDV,        R12_MEA,  1990,     15
-CircEUlar-N,        LDV,        R12_MEA,  2050,     14
-CircEUlar-N,        LDV,        R12_MEA,  2110,     12
-CircEUlar-N,        LDV,        R12_NAM,  1990,     18
-CircEUlar-N,        LDV,        R12_NAM,  2050,     14
-CircEUlar-N,        LDV,        R12_NAM,  2110,     12
-CircEUlar-N,        LDV,        R12_PAO,  1990,     15
-CircEUlar-N,        LDV,        R12_PAO,  2050,     14
-CircEUlar-N,        LDV,        R12_PAO,  2110,     12
-CircEUlar-N,        LDV,        R12_PAS,  1990,     15
-CircEUlar-N,        LDV,        R12_PAS,  2050,     14
-CircEUlar-N,        LDV,        R12_PAS,  2110,     12
-CircEUlar-N,        LDV,        R12_RCPA, 1990,     15
-CircEUlar-N,        LDV,        R12_RCPA, 2050,     14
-CircEUlar-N,        LDV,        R12_RCPA, 2110,     12
-CircEUlar-N,        LDV,        R12_SAS,  1990,     25
-CircEUlar-N,        LDV,        R12_SAS,  2050,     14
-CircEUlar-N,        LDV,        R12_SAS,  2110,     12
-CircEUlar-N,        LDV,        R12_WEU,  1990,     20
-CircEUlar-N,        LDV,        R12_WEU,  2050,     14
-CircEUlar-N,        LDV,        R12_WEU,  2110,     12
+CircEUlar-N,        LDV,        R12_AFR,1990,25
+CircEUlar-N,        LDV,        R12_AFR,2020,25
+CircEUlar-N,        LDV,        R12_AFR,2050,14
+CircEUlar-N,        LDV,        R12_AFR,2110,12
+CircEUlar-N,        LDV,        R12_CHN,1990,18
+CircEUlar-N,        LDV,        R12_CHN,2020,18
+CircEUlar-N,        LDV,        R12_CHN,2050,14
+CircEUlar-N,        LDV,        R12_CHN,2110,12
+CircEUlar-N,        LDV,        R12_EEU,1990,22
+CircEUlar-N,        LDV,        R12_EEU,2020,22
+CircEUlar-N,        LDV,        R12_EEU,2050,14
+CircEUlar-N,        LDV,        R12_EEU,2110,12
+CircEUlar-N,        LDV,        R12_FSU,1990,15
+CircEUlar-N,        LDV,        R12_FSU,2020,15
+CircEUlar-N,        LDV,        R12_FSU,2050,14
+CircEUlar-N,        LDV,        R12_FSU,2110,12
+CircEUlar-N,        LDV,        R12_LAM,1990,25
+CircEUlar-N,        LDV,        R12_LAM,2020,25
+CircEUlar-N,        LDV,        R12_LAM,2050,14
+CircEUlar-N,        LDV,        R12_LAM,2110,12
+CircEUlar-N,        LDV,        R12_MEA,1990,15
+CircEUlar-N,        LDV,        R12_MEA,2020,15
+CircEUlar-N,        LDV,        R12_MEA,2050,14
+CircEUlar-N,        LDV,        R12_MEA,2110,12
+CircEUlar-N,        LDV,        R12_NAM,1990,18
+CircEUlar-N,        LDV,        R12_NAM,2020,18
+CircEUlar-N,        LDV,        R12_NAM,2050,14
+CircEUlar-N,        LDV,        R12_NAM,2110,12
+CircEUlar-N,        LDV,        R12_PAO,1990,15
+CircEUlar-N,        LDV,        R12_PAO,2020,15
+CircEUlar-N,        LDV,        R12_PAO,2050,14
+CircEUlar-N,        LDV,        R12_PAO,2110,12
+CircEUlar-N,        LDV,        R12_PAS,1990,15
+CircEUlar-N,        LDV,        R12_PAS,2020,15
+CircEUlar-N,        LDV,        R12_PAS,2050,14
+CircEUlar-N,        LDV,        R12_PAS,2110,12
+CircEUlar-N,        LDV,        R12_RCPA,1990,15
+CircEUlar-N,        LDV,        R12_RCPA,2020,15
+CircEUlar-N,        LDV,        R12_RCPA,2050,14
+CircEUlar-N,        LDV,        R12_RCPA,2110,12
+CircEUlar-N,        LDV,        R12_SAS,1990,25
+CircEUlar-N,        LDV,        R12_SAS,2020,25
+CircEUlar-N,        LDV,        R12_SAS,2050,14
+CircEUlar-N,        LDV,        R12_SAS,2110,12
+CircEUlar-N,        LDV,        R12_WEU,1990,20
+CircEUlar-N,        LDV,        R12_WEU,2020,20
+CircEUlar-N,        LDV,        R12_WEU,2050,14
+CircEUlar-N,        LDV,        R12_WEU,2110,12
 
-CircEUlar-A,        LDV,        R12_AFR,  1990,     25
-CircEUlar-A,        LDV,        R12_AFR,  2050,     18
-CircEUlar-A,        LDV,        R12_AFR,  2110,     16
-CircEUlar-A,        LDV,        R12_CHN,  1990,     18
-CircEUlar-A,        LDV,        R12_CHN,  2050,     18
-CircEUlar-A,        LDV,        R12_CHN,  2110,     16
-CircEUlar-A,        LDV,        R12_EEU,  1990,     22
-CircEUlar-A,        LDV,        R12_EEU,  2050,     18
-CircEUlar-A,        LDV,        R12_EEU,  2110,     16
-CircEUlar-A,        LDV,        R12_FSU,  1990,     15
-CircEUlar-A,        LDV,        R12_FSU,  2050,     18
-CircEUlar-A,        LDV,        R12_FSU,  2110,     16
-CircEUlar-A,        LDV,        R12_LAM,  1990,     25
-CircEUlar-A,        LDV,        R12_LAM,  2050,     18
-CircEUlar-A,        LDV,        R12_LAM,  2110,     16
-CircEUlar-A,        LDV,        R12_MEA,  1990,     15
-CircEUlar-A,        LDV,        R12_MEA,  2050,     18
-CircEUlar-A,        LDV,        R12_MEA,  2110,     16
-CircEUlar-A,        LDV,        R12_NAM,  1990,     18
-CircEUlar-A,        LDV,        R12_NAM,  2050,     18
-CircEUlar-A,        LDV,        R12_NAM,  2110,     16
-CircEUlar-A,        LDV,        R12_PAO,  1990,     15
-CircEUlar-A,        LDV,        R12_PAO,  2050,     18
-CircEUlar-A,        LDV,        R12_PAO,  2110,     16
-CircEUlar-A,        LDV,        R12_PAS,  1990,     15
-CircEUlar-A,        LDV,        R12_PAS,  2050,     18
-CircEUlar-A,        LDV,        R12_PAS,  2110,     16
-CircEUlar-A,        LDV,        R12_RCPA, 1990,     15
-CircEUlar-A,        LDV,        R12_RCPA, 2050,     18
-CircEUlar-A,        LDV,        R12_RCPA, 2110,     16
-CircEUlar-A,        LDV,        R12_SAS,  1990,     25
-CircEUlar-A,        LDV,        R12_SAS,  2050,     18
-CircEUlar-A,        LDV,        R12_SAS,  2110,     16
-CircEUlar-A,        LDV,        R12_WEU,  1990,     20
-CircEUlar-A,        LDV,        R12_WEU,  2050,     18
-CircEUlar-A,        LDV,        R12_WEU,  2110,     16
+CircEUlar-S,        LDV,        R12_AFR,1990,25
+CircEUlar-S,        LDV,        R12_AFR,2020,25
+CircEUlar-S,        LDV,        R12_AFR,2050,30
+CircEUlar-S,        LDV,        R12_AFR,2110,30
+CircEUlar-S,        LDV,        R12_CHN,1990,18
+CircEUlar-S,        LDV,        R12_CHN,2020,18
+CircEUlar-S,        LDV,        R12_CHN,2050,25
+CircEUlar-S,        LDV,        R12_CHN,2110,30
+CircEUlar-S,        LDV,        R12_EEU,1990,22
+CircEUlar-S,        LDV,        R12_EEU,2020,22
+CircEUlar-S,        LDV,        R12_EEU,2050,25
+CircEUlar-S,        LDV,        R12_EEU,2110,30
+CircEUlar-S,        LDV,        R12_FSU,1990,15
+CircEUlar-S,        LDV,        R12_FSU,2020,15
+CircEUlar-S,        LDV,        R12_FSU,2050,25
+CircEUlar-S,        LDV,        R12_FSU,2110,30
+CircEUlar-S,        LDV,        R12_LAM,1990,25
+CircEUlar-S,        LDV,        R12_LAM,2020,25
+CircEUlar-S,        LDV,        R12_LAM,2050,25
+CircEUlar-S,        LDV,        R12_LAM,2110,30
+CircEUlar-S,        LDV,        R12_MEA,1990,15
+CircEUlar-S,        LDV,        R12_MEA,2020,15
+CircEUlar-S,        LDV,        R12_MEA,2050,25
+CircEUlar-S,        LDV,        R12_MEA,2110,30
+CircEUlar-S,        LDV,        R12_NAM,1990,18
+CircEUlar-S,        LDV,        R12_NAM,2020,18
+CircEUlar-S,        LDV,        R12_NAM,2050,25
+CircEUlar-S,        LDV,        R12_NAM,2110,25
+CircEUlar-S,        LDV,        R12_PAO,1990,15
+CircEUlar-S,        LDV,        R12_PAO,2020,15
+CircEUlar-S,        LDV,        R12_PAO,2050,25
+CircEUlar-S,        LDV,        R12_PAO,2110,30
+CircEUlar-S,        LDV,        R12_PAS,1990,15
+CircEUlar-S,        LDV,        R12_PAS,2020,15
+CircEUlar-S,        LDV,        R12_PAS,2050,25
+CircEUlar-S,        LDV,        R12_PAS,2110,30
+CircEUlar-S,        LDV,        R12_RCPA,1990,15
+CircEUlar-S,        LDV,        R12_RCPA,2020,15
+CircEUlar-S,        LDV,        R12_RCPA,2050,25
+CircEUlar-S,        LDV,        R12_RCPA,2110,30
+CircEUlar-S,        LDV,        R12_SAS,1990,25
+CircEUlar-S,        LDV,        R12_SAS,2020,25
+CircEUlar-S,        LDV,        R12_SAS,2050,30
+CircEUlar-S,        LDV,        R12_SAS,2110,30
+CircEUlar-S,        LDV,        R12_WEU,1990,20
+CircEUlar-S,        LDV,        R12_WEU,2020,20
+CircEUlar-S,        LDV,        R12_WEU,2050,30
+CircEUlar-S,        LDV,        R12_WEU,2110,30
 
 *,        2W,         *,        1990,     10
 *,        2W,         *,        2110,     10
