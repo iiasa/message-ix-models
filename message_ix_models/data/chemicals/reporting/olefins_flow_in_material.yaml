@@ -1,11 +1,11 @@
-# EFC Chemicals-sector olefins/petrochem INPUT material flows:
-#   in|Chemicals|<tech>|<ethylene|propylene|BTX> (Mt/yr).
+# EFC olefins/petrochem INPUT material flows: in|<...>|<tech>|<ethylene|propylene|BTX> (Mt/yr).
 # High-value-chemical CONSUMPTION. production_HVC aggregates the three olefins into the HVC
 # demand: it draws ethylene/propylene/BTX at final_material (Mt), one mode named per commodity.
 # BTX has a SECOND consumer, CH2O_to_resin (BTX -> resin), so the BTX balance is
 # steam_cracker_petro|BTX == production_HVC|BTX + CH2O_to_resin|BTX; ethylene/propylene
 # have production_HVC as their only consumer. Sum of these balances the olefin producers
-# in olefins_flow_out_material.yaml.
+# in olefins_flow_out_material.yaml. Only production_HVC|propylene is in the customer spec
+# (-> Industry|Chemicals); the others are kept as extras.
 var: in
 iamc_prefix: "in|"
 unit: Mt/yr
@@ -16,7 +16,7 @@ vars:
     original_unit: Mt/yr
     short: in_production_HVC_ethylene
 
-  Chemicals|production_HVC|propylene:
+  Industry|Chemicals|production_HVC|propylene:
     filter: {technology: production_HVC, commodity: propylene, level: final_material, mode: propylene}
     original_unit: Mt/yr
     short: in_production_HVC_propylene
