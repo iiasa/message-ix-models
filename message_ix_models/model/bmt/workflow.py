@@ -216,6 +216,73 @@ def remove_ELC100_near_term_infeasibility(
     return scenario
 
 
+# TODO: remove once project/ngfs_p6_bmt is merged to main and import from .project.ngfs
+def aas_coal_growth_near_term(
+    context,
+    scenario,
+    technologies: list[str] = [
+        "coal_adv",
+        # "coal_adv_ccs",
+        "coal_ppl",
+        # "igcc",
+        # "igcc_ccs",
+    ],
+    *,
+    start_year: int = 2020,
+    end_year: int = 2035,
+    limit: float = 0.03,
+) -> message_ix.Scenario:
+    """Add ``growth_activity_lo`` for coal power technologies.
+
+    Removes overlapping ``growth_activity_up`` entries for the same technologies,
+    nodes, and years before adding the lower bound.
+    """
+    # constrain coal phaseout speed in the near term
+    info = ScenarioInfo(scenario)
+    nodes = ["R12_CHN", "R12_SAS"]
+    years = [y for y in info.Y if start_year <= y <= end_year]
+
+    growth_up = scenario.par(
+        "growth_activity_up",
+        filters={
+            "technology": technologies,
+            "node_loc": nodes,
+            "year_act": years,
+        },
+    )
+
+    df = make_df(
+        "growth_activity_lo",
+        technology=technologies,
+        time="year",
+        value=limit,
+        unit="???",
+    ).pipe(
+        broadcast,
+        node_loc=nodes,
+        year_act=years,
+    )
+
+    with scenario.transact("Add growth_activity_lo for coal power technologies."):
+        if len(growth_up):
+            scenario.remove_par("growth_activity_up", growth_up)
+        scenario.add_par("growth_activity_lo", df)
+
+    log.info(
+        "Added growth_activity_lo=%s for technologies %s, "
+        "year_act %s–%s, nodes R12_CHN and R12_SAS (%d periods); "
+        "removed %d growth_activity_up rows",
+        limit,
+        technologies,
+        start_year,
+        end_year,
+        len(years),
+        len(growth_up),
+    )
+
+    return scenario
+
+
 def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     """Add BMT workflow steps to `wf`, starting from `base_step`.
 
