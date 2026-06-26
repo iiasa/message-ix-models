@@ -4,12 +4,13 @@ import logging
 
 import message_ix
 import pandas as pd
+from message_ix import make_df
 
-from message_ix_models import Context
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
 from message_ix_models.project.circeular.glomis import main as build_I
-from message_ix_models.util import minimum_version, package_data_path
+from message_ix_models.util import broadcast, minimum_version, package_data_path
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T
@@ -182,6 +183,39 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     return scenario
 
 
+def remove_ELC100_near_term_infeasibility(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    log.info(
+        "Remove values from growth_new_capacity_up/lo to avoid near-term infeasibility",
+    )
+    for suffix in ["_up", "_lo"]:
+        bound = scenario.par(
+            f"bound_new_capacity{suffix}",
+            filters={"technology": "ELC_100", "year_vtg": [2020, 2025]},
+        )
+        grow = scenario.par(
+            f"growth_new_capacity{suffix}",
+            filters={col: bound[col].unique().tolist() for col in bound.columns[:-2]},
+        )
+        to_remove = pd.merge(
+            grow, bound[["node_loc", "technology", "year_vtg"]], how="inner"
+        )
+        bad_coeff = scenario.par(
+            f"bound_new_capacity{suffix}",
+            filters={
+                "technology": ["ELC_100", "PHEV_ptrp"],
+                "year_vtg": 2020,
+                "node_loc": "R12_SAS",
+            },
+        )
+
+        with scenario.transact():
+            scenario.remove_par(f"growth_new_capacity{suffix}", to_remove)
+            scenario.remove_par(f"bound_new_capacity{suffix}", bad_coeff)
+    return scenario
+
+
 def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     """Add BMT workflow steps to `wf`, starting from `base_step`.
 
@@ -204,6 +238,7 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
 
     # Clone the base scenario
     name = wf.add_step(f"{prefix}M cloned", name, target=f"{url}M", clone=c)
+    name = wf.add_step(f"{prefix}M coal-power-fixed", name, aas_coal_growth_near_term)
     wf.add_step(f"{prefix}M reported", name, report)
 
     # Retrieve a 'Code' object with 'Annotations' that identify a particular
@@ -235,6 +270,11 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     # After cloning, set the scenario as default so it is the one used by later steps
     name = wf.add_step(
         f"{prefix}MT built", name, _set_as_default, target=f"{url}MT", clone=True
+    )
+    name = wf.add_step(
+        f"{prefix}MT built T quick-fix",
+        name,
+        remove_ELC100_near_term_infeasibility,
     )
     # TODO: check if Paul's action already has something to set as default
 
@@ -273,11 +313,12 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     )
     wf.add_step(f"{prefix}BMTPI baseline solved", f"{prefix}BMTPI built", solve)
     name = wf.add_step(f"{prefix}BMTX baseline solved", name, solve)
+    name = wf.add_step(f"{prefix}BMTX baseline reported", name, report)
 
     # make sure the scenario before this step is reported
     name = wf.add_step(
         f"{prefix}BMTX prep macro",
-        f"{prefix}BMTX baseline solved",
+        f"{prefix}BMTX baseline reported",
         # f"{prefix}BMT reported",
         prep_for_macro,
         target=f"{url}BMTX_message",
