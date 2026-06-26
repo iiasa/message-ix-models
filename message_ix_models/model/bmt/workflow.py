@@ -216,6 +216,43 @@ def remove_ELC100_near_term_infeasibility(
     return scenario
 
 
+def replace_cap_factor_vtg(scenario: message_ix.Scenario) -> message_ix.Scenario:
+    # load R scenario by replaceing the first character of the scenario name with "R"
+    ref = message_ix.Scenario(
+        scenario.platform, scenario.model, "R" + scenario.scenario[1:]
+    )
+    tecs = [
+        "ELC_100",
+        "HFC_ptrp",
+        "IAHe_ptrp",
+        "IAHm_ptrp",
+        "ICAe_ffv",
+        "ICAm_ptrp",
+        "ICE_conv",
+        "ICE_L_ptrp",
+        "ICE_nga",
+        "ICH_chyb",
+        "IGH_ghyb",
+        "PHEV_ptrp",
+    ]
+    vtgs = [i for i in range(1995, 2020, 5)]
+    par = "capacity_factor"
+    par_data = ref.par(par, filters={"technology": tecs, "year_vtg": vtgs})
+    del ref
+    with scenario.transact():
+        scenario.add_par(par, par_data)
+    return scenario
+
+
+def transport_quick_fixes(
+    context: Context, scenario: message_ix.Scenario, code
+) -> message_ix.Scenario:
+    remove_ELC100_near_term_infeasibility(context, scenario)
+    if code in ["N", "A"]:
+        replace_cap_factor_vtg(scenario)
+    return scenario
+
+
 # TODO: remove once project/ngfs_p6_bmt is merged to main and import from .project.ngfs
 def aas_coal_growth_near_term(
     context,
@@ -341,7 +378,8 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     name = wf.add_step(
         f"{prefix}MT built T quick-fix",
         name,
-        remove_ELC100_near_term_infeasibility,
+        transport_quick_fixes,
+        code=prefix.strip(),
     )
     # TODO: check if Paul's action already has something to set as default
 
