@@ -29,8 +29,7 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-      "SSP2",
-      "CircEUlar-N"
+      "DIGSY-BEST-C"
     ]
 
 # Run the workflow…
