@@ -9,6 +9,6 @@ technology, value
 # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
 # rail_pub,  80
 2W,           1.0
-RAIL,       200
+RAIL,       1800
 AIR,        115
 BUS,         20.9
