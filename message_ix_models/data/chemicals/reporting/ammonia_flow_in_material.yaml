@@ -1,20 +1,22 @@
-# EFC Chemicals-sector ammonia INPUT material flows: in|Chemicals|<tech>|ammonia (Mt/yr).
+# EFC ammonia INPUT material flows: in|<Sector>|<Subsector>|<tech>|NH3 (Mt/yr).
 # Ammonia mass CONSUMPTION (Mt/yr) at the material level:
 #   - NH3_to_N_fertil: fertiliser feedstock (the dominant use), draws at secondary_material.
 #   - residual_NH3: residual / non-fertiliser industrial ammonia demand (secondary_material).
 # The shipping-fuel bunker (NH3_bunker) is NOT reported here: it draws NH3@final, which the
 # NH3_tobunker mass->energy bridge makes energy (GWa), so it is reported in EJ/yr in
 # ammonia_flow_in_energy.yaml on the common marine-fuel basis. See that file and #284.
+# Customer spec: Industry|Chemicals subsector and the NH3 commodity label.
 var: in
 iamc_prefix: "in|"
 unit: Mt/yr
 
 vars:
-  Chemicals|NH3_to_N_fertil|ammonia:
+  Industry|Chemicals|NH3_to_N_fertil|NH3:
     filter: {technology: NH3_to_N_fertil, commodity: NH3, level: secondary_material, mode: M1}
     original_unit: Mt/yr
     short: in_NH3_to_N_fertil_ammonia
 
+  # Not in the customer spec; kept as an extra.
   Chemicals|residual_NH3|ammonia:
     filter: {technology: residual_NH3, commodity: NH3, level: secondary_material, mode: M1}
     original_unit: Mt/yr
