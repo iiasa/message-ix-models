@@ -9,7 +9,13 @@ from message_ix import make_df
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
+from message_ix_models.model.buildings.sturm import call_buildings_demand, call_sturm
 from message_ix_models.project.circeular.glomis import main as build_I
+from message_ix_models.tools.add_budget import main as add_budget
+from message_ix_models.tools.add_tax_emission import main as add_tax_emission
+from message_ix_models.tools.remove_emission_bounds import (
+    main as remove_emission_bounds,
+)
 from message_ix_models.util import broadcast, minimum_version, package_data_path
 from message_ix_models.workflow import Workflow
 
@@ -320,6 +326,44 @@ def aas_coal_growth_near_term(
     return scenario
 
 
+def add_simple_budget(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    add_budget(scenario, 1100, True)
+    return scenario
+
+
+def solve_w_sturm(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    for i in range(2):
+        scenario = solve(context, scenario, model="MESSAGE")
+        call_sturm(context, scenario)
+        scenario.remove_solution()
+        scenario = call_buildings_demand(context, scenario)
+    return scenario
+
+
+def gen_high_price(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    remove_emission_bounds(scenario, parameters=["bound_emission"])
+    add_tax_emission(scenario, 200)
+    solve(context, scenario, model="MESSAGE-MACRO")
+    return scenario
+
+
+def budget_run_macro(
+    context: Context, scenario: message_ix.Scenario, demand_scenario: str
+) -> message_ix.Scenario:
+    from message_data.tools.utilities import transfer_demands
+    source = message_ix.Scenario(scenario.platform, scenario.model, demand_scenario)
+    transfer_demands(source, scenario)
+    del source
+    solve(context, scenario, model="MESSAGE-MACRO")
+    return scenario
+
+
 def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     """Add BMT workflow steps to `wf`, starting from `base_step`.
 
@@ -442,6 +486,30 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
     )
 
     name = wf.add_step(f"{prefix}BMTX baseline macro reported", name, report)
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f built",
+        name,
+        add_simple_budget,
+        clone=True,
+        target=f"{url}BMTX_1100f",
+    )
+    name = wf.add_step(f"{prefix}BMTX 1100f sturm-feedback", name, solve_w_sturm)
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f high-price",
+        name,
+        gen_high_price,
+        clone=True,
+        target=f"{url}BMTX_high_price",
+    )
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f macro",
+        f"{prefix}BMTX 1100f sturm-feedback",
+        budget_run_macro,
+        clone=True,
+        target=f"{url}BMTX_1100f macro",
+        demand_scenario=f"{prefix}baseline_BMTX_high_price",
+    )
+    name = wf.add_step(f"{prefix}BMTX 1100f reported", name, report)
 
     return name
 
