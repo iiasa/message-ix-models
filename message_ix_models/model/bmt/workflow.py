@@ -334,8 +334,9 @@ def add_simple_budget(
 
 
 def solve_w_sturm(
-    context: Context, scenario: message_ix.Scenario
+    context: Context, scenario: message_ix.Scenario, code
 ) -> message_ix.Scenario:
+    context.buildings.code = code
     for i in range(2):
         scenario = solve(context, scenario, model="MESSAGE")
         call_sturm(context, scenario)
@@ -357,9 +358,35 @@ def budget_run_macro(
     context: Context, scenario: message_ix.Scenario, demand_scenario: str
 ) -> message_ix.Scenario:
     from message_data.tools.utilities import transfer_demands
+
     source = message_ix.Scenario(scenario.platform, scenario.model, demand_scenario)
     transfer_demands(source, scenario)
     del source
+    solve(context, scenario, model="MESSAGE-MACRO")
+    return scenario
+
+
+def price_run_macro(
+    context: Context, scenario: message_ix.Scenario, demand_scenario: str
+) -> message_ix.Scenario:
+    from message_data.tools.utilities import transfer_demands
+
+    from message_ix_models.project.engage.workflow import retr_CO2_price
+
+    source = message_ix.Scenario(scenario.platform, scenario.model, demand_scenario)
+    transfer_demands(source, scenario)
+    del source
+
+    # Add tax_emission based on R scenario solution
+    df = retr_CO2_price(
+        message_ix.Scenario(
+            scenario.platform, scenario.model, "R baseline_BMTX_1100f macro"
+        )
+    ).assign(type_emission="TCE")
+    df = [df["node"] == "World"]
+    with scenario.transact():
+        scenario.add_par("tax_emission", df)
+
     solve(context, scenario, model="MESSAGE-MACRO")
     return scenario
 
@@ -493,7 +520,9 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
         clone=True,
         target=f"{url}BMTX_1100f",
     )
-    name = wf.add_step(f"{prefix}BMTX 1100f sturm-feedback", name, solve_w_sturm)
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f sturm-feedback", name, solve_w_sturm, code=prefix.strip()
+    )
     name = wf.add_step(
         f"{prefix}BMTX 1100f high-price",
         name,
@@ -510,6 +539,16 @@ def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
         demand_scenario=f"{prefix}baseline_BMTX_high_price",
     )
     name = wf.add_step(f"{prefix}BMTX 1100f reported", name, report)
+    # extra steps for non R scenarios
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f macro price",
+        f"{prefix}BMTX baseline macro reported",
+        price_run_macro,
+        clone=True,
+        target=f"{url}BMTX_1100f macro price",
+        demand_scenario=f"{prefix}baseline_BMTX_high_price",
+    )
+    name = wf.add_step(f"{prefix}BMTX 1100f price reported", name, report)
 
     return name
 
