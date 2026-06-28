@@ -30,8 +30,8 @@ SOLVE_CONFIG = WorkflowConfig(
         model="MESSAGE",
         solve_options=dict(
             iis=1,
-            lpmethod=4,
-            scaind=0,
+            lpmethod=5,
+            scaind=1,
             threads=8,
             tilim=45 * 60,
         ),
