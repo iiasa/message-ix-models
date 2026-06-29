@@ -250,7 +250,7 @@ class Config(ConfigHelper):
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(self, extra_modules, navigate_scenario) -> None:
+    def __post_init__(self, extra_modules: str | list[str], navigate_scenario) -> None:
         self.use_modules(extra_modules)
 
         # Handle value for :attr:`navigate_scenario`
@@ -447,18 +447,19 @@ class Config(ConfigHelper):
         s = NAVIGATE_SCENARIO.parse(value)
         self.project.update(navigate=s)
 
-    def use_modules(self, *module_names: str) -> None:
-        """Handle extra_modules."""
-        for entry in module_names:
-            for m in entry.split() if isinstance(entry, str) else entry:
-                if m.startswith("-"):
-                    # Remove a module
-                    try:
-                        self.modules.remove(m[1:])
-                    except ValueError:
-                        pass
-                else:
-                    self.modules.append(m)
+    def use_modules(self, *module_names: str | list[str]) -> None:
+        """Handle :attr:`extra_modules`."""
+        # Convert a mixed sequence of space-delimited str and list[str] to one str
+        flat = " ".join(x if isinstance(x, str) else " ".join(x) for x in module_names)
+        # Split again
+        for m in flat.split():
+            if m.startswith("-"):
+                # Remove a module if present
+                if m[1:] in self.modules:
+                    self.modules.remove(m[1:])
+            elif m not in self.modules:
+                # Add a module not already present
+                self.modules.append(m)
 
 
 @dataclass
