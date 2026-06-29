@@ -145,6 +145,34 @@ class TestConfig:
         c.set_navigate_scenario(input)
         assert expected == c.project["navigate"]
 
+    @pytest.mark.parametrize(
+        "args",
+        (
+            ("a b c",),
+            ("a b c a",),  # Duplicates are ignored
+            ("a b -b b -b b b b b c",),
+            ("a -freight b c",),  # Mix of additions and removals
+            (["a", "b", "c"],),
+            (["a"], ["b -freight"], "c"),  # Multiple lists, one with a " "-sep string
+        ),
+    )
+    def test_use_modules(self, args: tuple[str | list[str], ...]) -> None:
+        # Call use_modules() explicitly
+        c = Config()
+        c.use_modules(*args)
+
+        # Modules a, b, and c are added, only once each, as the last in sequence
+        assert ["a", "b", "c"] == c.modules[-3:]
+        assert len(set(c.modules)) == len(c.modules)  # No duplicates
+
+        if len(args) > 1:
+            return  # Config(extra_modules=…) may only be *one* str or list[str]
+
+        # Implicit call via extra_modules InitVar
+        c = Config(extra_modules=args[0])
+        assert ["a", "b", "c"] == c.modules[-3:]
+        assert len(set(c.modules)) == len(c.modules)  # No duplicates
+
 
 class TestCL_SCENARIO:
     def test_get(self, test_context: Context) -> None:
