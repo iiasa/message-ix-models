@@ -1,0 +1,106 @@
+# EFC industry INPUT energy flows: in|Industry|<Subsector>|<tech>|hydrogen (EJ/yr).
+# Hydrogen consumed by industry furnaces, fuel cells, refining hydrocracking and DRI
+# steel. All energy (GWa -> EJ/yr).
+#
+# Per-tech LEVEL and MODE are taken from the scenario `input` parameter (queried on
+# the ixmp-dev baseline), NOT assumed. Both vary and both are load-bearing:
+#   - level: mostly `final`; *_refining draw hydrogen at `secondary`;
+#     hydro_cracking_ref at `refinery`.
+#   - mode: furnaces high_temp(+low_temp), fuel cells low_temp, h2_fc_I/h2_i/
+#     dri_h2_steel M1, hydro_cracking_ref cracking_gasoline/cracking_loil.
+# These industry techs have NO mode literally named "all" (unlike the transport
+# demand techs), so a `mode: all` filter would match nothing and emit an empty frame.
+#
+# NOT here: ethanol_to_ethylene_petro -- already reported correctly under
+# in|Industry|Chemicals| in data/chemicals/ethanol_flow_in_energy.yaml. The spec's
+# "ethanol_to_ethanol_petro" is a typo/duplicate of it (no such model tech); flag to
+# Yiyi, do not author (would double-count).
+#
+# All 15 filter techs verified present in the baseline scenario technology set.
+# Source: results/reporting/coverage_20260625.csv (absent demand_s industry leaves)
+# + scenario input-parameter coordinates.
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  # ---- Industry|Other: furnaces (hydrogen @ final; high/low temperature modes) ----
+  Industry|Other|furnace_h2_steel|hydrogen:
+    filter: {technology: furnace_h2_steel, commodity: hydrogen, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_h2_steel_hydrogen
+
+  Industry|Other|furnace_h2_cement|hydrogen:
+    filter: {technology: furnace_h2_cement, commodity: hydrogen, level: final, mode: [high_temp]}
+    original_unit: GWa
+    short: in_furnace_h2_cement_hydrogen
+
+  Industry|Other|furnace_h2_aluminum|hydrogen:
+    filter: {technology: furnace_h2_aluminum, commodity: hydrogen, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_h2_aluminum_hydrogen
+
+  Industry|Other|furnace_h2_petro|hydrogen:
+    filter: {technology: furnace_h2_petro, commodity: hydrogen, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_h2_petro_hydrogen
+
+  Industry|Other|furnace_h2_resins|hydrogen:
+    filter: {technology: furnace_h2_resins, commodity: hydrogen, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_h2_resins_hydrogen
+
+  # furnace_h2_refining draws hydrogen at `secondary`, not `final`
+  Industry|Other|furnace_h2_refining|hydrogen:
+    filter: {technology: furnace_h2_refining, commodity: hydrogen, level: secondary, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_h2_refining_hydrogen
+
+  # ---- Industry|Other: fuel cells (hydrogen, low_temp; refining @ secondary) ----
+  Industry|Other|fc_h2_steel|hydrogen:
+    filter: {technology: fc_h2_steel, commodity: hydrogen, level: final, mode: [low_temp]}
+    original_unit: GWa
+    short: in_fc_h2_steel_hydrogen
+
+  Industry|Other|fc_h2_aluminum|hydrogen:
+    filter: {technology: fc_h2_aluminum, commodity: hydrogen, level: final, mode: [low_temp]}
+    original_unit: GWa
+    short: in_fc_h2_aluminum_hydrogen
+
+  Industry|Other|fc_h2_petro|hydrogen:
+    filter: {technology: fc_h2_petro, commodity: hydrogen, level: final, mode: [low_temp]}
+    original_unit: GWa
+    short: in_fc_h2_petro_hydrogen
+
+  Industry|Other|fc_h2_resins|hydrogen:
+    filter: {technology: fc_h2_resins, commodity: hydrogen, level: final, mode: [low_temp]}
+    original_unit: GWa
+    short: in_fc_h2_resins_hydrogen
+
+  Industry|Other|fc_h2_refining|hydrogen:
+    filter: {technology: fc_h2_refining, commodity: hydrogen, level: secondary, mode: [low_temp]}
+    original_unit: GWa
+    short: in_fc_h2_refining_hydrogen
+
+  # ---- Industry|Other: generic industry hydrogen (mode M1, level final) ----
+  Industry|Other|h2_fc_I|hydrogen:
+    filter: {technology: h2_fc_I, commodity: hydrogen, level: final, mode: M1}
+    original_unit: GWa
+    short: in_h2_fc_I_hydrogen
+
+  Industry|Other|h2_i|hydrogen:
+    filter: {technology: h2_i, commodity: hydrogen, level: final, mode: M1}
+    original_unit: GWa
+    short: in_h2_i_hydrogen
+
+  # ---- Industry|Refining: hydrocracking draws hydrogen at `refinery`, cracking modes ----
+  Industry|Refining|hydro_cracking_ref|hydrogen:
+    filter: {technology: hydro_cracking_ref, commodity: hydrogen, level: refinery, mode: [cracking_gasoline, cracking_loil]}
+    original_unit: GWa
+    short: in_hydro_cracking_ref_hydrogen
+
+  # ---- Industry|Iron and Steel: hydrogen DRI (mode M1) ----
+  Industry|Iron and Steel|dri_h2_steel|hydrogen:
+    filter: {technology: dri_h2_steel, commodity: hydrogen, level: final, mode: M1}
+    original_unit: GWa
+    short: in_dri_h2_steel_hydrogen

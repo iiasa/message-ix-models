@@ -1,0 +1,6 @@
+# Unit conversion factors for industry reporting.
+# Complete table for this domain so it does not fall back to the hydrogen table.
+# All industry in| flows here are hydrogen consumed by furnaces / fuel cells /
+# refining / DRI: GWa -> EJ/yr. No material flows in this domain.
+conversions:
+  GWa_to_EJ/yr: 0.03154
