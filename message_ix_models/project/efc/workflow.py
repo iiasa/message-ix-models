@@ -186,7 +186,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
             rep,
             scenario.model,
             scenario.scenario,
-            domains=["hydrogen", "power", "chemicals", "transport"],
+            domains=["hydrogen", "power", "chemicals", "transport", "industry"],
         )
         try:
             scenario.check_out(timeseries_only=True)
