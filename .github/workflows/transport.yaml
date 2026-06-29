@@ -29,7 +29,7 @@ env:
   # - Ensure there is NO trailing comma on the last line.
   labels: >-
     [
-    "M SSP2"
+    "M SSP2 exo price 2e17"
     ]
 
 # Run the workflow…
