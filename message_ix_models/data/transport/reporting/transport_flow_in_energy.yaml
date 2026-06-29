@@ -1,0 +1,166 @@
+# EFC transport INPUT energy flows: in|Transportation|<Subsector>|<tech>|<commodity> (EJ/yr).
+# Per-technology fuel consumption by transport demand techs at level `final` (mode "all"),
+# all energy carriers: lightoil, hydrogen, gas, electr (GWa -> EJ/yr).
+#
+# Methanol/ethanol transport consumers are NOT here: they live in data/chemicals/
+# (renamed in place by C2, e.g. in|Transportation|Aviation|conm_ar|methanol). This file
+# holds the remaining carriers, which have no commodity-domain home.
+#
+# Tech names use MODEL-correct casing. The customer spec writes the LDV techs in
+# Sentence_case (Elc_100, Hfc_ptrp, Ice_conv, Ice_nga, Ich_chyb, Igh_ghyb, Ice_L_ptrp,
+# Phev_ptrp); the model uses UPPER-prefix (ELC_100, HFC_ptrp, ...) -- emitted corrected,
+# same convention as the C2 chemicals renames. Flag to Yiyi for the spec.
+# DROPPED: the spec's "Iahe_trp|ethanol" -- no such tech in the model; it is a typo for
+# IAHe_ptrp, whose ethanol flow is already reported from data/chemicals/ (do not re-author
+# here, would double-count). Flag to Yiyi.
+#
+# All 28 filter techs verified present in message_ix_models/data/transport/.
+# Source: results/reporting/coverage_20260625.csv (absent demand_s transport leaf rows).
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  # ---- Aviation ----
+  Transportation|Aviation|con_ar|lightoil:
+    filter: {technology: con_ar, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_con_ar_lightoil
+
+  Transportation|Aviation|conh_ar|hydrogen:
+    filter: {technology: conh_ar, commodity: hydrogen, level: final, mode: all}
+    original_unit: GWa
+    short: in_conh_ar_hydrogen
+
+  # ---- Bus ----
+  Transportation|Bus|FC_bus|hydrogen:
+    filter: {technology: FC_bus, commodity: hydrogen, level: final, mode: all}
+    original_unit: GWa
+    short: in_FC_bus_hydrogen
+
+  Transportation|Bus|FCg_bus|gas:
+    filter: {technology: FCg_bus, commodity: gas, level: final, mode: all}
+    original_unit: GWa
+    short: in_FCg_bus_gas
+
+  Transportation|Bus|ICE_H_bus|lightoil:
+    filter: {technology: ICE_H_bus, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICE_H_bus_lightoil
+
+  Transportation|Bus|ICE_M_bus|lightoil:
+    filter: {technology: ICE_M_bus, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICE_M_bus_lightoil
+
+  Transportation|Bus|ICG_bus|gas:
+    filter: {technology: ICG_bus, commodity: gas, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICG_bus_gas
+
+  Transportation|Bus|ICH_bus|lightoil:
+    filter: {technology: ICH_bus, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICH_bus_lightoil
+
+  Transportation|Bus|PHEV_bus|electr:
+    filter: {technology: PHEV_bus, commodity: electr, level: final, mode: all}
+    original_unit: GWa
+    short: in_PHEV_bus_electr
+
+  Transportation|Bus|PHEV_bus|lightoil:
+    filter: {technology: PHEV_bus, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_PHEV_bus_lightoil
+
+  Transportation|Bus|Trolley_bus|electr:
+    filter: {technology: Trolley_bus, commodity: electr, level: final, mode: all}
+    original_unit: GWa
+    short: in_Trolley_bus_electr
+
+  # ---- Light-Duty Vehicle (model casing; spec Sentence_case is a typo) ----
+  Transportation|Light-Duty Vehicle|ELC_100|electr:
+    filter: {technology: ELC_100, commodity: electr, level: final, mode: all}
+    original_unit: GWa
+    short: in_ELC_100_electr
+
+  Transportation|Light-Duty Vehicle|HFC_ptrp|hydrogen:
+    filter: {technology: HFC_ptrp, commodity: hydrogen, level: final, mode: all}
+    original_unit: GWa
+    short: in_HFC_ptrp_hydrogen
+
+  Transportation|Light-Duty Vehicle|ICE_L_ptrp|lightoil:
+    filter: {technology: ICE_L_ptrp, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICE_L_ptrp_lightoil
+
+  Transportation|Light-Duty Vehicle|ICE_conv|lightoil:
+    filter: {technology: ICE_conv, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICE_conv_lightoil
+
+  Transportation|Light-Duty Vehicle|ICE_nga|gas:
+    filter: {technology: ICE_nga, commodity: gas, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICE_nga_gas
+
+  Transportation|Light-Duty Vehicle|ICH_chyb|lightoil:
+    filter: {technology: ICH_chyb, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_ICH_chyb_lightoil
+
+  Transportation|Light-Duty Vehicle|IGH_ghyb|gas:
+    filter: {technology: IGH_ghyb, commodity: gas, level: final, mode: all}
+    original_unit: GWa
+    short: in_IGH_ghyb_gas
+
+  Transportation|Light-Duty Vehicle|PHEV_ptrp|electr:
+    filter: {technology: PHEV_ptrp, commodity: electr, level: final, mode: all}
+    original_unit: GWa
+    short: in_PHEV_ptrp_electr
+
+  Transportation|Light-Duty Vehicle|PHEV_ptrp|lightoil:
+    filter: {technology: PHEV_ptrp, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_PHEV_ptrp_lightoil
+
+  # ---- Truck (freight road) ----
+  Transportation|Truck|FR_FCH|hydrogen:
+    filter: {technology: FR_FCH, commodity: hydrogen, level: final, mode: all}
+    original_unit: GWa
+    short: in_FR_FCH_hydrogen
+
+  Transportation|Truck|FR_ICE_H|lightoil:
+    filter: {technology: FR_ICE_H, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_FR_ICE_H_lightoil
+
+  Transportation|Truck|FR_ICE_L|lightoil:
+    filter: {technology: FR_ICE_L, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_FR_ICE_L_lightoil
+
+  Transportation|Truck|FR_ICE_M|lightoil:
+    filter: {technology: FR_ICE_M, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_FR_ICE_M_lightoil
+
+  Transportation|Truck|FR_ICH|lightoil:
+    filter: {technology: FR_ICH, commodity: lightoil, level: final, mode: all}
+    original_unit: GWa
+    short: in_FR_ICH_lightoil
+
+  Transportation|Truck|f road electr|electr:
+    filter: {technology: "f road electr", commodity: electr, level: final, mode: all}
+    original_unit: GWa
+    short: in_f_road_electr_electr
+
+  Transportation|Truck|f road gas fc|gas:
+    filter: {technology: "f road gas fc", commodity: gas, level: final, mode: all}
+    original_unit: GWa
+    short: in_f_road_gas_fc_gas
+
+  Transportation|Truck|f road gas ic|gas:
+    filter: {technology: "f road gas ic", commodity: gas, level: final, mode: all}
+    original_unit: GWa
+    short: in_f_road_gas_ic_gas
