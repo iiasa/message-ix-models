@@ -41,7 +41,6 @@ def report(scenario:message_ix.Scenario,
     if add_legacy and add_trade:
         col = [str(c) for c in df_legacy.columns]
         df_legacy.columns = col
-        print(df_trade.col)
         df_trade = df_trade[col]
         df = pd.concat([df_legacy, df_trade])
     elif add_legacy:
