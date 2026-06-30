@@ -153,7 +153,7 @@ class ActivityVehicle(ExoDataSource):
         c.add(k[0], "convert_units", base_key, units="Mm/year")
 
         # Broadcast to all scenarios and nodes
-        coords = ["scenario::all", "n::ex world"]
+        coords = ["scenario::all", K.n]
         c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "n"))
 
         # Select values for the current scenario; drop the 'scenario' dimension
@@ -347,7 +347,7 @@ class Lifetime(ExoDataSource):
         c.add(k[0], "interpolate", base_key, "yv::coords", **EXTRAPOLATE)
 
         # Broadcast to all scenarios and nodes
-        coords = ["scenario::all", "n::ex world"]
+        coords = ["scenario::all", K.n]
         c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "nl"))
 
         # Select values for the current scenario; drop the 'scenario' dimension

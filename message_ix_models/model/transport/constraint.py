@@ -64,8 +64,7 @@ def prepare_computer(c: "Computer") -> None:
     # - 'n'ode dimension including all nodes
     # - 'y'ear dimension including all model periods
     c.add(k.b[0], "expand_dims", k.a[2] * "l", dim=dict(n="*", y="*"))
-    coords = ["n::ex world", "y::model"]
-    c.add(k.b[1], "broadcast_wildcard", k.b[0], *coords, dim=tuple("ny"))
+    c.add(k.b[1], "broadcast_wildcard", k.b[0], K.n, K.y, dim=("n", "y"))
 
     # Iterate over each MESSAGE constraint parameter
     for name in PARAM:
