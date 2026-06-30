@@ -260,6 +260,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         ContainsDataForParameters(
             {
                 "bound_new_capacity_lo",
+                "inv_cost",
                 "bound_new_capacity_up",
                 "historical_new_capacity",
                 "capacity_factor",
@@ -270,6 +271,9 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "capacity_factor::P ex LDV+ixmp": (HasCoords({"technology": ["ICE_H_bus"]}),),
     "capacity_factor::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
+    "inv_cost::vehicle+ixmp": (
+        HasCoords({"technology": ["ELE_moto", "f road electr", "f rail electr"]}),
+    ),
     "technical_lifetime::vehicle+ixmp": (
         HasCoords({"technology": ["ICE_H_bus", "f rail electr"]}),
     ),
