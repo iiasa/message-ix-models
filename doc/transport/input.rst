@@ -137,6 +137,7 @@ Quick links to each of the data flows:
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
 :class:`~.data.InputVehicle`
+:class:`~.data.InvestmentCost`
 :class:`~.data.Lifetime`
 :data:`~.data.load_factor_f`
 :data:`~.data.load_factor_p`

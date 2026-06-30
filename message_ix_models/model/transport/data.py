@@ -232,6 +232,46 @@ class IEA_Future_of_Trucks(ExoDataSource):
         return k[5]
 
 
+class InvestmentCost(ExoDataSource):
+    """Input energy intensity of vehicle activity.
+
+    The following transformations are applied:
+
+    1. |t| dimension → broadcast labels like "F ROAD" to full lists of technologies.
+    2. |n| dimension → :func:`broadcast_wildcard2` across all nodes.
+    3. |y| dimension → piecewise linear inter- and extrapolate.
+    """
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    #: Name of the file. :func:`.region_path_fallback` is used to locate a file for a
+    #: specific |n| code list, if any.
+    filename = "inv_cost.csv"
+    key = Key("inv_cost:nl-t-yv:T+exo")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS)
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+
+        # 't'echnology dimension: broadcast labels like "F ROAD" to full lists of techs
+        c.add(k[0], "call", "t::transport map", k)
+
+        # 'n' dimension: broadcast to all nodes
+        c.add(k[1], "broadcast_wildcard2", k[0], K.n, dim=("nl",))
+
+        # 'y' dimension: interpolate
+        c.add(k[2], "interpolate", k[1], "yv::coords", **EXTRAPOLATE)
+
+        return k[2]
+
+
 class InputVehicle(ExoDataSource):
     """Input energy intensity of vehicle activity.
 
