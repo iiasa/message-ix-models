@@ -55,6 +55,13 @@ def prepare_computer(c: "Computer") -> None:
         capacity_factor(c, mode)
         stock(c, mode)
 
+    # Add data for MESSAGE parameter ``inv_cost``
+    ic = "inv_cost"
+    # Convert to MESSAGE data structure
+    collect(
+        f"{ic}::vehicle", "as_message_df", K.exo.inv_cost, name=ic, dims=DIMS, common={}
+    )
+
     # Add data for MESSAGE parameter ``technical_lifetime``
     tl = "technical_lifetime"
     # Convert to MESSAGE data structure
