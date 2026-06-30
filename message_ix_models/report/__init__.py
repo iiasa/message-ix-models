@@ -221,7 +221,7 @@ def log_before(context, rep, key) -> None:
     mark_time()
 
 
-def report(context: Context, *args, **kwargs):
+def report(context: Context, *args, **kwargs) -> None:
     """Report (post-process) solution data in a :class:`.Scenario`.
 
     This function provides a single, common interface to call both the :mod:`genno`
@@ -274,16 +274,20 @@ def report(context: Context, *args, **kwargs):
     # Update `context` using any remaining `kwargs`
     context.update(kwargs)
 
+    # Quiet logging from:
+    # - ixmp.model.base.initialize_items()
     with (
         nullcontext()
         if context.core.verbose
-        else silence_log("genno message_ix_models")
+        else silence_log("genno ixmp.model.base message_ix_models")
     ):
         rep, key = prepare_reporter(context)
 
     log_before(context, rep, key)
 
-    if context.dry_run:
+    if context.core.dry_run:
+        if context.core.verbose:
+            print(rep.describe(key))
         return
 
     with discard_on_error(rep.graph["scenario"]):
@@ -294,8 +298,17 @@ def report(context: Context, *args, **kwargs):
         f"File output(s), if any, written under:\n{rep.graph['config']['output_dir']}"
     )
     msg = ["Result"]
-    if context.core.verbose and isinstance(result, genno.Quantity):
-        msg.append(result.to_string())
+    if context.core.verbose:
+        import pandas as pd
+        import pyam
+
+        match result:
+            case genno.Quantity() | pd.DataFrame():
+                msg.append(result.to_string())
+            case pyam.IamDataFrame():
+                msg.append(result.as_pandas().to_string())
+            case _:
+                msg.append(repr(result))
     else:
         msg.append(str(result))
 
