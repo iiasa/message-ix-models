@@ -86,6 +86,13 @@ IEA_EWEB_FLOW = [
 #: Set "C"
 #:    This set is used in :class:`ActivityVehicle`. It is the same as set "B", except
 #:    "CircEUlar-S" becomes "*".
+#:
+#: Set "D"
+#:    This set is used in :mod:`.transport.material` for :any:`input_cap_new`.
+#:
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2".
+#:    2. "CircEUlar-[AE]" becomes "CircEUlar-N".
+#:    2. All *except* "CircEUlar-[CN]" become "*".
 LABEL_SUBS = dict(
     A=Substitutions(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
@@ -103,6 +110,11 @@ LABEL_SUBS = dict(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
         ("^CircEUlar-E$", "CircEUlar-A"),
         (r"^(?!CircEUlar-[NA]).*$", "*"),
+    ),
+    D=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-[AE]$", "CircEUlar-N"),
+        (r"^(?!CircEUlar-[CN]).*$", "*"),
     ),
 )
 

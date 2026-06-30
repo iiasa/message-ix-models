@@ -1,24 +1,6 @@
-import pytest
-
 from message_ix_models import Context
 from message_ix_models.model.transport import Config
-from message_ix_models.model.transport.material import LABEL_SCENARIO, get_groups
-
-
-@pytest.mark.parametrize(
-    "value, exp",
-    (
-        ("SSP_2024.2", "*"),
-        ("CircEUlar-R", "*"),
-        ("CircEUlar-C", "CircEUlar-C"),
-        ("CircEUlar-N", "CircEUlar-N"),
-        ("CircEUlar-S", "*"),
-        ("CircEUlar-A", "CircEUlar-N"),
-        ("CircEUlar-E", "CircEUlar-N"),
-    ),
-)
-def test_LABEL_SCENARIO(value: str, exp: str) -> None:
-    assert exp == LABEL_SCENARIO(value)
+from message_ix_models.model.transport.material import get_groups
 
 
 def test_get_groups(test_context: Context) -> None:

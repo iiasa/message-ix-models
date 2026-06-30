@@ -95,6 +95,7 @@ coord = Keys(
     scenario_label_A="coords:scenario:label+A",
     scenario_label_B="coords:scenario:label+B",
     scenario_label_C="coords:scenario:label+C",
+    scenario_label_D="coords:scenario:label+D",
     scenario="coords:scenario:T",
     yv_hist="coords:yv:T+historical",
     yv_1plus="coords:yv:y1+",

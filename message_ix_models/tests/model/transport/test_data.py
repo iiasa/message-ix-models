@@ -206,6 +206,20 @@ def test_get_chn_ind_pop():
             {"*", "CircEUlar-A", "CircEUlar-N"},
             {"CircEUlar-S": "*", "CircEUlar-E": "CircEUlar-A", "SSP_2024.2": "*"},
         ),
+        (
+            "D",
+            # Appearing in input_cap_new.csv
+            {"*", "CircEUlar-C", "CircEUlar-N"},
+            {
+                "SSP_2024.2": "*",
+                "CircEUlar-R": "*",
+                "CircEUlar-C": "CircEUlar-C",
+                "CircEUlar-N": "CircEUlar-N",
+                "CircEUlar-S": "*",
+                "CircEUlar-A": "CircEUlar-N",
+                "CircEUlar-E": "CircEUlar-N",
+            },
+        ),
     ),
 )
 def test_label_subs(
