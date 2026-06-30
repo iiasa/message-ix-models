@@ -7,7 +7,8 @@ from genno import Key
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 from message_ix_models.util.genno import Keys
 
-from .data import ActivityVehicle, Lifetime, LoadFactorLDV, iter_files
+from . import data
+from .data import iter_files
 
 __all__ = [
     "agg",
@@ -173,8 +174,8 @@ y_ = Keys(
     to_y0="y::to y0",
 )
 
-#: Keys referring to loaded input data flows (exogenous data loaded from files).
-#: Attributes correspond to the members of :mod:`.transport.data`; see
+#: Keys referring to input data flows (exogenous data loaded from files and possibly
+#: transformed). Attributes correspond to the members of :mod:`.transport.data`; see
 #: :doc:`/transport/input` for a complete list.
 #:
 #: .. code-block:: python
@@ -183,9 +184,10 @@ y_ = Keys(
 #:    >>> exo.act_non_ldv
 #:    <activity:n-t-y:non-ldv+exo>
 exo = Keys(
-    activity_vehicle=ActivityVehicle.key,
-    lifetime=Lifetime.key,
-    load_factor_ldv=LoadFactorLDV.key,
+    activity_vehicle=data.ActivityVehicle.key,
+    inv_cost=data.InvestmentCost.key,
+    lifetime=data.Lifetime.key,
+    load_factor_ldv=data.LoadFactorLDV.key,
 )
 
 for name, df in iter_files():
