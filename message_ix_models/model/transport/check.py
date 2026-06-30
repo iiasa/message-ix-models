@@ -251,6 +251,10 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         ),
         Passenger(),
     ),
+    "2W::P+ixmp": (
+        # No data are generated for R12_GLB
+        HasCoords({"node_loc": ["R12_GLB"]}, inverse=True),
+    ),
     policy.TARGET: (
         HasCoords({"type_emission": ["TCE"]}),
         # No structure in base scenarios to accommodate these values → discard
