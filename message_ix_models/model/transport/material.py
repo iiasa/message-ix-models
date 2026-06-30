@@ -17,10 +17,11 @@ import genno
 from genno import Key, Keys
 from genno.core.key import single_key
 
-from message_ix_models.util import Substitutions, minimum_version
+from message_ix_models.util import minimum_version
 from message_ix_models.util.genno import Collector
 
-from . import key, util
+from . import key as K
+from . import util
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -51,7 +52,7 @@ COMMODITY_INFO = {
     # "plastics": "",  # Missing
     "stainless steel": "steel",
     "al_wrought": "aluminum",
-    "al_extrus": "aluminum",   
+    "al_extrus": "aluminum",
     # "zinc": "",  # Missing
 }
 
@@ -64,16 +65,6 @@ DIMS = dict(
     technology="t",
 )
 
-#: Conversion from :attr:`.transport.Config.label` to ``scenario`` dimension in
-#: :any:`input_cap_new`.
-#:
-#: - For "SSP_2024.[12345]" and "CircEUlar-[RS]" labels, select :py:`scenario="*"`.
-#: - For "CircEUlar-[AEN]", select :py:`scenario="CircEUlar-N"`.
-LABEL_SCENARIO = Substitutions(
-    ("SSP_2024.[12345]", "*"),
-    ("CircEUlar-[RS]", "*"),
-    ("CircEUlar-[AEN]", "CircEUlar-N"),
-)
 
 #: Portion of the ``input_cap_new`` that is available as ``output_cap_ret`` at the end
 #: of lifetime of a technology. Dimensionless.
@@ -134,16 +125,15 @@ def prepare_computer(c: "Computer") -> None:
     c.add("transport_data", __name__, key=TARGET)
 
     k = Keys(
-        exo=(key.exo.input_cap_new - "exo") / "scenario",
+        exo=(K.exo.input_cap_new - "exo") / "scenario",
         # Same key as used in .transport.ldv.stock
         # TODO Move to .key
         sales="sales:n-t-y:LDV",
-        demand=Key("demand", key.demand_base.dims, "MT"),
+        demand=Key("demand", K.demand_base.dims, "MT"),
     )
 
     # From input_cap_new.csv, select only a single scenario, using the Config.label
-    indexers = dict(scenario=LABEL_SCENARIO(config.label))
-    c.add(k.exo[0], "select", key.exo.input_cap_new, indexers=indexers)
+    c.add(k.exo[0], "select", K.exo.input_cap_new, K.coord.scenario_label_D)
 
     # Transform VMI data labels to MESSAGE -MT- labels
     c.add(k.exo[1], "aggregate", k.exo[0], groups=get_groups(config), keep=False)
@@ -171,7 +161,7 @@ def prepare_computer(c: "Computer") -> None:
 
     # Force units for existing model data
     # FIXME Adjust to trust the base model's units
-    c.add(k.demand[2], "apply_units", key.demand_base, units="Mt / year")
+    c.add(k.demand[2], "apply_units", K.demand_base, units="Mt / year")
 
     # Share of this transport total in existing material demand as of y₀
     c.add(k.demand[3], "div", k.demand[1], k.demand[2])
