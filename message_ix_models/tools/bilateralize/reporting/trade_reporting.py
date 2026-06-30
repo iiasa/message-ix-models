@@ -11,6 +11,7 @@ import pyam
 import ixmp
 import os
 
+from genno.core.exceptions import MissingKeyError
 from message_ix.report import Reporter
 from message_ix_models.util import broadcast, package_data_path
 
@@ -64,11 +65,16 @@ def pyam_df_from_rep(
     rep.set_filters(**filters_dict)
     
     if reporter_var == 'out':
-        df_hist = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-yv-m-c-l:historical+current"))
+        try:
+            df_hist = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-yv-m-c-l:historical+current"))
+        except MissingKeyError:
+            df_hist = pd.DataFrame()
         df_model = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-m-c-l"))
 
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
+            if dfv.empty:
+                continue
             df = dfv.join(mapping_df[['iamc_name', 'unit']])
             df = (df.dropna()
                   .groupby(["nl", "nd", "ya", "t", "iamc_name"])
