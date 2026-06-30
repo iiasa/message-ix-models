@@ -89,10 +89,15 @@ vars:
     original_unit: GWa
     short: in_HFC_ptrp_hydrogen
 
-  Transportation|Light-Duty Vehicle|ICE_L_ptrp|lightoil:
-    filter: {technology: ICE_L_ptrp, commodity: lightoil, level: final, mode: all}
-    original_unit: GWa
-    short: in_ICE_L_ptrp_lightoil
+  # DROPPED (verified BMT baseline v9, on-site 2026-06-30): ICE_L_ptrp is the
+  # historical-only pre-2005 LDV fleet tech -- it has NO input parameter (zero rows),
+  # ACT is identically zero, and it is absent from historical_activity, so this lightoil
+  # flow does not exist in the model. Kept commented (spec mapping_clean lists it) pending
+  # Yiyi sign-off on the spec deviation. See docs/reporting_open_questions_yiyi.md B5.
+  # Transportation|Light-Duty Vehicle|ICE_L_ptrp|lightoil:
+  #   filter: {technology: ICE_L_ptrp, commodity: lightoil, level: final, mode: all}
+  #   original_unit: GWa
+  #   short: in_ICE_L_ptrp_lightoil
 
   Transportation|Light-Duty Vehicle|ICE_conv|lightoil:
     filter: {technology: ICE_conv, commodity: lightoil, level: final, mode: all}
