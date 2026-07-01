@@ -101,3 +101,24 @@ vars:
              shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
     original_unit: GWa
     short: in_eth_bunker_ethanol
+
+  # ---- Bio-ethanol PRODUCTION feedstock inputs (biomass@primary, electr@secondary; GWa) ----
+  # Spec type feedstock_ethanol, sector-less. eth_bio's electr input coeff is 0 (not authored).
+  # FLAG-TO-YIYI: the spec writes eth_bio_ccs targets with a spurious extra segment --
+  # "in|eth_bio_ccs|biomass|biomass" / "in|eth_bio_ccs|biomass|electr". We emit the clean
+  # in|eth_bio_ccs|biomass and in|eth_bio_ccs|electr (matching in|eth_bio|biomass); please fix
+  # the spec keys.
+  eth_bio|biomass:
+    filter: {technology: eth_bio, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_eth_bio_biomass
+
+  eth_bio_ccs|biomass:
+    filter: {technology: eth_bio_ccs, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_eth_bio_ccs_biomass
+
+  eth_bio_ccs|electr:
+    filter: {technology: eth_bio_ccs, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_eth_bio_ccs_electr

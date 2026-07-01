@@ -1,0 +1,44 @@
+# EFC steam-cracker petrochemical feedstock INPUT material flows:
+#   in|steam_cracker_petro|<feedstock> (Mt/yr).
+#
+# Unit determined by tracing PRODUCTION, not usage (IAMC reports supply): steam_cracker_petro's
+# own output (ethylene/propylene/BTX @ final_material) and its feedstocks' producers
+# (refinery -> naphtha/atm_gasoil/vacuum_gasoil; gas_processing_petro -> ethane/propane) are ALL
+# carried in mass ('t' in the model). So the cracker is mass-basis and its feedstock inputs are
+# mass -> Mt/yr (identity, no conversion). One mode per feedstock. The level split reflects
+# supply origin: oil cuts @final (from the oil refinery), gas alkanes @secondary_material
+# (from gas_processing_petro). Spec type others_olefins (sector-less keys).
+#
+# The cracker's electr + ht_heat inputs are ENERGY -> reported in ht_heat_flow_in_energy.yaml.
+# NB: the legacy reporter's Non-Energy-Use feedstock family (materials_dac_bmt_tables
+# legacy_fe_ne_reporting) expressed these in energy content, but it is COMMENTED OUT at every
+# call site, so there is no active energy convention to inherit; the native flow is mass.
+var: in
+iamc_prefix: "in|"
+unit: Mt/yr
+
+vars:
+  steam_cracker_petro|naphtha:
+    filter: {technology: steam_cracker_petro, commodity: naphtha, level: final, mode: naphtha}
+    original_unit: Mt/yr
+    short: in_steam_cracker_petro_naphtha
+
+  steam_cracker_petro|atm_gasoil:
+    filter: {technology: steam_cracker_petro, commodity: atm_gasoil, level: final, mode: atm_gasoil}
+    original_unit: Mt/yr
+    short: in_steam_cracker_petro_atm_gasoil
+
+  steam_cracker_petro|vacuum_gasoil:
+    filter: {technology: steam_cracker_petro, commodity: vacuum_gasoil, level: final, mode: vacuum_gasoil}
+    original_unit: Mt/yr
+    short: in_steam_cracker_petro_vacuum_gasoil
+
+  steam_cracker_petro|ethane:
+    filter: {technology: steam_cracker_petro, commodity: ethane, level: secondary_material, mode: ethane}
+    original_unit: Mt/yr
+    short: in_steam_cracker_petro_ethane
+
+  steam_cracker_petro|propane:
+    filter: {technology: steam_cracker_petro, commodity: propane, level: secondary_material, mode: propane}
+    original_unit: Mt/yr
+    short: in_steam_cracker_petro_propane

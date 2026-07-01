@@ -84,14 +84,15 @@ vars:
     original_unit: GWa
     short: in_meth_bunker_methanol
 
-  # meth_h2 captive-H2 input (filter commodity = hydrogen): not in the customer spec under this
-  # name; kept as an extra. (The spec's in|Industry|Chemicals|meth_h2|hydrogen is handled with
-  # the other absent industry H2 flows.)
-  Chemicals|meth_h2|methanol:
+  # meth_h2 merchant-H2 input -> methanol synthesis. This IS the spec target
+  # in|Industry|Chemicals|meth_h2|hydrogen (demand_s|chemicals + demand_c|hydrogen). The
+  # filter draws hydrogen@secondary across the 6 feedstock/fuel x CO2-source modes; keyed
+  # (and labelled) as hydrogen -- the earlier "|methanol" key was a mislabel of this H2 input.
+  Industry|Chemicals|meth_h2|hydrogen:
     filter:
       technology: meth_h2
       commodity: hydrogen
       level: secondary
       mode: [feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic]
     original_unit: GWa
-    short: in_meth_h2_methanol
+    short: in_meth_h2_hydrogen

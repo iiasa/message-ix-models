@@ -104,3 +104,12 @@ vars:
     filter: {technology: dri_h2_steel, commodity: hydrogen, level: final, mode: M1}
     original_unit: GWa
     short: in_dri_h2_steel_hydrogen
+
+  # ---- Industry|Chemicals: hydrogen liquefaction feedstock (spec's classification) ----
+  # h2_liq (H2 -> LH2) draws hydrogen@secondary (GWa). It is H2 logistics infrastructure, but
+  # the customer spec files it under Industry|Chemicals (demand_s|chemicals + demand_c|hydrogen);
+  # emitted under that name.
+  Industry|Chemicals|h2_liq|hydrogen:
+    filter: {technology: h2_liq, commodity: hydrogen, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_h2_liq_hydrogen
