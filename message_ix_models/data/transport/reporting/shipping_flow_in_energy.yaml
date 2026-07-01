@@ -1,0 +1,63 @@
+# EFC Shipping (international marine bunker) INPUT energy flows:
+#   in|Shipping|<tech>|<fuel>  (EJ/yr).
+#
+# Fossil marine bunker fuels consumed by the base bunker techs at level `final`
+# across the 19 MariTEAM ship-type modes (GWa -> EJ/yr). These carriers have no
+# commodity-domain reporting home (fueloil/LNG are not chemicals), so they live
+# here in the transport domain, which is already wired into the workflow and
+# auto-discovers every *.yaml. The chemical marine fuels are reported from
+# data/chemicals/ (meth_bunker, eth_bunker keyed Shipping|...; NH3_bunker as a
+# Chemicals| extra) and LH2 from data/hydrogen/ (legacy Use| name).
+#
+# Filters verified against the BMT baseline (v9, ixmp-dev), input parameter:
+#   foil_bunker: fueloil@final, 19 shp_* modes, coeff 1.0.
+#   LNG_bunker:  LNG@final,     19 shp_* modes, coeff 1.0.
+# These are the BASE (non-capture) bunker techs. Their onboard-carbon-capture
+# (OCC) addons -- foil_occ_bunker / LNG_occ_bunker -- burn the same fuel with a
+# ~20% penalty and are NOT reported here (out of the customer spec, small, and
+# only deploy from 2090 under the IMO bound). See docs/shipping_bunker_findings.md.
+#
+# NOT AUTHORED (spec lists them, the model does not support them -- flagged to Yiyi):
+#  * in|Shipping|loil_bunker|lightoil -- loil is NOT a shipping fuel in this model.
+#    Its fuel pathway is commented out of update_shipping.add_fuel_pathways
+#    (`for fuel in [...]:  # "loil"`), so loil_bunker has NO input and NO output;
+#    it is a hollow addon-PARENT (parent of the loil_occ_bunker OCC addon). Its
+#    nonzero ACT (e.g. 214 GWa @2060, all in shp_solid mode) is a DEGENERATE
+#    alternate-optimum artifact -- zero objective contribution, emissions unpriced
+#    in the baseline -- not lightoil consumption, and it serves no shipping
+#    (meth_bunker et al. supply shp_solid). Authoring it would emit a mislabeled
+#    zero/phantom. It also injects phantom shipping CO2 into CO2s_TCE (14-42% of
+#    reported shipping CO2). Root-cause + fix tracked on board #348.
+#  * in|Power|coal_adv_cfNH3|ammonia -- coal_adv_cfNH3 is absent from the model
+#    technology set entirely (only coal_NH3 / coal_NH3_ccs exist, which are ammonia
+#    PRODUCTION, not power co-firing). Phantom spec target; nothing to author.
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+vars:
+  Shipping|foil_bunker|fueloil:
+    filter:
+      technology: foil_bunker
+      commodity: fueloil
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_foil_bunker_fueloil
+
+  Shipping|LNG_bunker|LNG:
+    filter:
+      technology: LNG_bunker
+      commodity: LNG
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_LNG_bunker_LNG
