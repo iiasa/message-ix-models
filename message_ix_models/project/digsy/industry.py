@@ -4,7 +4,11 @@ import pint_pandas  # noqa: F401
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.material.util import read_yaml_file
-from message_ix_models.project.digsy.utils import DIGSY_SCENS
+from message_ix_models.project.digsy.utils import (
+    DIGSY_SCENS,
+    DIGSY_SCENS_v2,
+    rename_trp_scenarios,
+)
 from message_ix_models.util import (
     package_data_path,
     private_data_path,
@@ -31,13 +35,15 @@ def read_industry_file(config: dict) -> pd.DataFrame:
         "projects", "digsy", "industry", config["industry_input"]["file_name"]
     )
     df = read_file(path, sheet_name=config["industry_input"]["sheet_name"])
-    df.columns = [i.replace("TRModified_agg_", "") for i in df.columns]
+    df.columns = [str(i).replace("TRModified_agg_", "") for i in df.columns]
     df.columns = [i if not i.isdigit() else int(i) for i in df.columns]
+    if "Spatial Variant" in df.columns:
+        df.scenario = df.scenario.str.replace(" ", "-") + "-" + df["Spatial Variant"]
+        df.drop(columns=["Spatial Variant"], inplace=True)
     return df
 
 
-def get_industry_modifiers(scenario: DIGSY_SCENS) -> pd.DataFrame:
-    config = read_config()
+def get_industry_modifiers(scenario: DIGSY_SCENS, config: dict) -> pd.DataFrame:
     df = read_industry_file(config)
     df["subsector"] = df["subsector"] + (
         df["Electric or thermal"].fillna("").astype(str)
@@ -45,6 +51,11 @@ def get_industry_modifiers(scenario: DIGSY_SCENS) -> pd.DataFrame:
     df = df.drop(columns=["Electric or thermal"])
     mapping = pd.DataFrame(config["subsector_message_map"]).T
     df["subsector"] = df["subsector"].str.strip()
+    mask = df["subsector"] == "whole plant"
+    df.loc[mask, "subsector"] = (
+        df.loc[mask, "subsector"] + "_" + df.loc[mask, "sector"].str[0]
+    )
+
     df = df.set_index("subsector").join(mapping).reset_index()
     df = df[df["scenario"] == scenario]
     df = df[df["par"].notna()]
@@ -94,10 +105,20 @@ def apply_industry_modifiers(mods: pd.DataFrame, pars: dict) -> dict:
     return pars
 
 
-def read_rc_materials(
-    digsy_scenario: DIGSY_SCENS,
-):
-    f_suffix = f"_{digsy_scenario}" if digsy_scenario != "baseline" else ""
+def read_rc_materials(digsy_scenario: DIGSY_SCENS):
+    def format_to_sturm_name(name):
+        name_split = name.split("-")
+        if len(name_split) == 1:
+            return name
+        else:
+            return f"{name_split[-1]}_{name_split[0]} {name_split[1]}"
+
+    f_suffix = (
+        f"_{format_to_sturm_name(digsy_scenario)}"
+        if digsy_scenario not in ["baseline", "Reference"]
+        else ""
+    )
+
     path = private_data_path(
         "projects", "digsy", "buildings", f"rc_material_demand_SSP2{f_suffix}.csv"
     )
@@ -116,14 +137,16 @@ def read_rc_materials(
     return df_agg
 
 
-def read_trp_materials(digsy_scenario) -> pd.DataFrame:
+def read_trp_materials(digsy_scenario, config) -> pd.DataFrame:
     if digsy_scenario == "baseline":
         digsy_scenario = "BASE"
     path = private_data_path(
-        "projects", "digsy", "transport", "MixT material handover #1585.csv"
+        "projects", "digsy", "transport", config["trp_materials_file"]
     )
     df = pd.read_csv(path)
     df.value /= 1000
+    if digsy_scenario in DIGSY_SCENS_v2:
+        df = rename_trp_scenarios(df)
     df = df[df["digsy_scenario"] == digsy_scenario]
     df["commodity"] = df["commodity"].str.split("_").str[-1]
     df = df.set_index(["node", "year"])[["value", "commodity"]]

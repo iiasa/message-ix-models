@@ -95,7 +95,16 @@ def expand_reserve(scenario: "Scenario"):
 def adjust_rooftop_constraint(
     digsy_scen: str, s_info: "ScenarioInfo"
 ) -> "ParameterData":
-    val_map = {"BEST": 0.4, "BESTEST": 0.45}
+    val_map = {
+        "BEST": 0.4,
+        "Enable-Cautious-R12Base": 0.4,
+        "Enable-Moderate-R12Base": 0.4,
+        "Enable-Cautious-R12Converge": 0.4,
+        "Enable-Moderate-R12Converge": 0.4,
+        "BESTEST": 0.45,
+        "Enable-Extreme-R12Base": 0.45,
+        "Enable-Extreme-R12Converge": 0.45,
+    }
     if not val_map.get(digsy_scen, None):
         return {}
     df = (
@@ -113,7 +122,16 @@ def adjust_rooftop_constraint(
 
 
 def adjust_electrification_constraint(scenario: "Scenario") -> "ParameterData":
-    val_map = {"BEST": 0.01, "BESTEST": 0.01}
+    val_map = {
+        "BEST": 0.01,
+        "BESTEST": 0.01,
+        "Enable-Cautious-R12Base": 0.01,
+        "Enable-Moderate-R12Base": 0.01,
+        "Enable-Cautious-R12Converge": 0.01,
+        "Enable-Moderate-R12Converge": 0.01,
+        "Enable-Extreme-R12Base": 0.01,
+        "Enable-Extreme-R12Converge": 0.01,
+    }
     if not val_map.get(scenario.scenario.split("_")[-1], None):
         return {}
     df = scenario.par(

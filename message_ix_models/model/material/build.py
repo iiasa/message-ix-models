@@ -97,6 +97,7 @@ def add_digsy_data(
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
         get_industry_modifiers,
+        read_config,
         read_rc_materials,
         read_trp_materials,
     )
@@ -107,13 +108,14 @@ def add_digsy_data(
         gen_data_petro_chemicals: "Petrochemicals",
         gen_data_aluminum: "Aluminium",
     }
+    config = read_config()
     mods = extrapolate_modifiers_past_2050(
-        get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
+        get_industry_modifiers(digsy_scenario, config), ScenarioInfo(scenario)
     )
     rc_mat_demands_digsy = read_rc_materials(digsy_scenario)
-    rc_mat_demands_base = read_rc_materials("baseline")
-    trp_mat_demands_digsy = read_trp_materials(digsy_scenario)
-    trp_mat_demands_base = read_trp_materials("baseline")
+    rc_mat_demands_base = read_rc_materials("Reference")
+    trp_mat_demands_digsy = read_trp_materials(digsy_scenario, config)
+    trp_mat_demands_base = read_trp_materials("Reference", config)
     for func in DATA_FUNCTIONS:
         # Generate or load the data and add to the Scenario
         log.info(f"from {func.__name__}()")
@@ -141,6 +143,7 @@ def get_resid_demands(
         apply_industry_modifiers,
         extrapolate_modifiers_past_2050,
         get_industry_modifiers,
+        read_config,
     )
 
     resid_demands = {
@@ -148,9 +151,10 @@ def get_resid_demands(
             gen_other_ind_demands(get_ssp_from_context(context)).values()
         )
     }
-    if digsy_scenario != "baseline":
+    if digsy_scenario not in ["baseline", "Reference"]:
+        config = read_config()
         mods = extrapolate_modifiers_past_2050(
-            get_industry_modifiers(digsy_scenario), ScenarioInfo(scenario)
+            get_industry_modifiers(digsy_scenario, config), ScenarioInfo(scenario)
         )
         resid_demands = apply_industry_modifiers(mods, resid_demands)
     merge_data(resid_demands)
