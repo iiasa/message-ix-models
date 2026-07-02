@@ -5,7 +5,7 @@ import pandas as pd
 from message_ix.util import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import broadcast
+from message_ix_models.util import broadcast, nodes_ex_world
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -105,6 +105,10 @@ def adjust_rooftop_constraint(
         "Enable-Extreme-R12Base": 0.45,
         "Enable-Extreme-R12Converge": 0.45,
     }
+    print(
+        f"Adjusting rooftop constraint for scenario {digsy_scen} with value"
+        f"{val_map.get(digsy_scen, None)}"
+    )
     if not val_map.get(digsy_scen, None):
         return {}
     df = (
@@ -116,12 +120,14 @@ def adjust_rooftop_constraint(
             value=val_map.get(digsy_scen),
         )
         .pipe(broadcast, year_act=[i for i in s_info.Y if i > 2025])
-        .pipe(broadcast, node_share=[i for i in s_info.Y if i > 2025])
+        .pipe(broadcast, node_share=nodes_ex_world(s_info.N))
     )
     return {"share_commodity_up": df}
 
 
-def adjust_electrification_constraint(scenario: "Scenario") -> "ParameterData":
+def adjust_electrification_constraint(
+    scenario: "Scenario", digsy_scen: str
+) -> "ParameterData":
     val_map = {
         "BEST": 0.01,
         "BESTEST": 0.01,
@@ -132,13 +138,15 @@ def adjust_electrification_constraint(scenario: "Scenario") -> "ParameterData":
         "Enable-Extreme-R12Base": 0.01,
         "Enable-Extreme-R12Converge": 0.01,
     }
-    if not val_map.get(scenario.scenario.split("_")[-1], None):
-        return {}
+    print(
+        f"Adjusting electrification constraint for scenario {digsy_scen} with value "
+        f"{val_map.get(digsy_scen, None)}"
+    )
     df = scenario.par(
         "growth_activity_up",
         filters={"technology": ["elec_trp", "hp_el_rc", "elec_rc"]},
     )
-    df.value += val_map.get(scenario.scenario.split("_")[-1])
+    df.value += val_map.get(digsy_scen, 0)
     return {"growth_activity_up": df}
 
 
