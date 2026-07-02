@@ -10,7 +10,7 @@ industry_input:
   #  sheet_name: in
   #  file_name: DIGSY-MESSAGE_Industry_v6_Extracted 4 Scenarios.csv
   sheet_name: "8 FINAL modifiers"
-  file_name: Industry_modifiers_output_R12Base_v5.xlsx
+  file_name: Industry_modifiers_output_v5.xlsx
 
 # mapping of DIGSY modifier names to MESSAGEix parameters
 subsector_message_map:
