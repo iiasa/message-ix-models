@@ -1,0 +1,62 @@
+# CAP_NEW|<tech> — new capacity of the ammonia production technologies
+# (mapping_clean cap_new rows). The ammonia producers are MASS-basis: their
+# ACT/output is NH3@secondary_material in Mt/yr (C2-traced convention,
+# ammonia_flow_out_material.yaml), so capacity is Mt/yr — NOT the GW/yr the
+# spec lists (physics-driven deviation, tracked in the reconciliation CSV).
+# The spec's h2_NH3 does not exist in the model (no merchant-H2->NH3 route)
+# and is deliberately not listed — a listed-but-absent tech would emit
+# zero-fill noise. Basis evidence: scripts/verify/check_c3_capacity_basis.py.
+
+var:
+  CAP_NEW
+
+iamc_prefix:
+  "CAP_NEW|"
+
+unit: Mt/yr
+
+vars:
+  gas_NH3:
+    filter: {technology: gas_NH3}
+    original_unit: Mt/yr
+    short: cap_new_gas_NH3
+
+  gas_NH3_ccs:
+    filter: {technology: gas_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_new_gas_NH3_ccs
+
+  coal_NH3:
+    filter: {technology: coal_NH3}
+    original_unit: Mt/yr
+    short: cap_new_coal_NH3
+
+  coal_NH3_ccs:
+    filter: {technology: coal_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_new_coal_NH3_ccs
+
+  fueloil_NH3:
+    filter: {technology: fueloil_NH3}
+    original_unit: Mt/yr
+    short: cap_new_fueloil_NH3
+
+  fueloil_NH3_ccs:
+    filter: {technology: fueloil_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_new_fueloil_NH3_ccs
+
+  biomass_NH3:
+    filter: {technology: biomass_NH3}
+    original_unit: Mt/yr
+    short: cap_new_biomass_NH3
+
+  biomass_NH3_ccs:
+    filter: {technology: biomass_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_new_biomass_NH3_ccs
+
+  electr_NH3:
+    filter: {technology: electr_NH3}
+    original_unit: Mt/yr
+    short: cap_new_electr_NH3

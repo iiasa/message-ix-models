@@ -5,3 +5,8 @@
 # energy<->mass bridge already happened inside the model at the *_t_d conversion tech).
 conversions:
   GWa_to_EJ/yr: 0.03154
+
+  # Investment: genno inv = inv_cost x CAP_NEW is numerically million USD/yr on
+  # BOTH bases (USD/kW x GW/yr and USD/(t/yr) x Mt/yr), in the model's USD_2005;
+  # x1.10774 (US$2005->US$2010, legacy currency_unit_out_conv) / 1000
+  million USD_2005/yr_to_billion USD_2010/yr: 0.00110774

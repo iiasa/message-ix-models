@@ -1,0 +1,49 @@
+# CAP_NEW|<tech> — new capacity of the methanol production technologies
+# (mapping_clean cap_new rows). The methanol producers are ENERGY-basis (their
+# ACT/output is GWa; the GWa->Mt bridge sits at meth_t_d, not the producers),
+# so capacity is GW/yr — same basis as hydrogen, unlike the ammonia set.
+# Basis evidence: EFC_2026 scripts/verify/check_c3_capacity_basis.py.
+
+var:
+  CAP_NEW
+
+iamc_prefix:
+  "CAP_NEW|"
+
+unit: GW/yr
+
+vars:
+  meth_ng:
+    filter: {technology: meth_ng}
+    original_unit: GW/yr
+    short: cap_new_meth_ng
+
+  meth_ng_ccs:
+    filter: {technology: meth_ng_ccs}
+    original_unit: GW/yr
+    short: cap_new_meth_ng_ccs
+
+  meth_coal:
+    filter: {technology: meth_coal}
+    original_unit: GW/yr
+    short: cap_new_meth_coal
+
+  meth_coal_ccs:
+    filter: {technology: meth_coal_ccs}
+    original_unit: GW/yr
+    short: cap_new_meth_coal_ccs
+
+  meth_bio:
+    filter: {technology: meth_bio}
+    original_unit: GW/yr
+    short: cap_new_meth_bio
+
+  meth_bio_ccs:
+    filter: {technology: meth_bio_ccs}
+    original_unit: GW/yr
+    short: cap_new_meth_bio_ccs
+
+  meth_h2:
+    filter: {technology: meth_h2}
+    original_unit: GW/yr
+    short: cap_new_meth_h2

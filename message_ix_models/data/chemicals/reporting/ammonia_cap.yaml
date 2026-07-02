@@ -1,0 +1,59 @@
+# CAP|<tech> — cumulative net installed capacity of the ammonia production
+# technologies. NOT in mapping_clean; built alongside CAP_NEW per user decision
+# 2026-07-01, final keep-or-drop pending confirmation with Yiyi. Mass-basis
+# (see ammonia_cap_new.yaml): natively Mt/yr. h2_NH3 deliberately not listed
+# (absent from the model).
+
+var:
+  CAP
+
+iamc_prefix:
+  "CAP|"
+
+unit: Mt/yr
+
+vars:
+  gas_NH3:
+    filter: {technology: gas_NH3}
+    original_unit: Mt/yr
+    short: cap_gas_NH3
+
+  gas_NH3_ccs:
+    filter: {technology: gas_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_gas_NH3_ccs
+
+  coal_NH3:
+    filter: {technology: coal_NH3}
+    original_unit: Mt/yr
+    short: cap_coal_NH3
+
+  coal_NH3_ccs:
+    filter: {technology: coal_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_coal_NH3_ccs
+
+  fueloil_NH3:
+    filter: {technology: fueloil_NH3}
+    original_unit: Mt/yr
+    short: cap_fueloil_NH3
+
+  fueloil_NH3_ccs:
+    filter: {technology: fueloil_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_fueloil_NH3_ccs
+
+  biomass_NH3:
+    filter: {technology: biomass_NH3}
+    original_unit: Mt/yr
+    short: cap_biomass_NH3
+
+  biomass_NH3_ccs:
+    filter: {technology: biomass_NH3_ccs}
+    original_unit: Mt/yr
+    short: cap_biomass_NH3_ccs
+
+  electr_NH3:
+    filter: {technology: electr_NH3}
+    original_unit: Mt/yr
+    short: cap_electr_NH3

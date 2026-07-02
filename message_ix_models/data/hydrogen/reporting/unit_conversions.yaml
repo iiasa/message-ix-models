@@ -16,6 +16,11 @@ conversions:
   # Mass conversion for hydrogen
   # Mt H2/yr (megatonnes hydrogen per year) to kt H2/yr (kilotonnes hydrogen per year)
   Mt H2/yr_to_kt H2/yr: 1000
+
+  # Investment: genno inv = inv_cost x CAP_NEW is numerically million USD/yr,
+  # in the model's USD_2005; x1.10774 (US$2005->US$2010, legacy reporter
+  # currency_unit_out_conv) / 1000 (million->billion)
+  million USD_2005/yr_to_billion USD_2010/yr: 0.00110774
   
   # Add more conversions as needed
   # Example format:
