@@ -95,6 +95,28 @@ CO2 mitigation options in the energy system include technology and fuel shifts; 
      - steam methane reforming with CCS
      - 90%
 
+CO2 Removal Technologies
+~~~~~~~~~~~~~~~~~~~~~~~~
+In MESSAGE, a range of technology-based CO2 removal approaches are represented. This representation includes bioenergy with carbon capture sequestration (BECCS), 
+direct air carbon capture and sequestration (DACCS), biochar for non-land-use applications, biomass burial, enhanced rock weathering (ERW), and ocean alkalinity enhancement (OAE).
+
+Bioenergy with CCS (BECCS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Direct Air Capture (DACCS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Biochar for non-land-use applications
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Biomass Burial
+^^^^^^^^^^^^^^
+
+Enhanced Rock Weathering (ERW)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Ocean Alkalinity Enhancement (OAE)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 Non-CO2 GHGs
