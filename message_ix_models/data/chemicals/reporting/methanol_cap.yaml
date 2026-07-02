@@ -1,0 +1,48 @@
+# CAP|<tech> — cumulative net installed capacity of the methanol production
+# technologies. NOT in mapping_clean; built alongside CAP_NEW per user decision
+# 2026-07-01, final keep-or-drop pending confirmation with Yiyi. Energy-basis
+# (see methanol_cap_new.yaml): natively GW.
+
+var:
+  CAP
+
+iamc_prefix:
+  "CAP|"
+
+unit: GW
+
+vars:
+  meth_ng:
+    filter: {technology: meth_ng}
+    original_unit: GW
+    short: cap_meth_ng
+
+  meth_ng_ccs:
+    filter: {technology: meth_ng_ccs}
+    original_unit: GW
+    short: cap_meth_ng_ccs
+
+  meth_coal:
+    filter: {technology: meth_coal}
+    original_unit: GW
+    short: cap_meth_coal
+
+  meth_coal_ccs:
+    filter: {technology: meth_coal_ccs}
+    original_unit: GW
+    short: cap_meth_coal_ccs
+
+  meth_bio:
+    filter: {technology: meth_bio}
+    original_unit: GW
+    short: cap_meth_bio
+
+  meth_bio_ccs:
+    filter: {technology: meth_bio_ccs}
+    original_unit: GW
+    short: cap_meth_bio_ccs
+
+  meth_h2:
+    filter: {technology: meth_h2}
+    original_unit: GW
+    short: cap_meth_h2

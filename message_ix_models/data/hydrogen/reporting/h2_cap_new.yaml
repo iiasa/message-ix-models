@@ -1,0 +1,67 @@
+# CAP_NEW|<tech> — new capacity of the hydrogen production technologies
+# (data/20260514variables_mapping.xlsx, sheet mapping_clean, cap_new rows).
+# Energy-output techs: genno CAP_NEW is natively GW/yr, no conversion.
+# The spec names h2_alkaline / h2_SOEC / h2_pem do not exist in the model; the
+# electrolysis set is h2_elec_alk / h2_elec_pem / h2_elec_soe (model wins on
+# tech identity; spec deviations tracked in the reconciliation CSV).
+# Basis evidence: EFC_2026 scripts/verify/check_c3_capacity_basis.py and
+# docs/reporting_c3_capacity_cost.md.
+
+var:
+  CAP_NEW
+
+iamc_prefix:
+  "CAP_NEW|"
+
+unit: GW/yr
+
+vars:
+  h2_smr:
+    filter: {technology: h2_smr}
+    original_unit: GW/yr
+    short: cap_new_h2_smr
+
+  h2_smr_ccs:
+    filter: {technology: h2_smr_ccs}
+    original_unit: GW/yr
+    short: cap_new_h2_smr_ccs
+
+  h2_coal:
+    filter: {technology: h2_coal}
+    original_unit: GW/yr
+    short: cap_new_h2_coal
+
+  h2_coal_ccs:
+    filter: {technology: h2_coal_ccs}
+    original_unit: GW/yr
+    short: cap_new_h2_coal_ccs
+
+  h2_bio:
+    filter: {technology: h2_bio}
+    original_unit: GW/yr
+    short: cap_new_h2_bio
+
+  h2_bio_ccs:
+    filter: {technology: h2_bio_ccs}
+    original_unit: GW/yr
+    short: cap_new_h2_bio_ccs
+
+  h2_elec_alk:
+    filter: {technology: h2_elec_alk}
+    original_unit: GW/yr
+    short: cap_new_h2_elec_alk
+
+  h2_elec_pem:
+    filter: {technology: h2_elec_pem}
+    original_unit: GW/yr
+    short: cap_new_h2_elec_pem
+
+  h2_elec_soe:
+    filter: {technology: h2_elec_soe}
+    original_unit: GW/yr
+    short: cap_new_h2_elec_soe
+
+  h2_pyro_elec:
+    filter: {technology: h2_pyro_elec}
+    original_unit: GW/yr
+    short: cap_new_h2_pyro_elec

@@ -1,0 +1,96 @@
+# Investment|<tech> — annual investment into the methanol + ammonia production
+# technologies (mapping_clean investment rows). genno inv = inv_cost x CAP_NEW
+# lands numerically in million USD/yr on BOTH bases (USD/kW x GW/yr for the
+# energy-basis methanol set, USD/(t/yr) x Mt/yr for the mass-basis ammonia set),
+# and model costs are USD_2005, so one x1.10774/1000 factor covers all techs
+# (legacy convention: materials_dac_units.yaml currency_unit_out_conv=1.10774).
+# h2_NH3 deliberately not listed (absent from the model).
+
+var:
+  inv
+
+iamc_prefix:
+  "Investment|"
+
+unit: billion USD_2010/yr
+
+vars:
+  meth_ng:
+    filter: {technology: meth_ng}
+    original_unit: million USD_2005/yr
+    short: inv_meth_ng
+
+  meth_ng_ccs:
+    filter: {technology: meth_ng_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_meth_ng_ccs
+
+  meth_coal:
+    filter: {technology: meth_coal}
+    original_unit: million USD_2005/yr
+    short: inv_meth_coal
+
+  meth_coal_ccs:
+    filter: {technology: meth_coal_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_meth_coal_ccs
+
+  meth_bio:
+    filter: {technology: meth_bio}
+    original_unit: million USD_2005/yr
+    short: inv_meth_bio
+
+  meth_bio_ccs:
+    filter: {technology: meth_bio_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_meth_bio_ccs
+
+  meth_h2:
+    filter: {technology: meth_h2}
+    original_unit: million USD_2005/yr
+    short: inv_meth_h2
+
+  gas_NH3:
+    filter: {technology: gas_NH3}
+    original_unit: million USD_2005/yr
+    short: inv_gas_NH3
+
+  gas_NH3_ccs:
+    filter: {technology: gas_NH3_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_gas_NH3_ccs
+
+  coal_NH3:
+    filter: {technology: coal_NH3}
+    original_unit: million USD_2005/yr
+    short: inv_coal_NH3
+
+  coal_NH3_ccs:
+    filter: {technology: coal_NH3_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_coal_NH3_ccs
+
+  fueloil_NH3:
+    filter: {technology: fueloil_NH3}
+    original_unit: million USD_2005/yr
+    short: inv_fueloil_NH3
+
+  fueloil_NH3_ccs:
+    filter: {technology: fueloil_NH3_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_fueloil_NH3_ccs
+
+  biomass_NH3:
+    filter: {technology: biomass_NH3}
+    original_unit: million USD_2005/yr
+    short: inv_biomass_NH3
+
+  biomass_NH3_ccs:
+    filter: {technology: biomass_NH3_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_biomass_NH3_ccs
+
+  electr_NH3:
+    filter: {technology: electr_NH3}
+    original_unit: million USD_2005/yr
+    short: inv_electr_NH3

@@ -16,10 +16,21 @@ class Config:
     iamc_prefix: str
 
     #: Units of measure for the reported data.
-    unit: Literal["Mt/yr", "GWa", "Mt CH4/yr", "GW", "Mt H2/yr", "EJ/yr"]
+    unit: Literal[
+        "Mt/yr",
+        "GWa",
+        "Mt CH4/yr",
+        "GW",
+        "GW/yr",
+        "Mt H2/yr",
+        "EJ/yr",
+        "billion USD_2010/yr",
+    ]
 
     #: :mod:`message_ix.report` key from which to retrieve the data.
-    var: Literal["out", "in", "ACT", "emi", "CAP", "out_hist", "emi_hist"]
+    var: Literal[
+        "out", "in", "ACT", "emi", "CAP", "CAP_NEW", "inv", "out_hist", "emi_hist"
+    ]
 
     #: Data frame with:
     #:

@@ -1,0 +1,64 @@
+# Investment|<tech> — annual investment into the hydrogen production
+# technologies (mapping_clean investment rows). genno inv = inv_cost x CAP_NEW:
+# USD/kW x GW/yr lands numerically in million USD/yr, and model costs are
+# USD_2005, so the target needs x1.10774/1000 (legacy reporter convention,
+# message_data materials_dac_units.yaml: currency_unit_out_conv=1.10774).
+
+var:
+  inv
+
+iamc_prefix:
+  "Investment|"
+
+unit: billion USD_2010/yr
+
+vars:
+  h2_smr:
+    filter: {technology: h2_smr}
+    original_unit: million USD_2005/yr
+    short: inv_h2_smr
+
+  h2_smr_ccs:
+    filter: {technology: h2_smr_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_h2_smr_ccs
+
+  h2_coal:
+    filter: {technology: h2_coal}
+    original_unit: million USD_2005/yr
+    short: inv_h2_coal
+
+  h2_coal_ccs:
+    filter: {technology: h2_coal_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_h2_coal_ccs
+
+  h2_bio:
+    filter: {technology: h2_bio}
+    original_unit: million USD_2005/yr
+    short: inv_h2_bio
+
+  h2_bio_ccs:
+    filter: {technology: h2_bio_ccs}
+    original_unit: million USD_2005/yr
+    short: inv_h2_bio_ccs
+
+  h2_elec_alk:
+    filter: {technology: h2_elec_alk}
+    original_unit: million USD_2005/yr
+    short: inv_h2_elec_alk
+
+  h2_elec_pem:
+    filter: {technology: h2_elec_pem}
+    original_unit: million USD_2005/yr
+    short: inv_h2_elec_pem
+
+  h2_elec_soe:
+    filter: {technology: h2_elec_soe}
+    original_unit: million USD_2005/yr
+    short: inv_h2_elec_soe
+
+  h2_pyro_elec:
+    filter: {technology: h2_pyro_elec}
+    original_unit: million USD_2005/yr
+    short: inv_h2_pyro_elec

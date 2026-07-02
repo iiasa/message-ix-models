@@ -111,13 +111,21 @@ def pyam_df_from_rep(
         filters_dict = {k: v for k, v in filters_dict.items() if k in valid_dims}
     rep.set_filters(**filters_dict)
 
+    # Capacity/cost quantities are not dimensioned by m-c-l-e, and CAP_NEW / inv
+    # exist only at the construction year (yv), which is reported as the year.
+    key_suffixes = {
+        "historical_activity": "nl-t-ya-m-h",
+        "CAP": "nl-t-ya",
+        "CAP_NEW": "nl-t-yv",
+        "inv": "nl-t-yv",
+    }
+    key_suffix = key_suffixes.get(reporter_var, "nl-t-ya-m-c-l-e")
+
     # Try to get the data, but handle missing keys gracefully
     try:
-        if reporter_var == "historical_activity":
-            key_suffix = "nl-t-ya-m-h"
-        else:
-            key_suffix = "nl-t-ya-m-c-l-e"
         df_var = pd.DataFrame(rep.get(f"{reporter_var}:{key_suffix}"))
+        if reporter_var in ("CAP_NEW", "inv"):
+            df_var = df_var.rename_axis(index={"yv": "ya"})
     except Exception as e:
         # If the key doesn't exist (e.g., historical data not available),
         # return an empty dataframe with the expected structure
@@ -128,7 +136,7 @@ def pyam_df_from_rep(
                 reporter_var,
             )
         else:
-            LOG.warning("Could not retrieve %s:nl-t-ya-m-c-l-e: %s", reporter_var, e)
+            LOG.warning("Could not retrieve %s:%s: %s", reporter_var, key_suffix, e)
 
         rep.set_filters()
         return pd.DataFrame(
