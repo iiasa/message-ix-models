@@ -1,4 +1,6 @@
-# EFC Chemicals-sector ammonia INPUT energy flow: in|Chemicals|NH3_bunker|ammonia (EJ/yr).
+# EFC ammonia INPUT energy flow: in|Shipping|NH3_bunker|ammonia (EJ/yr). The leaf lives
+# in the chemicals domain (ammonia commodity) but is attributed to the Shipping SECTOR,
+# consistent with its sibling bunkers (meth/eth here; foil/LNG in the transport domain).
 # Ammonia is mass (Mt) everywhere EXCEPT the shipping-fuel pathway. NH3_tobunker converts
 # NH3@export (mass, Mt) -> NH3@final (energy, GWa) at 1/convert_nh3 = 1.67856 Mt/GWa
 # (LHV 18.8 MJ/kg; see message_data tools/utilities/update_shipping.py add_NH3_bunker).
@@ -12,7 +14,7 @@ unit: EJ/yr
 
 vars:
   # Shipping bunker — NH3@final is energy (GWa) via the NH3_tobunker mass->energy bridge.
-  Chemicals|NH3_bunker|ammonia:
+  Shipping|NH3_bunker|ammonia:
     filter:
       technology: NH3_bunker
       commodity: NH3
