@@ -20,7 +20,7 @@ models_scenarios:
     scenario: NPiREF
   SSP3_STS3:
     model: SSP_SSP3_STS3_v6.6_sp
-    scenario: glasgow
+    scenario: sts_policy_final
   
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:

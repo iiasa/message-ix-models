@@ -44,7 +44,7 @@ def broadcast_years(
     for _, row in df.iterrows():
         for y in year_list:
             new_row = row.copy()
-            new_row[year_type] = int(y)
+            new_row[year_type] = (str(int(y)))
             all_new_rows.append(new_row)
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
     result_df = result_df[result_df[year_type] != "broadcast"]
