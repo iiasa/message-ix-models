@@ -28,6 +28,6 @@ def combined_legacy_trade_reporting():
                     legacy_out_dir = LEGACY_OUT_DIR,
                     trade_out_dir  = TRADE_OUT_DIR,
                     report_out_dir = REPORT_OUT_DIR,
-                    add_legacy = False)
+                    add_legacy = True)
 
 combined_legacy_trade_reporting()
