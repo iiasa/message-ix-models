@@ -6,16 +6,21 @@
 # commodity-domain reporting home (fueloil/LNG are not chemicals), so they live
 # here in the transport domain, which is already wired into the workflow and
 # auto-discovers every *.yaml. The chemical marine fuels are reported from
-# data/chemicals/ (meth_bunker, eth_bunker keyed Shipping|...; NH3_bunker as a
-# Chemicals| extra) and LH2 from data/hydrogen/ (legacy Use| name).
+# data/chemicals/ (meth_bunker, eth_bunker, NH3_bunker, all keyed Shipping|...)
+# and LH2 from data/hydrogen/ (legacy Use| name).
 #
 # Filters verified against the BMT baseline (v9, ixmp-dev), input parameter:
 #   foil_bunker: fueloil@final, 19 shp_* modes, coeff 1.0.
 #   LNG_bunker:  LNG@final,     19 shp_* modes, coeff 1.0.
-# These are the BASE (non-capture) bunker techs. Their onboard-carbon-capture
-# (OCC) addons -- foil_occ_bunker / LNG_occ_bunker -- burn the same fuel with a
-# ~20% penalty and are NOT reported here (out of the customer spec, small, and
-# only deploy from 2090 under the IMO bound). See docs/shipping_bunker_findings.md.
+# The onboard-carbon-capture (OCC) addons -- foil_occ_bunker / LNG_occ_bunker --
+# burn the same fuel with a ~20% penalty and only deploy from 2090 under the IMO
+# bound. Reported since 2026-07-07 (C4 decision, reversing the earlier omission):
+# the per-fuel Final Energy|Bunkers|Shipping totals must include the OCC extra
+# fuel (Yiyi's ribbon plots these flows; the legacy reporter misses them; final
+# say rides with the shipping-module owners, board #348). Their filters MIRROR
+# the parents' 19-mode lists and are NOT yet coord-verified -- run
+# check_filter_coords.py at the next platform pass.
+# See docs/shipping_bunker_findings.md.
 #
 # NOT AUTHORED (spec lists them, the model does not support them -- flagged to Yiyi):
 #  * in|Shipping|loil_bunker|lightoil -- loil is NOT a shipping fuel in this model.
@@ -61,3 +66,29 @@ vars:
              shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
     original_unit: GWa
     short: in_LNG_bunker_LNG
+
+  Shipping|foil_occ_bunker|fueloil:
+    filter:
+      technology: foil_occ_bunker
+      commodity: fueloil
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_foil_occ_bunker_fueloil
+
+  Shipping|LNG_occ_bunker|LNG:
+    filter:
+      technology: LNG_occ_bunker
+      commodity: LNG
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_LNG_occ_bunker_LNG
