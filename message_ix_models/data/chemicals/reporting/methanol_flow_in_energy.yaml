@@ -84,15 +84,37 @@ vars:
     original_unit: GWa
     short: in_meth_bunker_methanol
 
-  # meth_h2 merchant-H2 input -> methanol synthesis. This IS the spec target
-  # in|Industry|Chemicals|meth_h2|hydrogen (demand_s|chemicals + demand_c|hydrogen). The
-  # filter draws hydrogen@secondary across the 6 feedstock/fuel x CO2-source modes; keyed
-  # (and labelled) as hydrogen -- the earlier "|methanol" key was a mislabel of this H2 input.
-  Industry|Chemicals|meth_h2|hydrogen:
+  # meth_h2 merchant-H2 input -> methanol synthesis, split by CO2 source for the spec's
+  # Final Energy|Industry|Chemicals|Methanol|Hydrogen|{BIC,FIC,DAC}_CO2 rows. Each leaf
+  # pairs the feedstock+fuel modes of one CO2 source (the input is hydrogen@secondary
+  # either way; fuel-vs-feedstock only routes the methanol OUTPUT). The three leaves
+  # partition the verified 6-mode set, so the spec target
+  # in|Industry|Chemicals|meth_h2|hydrogen is rebuilt identically as their aggregate
+  # (methanol_flow_in_energy_aggregates.yaml) -- keep the partition exhaustive if modes
+  # are ever added to meth_h2.
+  Industry|Chemicals|meth_h2|BIC_CO2|hydrogen:
     filter:
       technology: meth_h2
       commodity: hydrogen
       level: secondary
-      mode: [feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic]
+      mode: [feedstock_bic, fuel_bic]
     original_unit: GWa
-    short: in_meth_h2_hydrogen
+    short: in_meth_h2_bic_hydrogen
+
+  Industry|Chemicals|meth_h2|DAC_CO2|hydrogen:
+    filter:
+      technology: meth_h2
+      commodity: hydrogen
+      level: secondary
+      mode: [feedstock_dac, fuel_dac]
+    original_unit: GWa
+    short: in_meth_h2_dac_hydrogen
+
+  Industry|Chemicals|meth_h2|FIC_CO2|hydrogen:
+    filter:
+      technology: meth_h2
+      commodity: hydrogen
+      level: secondary
+      mode: [feedstock_fic, fuel_fic]
+    original_unit: GWa
+    short: in_meth_h2_fic_hydrogen

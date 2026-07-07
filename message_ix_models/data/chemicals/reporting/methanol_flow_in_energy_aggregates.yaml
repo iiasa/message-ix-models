@@ -1,0 +1,19 @@
+# Aggregation rules for the methanol INPUT energy flow reporting (in| family).
+#
+# in|Industry|Chemicals|meth_h2|hydrogen (the spec target) = sum of the three
+# CO2-source leaves (BIC/FIC/DAC), which partition meth_h2's six
+# feedstock/fuel x CO2-source modes -- the total reproduces the former single
+# leaf exactly. The mode-split leaves exist so the spec's
+# Final Energy|Industry|Chemicals|Methanol|Hydrogen|{BIC,FIC,DAC}_CO2 rows are
+# derivable; they are the one tech where leaves carry a mode segment.
+#
+# Aggregates sum already-converted IAMC values, so no original_unit/factors here.
+
+var: in
+iamc_prefix: "in|"
+unit: EJ/yr
+
+level_1:
+  Industry|Chemicals|meth_h2|hydrogen:
+    short: in_meth_h2_hydrogen
+    components: [ in_meth_h2_bic_hydrogen, in_meth_h2_dac_hydrogen, in_meth_h2_fic_hydrogen ]
