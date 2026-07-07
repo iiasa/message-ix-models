@@ -29,9 +29,8 @@ _HAS_RIME_DATA = (
 ).exists()
 
 
-@pytest.mark.skipif(not _HAS_RIME_DATA, reason="RIME NetCDF datasets not available")
 class TestSplitBasinMacroregion:
-    """Requires RIME data for basin-to-index mapping."""
+    """Uses only load_basin_mapping() + synthetic arrays; no RIME data needed."""
 
     def test_expansion_shape(self):
         basin_mapping = load_basin_mapping()

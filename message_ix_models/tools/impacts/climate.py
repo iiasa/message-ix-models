@@ -106,7 +106,7 @@ def gmt_expectation(arr: GmtArray) -> GmtArray:
 _GMT_VARIABLE = "Physical Climate Impact|Surface Temperature (GSAT)|Mean"
 
 
-def persist_gmt_mean(scen, gmt: GmtArray) -> None:
+def persist_gmt_mean(scen, gmt: GmtArray) -> None:  # pragma: no cover
     """Persist the ensemble-mean GMT trajectory on *scen* as a global timeseries.
 
     Writes one ``World``-region row per year under

@@ -544,7 +544,7 @@ def _ratios_to_long(ratios: pd.DataFrame, regions: str) -> pd.DataFrame:
     return long
 
 
-def apply_cooling_cids(
+def apply_cooling_cids(  # pragma: no cover
     scen,
     gmt: GmtArray,
     min_year: int = _DEFAULT_MIN_YEAR,

@@ -5,9 +5,11 @@ import pandas as pd
 import pytest
 
 from message_ix_models.tools.impacts.climate import (
+    _GSAT_VAR,
     GmtArray,
     gmt_ensemble,
     gmt_expectation,
+    load_magicc_gmt,
 )
 
 
@@ -52,3 +54,49 @@ def test_gmt_expectation_nan_handling():
     result = gmt_expectation(gmt_ensemble(df, ["id"]))
     assert result.values[0] == pytest.approx(1.0)  # nanmean(1.0, nan)
     assert result.values[1] == pytest.approx(4.0)  # nanmean(3.0, 5.0)
+
+
+def _write_iamc_xlsx(path, *, model_runs=("run_0", "run_1"), variable=_GSAT_VAR):
+    rows = [
+        {
+            "Model": f"MAGICCv7.5.3|{run}",
+            "Scenario": "scen",
+            "Region": "World",
+            "Variable": variable,
+            "Unit": "degC",
+            2020: 1.0,
+            2025: 1.2,
+        }
+        for run in model_runs
+    ]
+    pd.DataFrame(rows).to_excel(path, sheet_name="data", index=False)
+
+
+def test_load_magicc_gmt_reads_run_rows(tmp_path):
+    _write_iamc_xlsx(tmp_path / "foo_IAMC_climateassessment.xlsx")
+
+    result = load_magicc_gmt(tmp_path)
+
+    assert result.values.shape == (2, 2)
+    np.testing.assert_array_equal(result.years, [2020, 2025])
+
+
+def test_load_magicc_gmt_missing_file_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        load_magicc_gmt(tmp_path)
+
+
+def test_load_magicc_gmt_multiple_files_raises(tmp_path):
+    _write_iamc_xlsx(tmp_path / "foo_IAMC_climateassessment.xlsx")
+    _write_iamc_xlsx(tmp_path / "bar_IAMC_climateassessment.xlsx")
+
+    with pytest.raises(ValueError, match="Multiple"):
+        load_magicc_gmt(tmp_path)
+
+
+def test_load_magicc_gmt_no_run_rows_raises(tmp_path):
+    # Rows present, but Model doesn't contain "|run_" (e.g. percentile rows only).
+    _write_iamc_xlsx(tmp_path / "foo_IAMC_climateassessment.xlsx", model_runs=("p50",))
+
+    with pytest.raises(ValueError, match="No individual GSAT runs found"):
+        load_magicc_gmt(tmp_path)

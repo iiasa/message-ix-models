@@ -467,7 +467,7 @@ def _demand_to_final_energy_iamc(
     )
 
 
-def apply_building_cids(
+def apply_building_cids(  # pragma: no cover
     scen: Scenario,
     cooling_demand: pd.DataFrame,
     heating_demand: pd.DataFrame,

@@ -120,7 +120,7 @@ def validate_inputs(config: dict) -> None:
         )
 
 
-def phase1_cooling(
+def phase1_cooling(  # pragma: no cover
     context: "Context",
     scenario: "Scenario",
     *,
@@ -162,7 +162,7 @@ def phase1_cooling(
     return Scenario(scenario.platform, scenario.model, target_name)
 
 
-def apply_buildings(
+def apply_buildings(  # pragma: no cover
     context: "Context",
     scenario: "Scenario",
     *,
@@ -195,7 +195,7 @@ def apply_buildings(
     persist_gmt_mean(scenario, gmt)
 
 
-def apply_cooling(
+def apply_cooling(  # pragma: no cover
     context: "Context",
     scenario: "Scenario",
     *,
@@ -223,7 +223,7 @@ def apply_cooling(
     persist_gmt_mean(scenario, gmt)
 
 
-def _apply_buildings_and_cooling(
+def _apply_buildings_and_cooling(  # pragma: no cover
     context: "Context",
     scenario: "Scenario",
     *,

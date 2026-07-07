@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from message_ix_models.model.water.data.cooling_impacts import (
+    _ratios_to_long,
     build_dry_cooling_factors,
     build_wet_cooling_constraints,
     compute_degradation_ratios,
@@ -179,3 +180,22 @@ def test_dry_cooling_min_year_filtering():
 
     assert old_cf.empty
     assert new_cf.empty
+
+
+# ---------------------------------------------------------------------------
+# _ratios_to_long
+# ---------------------------------------------------------------------------
+
+
+def test_ratios_to_long_reshapes_and_prefixes_region():
+    wide = pd.DataFrame(
+        {2030: [0.9, 0.8], 2050: [0.7, 0.6]},
+        index=pd.Index(["AFR", "WEU"], name="region"),
+    )
+
+    long = _ratios_to_long(wide, regions="R12")
+
+    assert set(long.columns) == {"region", "year", "value"}
+    assert set(long["region"]) == {"R12_AFR", "R12_WEU"}
+    assert set(long["year"]) == {2030, 2050}
+    assert len(long) == 4

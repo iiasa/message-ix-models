@@ -2,12 +2,37 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from message_ix_models.model.buildings.impacts import (
     _demand_to_final_energy_iamc,
+    load_correction_coefficients,
+    load_floor_areas,
+    load_sector_fractions,
+    load_theta,
     predict_building_ei,
     prepare_building_demand,
 )
+
+
+@pytest.mark.parametrize(
+    "loader,args,required_columns",
+    [
+        (load_theta, ("cool", "SSP1"), {"node", "year", "theta"}),
+        (load_sector_fractions, ("SSP2",), {"node", "year"}),
+        (load_floor_areas, ("resid",), {"region", "year", "floor_Mm2"}),
+        (
+            load_correction_coefficients,
+            ("cool", "resid"),
+            {"region", "arch", "urt", "year", "correction_coeff"},
+        ),
+    ],
+)
+def test_calibration_loaders(loader, args, required_columns):
+    df = loader(*args)
+    assert required_columns <= set(df.columns)
+    assert not df.empty
+
 
 # ---------------------------------------------------------------------------
 # predict_building_ei
