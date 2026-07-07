@@ -291,8 +291,6 @@ def generate(
         scenario = starter["scenario"]
         ssp = starter["ssp"]
         magicc_dir = starter["magicc_output_dir"]
-        if not magicc_dir:
-            raise ValueError(f"Starter {model}/{scenario} lacks magicc_output_dir")
 
         label = f"{ssp}/{scenario}"
         base_step = f"{label} base"
