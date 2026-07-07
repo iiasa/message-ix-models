@@ -1031,8 +1031,8 @@ def flow_as_trade_input(
         ).drop_duplicates()
 
     # For shipped commodities calculate capacities based on distance & energy content
-    if config_dict["flow_commodity_output"][tec] in commodity_specific_distances:
-        c = config_dict["flow_commodity_output"][tec]
+    if config_dict["trade_commodity"][tec] in commodity_specific_distances:
+        c = config_dict["trade_commodity"][tec]
         distance_df = pd.read_csv(
             os.path.join(data_path, "distances", message_regions + f"_{c}_distances.csv")
         )
