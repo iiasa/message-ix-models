@@ -490,7 +490,9 @@ def check_iea_balances(
     )
     iea = iea.groupby(["YEAR", "ISO3", "IEA-WEB COMMODITY", "IEA-WEB UNIT", "FLOW"])["IEA-WEB VALUE"].sum().reset_index()
 
-    # LNG and pipe gas are directly from IEA
+    # LNG and pipe gas are directly from IEA, so skip calibration for them
+    # but keep the rows to add back at the end
+    gas_direct = indf[indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
     indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
 
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
@@ -555,6 +557,9 @@ def check_iea_balances(
     basedf = basedf.merge(exports, left_on = ['YEAR', 'EXPORTER', 'COMMODITY'], right_on = ['YEAR', 'EXPORTER', 'COMMODITY'], how = 'left')
     basedf['MULTIPLIER'] = np.where(basedf['MULTIPLIER'].isnull(), 1, basedf['MULTIPLIER'])
     basedf['ENERGY (TJ)'] = basedf['ENERGY (TJ)'] * basedf['MULTIPLIER']
+
+    # Add back gas_piped/LNG_shipped rows, uncalibrated (already sourced from IEA)
+    basedf = pd.concat([basedf, gas_direct])
     return basedf
 
 # Aggregate UN Comtrade data to MESSAGE regions
