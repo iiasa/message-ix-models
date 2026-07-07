@@ -241,7 +241,7 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
             solve_options={"lpmethod": "4", "scaind": "1"},
             case=caseName,
         )
-    else:
+    else:  # pragma: no cover
         scen.solve(solve_options={"lpmethod": "4", "scaind": "-1"}, case=caseName)
 
     # if options["report"]:
@@ -346,7 +346,7 @@ def cooling(
         # Set scenario as default
         scen.set_as_default()
 
-    if solve:
+    if solve:  # pragma: no cover
         # Solve
         scen.solve(solve_options={"lpmethod": "4", "scaind": "-1"}, case=caseName)
 

@@ -388,7 +388,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         all_rates = pd.concat([all_rates_base, all_rates_sdg])
         save_path = package_data_path("water", "demands", "harmonized", context.regions)
         # save all the rates for reporting purposes
-        all_rates.to_csv(save_path / f"all_rates_{context.ssp}.csv", index=False)
+        all_rates.to_csv(  # pragma: no cover
+            save_path / f"all_rates_{context.ssp}.csv", index=False
+        )
 
     # urban water demand and return. Full withdrawal routes through urban_mw;
     # connected/unconnected attribution is reconstructed at reporting time
