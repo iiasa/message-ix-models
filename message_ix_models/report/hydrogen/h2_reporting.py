@@ -456,6 +456,14 @@ def compute_aggregates_from_iamc(
     -------
     pyam.IamDataFrame
         Combined DataFrame with both leaf variables and computed aggregates
+
+    Raises
+    ------
+    ValueError
+        If an aggregate references a component short that is not defined in
+        ``short_to_iamc`` or an earlier aggregation level (a config typo would
+        otherwise shrink the sum silently), or if the matched component rows
+        carry more than one unit.
     """
     if not aggregates:
         return df
@@ -479,21 +487,40 @@ def compute_aggregates_from_iamc(
             components = agg_def["components"]
             short_name = agg_def["short"]
 
-            # Find component variables in the DataFrame
-            component_vars = []
-            for comp_short in components:
-                if comp_short in short_to_full_var:
-                    component_vars.append(short_to_full_var[comp_short])
-
-            if not component_vars:
-                # No components found - skip this aggregate
-                continue
+            # An unresolvable short is always a config bug: shorts come from the
+            # YAML itself, so silently dropping one would shrink the aggregate to
+            # a plausible-looking wrong number.
+            missing = [s for s in components if s not in short_to_full_var]
+            if missing:
+                raise ValueError(
+                    f"Aggregate {iamc_name!r}: unknown component short(s) {missing}. "
+                    "Components must be shorts defined in the sibling config file "
+                    "or an earlier aggregation level."
+                )
+            component_vars = [short_to_full_var[s] for s in components]
 
             # Filter dataframe for these component variables
             df_components = df_work[df_work["variable"].isin(component_vars)]
 
+            # Data-side absence is a condition, not a config error: _hist
+            # variants legitimately lose rows to year filtering.
+            absent = sorted(set(component_vars) - set(df_components["variable"]))
+            if absent:
+                LOG.warning(
+                    "Aggregate %r: component variable(s) %s carry no data rows",
+                    iamc_name,
+                    absent,
+                )
             if df_components.empty:
                 continue
+
+            units = df_components["unit"].unique()
+            if len(units) > 1:
+                raise ValueError(
+                    f"Aggregate {iamc_name!r}: components carry mixed units "
+                    f"{sorted(units)}; an aggregate must be unit-homogeneous "
+                    "(one target unit per config file)."
+                )
 
             # Sum the components grouped by model, scenario, region, year, unit
             df_agg = (
@@ -540,7 +567,7 @@ def compute_global_aggregates(
         against a snapshot of the input, so an aggregate never absorbs another
         aggregate from the same call. A leaf matched by several patterns of one
         spec is summed once. A spec whose patterns match nothing emits nothing
-        (dead patterns are a config-check concern, not a runtime condition).
+        and logs a warning (dead patterns are a config-check concern).
 
     Returns
     -------
@@ -565,6 +592,11 @@ def compute_global_aggregates(
             if fnmatch.fnmatchcase(v, pattern)
         }
         if not matched:
+            LOG.warning(
+                "Global aggregate %r: no variable matches its patterns; "
+                "nothing emitted",
+                spec["name"],
+            )
             continue
         sub = data[data["variable"].isin(matched)]
         units = sorted(set(sub["unit"]))
