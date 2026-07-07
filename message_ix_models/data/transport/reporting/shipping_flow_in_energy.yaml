@@ -17,9 +17,9 @@
 # bound. Reported since 2026-07-07 (C4 decision, reversing the earlier omission):
 # the per-fuel Final Energy|Bunkers|Shipping totals must include the OCC extra
 # fuel (Yiyi's ribbon plots these flows; the legacy reporter misses them; final
-# say rides with the shipping-module owners, board #348). Their filters MIRROR
-# the parents' 19-mode lists and are NOT yet coord-verified -- run
-# check_filter_coords.py at the next platform pass.
+# say rides with the shipping-module owners, board #348). Their filters mirror
+# the parents' 19-mode lists, coord-verified against the baseline input
+# parameter on 2026-07-07 (check_filter_coords: all coords present).
 # See docs/shipping_bunker_findings.md.
 #
 # NOT AUTHORED (spec lists them, the model does not support them -- flagged to Yiyi):

@@ -17,8 +17,12 @@ vars:
     original_unit: GWa
     short: in_furnace_methanol_steel_methanol
 
+  # Cement heat demand is high-temperature only: the materials source data
+  # (data/material/other/generic.csv) defines this furnace with a single
+  # high_temp mode (no low_temp input, no lt_heat output), unlike the other
+  # furnaces. Coord-checked on the baseline 2026-07-07.
   Industry|Other|furnace_methanol_cement|methanol:
-    filter: {technology: furnace_methanol_cement, commodity: methanol, level: final, mode: [high_temp, low_temp]}
+    filter: {technology: furnace_methanol_cement, commodity: methanol, level: final, mode: [high_temp]}
     original_unit: GWa
     short: in_furnace_methanol_cement_methanol
 
