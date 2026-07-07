@@ -1,3 +1,4 @@
+import fnmatch
 import logging
 from typing import List, Optional
 
@@ -517,6 +518,71 @@ def compute_aggregates_from_iamc(
 
     # Return the combined dataframe with all leaves and aggregates
     return pyam.IamDataFrame(df_work)
+
+
+def compute_global_aggregates(
+    py_df: pyam.IamDataFrame, specs: List[dict]
+) -> pyam.IamDataFrame:
+    """Append cross-file aggregate variables summed from leaf variables.
+
+    Unlike :func:`compute_aggregates_from_iamc`, which sums explicit component
+    lists within one config file, this stage matches glob patterns against the
+    variable universe of an assembled report, so one aggregate can span leaves
+    from several domains and files.
+
+    Parameters
+    ----------
+    py_df : pyam.IamDataFrame
+        Assembled leaf variables (after unit conversion and per-file aggregation).
+    specs : list of dict
+        Aggregate definitions ``{"name": str, "patterns": [glob, ...], "unit": str}``.
+        Patterns are shell-style globs over full variable names. Matching runs
+        against a snapshot of the input, so an aggregate never absorbs another
+        aggregate from the same call. A leaf matched by several patterns of one
+        spec is summed once. A spec whose patterns match nothing emits nothing
+        (dead patterns are a config-check concern, not a runtime condition).
+
+    Returns
+    -------
+    pyam.IamDataFrame
+        Input data plus one aggregate variable per matching spec.
+
+    Raises
+    ------
+    ValueError
+        If the leaves matched by one spec do not all carry the spec's ``unit``
+        (e.g. an EJ/yr energy flow and an Mt/yr material flow under one glob).
+    """
+    data = py_df.data
+    leaf_variables = data["variable"].unique()
+
+    frames = []
+    for spec in specs:
+        matched = {
+            v
+            for pattern in spec["patterns"]
+            for v in leaf_variables
+            if fnmatch.fnmatchcase(v, pattern)
+        }
+        if not matched:
+            continue
+        sub = data[data["variable"].isin(matched)]
+        units = sorted(set(sub["unit"]))
+        if units != [spec["unit"]]:
+            raise ValueError(
+                f"Aggregate {spec['name']!r} declares unit {spec['unit']!r} but "
+                f"its matched leaves carry {units}; components: {sorted(matched)}"
+            )
+        agg = sub.groupby(["model", "scenario", "region", "year"], as_index=False)[
+            "value"
+        ].sum()
+        agg["variable"] = spec["name"]
+        agg["unit"] = spec["unit"]
+        frames.append(agg)
+
+    if not frames:
+        return py_df
+    return pyam.IamDataFrame(pd.concat([data, *frames], ignore_index=True))
 
 
 def load_config(name: str, domain: str = "hydrogen") -> "Config":
