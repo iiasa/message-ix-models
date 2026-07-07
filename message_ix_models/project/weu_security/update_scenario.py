@@ -20,23 +20,11 @@ base_model = 'weu_security'
 base_scen = 'SSP2'
 
 mp = ixmp.Platform()
-df = mp.scenario_list()
-df = df[df['model'] == 'SSP_SSP2_v6.6']
-print(df.scenario.unique())
 
-#base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-#out_scenario = base_scenario.clone('weu_security', "tec_lt", keep_solution = False)
+base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
+out_scenario = base_scenario.clone('weu_security', "myopic-test", keep_solution = False)
+out_scenario.set_as_default()
 
-#print("Update pipeline lifetime")
-##cdf = out_scenario.par("technical_lifetime")
-#cdf = cdf[cdf['technology'].str.contains('_pipe_')]
-#cdf_new = cdf.copy()
-#cdf_new['value'] = 50
+out_scenario.solve(quiet = False, solve_options={"--foresight":"1"}, gams_args=["--foresight=1"])
 
-#with out_scenario.transact("Update pipeline lifetime"):
-#    out_scenario.remove_par("technical_lifetime", cdf)
-#    out_scenario.add_par("technical_lifetime", cdf_new)
-    
-#print("Solve scenario")
-#out_scenario.solve()
-#mp.close_db()
+mp.close_db()
