@@ -625,6 +625,17 @@ def load_config(name: str, domain: str = "hydrogen") -> "Config":
     return Config.from_files(name, domain=domain)
 
 
+def load_global_aggregate_specs() -> List[dict]:
+    """Load the specs from :file:`data/reporting/aggregates_global.yaml`.
+
+    The file lives outside the per-domain reporting directories so that leaf
+    auto-discovery (:func:`fetch_variables`) never picks it up.
+    """
+    path = package_data_path("reporting", "aggregates_global.yaml")
+    doc = yaml.safe_load(path.read_text()) or {}
+    return list(doc.get("aggregates") or [])
+
+
 def run_h2_fgt_reporting(
     rep: Reporter, model_name: str, scen_name: str
 ) -> pyam.IamDataFrame:
@@ -803,6 +814,7 @@ def run_sectoral_reporting(
     scen_name: str,
     domains: Optional[List[str]] = None,
     add_world: bool = True,
+    add_global_aggregates: bool = False,
 ) -> pyam.IamDataFrame:
     """Run reporting across one or more ``data/<domain>/reporting`` directories.
 
@@ -819,6 +831,12 @@ def run_sectoral_reporting(
         :func:`fetch_variables` (no silent fallback).
     add_world
         If True, append a World total under the R12_GLB technical node ID.
+    add_global_aggregates
+        If True, run :func:`compute_global_aggregates` over the assembled leaves
+        (specs from :func:`load_global_aggregate_specs`) before the World step, so
+        World rolls the aggregates up too. Leave False for partial-domain runs:
+        the global specs assume the full workflow domain set, and a subset of
+        domains would emit silently partial totals.
     """
     if domains is None:
         domains = ["hydrogen"]
@@ -832,6 +850,9 @@ def run_sectoral_reporting(
         for var in fetch_variables(domain)
     ]
     py_df = pyam.concat(dfs)
+
+    if add_global_aggregates:
+        py_df = compute_global_aggregates(py_df, load_global_aggregate_specs())
 
     # Sum regional nodes → R12_GLB only for variables without native GLB rows
     # (chemicals bunkers already report at R12_GLB).
