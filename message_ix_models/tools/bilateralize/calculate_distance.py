@@ -132,13 +132,14 @@ def calculate_distance(regional_specification: str = "R12",
 
     for c in commodity_list:
         usefile = infile[infile["Commodity"] == c]
+        
         # Calculate distances
-        df = calculate_port_distances(infile)
+        df = calculate_port_distances(usefile)
 
         # Add regions back
         for i in ["1", "2"]:
             df = df.merge(
-                infile[["Node", "Port"]], left_on="Port" + i, right_on="Port", how="left"
+                usefile[["Node", "Port"]], left_on="Port" + i, right_on="Port", how="left"
             )
             df = df.rename(columns={"Node": "Node" + i})
         df = df[["Node1", "Port1", "Node2", "Port2", "Distance_km"]]
