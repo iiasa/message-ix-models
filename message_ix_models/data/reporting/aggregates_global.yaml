@@ -1,0 +1,81 @@
+# Global (cross-file) aggregate variables, consumed by compute_global_aggregates
+# in report/hydrogen/h2_reporting.py. This directory sits OUTSIDE the per-domain
+# data/<domain>/reporting/ dirs on purpose: leaf auto-discovery must never pick
+# this file up.
+#
+# Each entry: {name, patterns, unit}. Patterns are shell-style globs matched
+# against the full variable names of the assembled report (leaves + per-file
+# aggregates); matches are summed once (union), and the engine raises if the
+# matched variables do not all carry `unit`. Static validation (dead patterns,
+# unit homogeneity, aggregate-vs-component double-counts) lives in
+# EFC_2026/scripts/verify/check_aggregates_config.py -- run it on every edit.
+#
+# Provenance decisions carried from docs/reporting_c4_aggregates_trade.md:
+# - loil_bunker is EXCLUDED everywhere (hollow addon-parent, phantom activity):
+#   both Liquids|Oil rows equal the foil-only sum by construction.
+# - OCC addons (foil/LNG_occ_bunker) are INCLUDED in per-fuel totals (ribbon
+#   plots them; legacy misses them; final say with the shipping-module owners).
+# - Shipping|Ammonia is a spec ADDITION pending ratification (open-questions
+#   item 16); it is also included in the Bunkers|Shipping total, so that total
+#   covers every marine fuel actually reported.
+# - Shipping|Hydrogen sums the LH2 flow under its legacy name
+#   Use|LH2|Transportation|Shipping; if the item-15 naming decision re-points
+#   that leaf, update the pattern here.
+
+aggregates:
+  # --- Methanol-from-hydrogen by CO2 source (mode-split leaves, item 17) ---
+  - name: Final Energy|Industry|Chemicals|Methanol|Hydrogen|BIC_CO2
+    patterns: ["in|Industry|Chemicals|meth_h2|BIC_CO2|hydrogen"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Hydrogen|DAC_CO2
+    patterns: ["in|Industry|Chemicals|meth_h2|DAC_CO2|hydrogen"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Hydrogen|FIC_CO2
+    patterns: ["in|Industry|Chemicals|meth_h2|FIC_CO2|hydrogen"]
+    unit: EJ/yr
+
+  # --- Aviation (con_ar family; conE_ar ethanol confirmed in spec + model) ---
+  - name: Final Energy|Transportation|Aviation|Liquids|Oil
+    patterns: ["in|Transportation|Aviation|con_ar|lightoil"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Aviation|Hydrogen
+    patterns: ["in|Transportation|Aviation|conh_ar|hydrogen"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Aviation|Methanol
+    patterns: ["in|Transportation|Aviation|conm_ar|methanol"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Aviation|Ethanol
+    patterns: ["in|Transportation|Aviation|conE_ar|ethanol"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Aviation
+    patterns: ["in|Transportation|Aviation|*"]
+    unit: EJ/yr
+  - name: in|Transportation|Aviation|all
+    patterns: ["in|Transportation|Aviation|*"]
+    unit: EJ/yr
+
+  # --- Shipping (Final Energy|Bunkers|Shipping family) ---
+  - name: Final Energy|Bunkers|Shipping|Methanol
+    patterns: ["in|Shipping|meth_bunker|methanol"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Ethanol
+    patterns: ["in|Shipping|eth_bunker|ethanol"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Hydrogen
+    patterns: ["Use|LH2|Transportation|Shipping"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Gases|Gas
+    patterns: ["in|Shipping|LNG_bunker|LNG", "in|Shipping|LNG_occ_bunker|LNG"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Liquids|Oil|foil
+    patterns: ["in|Shipping|foil_bunker|fueloil", "in|Shipping|foil_occ_bunker|fueloil"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Liquids|Oil
+    patterns: ["in|Shipping|foil_bunker|fueloil", "in|Shipping|foil_occ_bunker|fueloil"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Ammonia
+    patterns: ["in|Shipping|NH3_bunker|ammonia"]
+    unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping
+    patterns: ["in|Shipping|*", "Use|LH2|Transportation|Shipping"]
+    unit: EJ/yr
