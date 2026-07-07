@@ -998,6 +998,7 @@ def flow_as_trade_input(
     parameter_outputs: dict,
     message_regions: str,
     data_path: Path,
+    commodity_specific_distances: list[str] = ["crudeoil", "lightoil", "LNG"]
 ):
     """
     Generate flow technology as trade technology input parameter
@@ -1030,9 +1031,15 @@ def flow_as_trade_input(
         ).drop_duplicates()
 
     # For shipped commodities calculate capacities based on distance & energy content
-    distance_df = pd.read_csv(
-        os.path.join(data_path, "distances", message_regions + "_distances.csv")
-    )
+    if config_dict["flow_commodity_output"][tec] in commodity_specific_distances:
+        c = config_dict["flow_commodity_output"][tec]
+        distance_df = pd.read_csv(
+            os.path.join(data_path, "distances", message_regions + f"_{c}_distances.csv")
+        )
+    else:
+        distance_df = pd.read_csv(
+            os.path.join(data_path, "distances", message_regions + "_base_distances.csv")
+        )
     energycontent_df = pd.read_excel(os.path.join(data_path, "specific_energy.xlsx"))
     if config_dict["trade_units"][tec] == "GWa":
         tradecom = config_dict["trade_commodity"][tec]

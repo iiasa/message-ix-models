@@ -105,7 +105,8 @@ def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
     return outdf
 
 
-def calculate_distance(regional_specification: str = "R12"):
+def calculate_distance(regional_specification: str = "R12",
+                       commodity_list: list = ["base", "crudeoil", "lightoil", "LNG"]):
     """
     Run distance calculation.
 
@@ -129,20 +130,22 @@ def calculate_distance(regional_specification: str = "R12"):
     )
     infile = infile[infile["Regionalization"] == regional_specification]
 
-    # Calculate distances
-    df = calculate_port_distances(infile)
+    for c in commodity_list:
+        usefile = infile[infile["Commodity"] == c]
+        # Calculate distances
+        df = calculate_port_distances(infile)
 
-    # Add regions back
-    for i in ["1", "2"]:
-        df = df.merge(
-            infile[["Node", "Port"]], left_on="Port" + i, right_on="Port", how="left"
+        # Add regions back
+        for i in ["1", "2"]:
+            df = df.merge(
+                infile[["Node", "Port"]], left_on="Port" + i, right_on="Port", how="left"
+            )
+            df = df.rename(columns={"Node": "Node" + i})
+        df = df[["Node1", "Port1", "Node2", "Port2", "Distance_km"]]
+
+        df.to_csv(
+            os.path.join(csv_path, regional_specification + f"_{c}_distances.csv"), index=False
         )
-        df = df.rename(columns={"Node": "Node" + i})
-    df = df[["Node1", "Port1", "Node2", "Port2", "Distance_km"]]
-
-    df.to_csv(
-        os.path.join(csv_path, regional_specification + "_distances.csv"), index=False
-    )
 
 # Calculate pipeline distances
 def calculate_pipeline_distances(regional_specification: str = "R12") -> pd.DataFrame:
