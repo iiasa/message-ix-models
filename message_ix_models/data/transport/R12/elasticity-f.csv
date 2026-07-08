@@ -4,7 +4,6 @@
 #
 scenario,      node,     technology, year, value
 DIGSY-BEST-C,   R12_AFR,  *,          2020, 1.0
-DIGSY-BEST-C,   R12_AFR,  *,          2020, 1.0
 DIGSY-BEST-C,   R12_AFR,  *,          2030, 1.0
 DIGSY-BEST-C,   R12_AFR,  *,          2110, 1.0
 DIGSY-BEST-C,   R12_CHN,  *,          2020, 1.0
