@@ -18,9 +18,11 @@
 # - Shipping|Ammonia is a spec ADDITION pending ratification (open-questions
 #   item 16); it is also included in the Bunkers|Shipping total, so that total
 #   covers every marine fuel actually reported.
-# - Shipping|Hydrogen sums the LH2 flow under its legacy name
-#   Use|LH2|Transportation|Shipping; if the item-15 naming decision re-points
-#   that leaf, update the pattern here.
+# - Shipping|Hydrogen sums the spec-named LH2 leaf in|Shipping|LH2_bunker|hydrogen
+#   (item-15 re-point done; data/hydrogen/reporting/lh2_shipping_flow_in.yaml).
+#   The legacy Use|LH2|Transportation|Shipping leaf still exists but is NOT
+#   referenced here -- listing it alongside the in|Shipping|* glob would
+#   double-count LH2 in the Bunkers|Shipping total.
 
 aggregates:
   # --- Methanol-from-hydrogen by CO2 source (mode-split leaves, item 17) ---
@@ -62,7 +64,7 @@ aggregates:
     patterns: ["in|Shipping|eth_bunker|ethanol"]
     unit: EJ/yr
   - name: Final Energy|Bunkers|Shipping|Hydrogen
-    patterns: ["Use|LH2|Transportation|Shipping"]
+    patterns: ["in|Shipping|LH2_bunker|hydrogen"]
     unit: EJ/yr
   - name: Final Energy|Bunkers|Shipping|Gases|Gas
     patterns: ["in|Shipping|LNG_bunker|LNG", "in|Shipping|LNG_occ_bunker|LNG"]
@@ -77,5 +79,5 @@ aggregates:
     patterns: ["in|Shipping|NH3_bunker|ammonia"]
     unit: EJ/yr
   - name: Final Energy|Bunkers|Shipping
-    patterns: ["in|Shipping|*", "Use|LH2|Transportation|Shipping"]
+    patterns: ["in|Shipping|*"]
     unit: EJ/yr
