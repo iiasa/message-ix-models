@@ -1,0 +1,29 @@
+# EFC ammonia MASS trade flows: out|<tech> (Mt/yr).
+# Gross ammonia export/import volumes. Ammonia is intrinsically mass in this model
+# (NH3 has no energy level; producers output NH3@secondary_material at coeff 1.0),
+# so trade is Mt/yr like the rest of the ammonia chain -- NOT the spec's EJ/yr
+# (an energy-content conversion nothing else in the chain uses; filed as a unit
+# deviation, item 18). The model unit on these coeffs is the dimensionless '-',
+# handled by the reporter's units-replace (run_sectoral_reporting); original_unit
+# here is the real basis, Mt/yr, identity to target.
+#
+# Prefix naming: the export/import techs are export_NH3 / import_NH3 (a *_exp
+# suffix search misses them). Spec names drop the commodity segment.
+# Net-vs-gross unresolved (item 18): these are the GROSS per-direction volumes.
+#
+# Filters verified against the BMT baseline (ixmp-dev, 2026-07-08 output-param probe).
+
+var: out
+iamc_prefix: "out|"
+unit: Mt/yr
+
+vars:
+  export_NH3:
+    filter: {technology: export_NH3, commodity: NH3, level: export, mode: M1}
+    original_unit: Mt/yr
+    short: out_export_NH3
+
+  import_NH3:
+    filter: {technology: import_NH3, commodity: NH3, level: secondary_material, mode: M1}
+    original_unit: Mt/yr
+    short: out_import_NH3

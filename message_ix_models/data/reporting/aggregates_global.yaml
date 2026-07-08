@@ -81,3 +81,84 @@ aggregates:
   - name: Final Energy|Bunkers|Shipping
     patterns: ["in|Shipping|*"]
     unit: EJ/yr
+
+  # --- Trade (Trade|Goods|* and Trade|Secondary Energy|*) ---
+  # PROVISIONAL: authored as GROSS EXPORTS under the spec name, pending Yiyi's
+  # net-vs-gross ruling (open-questions item 18). The gross per-direction leaves
+  # (out|meth_exp/meth_imp, out|export_NH3/import_NH3, out|lh2_exp/lh2_imp,
+  # out|eth_exp/eth_imp) are unambiguous and reported directly. Net trade cannot be
+  # built here -- compute_global_aggregates is sum-only, so exp-imp needs signed
+  # components; if Yiyi wants net, that is an engine change or a signed-leaf pair.
+  # Trade|Goods|Ammonia stays Mt/yr (the model basis); the spec's EJ/yr is filed
+  # as a unit deviation (item 18). No Trade|Goods|Ethanol in the spec (leaves only).
+  - name: Trade|Goods|Methanol
+    patterns: ["out|meth_exp"]
+    unit: EJ/yr
+  - name: Trade|Goods|Ammonia
+    patterns: ["out|export_NH3"]
+    unit: Mt/yr
+  - name: Trade|Secondary Energy|Hydrogen
+    patterns: ["out|lh2_exp"]
+    unit: EJ/yr
+
+  # --- Per-commodity in|all / out|all totals ---
+  # Q6 split rule: a single total is ONE unit, so these are the commodity's NATIVE
+  # basis; the cross-basis pieces are excluded (a separate total, not in the spec).
+  # in|all|hydrogen: all H2 consumption (EJ). Lists the meth_h2 CO2-source TOTAL
+  # aggregate (in|Industry|Chemicals|meth_h2|hydrogen) and NOT its three split
+  # leaves, so meth_h2 is counted once (a glob in|*|hydrogen would match both and
+  # double-count). Chemicals H2 consumers beyond h2_liq + meth_h2 would need adding.
+  - name: in|all|hydrogen
+    patterns:
+      - "in|Industry|Chemicals|h2_liq|hydrogen"
+      - "in|Industry|Chemicals|meth_h2|hydrogen"
+      - "in|Industry|Other|*|hydrogen"
+      - "in|Industry|Iron and Steel|*|hydrogen"
+      - "in|Industry|Refining|*|hydrogen"
+      - "in|Power|*|hydrogen"
+      - "in|Shipping|*|hydrogen"
+      - "in|Transportation|*|hydrogen"
+    unit: EJ/yr
+  # in|all|methanol: ENERGY methanol consumption only (EJ). The material feedstock
+  # consumers (MTO_petro, CH2O_synth, meth_ind_fs -- Mt) are the separate mass
+  # total, excluded here to keep one unit.
+  - name: in|all|methanol
+    patterns:
+      - "in|Industry|Other|furnace_methanol_*|methanol"
+      - "in|Shipping|meth_bunker|methanol"
+      - "in|Transportation|*|methanol"
+    unit: EJ/yr
+  # in|all|NH3: MATERIAL ammonia consumption (Mt). The shipping bunker
+  # (in|Shipping|NH3_bunker|ammonia, EJ) is the cross-basis piece, excluded. Whether
+  # "all" should span both bases is a Yiyi scope question (item 18).
+  - name: in|all|NH3
+    patterns:
+      - "in|Industry|Chemicals|NH3_to_N_fertil|NH3"
+      - "in|Chemicals|residual_NH3|ammonia"
+    unit: Mt/yr
+  # out|all|methanol: total methanol PRODUCTION (EJ; producers are energy-basis,
+  # the Mt bridge is downstream at meth_t_d). Trade (out|meth_exp) is not a producer.
+  - name: out|all|methanol
+    patterns: ["out|*|methanol"]
+    unit: EJ/yr
+  # out|all|NH3: total ammonia PRODUCTION (Mt). Trade (out|export_NH3) has no
+  # commodity segment so the glob does not match it.
+  - name: out|all|NH3
+    patterns: ["out|*|NH3"]
+    unit: Mt/yr
+  # Per-mode transport input totals (EJ; all transport fuels are energy-basis).
+  # in|Shipping|all shares the in|Shipping|* match with Final Energy|Bunkers|Shipping
+  # -- same value under the raw-name convention, a distinct variable, not a
+  # double-count (that guard is within a single aggregate's components).
+  - name: in|Transportation|Bus|all
+    patterns: ["in|Transportation|Bus|*"]
+    unit: EJ/yr
+  - name: in|Transportation|Light-Duty Vehicle|all
+    patterns: ["in|Transportation|Light-Duty Vehicle|*"]
+    unit: EJ/yr
+  - name: in|Transportation|Truck|all
+    patterns: ["in|Transportation|Truck|*"]
+    unit: EJ/yr
+  - name: in|Shipping|all
+    patterns: ["in|Shipping|*"]
+    unit: EJ/yr

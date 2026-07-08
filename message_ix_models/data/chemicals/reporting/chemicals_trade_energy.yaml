@@ -1,0 +1,39 @@
+# EFC chemicals ENERGY trade flows: out|<tech> (EJ/yr).
+# Gross methanol + ethanol export/import volumes. These techs' ACT is energy-basis
+# (GWa) -- trade happens at the export/secondary levels BEFORE the meth_t_d GWa->Mt
+# bridge, so despite methanol's dual basis the traded flow is energy (verified on
+# the baseline: meth_exp/meth_imp output methanol at GWa coeff 1.0; the level
+# suffix _material here still carries GWa because ACT is energy-basis). Spec names
+# drop the commodity segment (out|meth_exp, not out|meth_exp|methanol).
+#
+# meth_exp/meth_imp carry BOTH fuel and feedstock modes (the _fs twins); each leaf
+# sums them -> total methanol traded. Net-vs-gross is unresolved (item 18, Yiyi):
+# these are the GROSS per-direction volumes, which are unambiguous; the signed/net
+# Trade|Goods|Methanol aggregate is provisional in aggregates_global.yaml.
+#
+# Filters verified against the BMT baseline (ixmp-dev, 2026-07-08 output-param probe).
+
+var: out
+iamc_prefix: "out|"
+unit: EJ/yr
+
+vars:
+  meth_exp:
+    filter: {technology: meth_exp, commodity: methanol, level: [export, export_fs], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_exp
+
+  meth_imp:
+    filter: {technology: meth_imp, commodity: methanol, level: [secondary, secondary_material], mode: [fuel, feedstock]}
+    original_unit: GWa
+    short: out_meth_imp
+
+  eth_exp:
+    filter: {technology: eth_exp, commodity: ethanol, level: export, mode: M1}
+    original_unit: GWa
+    short: out_eth_exp
+
+  eth_imp:
+    filter: {technology: eth_imp, commodity: ethanol, level: secondary, mode: M1}
+    original_unit: GWa
+    short: out_eth_imp

@@ -1,0 +1,24 @@
+# EFC hydrogen (LH2) trade flows: out|<tech> (EJ/yr).
+# Gross liquefied-hydrogen export/import volumes. The model's ONLY hydrogen trade
+# is LH2 (no gaseous-H2 trade tech); lh2_exp/lh2_imp are energy-basis (GWa->EJ).
+# lh2_imp is idle in the baseline (peak ACT 0) -- a legitimate zero for a real
+# tech, reported like any other idle tech. Spec names drop the commodity segment.
+# Net-vs-gross unresolved (item 18): GROSS per-direction volumes; the provisional
+# Trade|Secondary Energy|Hydrogen aggregate is in aggregates_global.yaml.
+#
+# Filters verified against the BMT baseline (ixmp-dev, 2026-07-08 output-param probe).
+
+var: out
+iamc_prefix: "out|"
+unit: EJ/yr
+
+vars:
+  lh2_exp:
+    filter: {technology: lh2_exp, commodity: lh2, level: export, mode: M1}
+    original_unit: GWa
+    short: out_lh2_exp
+
+  lh2_imp:
+    filter: {technology: lh2_imp, commodity: lh2, level: secondary, mode: M1}
+    original_unit: GWa
+    short: out_lh2_imp
