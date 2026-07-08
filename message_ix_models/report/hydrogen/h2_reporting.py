@@ -844,6 +844,15 @@ def run_sectoral_reporting(
     # Historical keys are created once on the shared Reporter (idempotent).
     ensure_historical_keys(rep)
 
+    # MESSAGE stores dimensionless coefficients with unit "-", which pint cannot
+    # parse. genno tolerates it while a quantity spans mixed units (it discards
+    # units), but a per-family filter that narrows to a uniform "-" (e.g. the
+    # ammonia producers biomass_NH3/coal_NH3/... output NH3 at coeff 1.0) makes
+    # data_for_quantity call parse_units("-") and raise — which pyam_df_from_rep
+    # swallows, silently dropping the whole family. Normalize "-" to dimensionless
+    # up front so those families report. Value-preserving: "-" IS dimensionless.
+    rep.configure(units={"replace": {"-": ""}})
+
     dfs = [
         run_reporting(var, rep, model_name, scen_name, domain=domain)
         for domain in domains
