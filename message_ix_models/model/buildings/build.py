@@ -41,10 +41,10 @@ from message_ix_models.util import (
     make_io,
     merge_data,
     nodes_ex_world,
-    private_data_path,
 )
 
 from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
+from .sturm import call_sturm, message_linking_path
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -985,7 +985,9 @@ def prune_spec(spec: Spec, data: "ParameterData") -> None:
             )
 
 
-def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -> None:
+def main(
+    context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame, **kwargs
+) -> None:
     """Set up the structure and data for MESSAGE_Buildings on `scenario`.
 
     The function responds to a :class:`.buildings.Config` instance at
@@ -1003,8 +1005,13 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
     - :func:`get_spec` is called with the :py:`filter_relations` parameter, using only
       the relation set members already present on `scenario`.
     - `args` must be empty.
+    - :func:`.sturm.call_sturm` is invoked to update STURM inputs and re-run STURM; if
+      `scenario` has no solution, reference prices from
+      ``input_prices_R12_default.csv`` are used.
     - Data for demand, prices, and STURM are loaded from CSV files given by
-      :attr:`.buildings.Config.data_paths`.
+      :attr:`.buildings.Config.data_paths` (relative paths resolve under
+      ``message_ix_buildings/sturm/message_linking``, with ``{code}`` substituted from
+      ``kwargs["code"]`` or :attr:`~.buildings.Config.code`).
     - Model data are prepared using :func:`prepare_data_B`
     - The functions :func:`_remove_rc_bounds` and
       :func:`_replace_ue_rt_share_with_share_mode` are called on `scenario`.
@@ -1063,12 +1070,24 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             afofi_demand=None,  # Use calculated AFOFI demand
         )
     elif context.buildings.method is METHOD.B:
-        # MESSAGE demand tables; extra columns (e.g. saved row index) are dropped.
-        demand_columns = ["node", "commodity", "year", "level", "time", "unit", "value"]
+        context_b = deepcopy(context)
+        context_b.buildings.code = kwargs.get("code", context.buildings.code).strip()
 
-        def _load_csv(attr: str, columns: list[str] | None = None) -> pd.DataFrame:
-            path = Path(context.buildings.data_paths[attr])
-            path = path if path.is_absolute() else private_data_path("buildings", attr)
+        call_sturm(context_b, scenario)
+
+        # MESSAGE demand tables; extra columns (e.g. saved row index) are dropped.
+        _DEMAND_CSV_COLUMNS = (
+            "node",
+            "commodity",
+            "year",
+            "level",
+            "time",
+            "unit",
+            "value",
+        )
+
+        def _load_csv(attr: str) -> pd.DataFrame:
+            path = message_linking_path(context_b, attr)
             df = pd.read_csv(path)
             columns = columns or df.columns.tolist()
             try:
@@ -1078,10 +1097,10 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
                 raise ValueError(f"{path}: missing demand columns {sorted(missing)}")
 
         # Inputs for prepare_data_B from context.buildings or defaults
-        prices = _load_csv("prices")
-        sturm_r = _load_csv("sturm_r", demand_columns)
-        sturm_c = _load_csv("sturm_c", demand_columns)
-        demand_static = _load_csv("demand_static", demand_columns)
+        prices = pd.read_csv(message_linking_path(context_b, "prices"))
+        sturm_r = _load_csv("sturm_r")
+        sturm_c = _load_csv("sturm_c")
+        demand_static = _load_csv("demand_static")
         demand_static.loc[
             demand_static["commodity"].str.contains("afofio", na=False), "value"
         ] = 0  # Temporary fix to remove AFOFIO demand from demand_static

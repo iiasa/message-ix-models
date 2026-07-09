@@ -10,11 +10,12 @@ buildings:
   # An ID from CL_SCENARIO_CIRCEULAR, e.g. "R" for "Reference"
   code: "R"
   data_paths:
-      # Input file names under private_data_path("buildings")
+      # Relative paths resolve under message_ix_buildings/sturm/message_linking;
+      # {code} is substituted from buildings.code (see sturm.format_sturm_code).
       prices: "input_prices_R12.csv"
-      sturm_r: "resid_sturm_aligned_R.csv"
-      sturm_c: "comm_sturm_aligned_R.csv"
-      demand_static: "resid_comm_glance_aligned_R.csv"
+      sturm_r: "resid_sturm_aligned_{code}.csv"
+      sturm_c: "comm_sturm_aligned_{code}.csv"
+      demand_static: "resid_comm_glance_aligned_{code}.csv"
   # Whether to include materials (steel, cement, aluminum) in the buildings spec
   with_materials: False
 
