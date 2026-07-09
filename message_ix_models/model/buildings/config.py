@@ -26,6 +26,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 #: Defaults for :attr:`Config.data_paths`.
+# YJ: deprecated, by default call sturm once for the first build
+# but the feature is still useful for users who skip running sturm
 DEFAULT_DATA_PATHS: "DataPaths" = dict(
     prices=Path("input_prices_R12.csv"),
     sturm_r=Path("report_MESSAGE_resid_SSP2_nopol_post.csv"),
