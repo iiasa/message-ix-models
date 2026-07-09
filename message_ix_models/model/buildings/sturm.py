@@ -226,12 +226,37 @@ def _message_buildings_install_dir() -> Path:
 
 
 # MIXB demand CSV basenames under ``sturm/message_linking``
-# ({code} = context.buildings.code).
+# ({code} = :func:`format_sturm_code` applied to ``context.buildings.code``).
 _MIXB_DEMAND_CSV = (
     "resid_sturm_aligned_{code}.csv",
     "comm_sturm_aligned_{code}.csv",
     "resid_comm_glance_aligned_{code}.csv",
 )
+
+
+def format_sturm_code(code: str, sturm_scen: str = "r") -> str:
+    """Return MIXB filename code suffix under ``sturm/message_linking``.
+    """
+    return code + "_" + sturm_scen if code != "R" else code
+
+
+def message_linking_path(context: Context, attr: str) -> Path:
+    """Resolve :attr:`~.buildings.Config.data_paths` entry to a CSV path.
+
+    Absolute paths are returned unchanged. Relative paths are resolved under
+    ``message_ix_buildings/sturm/message_linking``, with ``{code}`` substituted using
+    :func:`format_sturm_code`.
+    """
+    val = context.buildings.data_paths[attr]
+    path = Path(val)
+    if path.is_absolute():
+        return path
+    code = format_sturm_code(context.buildings.code)
+    return (
+        _message_buildings_install_dir()
+        .joinpath("message_ix_buildings", "sturm", "message_linking")
+        .joinpath(str(val).format(code=code))
+    )
 
 
 def _pass_scen_config_to_mixb(sturm_dir: Path, scenarios: list[str]) -> None:
@@ -250,24 +275,29 @@ def _pass_scen_config_to_mixb(sturm_dir: Path, scenarios: list[str]) -> None:
     log.info("Wrote STURM scenarios %s to %s", scenarios, path)
 
 
-def call_sturm(context: Context, scenario: Scenario) -> Scenario:
-    """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM.
+def _write_sturm_prices(
+    scenario: Scenario, price_default: Path, price_input: Path
+) -> int:
+    """Write ``input_prices_R12.csv`` for STURM.
 
-    Read reference levels from ``input_prices_R12_default.csv``, apply scenario
-    ``PRICE_COMMODITY`` (with floors), write ``input_prices_R12.csv``, update
-    ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
+    If `scenario` has a solution, merge ``PRICE_COMMODITY`` into the reference
+    levels from `price_default` (with floors). Otherwise copy `price_default` unchanged.
+
+    Returns
+    -------
+    int
+        Number of price rows updated from the scenario solution.
     """
-    buildings_root = _message_buildings_install_dir()
-    sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
-    price_dir = sturm_dir.joinpath("data")
-
-    price_default = price_dir.joinpath("input_prices_R12_default.csv")
-    price_input = price_dir.joinpath("input_prices_R12.csv")
-
-    if not price_default.exists():
-        raise FileNotFoundError(f"STURM reference prices not found: {price_default}")
-
     df_prices_ori = pd.read_csv(price_default)
+
+    if not scenario.has_solution():
+        log.info(
+            "Scenario has no solution; writing reference prices from %s to %s",
+            price_default,
+            price_input,
+        )
+        df_prices_ori.to_csv(price_input, index=False)
+        return 0
 
     # Retrieve new energy commodity prices from the scenario
     df_prices = scenario.var(
@@ -342,11 +372,33 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
 
     # STURM R scripts read input_prices_R12.csv; default file is left unchanged.
     df_updated.to_csv(price_input, index=False)
+    return rows_updated
+
+
+def call_sturm(context: Context, scenario: Scenario) -> Scenario:
+    """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM.
+
+    Read reference levels from ``input_prices_R12_default.csv``. If `scenario` has a
+    solution, apply ``PRICE_COMMODITY`` (with floors) and write
+    ``input_prices_R12.csv``; otherwise copy the reference file unchanged. Update
+    ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
+    """
+    buildings_root = _message_buildings_install_dir()
+    sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
+    price_dir = sturm_dir.joinpath("data")
+
+    price_default = price_dir.joinpath("input_prices_R12_default.csv")
+    price_input = price_dir.joinpath("input_prices_R12.csv")
+
+    if not price_default.exists():
+        raise FileNotFoundError(f"STURM reference prices not found: {price_default}")
+
+    rows_updated = _write_sturm_prices(scenario, price_default, price_input)
     log.info("Updated prices written to %s (reference: %s)", price_input, price_default)
-    log.info("Total rows: %d", len(df_updated))
     log.info("Rows with updated prices: %d", rows_updated)
 
-    _pass_scen_config_to_mixb(sturm_dir, [context.buildings.code])
+    code = context.buildings.code
+    _pass_scen_config_to_mixb(sturm_dir, [code + "_r" if code != "R" else code])
 
     # Run STURM (via Rscript)
     for name in (
@@ -374,7 +426,7 @@ def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
     linking_dir = buildings_root.joinpath(
         "message_ix_buildings", "sturm", "message_linking"
     )
-    code = context.buildings.code
+    code = format_sturm_code(context.buildings.code)
     demand = pd.concat(
         [
             pd.read_csv(linking_dir / name.format(code=code))
