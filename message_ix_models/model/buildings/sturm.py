@@ -347,8 +347,7 @@ _MIXB_DEMAND_CSV = (
 
 
 def format_sturm_code(code: str, sturm_scen: str = "r") -> str:
-    """Return MIXB filename code suffix under ``sturm/message_linking``.
-    """
+    """Return MIXB filename suffix under ``sturm/message_linking``."""
     return code + "_" + sturm_scen if code != "R" else code
 
 
@@ -513,9 +512,11 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
 
     # Run STURM (via Rscript)
     for name in (
-        "run_STURM_bmt_resid.R", 
+        "run_STURM_bmt_resid.R",
         "run_STURM_bmt_comm.R",
-        "run_MIXB_aligner.R",):
+        "run_GLANCE_placeholder.R",
+        "run_MIXB_aligner.R",
+    ):
         script = sturm_dir.joinpath(name)
         if not script.is_file():
             raise FileNotFoundError(f"STURM BMT R script not found: {script}")
@@ -545,7 +546,7 @@ def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
         ignore_index=True,
     )
 
-    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
+    exclude_expr = r"_mat_|_floor_|v_no_heat|non-comm"
     # TODO: do we need dynamic materials demand for CircEUlar too?
     demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
     demand["level"] = "useful"
