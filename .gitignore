@@ -178,3 +178,7 @@ message_ix_models/data/hydrogen/debug_utils/
 /SSP_*.xlsx
 /_*.xlsx
 /*_check.xlsx
+
+# Report Excel outputs (regenerated per reporting run; not source)
+reporting_output/
+message_ix_models/data/hydrogen/reporting_example_no_H2_leak.xlsx
