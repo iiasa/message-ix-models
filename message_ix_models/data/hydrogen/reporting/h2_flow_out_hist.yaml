@@ -1,0 +1,100 @@
+# Historical companion to h2_flow_out.yaml: emits the pre-firstmodelyear
+# (2010/2015) values of the curated out|<tech>|hydrogen production leaves, so
+# the concrete per-technology flows carry the same history the aggregated
+# Secondary Energy|Hydrogen|<route> family already gets from h2_prod_hist.yaml.
+#
+# var: out_hist -> output x historical_activity (report/hydrogen/h2_reporting.py).
+# It auto-skips any technology with no historical_activity, so routes without
+# calibrated history emit nothing (no spurious zeros). Same iamc names + short
+# names as h2_flow_out.yaml, so the historical rows concatenate onto the same
+# out| variables by year.
+#
+# NOTE ON MODES: the electrolysers use the HISTORICAL modes [M1, feedstock, fuel]
+# — mirroring h2_prod_hist.yaml — NOT the CO2-source split modes
+# (feedstock_bic/fic/dac, fuel_*). The split modes are the newer Yoga meth_h2
+# structure that does not exist in the historical calibration, so historical
+# electrolyser activity is carried under the plain feedstock/fuel modes.
+
+var:
+  out_hist
+
+iamc_prefix:
+  "out|"
+
+unit: EJ/yr
+
+vars:
+  # gas
+  h2_smr|hydrogen:
+    filter:
+      {technology: h2_smr, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_smr
+
+  h2_smr_ccs|hydrogen:
+    filter:
+      {technology: h2_smr_ccs, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_smr_ccs
+
+  # coal
+  h2_coal|hydrogen:
+    filter:
+      {technology: h2_coal, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_coal
+
+  h2_coal_ccs|hydrogen:
+    filter:
+      {technology: h2_coal_ccs, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_coal_ccs
+
+  # biomass
+  h2_bio|hydrogen:
+    filter:
+      {technology: h2_bio, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_bio
+
+  h2_bio_ccs|hydrogen:
+    filter:
+      {technology: h2_bio_ccs, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_bio_ccs
+
+  # electricity (historical modes, not the CO2-source split modes)
+  h2_elec_alk|hydrogen:
+    filter:
+      {technology: h2_elec_alk, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_elec_alk
+
+  h2_elec_pem|hydrogen:
+    filter:
+      {technology: h2_elec_pem, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_elec_pem
+
+  h2_elec_soe|hydrogen:
+    filter:
+      {technology: h2_elec_soe, mode: [M1, feedstock, fuel], commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_elec_soe
+
+  # electric pyrolysis (turquoise)
+  h2_pyro_elec|hydrogen:
+    filter:
+      {technology: h2_pyro_elec, mode: M1, commodity: hydrogen, level: secondary}
+    original_unit: GWa
+    short:
+      out_h2_pyro
