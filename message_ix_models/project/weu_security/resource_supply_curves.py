@@ -92,23 +92,23 @@ def adjust_resource_supply_curves(base_scenario_name:str,
             out_scenario.remove_par(p, rsc_in)
             out_scenario.add_par(p, rsc_out)
 
-    #rsc_out['status'] = 'Adjusted'
-    #rsc_in['status'] = 'Base'
-    #rsc_full = pd.concat([rsc_in, rsc_out])
-    #rsc_full['fuel'] = np.where(rsc_full['technology'].str.contains('gas'), 'Gas', 'Oil')
+    rsc_out['status'] = 'Adjusted'
+    rsc_in['status'] = 'Base'
+    rsc_full = pd.concat([rsc_in, rsc_out])
+    rsc_full['fuel'] = np.where(rsc_full['technology'].str.contains('gas'), 'Gas', 'Oil')
     
-    #plot_rsc(rsc_full)
+    plot_rsc(rsc_full)
 
     out_scenario.solve()
 
     mp.close_db()
 
 # Run functions
-for scen_name in ["SSP2_NAM30EJ"]:
+for scen_name in ["SSP2", "SSP2_NAM30EJ"]:
     print(f"----------Adjusting resource supply curves for {scen_name}----------")
     adjust_resource_supply_curves(base_scenario_name = scen_name,
-                                adjustment_factors = {'gas_extr_1': 1.0, 'gas_extr_2': 0.7, 'gas_extr_3': 0.7, 
-                                                      'gas_extr_4': 0.5, 'gas_extr_5': 0.5, 'gas_extr_6': 0.5, 'gas_extr_7': 0.5, 
+                                adjustment_factors = {'gas_extr_1': 1.0, 'gas_extr_2': 0.7, 'gas_extr_3': 0.5, 
+                                                      'gas_extr_4': 0.40, 'gas_extr_5': 0.25, 'gas_extr_6': 0.20, 'gas_extr_7': 0.10, 
                                                       'oil_extr_1': 1.0, 'oil_extr_2': 0.7, 'oil_extr_3': 0.7, 
                                                       'oil_extr_4': 0.5, 'oil_extr_5': 0.5, 'oil_extr_6': 0.5, 'oil_extr_7': 0.5},
                                 adjustment_regions = ['R12_NAM'],

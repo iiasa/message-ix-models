@@ -61,7 +61,7 @@ for model_scen in models_scenarios.keys():
     base_scen = models_scenarios[model_scen]['scenario']
 
     print(f"Base model: {base_model}/{base_scen}")
-    print(f"Target model: weu_security/{model_scen}_portupdate") #TODO: Remove _portupdate after fix
+    print(f"Target model: weu_security/{model_scen}")
 
     print("Setting up scenario")
     load_and_solve(trade_dict = trade_dict,
@@ -77,7 +77,7 @@ for model_scen in models_scenarios.keys():
     print("Updating extraction constraints")
     mp = ixmp.Platform()
     base_scenario = message_ix.Scenario(mp, model='weu_security', scenario=model_scen)
-    out_scenario = base_scenario.clone('weu_security', model_scen + '_portupdate') #TODO: Remove _portupdate after fix
+    out_scenario = base_scenario.clone('weu_security', model_scen)
     out_scenario.set_as_default()
 
     for g in ['growth_activity_up']:
