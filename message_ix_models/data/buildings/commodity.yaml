@@ -59,6 +59,8 @@ resid_heat_gas:
   description: Gas demand for residential heating
 resid_hotwater_gas:
   description: Gas demand for residential hotwater
+resid_apps_gas:
+  description: Gas demand for residential appliances
 comm_heat_gas:
   description: Gas demand for commercial heating
 comm_hotwater_gas:
