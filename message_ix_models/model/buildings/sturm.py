@@ -243,17 +243,19 @@ def message_linking_path(context: Context, attr: str) -> Path:
     """Resolve :attr:`~.buildings.Config.data_paths` entry to a CSV path.
 
     Absolute paths are returned unchanged. Relative paths are resolved under
-    ``message_ix_buildings/sturm/message_linking``, with ``{code}`` substituted using
-    :func:`format_sturm_code`.
+    ``message_ix_buildings/sturm/message_linking``, except ``prices``, which resolves
+    under ``message_ix_buildings/sturm/data``. ``{code}`` is substituted using
+    :func:`format_sturm_code` where present in the configured filename.
     """
     val = context.buildings.data_paths[attr]
     path = Path(val)
     if path.is_absolute():
         return path
     code = format_sturm_code(context.buildings.code)
+    subdir = "data" if attr == "prices" else "message_linking"
     return (
         _message_buildings_install_dir()
-        .joinpath("message_ix_buildings", "sturm", "message_linking")
+        .joinpath("message_ix_buildings", "sturm", subdir)
         .joinpath(str(val).format(code=code))
     )
 
@@ -377,10 +379,10 @@ def _write_sturm_prices(
 def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM.
 
-    Read reference levels from ``input_prices_R12_default.csv``. If `scenario` has a
-    solution, apply ``PRICE_COMMODITY`` (with floors) and write
-    ``input_prices_R12.csv``; otherwise copy the reference file unchanged. Update
-    ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
+    Read reference levels from ``sturm/data/input_prices_R12_default.csv``. If
+    `scenario` has a solution, apply ``PRICE_COMMODITY`` (with floors) and write
+    ``sturm/data/input_prices_R12.csv``; otherwise copy the reference file unchanged.
+    Update ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
     """
     buildings_root = _message_buildings_install_dir()
     sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
