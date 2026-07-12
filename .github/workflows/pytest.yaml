@@ -55,12 +55,12 @@ jobs:
         os: [ macos-15-intel, macos-latest, ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: francisbilham11/action-cached-lfs-checkout@v3
+    - uses: francisbilham11/action-cached-lfs-checkout@v4
       with:
         ref: ${{ needs.check.outputs.ref }}
 
     - name: Cache static data
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: message-static-data
         key: static-data-${{ matrix.os }}
@@ -123,7 +123,7 @@ jobs:
 
     steps:
     - name: Cache test data
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: |
           local-data
@@ -131,12 +131,12 @@ jobs:
         key: local-data-${{ matrix.os }}-upstream-${{ matrix.version.upstream }}
 
     - name: Check out message-ix-models
-      uses: francisbilham11/action-cached-lfs-checkout@v3
+      uses: francisbilham11/action-cached-lfs-checkout@v4
       with:
         ref: ${{ needs.check.outputs.ref }}
 
     - name: Restore message-static-data from cache
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: message-static-data
         key: static-data-${{ matrix.os }}
