@@ -102,6 +102,19 @@ aggregates:
     unit: EJ/yr
 
   # --- Per-commodity in|all / out|all totals ---
+  # FAMILY SEMANTICS: in|all|<c> = REGIONAL consumption of <c>; international
+  # shipping bunkers are EXCLUDED for every commodity. Bunkers are GLB-native
+  # (they report only at R12_GLB, the World-level sink) and stay first-class in
+  # in|Shipping|all and the Final Energy|Bunkers|Shipping family. This matches
+  # the legacy trade convention ("excluding use for international shipping") and
+  # makes the three commodities symmetric -- in|all|NH3 always excluded its
+  # bunker. It is also structural: one aggregate = ONE REGION BASIS, exactly as
+  # one file = one unit. The engine refuses a variable mixing GLB-native and
+  # regional rows (check_region_purity, raised before the World step), because
+  # the World step cannot classify it -- so a spec that globs a bunker leaf into
+  # regional components fails the run loudly instead of publishing an
+  # understated World row. A "consumption incl. bunkers" total would need
+  # post-World aggregation, an engine extension deliberately not built.
   # Q6 split rule: a single total is ONE unit, so these are the commodity's NATIVE
   # basis; the cross-basis pieces are excluded (a separate total, not in the spec).
   # in|all|hydrogen: all H2 consumption (EJ). Lists the meth_h2 CO2-source TOTAL
@@ -116,7 +129,6 @@ aggregates:
       - "in|Industry|Iron and Steel|*|hydrogen"
       - "in|Industry|Refining|*|hydrogen"
       - "in|Power|*|hydrogen"
-      - "in|Shipping|*|hydrogen"
       - "in|Transportation|*|hydrogen"
     unit: EJ/yr
   # in|all|methanol: ENERGY methanol consumption only (EJ). The material feedstock
@@ -125,12 +137,11 @@ aggregates:
   - name: in|all|methanol
     patterns:
       - "in|Industry|Other|furnace_methanol_*|methanol"
-      - "in|Shipping|meth_bunker|methanol"
       - "in|Transportation|*|methanol"
     unit: EJ/yr
   # in|all|NH3: MATERIAL ammonia consumption (Mt). The shipping bunker
-  # (in|Shipping|NH3_bunker|ammonia, EJ) is the cross-basis piece, excluded. Whether
-  # "all" should span both bases is a Yiyi scope question (item 18).
+  # (in|Shipping|NH3_bunker|ammonia, EJ) is excluded per the family semantics
+  # above (and is additionally cross-basis).
   - name: in|all|NH3
     patterns:
       - "in|Industry|Chemicals|NH3_to_N_fertil|NH3"
