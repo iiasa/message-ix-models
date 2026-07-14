@@ -617,6 +617,40 @@ def compute_global_aggregates(
     return pyam.IamDataFrame(pd.concat([data, *frames], ignore_index=True))
 
 
+def check_region_purity(py_df: pyam.IamDataFrame, glb: str = "R12_GLB") -> None:
+    """Raise if any variable carries both native ``glb`` rows and regional rows.
+
+    The World step classifies variables binarily: those with any ``glb`` row are
+    taken as GLB-native (bunkers, trade-pool techs) and kept as-is; all others
+    get a ``glb`` row summed from their regional rows. A variable holding BOTH
+    kinds of rows — typically a global aggregate whose patterns mix a GLB-native
+    leaf into regional components — would keep its partial ``glb`` row as the
+    World value, silently understated. The zero-fill in
+    :func:`format_reporting_df` keeps GLB-native leaves present (as zeros) even
+    when idle, so this fires on config structure, not on activity levels.
+
+    Raises
+    ------
+    ValueError
+        Naming the mixed variables. Resolutions: drop the GLB-native pattern
+        from the aggregate spec (report that piece as its own variable, e.g.
+        under ``in|Shipping|all``), or aggregate after the World step (an
+        engine extension, deliberately not built).
+    """
+    native = set(py_df.filter(region=glb).variable)
+    regional = set(py_df.filter(region=glb, keep=False).variable)
+    mixed = sorted(native & regional)
+    if mixed:
+        raise ValueError(
+            f"Variables mix native {glb} rows with regional rows; the World "
+            f"step cannot classify them: {mixed}. A global-aggregate spec "
+            "likely matches a GLB-native leaf (e.g. in|Shipping|*) alongside "
+            "regional ones. One aggregate = one region basis: remove the "
+            "GLB-native pattern from the spec, or aggregate after the World "
+            "step."
+        )
+
+
 def load_config(name: str, domain: str = "hydrogen") -> "Config":
     """Load a config for a given reporting variable category from the YAML files.
 
@@ -832,6 +866,7 @@ def run_sectoral_reporting(
     # (chemicals bunkers already report at R12_GLB).
     if add_world:
         glb = "R12_GLB"
+        check_region_purity(py_df, glb)
         native = set(py_df.filter(region=glb).variable)
         to_sum = py_df.filter(variable=list(native), keep=False).filter(
             region=glb, keep=False
