@@ -58,6 +58,37 @@ def friction_dictionary(friction_endyear:int = 2100):
         
     return bound_out
 
+# Increase import costs
+def import_cost_update(scenario,
+                       importers_list:list(str),
+                       cost_multiplier:int,
+                       cost_parameter:str = "fix_cost"):
+
+    df = scenario.par(cost_parameter)
+    
+    for i in importers_list:
+        print(f"Increase fixed costs on fuel exports destined for {i}")
+        
+        cdf = cdf[cdf['technology'].str.contains(f'_exp_{i}')]
+        cdf['commodity'] = cdf['technology'].str.split('_exp_').str[0]
+        cdf = cdf[cdf['commodity'].isin(['coal_shipped', 'crudeoil_shipped', 'crudeoil_piped', 'gas_piped', 
+                                         'foil_piped', 'foil_shipped', 'loil_piped', 'loil_shipped',
+                                         'LNG_shipped'])]
+        cdf = cdf.drop(columns = ['commodity'])
+        cdf_new = cdf.copy()
+        cdf_new['value'] *= cost_multiplier
+    
+        printdf_old = cdf[cdf['year_act'] == 2035]
+        printdf_new = cdf_new[cdf_new['year_act'] == 2035]
+        print("### Default Fixed Costs ###")
+        print(printdf_old)
+        print("### Updated Fixed Costs ###")
+        print(printdf_new)
+    
+        with scenario.transact(f"Update import costs for {i}"):
+            scenario.remove_par("fix_cost", cdf)
+            scenario.add_par("fix_cost", cdf_new)
+
 # Run scenarios
 for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     base_model = 'sparccle_trade'
@@ -68,27 +99,14 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     out_scenario.set_as_default()
 
     # Increase import costs
-    print("Increase fixed costs on fuel exports destined for Europe")
-    cdf = out_scenario.par("fix_cost")
-    cdf = cdf[(cdf['technology'].str.contains('_exp_weu'))|(cdf['technology'].str.contains('_exp_eeu'))]
-    cdf['commodity'] = cdf['technology'].str.split('_exp_').str[0]
-    cdf = cdf[cdf['commodity'].isin(['coal_shipped', 'crudeoil_shipped', 'crudeoil_piped', 'gas_piped', 
-                                     'foil_piped', 'foil_shipped', 'loil_piped', 'loil_shipped',
-                                     'LNG_shipped'])]
-    cdf = cdf.drop(columns = ['commodity'])
-    cdf_new = cdf.copy()
-    cdf_new['value'] *= 3
-
-    printdf_old = cdf[cdf['year_act'] == 2035]
-    printdf_new = cdf_new[cdf_new['year_act'] == 2035]
-    print("### Default Fixed Costs ###")
-    print(printdf_old)
-    print("### Updated Fixed Costs ###")
-    print(printdf_new)
-    
-    with out_scenario.transact("Update import costs costs"):
-        out_scenario.remove_par("fix_cost", cdf)
-        out_scenario.add_par("fix_cost", cdf_new)
+    import_cost_update(scenario = out_scenario,
+                       importers = ["eeu", "weu"],
+                       cost_multiplier = 1.2)
+    import_cost_update(scenario = out_scenario,
+                       importers = ["afr", "chn", "fsu", 
+                                    "lam", "mea", "nam", 
+                                    "pao", "pas", "rcpa", "sas"],
+                       cost_multiplier = 1.1)
 
     # Add FSU trade friction
     fsu_bound = friction_dictionary()
