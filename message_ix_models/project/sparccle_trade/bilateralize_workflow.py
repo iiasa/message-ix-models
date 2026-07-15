@@ -55,17 +55,17 @@ liquefaction_parameters = update_liquefaction_input(message_regions = "R12",
                                                      project_name = 'sparccle_trade',
                                                      config_name = 'config.yaml')
 # Run scenarios without bilateralization
-mp = ixmp.Platform()
-for model_scen in models_scenarios.keys():
-    base_model = models_scenarios[model_scen]['model']
-    base_scen = models_scenarios[model_scen]['scenario']
+#mp = ixmp.Platform()
+#for model_scen in models_scenarios.keys():
+#    base_model = models_scenarios[model_scen]['model']
+#    base_scen = models_scenarios[model_scen]['scenario']
 
-    print("Loading and cloning scenario")
-    base = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-    cloned_scen = base.clone('sparccle_trade', model_scen + "_base", keep_solution=False)
-    cloned_scen.set_as_default()
-    cloned_scen.solve(quiet = False, solve_options={"scaind":"-1"})
-mp.close_db()
+#    print("Loading and cloning scenario")
+#    base = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
+#    cloned_scen = base.clone('sparccle_trade', model_scen + "_base", keep_solution=False)
+#    cloned_scen.set_as_default()
+#    cloned_scen.solve(quiet = False, solve_options={"scaind":"-1"})
+#mp.close_db()
 
 # Update base scenarios
 for model_scen in models_scenarios.keys():
