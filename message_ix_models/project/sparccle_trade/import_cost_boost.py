@@ -77,7 +77,7 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
                                      'LNG_shipped'])]
     cdf = cdf.drop(columns = ['commodity'])
     cdf_new = cdf.copy()
-    cdf_new['value'] *= 1.2
+    cdf_new['value'] *= 3
 
     printdf_old = cdf[cdf['year_act'] == 2035]
     printdf_new = cdf_new[cdf_new['year_act'] == 2035]
