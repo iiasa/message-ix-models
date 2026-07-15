@@ -109,3 +109,20 @@ update_tec:
   - LNG_shipped
   - loil_piped
   - loil_shipped
+
+# TRADE FRICTION SCENARIOS
+restriction:
+  exporters:
+    - R12_FSU
+  importers:
+    - R12_WEU
+    - R12_EEU
+  technologies:
+    - gas_piped_exp_eeu
+    - gas_piped_exp_weu
+    - LNG_shipped_exp_eeu
+    - LNG_shipped_exp_weu
+    - crudeoil_piped_exp_eeu
+    - crudeoil_piped_exp_weu
+    - crudeoil_shipped_exp_eeu
+    - crudeoil_shipped_exp_weu

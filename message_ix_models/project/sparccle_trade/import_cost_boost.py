@@ -10,6 +10,7 @@ from message_ix_models.tools.bilateralize.liquefaction_calibration import *
 
 import os
 from ixmp import Platform
+from itertools import product
 
 # Import scenario and models
 config, config_path = load_config(project_name = 'sparccle_trade', config_name = 'config.yaml')
@@ -17,6 +18,47 @@ models_scenarios = config['models_scenarios']
 data_path = package_data_path("bilateralize")
 
 mp = ixmp.Platform()
+
+# Trade friction functions
+def friction_dictionary(friction_endyear:int = 2100):
+
+    # Import scenario and models
+    config, config_path = load_config(project_name = 'sparccle_trade', config_name = 'config.yaml')
+    data_path = package_data_path("bilateralize")
+
+    sens_i = config['restriction']['exporters']
+    sens_j = config['restriction']['importers']
+    sens_techs = config['restriction']['technologies']
+
+    base_years = [2030, 2035, 2040, 2045, 2050, 2055,
+                  2060, 2070, 2080, 2090, 2100, 2110]
+    fric_years = [y for y in base_years if y <= friction_endyear]
+    
+    bound_out = pd.DataFrame()
+    for tec in sens_techs:
+        tec_list = sens_techs
+        
+        basedf = pd.DataFrame(product(sens_i, tec_list,
+                                  fric_years,
+                                  ["M1"],
+                                  ["year"]))
+        basedf.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time']
+
+        bounddf = message_ix.make_df(
+            "bound_activity_up",
+            node_loc = basedf['node_loc'],
+            technology = basedf['technology'],
+            value = 0,
+            year_act = basedf['year_act'],
+            mode = basedf['mode'],
+            time = basedf['time'],
+            unit = '-')
+
+        bound_out = pd.concat([bound_out, bounddf])
+        
+    return bound_out
+
+# Run scenarios
 for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     base_model = 'sparccle_trade'
     base_scen = in_scen
@@ -24,7 +66,8 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
     out_scenario = base_scenario.clone('sparccle_trade', base_scen + "_impcosts_hi", keep_solution = False)
     out_scenario.set_as_default()
-    
+
+    # Increase import costs
     print("Increase fixed costs on fuel exports destined for Europe")
     cdf = out_scenario.par("fix_cost")
     cdf = cdf[(cdf['technology'].str.contains('_exp_weu'))|(cdf['technology'].str.contains('_exp_eeu'))]
@@ -34,7 +77,7 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
                                      'LNG_shipped'])]
     cdf = cdf.drop(columns = ['commodity'])
     cdf_new = cdf.copy()
-    cdf_new['value'] *= 2
+    cdf_new['value'] *= 3
 
     printdf_old = cdf[cdf['year_act'] == 2035]
     printdf_new = cdf_new[cdf_new['year_act'] == 2035]
@@ -46,7 +89,21 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     with out_scenario.transact("Update import costs costs"):
         out_scenario.remove_par("fix_cost", cdf)
         out_scenario.add_par("fix_cost", cdf_new)
-        
+
+    # Add FSU trade friction
+    fsu_bound = friction_dictionary()
+    
+    with out_scenario.transact(f"Add friction sensitivity"):
+        out_scenario.add_par('bound_activity_up', fsu_bound)
+
+    with out_scenario.transact("Remove constraints on shocked technologies"):
+        for par in ["growth_activity_lo", "growth_activity_up", "initial_activity_lo", "initial_activity_up"]:
+            basepar = out_scenario.par(par, filters = {"technology": fsu_bound['technology'],
+                                                       "node_loc": fsu_bound['node_loc']})
+            if len(basepar) != 0:
+                print(f"...{par}")
+                out_scenario.remove_par(par, basepar)
+                
     print("Solve scenario")
     out_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
 
