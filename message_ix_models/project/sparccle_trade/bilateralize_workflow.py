@@ -34,16 +34,16 @@ prepare_edit_files(project_name = 'sparccle_trade',
                    P_access = True)
 
 # Add scenario updates for project
-#print("Add scenario updates for project")
-#for tec in config['update_tec']:
-#    print(f"...{tec}")
-#    if os.path.exists(package_data_path("sparccle_trade", "scenario_updates", tec)):
-#        for file in os.listdir(package_data_path("sparccle_trade", "scenario_updates", tec)):
-#            base_file = package_data_path("sparccle_trade", "scenario_updates", tec, file)
-#            if ".csv" in str(base_file):
-#                dest_file = os.path.join(data_path, tec, "bare_files", file)
-#                shutil.copy2(base_file, dest_file)
-#                print(f"Copied file from scenario_updates to bare: {file}")
+print("Add scenario updates for project")
+for tec in config['update_tec']:
+    print(f"...{tec}")
+    if os.path.exists(package_data_path("sparccle_trade", "scenario_updates", tec)):
+        for file in os.listdir(package_data_path("sparccle_trade", "scenario_updates", tec)):
+            base_file = package_data_path("sparccle_trade", "scenario_updates", tec, file)
+            if ".csv" in str(base_file):
+                dest_file = os.path.join(data_path, tec, "bare_files", file)
+                shutil.copy2(base_file, dest_file)
+                print(f"Copied file from scenario_updates to bare: {file}")
                 
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'sparccle_trade', 
@@ -55,17 +55,17 @@ liquefaction_parameters = update_liquefaction_input(message_regions = "R12",
                                                      project_name = 'sparccle_trade',
                                                      config_name = 'config.yaml')
 # Run scenarios without bilateralization
-mp = ixmp.Platform()
-for model_scen in models_scenarios.keys():
-    base_model = models_scenarios[model_scen]['model']
-    base_scen = models_scenarios[model_scen]['scenario']
+#mp = ixmp.Platform()
+#for model_scen in models_scenarios.keys():
+#    base_model = models_scenarios[model_scen]['model']
+#    base_scen = models_scenarios[model_scen]['scenario']
 
-    print("Loading and cloning scenario")
-    base = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-    cloned_scen = base.clone('sparccle_trade', model_scen + "_base", keep_solution=False)
-    cloned_scen.set_as_default()
-    cloned_scen.solve(quiet = False, solve_options={"scaind":"-1"})
-mp.close_db()
+#    print("Loading and cloning scenario")
+#    base = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
+#    cloned_scen = base.clone('sparccle_trade', model_scen + "_base", keep_solution=False)
+#    cloned_scen.set_as_default()
+#    cloned_scen.solve(quiet = False, solve_options={"scaind":"-1"})
+#mp.close_db()
 
 # Update base scenarios
 for model_scen in models_scenarios.keys():
