@@ -39,7 +39,7 @@ level_1:
 level_2:
   Hydrogen:
     short: prod_h2
-    components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec, prod_h2_geological ]
+    components: [ prod_h2_gas, prod_h2_coal, prod_h2_bio, prod_h2_elec ]
   Hydrogen|Fossil:
     short: prod_h2_fossil
     components: [ prod_h2_fossil_w_ccs, prod_h2_fossil_wo_ccs ]
