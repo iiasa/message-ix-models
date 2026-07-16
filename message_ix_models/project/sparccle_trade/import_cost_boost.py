@@ -60,7 +60,7 @@ def friction_dictionary(friction_endyear:int = 2100):
 
 # Increase import costs
 def import_cost_update(scenario,
-                       importers_list:list(str),
+                       importers_list:list,
                        cost_multiplier:int,
                        cost_parameter:str = "fix_cost"):
 
@@ -69,7 +69,7 @@ def import_cost_update(scenario,
     for i in importers_list:
         print(f"Increase fixed costs on fuel exports destined for {i}")
         
-        cdf = cdf[cdf['technology'].str.contains(f'_exp_{i}')]
+        cdf = df[df['technology'].str.contains(f'_exp_{i}')].copy()
         cdf['commodity'] = cdf['technology'].str.split('_exp_').str[0]
         cdf = cdf[cdf['commodity'].isin(['coal_shipped', 'crudeoil_shipped', 'crudeoil_piped', 'gas_piped', 
                                          'foil_piped', 'foil_shipped', 'loil_piped', 'loil_shipped',
@@ -100,12 +100,12 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
 
     # Increase import costs
     import_cost_update(scenario = out_scenario,
-                       importers = ["eeu", "weu"],
+                       importers_list = ["eeu", "weu"],
                        cost_multiplier = 1.2)
     import_cost_update(scenario = out_scenario,
-                       importers = ["afr", "chn", "fsu", 
-                                    "lam", "mea", "nam", 
-                                    "pao", "pas", "rcpa", "sas"],
+                       importers_list = ["afr", "chn", "fsu", 
+                                         "lam", "mea", "nam", 
+                                         "pao", "pas", "rcpa", "sas"],
                        cost_multiplier = 1.1)
 
     # Add FSU trade friction
