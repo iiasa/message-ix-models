@@ -450,12 +450,13 @@ def build_emission_factor(
     """
     if config_dict["tracked_emissions"][tec] is not None:
         df_ef = pd.DataFrame()
-        for emission_type in config_dict["tracked_emissions"][tec]:
+        for emission_type in config_dict["tracked_emissions"][tec].keys():
             df_ef_t = build_parameterdf(
                 "emission_factor",
                 network_df=network_setup[tec],
                 col_values=dict(unit=None, emission=emission_type),
             )
+            df_ef_t["value"] = config_dict["emission_factor"][tec][emission_type]
             df_ef = pd.concat([df_ef, df_ef_t])
 
         parameter_outputs[tec]["trade"]["emission_factor"] = df_ef.drop_duplicates()
