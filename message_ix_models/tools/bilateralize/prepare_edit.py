@@ -456,9 +456,10 @@ def build_emission_factor(
                 network_df=network_setup[tec],
                 col_values=dict(unit=None, emission=emission_type),
             )
-            df_ef_t["value"] = config_dict["emission_factor"][tec][emission_type]
+            df_ef_t["value"] = config_dict["tracked_emissions"][tec][emission_type]
             df_ef = pd.concat([df_ef, df_ef_t])
-
+            df_ef = df_ef[df_ef['technology'].str.contains('_exp_')]
+            
         parameter_outputs[tec]["trade"]["emission_factor"] = df_ef.drop_duplicates()
 
     return parameter_outputs
