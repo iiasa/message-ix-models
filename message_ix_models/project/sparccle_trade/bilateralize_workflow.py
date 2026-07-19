@@ -44,7 +44,13 @@ for tec in config['update_tec']:
                 dest_file = os.path.join(data_path, tec, "bare_files", file)
                 shutil.copy2(base_file, dest_file)
                 print(f"Copied file from scenario_updates to bare: {file}")
-                
+
+# Add emission factors from edit to bare
+base_file = os.path.join(data_path, "gas_piped", "edit_files", "emission_factor.csv")
+dest_file = os.path.join(data_path, "gas_piped", "bare_files", "emission_factor.csv")
+shutil.copy2(base_file, dest_file)
+print(f"Copied from edit to bare: {file}")
+
 # Move data from bare files to a dictionary to update a MESSAGEix scenario
 trade_dict = bare_to_scenario(project_name = 'sparccle_trade', 
                               config_name = 'config.yaml',

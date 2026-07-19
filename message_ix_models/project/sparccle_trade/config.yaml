@@ -95,6 +95,7 @@ define_parameters:
       - var_cost
       - capacity_factor
       - relation_activity_CO2_Emission
+      - emission_factor
       
 # TECHNOLOGIES THAT ARE UPDATED WITH PROJECT-SPECIFIC SCENARIO UPDATES
 update_tec:
