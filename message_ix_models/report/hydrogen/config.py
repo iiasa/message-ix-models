@@ -111,7 +111,16 @@ class Config:
         return result
 
     def check_mapping(self) -> None:
-        """Assert that :attr:`mapping` has the correct structure and is complete."""
+        """Assert that :attr:`mapping` has the correct structure and is complete.
+
+        Raises
+        ------
+        ValueError
+            If any per-variable ``unit`` diverges from the file-level
+            :attr:`unit`. The engine emits one target unit per config file and
+            never applies the per-variable field, so a divergent entry is an
+            authoring error that would otherwise be silently ignored.
+        """
         assert self.mapping.empty or set(self.mapping.index.names) <= set("clmte")
         assert {
             "iamc_name",
@@ -121,6 +130,14 @@ class Config:
             "stoichiometric_factor",
         } == set(self.mapping.columns)
         assert not self.mapping.isna().any(axis=None)
+        divergent = self.mapping.loc[self.mapping["unit"] != self.unit, "iamc_name"]
+        if not divergent.empty:
+            raise ValueError(
+                f"Per-variable 'unit' diverges from the file-level unit "
+                f"{self.unit!r} for {sorted(set(divergent))}. One target unit "
+                "per YAML file; the per-variable field is not applied — remove "
+                "it or split the file."
+            )
 
     def store_aggregates(self, data: dict) -> None:
         """Store aggregate definitions from YAML data for IAMC-level aggregation.

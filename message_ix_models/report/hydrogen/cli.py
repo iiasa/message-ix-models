@@ -1,12 +1,15 @@
 import click
 import pyam
 from message_ix.report import Reporter
+
 from .h2_reporting import run_h2_reporting
+
 
 @click.group("hydrogen")
 def cli():
     """Hydrogen-related commands."""
     pass
+
 
 @cli.command("report")
 @click.pass_obj

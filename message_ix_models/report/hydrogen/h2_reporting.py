@@ -6,6 +6,7 @@ import message_ix
 import pandas as pd
 import pyam
 import yaml
+from genno.core.exceptions import MissingKeyError
 from iam_units import registry
 from message_ix.report import Reporter
 
@@ -43,30 +44,26 @@ def ensure_historical_keys(rep: Reporter) -> None:
     has_out_hist = any("out_hist" == str(k).split(":")[0] for k in rep.keys())
     has_emi_hist = any("emi_hist" == str(k).split(":")[0] for k in rep.keys())
 
-    # Check if base keys exist with dimensions
-    try:
-        if not has_out_hist and has_output and has_historical_activity:
-            rep.add("out_hist", "mul", "output", "historical_activity")
-        elif not has_out_hist:
-            LOG.warning(
-                "Cannot create out_hist: output=%s historical_activity=%s",
-                has_output,
-                has_historical_activity,
-            )
-    except Exception as exc:
-        LOG.error("Error creating out_hist key: %s", exc)
+    # Absent base keys are a data condition (scenario without historical data) and
+    # stay a warning; an unexpected failure of rep.add itself must propagate, or every
+    # _hist family downstream silently degrades to the quiet missing-key path.
+    if not has_out_hist and has_output and has_historical_activity:
+        rep.add("out_hist", "mul", "output", "historical_activity")
+    elif not has_out_hist:
+        LOG.warning(
+            "Cannot create out_hist: output=%s historical_activity=%s",
+            has_output,
+            has_historical_activity,
+        )
 
-    try:
-        if not has_emi_hist and has_emission_factor and has_historical_activity:
-            rep.add("emi_hist", "mul", "emission_factor", "historical_activity")
-        elif not has_emi_hist:
-            LOG.warning(
-                "Cannot create emi_hist: emission_factor=%s historical_activity=%s",
-                has_emission_factor,
-                has_historical_activity,
-            )
-    except Exception as exc:
-        LOG.error("Error creating emi_hist key: %s", exc)
+    if not has_emi_hist and has_emission_factor and has_historical_activity:
+        rep.add("emi_hist", "mul", "emission_factor", "historical_activity")
+    elif not has_emi_hist:
+        LOG.warning(
+            "Cannot create emi_hist: emission_factor=%s historical_activity=%s",
+            has_emission_factor,
+            has_historical_activity,
+        )
 
 
 # Cache attribute name for storing first model year on Reporter
@@ -74,19 +71,29 @@ _FIRST_MODEL_YEAR_ATTR = "_h2_first_model_year"
 
 
 def get_first_model_year(rep: Reporter) -> Optional[int]:
-    """Return the first model year defined in cat_year."""
+    """Return the first model year defined in cat_year.
+
+    Raises
+    ------
+    ValueError
+        If ``cat_year`` carries no ``firstmodelyear`` entry. Without it the
+        historical/model year split is undefined; a silent ``None`` would
+        disable :func:`_filter_years` and let ``out``/``out_hist`` rows for
+        the same year collide downstream.
+    """
     cached = getattr(rep, _FIRST_MODEL_YEAR_ATTR, None)
     if cached is not None:
         return cached
-    try:
-        df = rep.get("cat_year")
-        fm = df.loc[df["type_year"] == "firstmodelyear", "year"].astype(int).min()
-        setattr(rep, _FIRST_MODEL_YEAR_ATTR, fm)
-        return fm
-    except Exception:
-        LOG.warning("Could not determine first model year from cat_year")
-        setattr(rep, _FIRST_MODEL_YEAR_ATTR, None)
-        return None
+    df = rep.get("cat_year")
+    rows = df.loc[df["type_year"] == "firstmodelyear", "year"]
+    if rows.empty:
+        raise ValueError(
+            "cat_year has no 'firstmodelyear' entry; cannot split historical "
+            "vs model years for reporting"
+        )
+    fm = int(rows.astype(int).min())
+    setattr(rep, _FIRST_MODEL_YEAR_ATTR, fm)
+    return fm
 
 
 def pyam_df_from_rep(
@@ -122,65 +129,72 @@ def pyam_df_from_rep(
     }
     key_suffix = key_suffixes.get(reporter_var, "nl-t-ya-m-c-l-e")
 
-    # Try to get the data, but handle missing keys gracefully
+    # The only tolerated retrieval failure is a MISSING KEY on a *_hist variable:
+    # ensure_historical_keys deliberately skips creating out_hist/emi_hist when the
+    # scenario carries no historical_activity, and that absence is a data condition,
+    # not an error. Everything else — ComputationError from inside the graph (the
+    # dimensionless-'-' unit class that once silently dropped the whole ammonia
+    # family), or a missing key on a non-hist variable — is a config/engine defect
+    # and must abort the report instead of degrading to an empty family.
+    # try/finally so a raise cannot leak this call's filters into the next family.
     try:
-        df_var = pd.DataFrame(rep.get(f"{reporter_var}:{key_suffix}"))
-        if reporter_var in ("CAP_NEW", "inv"):
-            df_var = df_var.rename_axis(index={"yv": "ya"})
-    except Exception as e:
-        # If the key doesn't exist (e.g., historical data not available),
-        # return an empty dataframe with the expected structure
-        # More informative message about which data is missing
-        if "_hist" in reporter_var:
+        try:
+            df_var = pd.DataFrame(rep.get(f"{reporter_var}:{key_suffix}"))
+            if reporter_var in ("CAP_NEW", "inv"):
+                df_var = df_var.rename_axis(index={"yv": "ya"})
+        except MissingKeyError:
+            if not reporter_var.endswith("_hist"):
+                raise
             LOG.debug(
                 "Historical data missing for %s (requires historical_activity)",
                 reporter_var,
             )
-        else:
-            LOG.warning("Could not retrieve %s:%s: %s", reporter_var, key_suffix, e)
+            return pd.DataFrame(
+                columns=["value"],
+                index=pd.MultiIndex.from_tuples(
+                    [],
+                    names=[
+                        "nl",
+                        "ya",
+                        "iamc_name",
+                        "original_unit",
+                        "stoichiometric_factor",
+                    ],
+                ),
+            )
 
+        # Use join to merge data - this allows partial index matching
+        # (e.g. emissions only need t,m but output needs t,m,c,l)
+        df = (
+            df_var.join(
+                mapping_df[
+                    ["iamc_name", "unit", "original_unit", "stoichiometric_factor"]
+                ]
+            )
+            .dropna()
+            .reset_index()
+        )
+
+        # If the reporter is looking at historical data, we need to filter
+        # all the values that have yv == ya
+        # This is because the historical_activity only has ya, while output
+        # has also yv and ya. When cartesian product happens, it multiplies the
+        # output over all yv for each ya. So we get the same activity multiple times
+        # (however many times there are unique yv values per ya)
+        if reporter_var in {"out_hist", "emi_hist"} and {"yv", "ya"}.issubset(
+            df.columns
+        ):
+            df = df[df["yv"] == df["ya"]]
+
+        dim_candidates = ["nl", "t", "ya", "m", "c", "l", "e", "h", "yv"]
+        dim_cols = [col for col in dim_candidates if col in df.columns]
+        group_cols = dim_cols + ["iamc_name", "original_unit", "stoichiometric_factor"]
+
+        df = df.groupby(group_cols, dropna=False).sum(numeric_only=True)
+        df.index.names = group_cols
+        return df
+    finally:
         rep.set_filters()
-        return pd.DataFrame(
-            columns=["value"],
-            index=pd.MultiIndex.from_tuples(
-                [],
-                names=[
-                    "nl",
-                    "ya",
-                    "iamc_name",
-                    "original_unit",
-                    "stoichiometric_factor",
-                ],
-            ),
-        )
-
-    # Use join to merge data - this allows partial index matching
-    # (e.g. emissions only need t,m but output needs t,m,c,l)
-    df = (
-        df_var.join(
-            mapping_df[["iamc_name", "unit", "original_unit", "stoichiometric_factor"]]
-        )
-        .dropna()
-        .reset_index()
-    )
-
-    # If the reporter is looking at historical data, we need to filter
-    # all the values that have yv == ya
-    # This is because the historical_activity only has ya, while output
-    # has also yv and ya. When cartesian product happens, it multiplies the
-    # output over all yv for each ya. So we get the same activity multiple times
-    # (however many times there are unique yv values per ya)
-    if reporter_var in {"out_hist", "emi_hist"} and {"yv", "ya"}.issubset(df.columns):
-        df = df[df["yv"] == df["ya"]]
-
-    dim_candidates = ["nl", "t", "ya", "m", "c", "l", "e", "h", "yv"]
-    dim_cols = [col for col in dim_candidates if col in df.columns]
-    group_cols = dim_cols + ["iamc_name", "original_unit", "stoichiometric_factor"]
-
-    df = df.groupby(group_cols, dropna=False).sum(numeric_only=True)
-    df.index.names = group_cols
-    rep.set_filters()
-    return df
 
 
 def _load_unit_conversions(domain: str = "hydrogen") -> dict:
@@ -207,23 +221,20 @@ def _load_unit_conversions(domain: str = "hydrogen") -> dict:
             )
         path = package_data_path("hydrogen", "reporting", "unit_conversions.yaml")
 
-    try:
-        with open(path) as f:
-            data = yaml.safe_load(f)
+    # A malformed table must propagate: degrading to {} would push every pair onto
+    # the pint fallback and turn config corruption into wrong reported values.
+    with open(path) as f:
+        data = yaml.safe_load(f)
 
-        # Convert the YAML format to the expected dictionary format
-        conversions = {}
-        for key, factor in data.get("conversions", {}).items():
-            # Parse keys like "GWa_to_EJ/yr" into ("GWa", "EJ/yr")
-            if "_to_" in key:
-                source_unit, target_unit = key.split("_to_", 1)
-                conversions[(source_unit, target_unit)] = factor
+    # Convert the YAML format to the expected dictionary format
+    conversions = {}
+    for key, factor in (data or {}).get("conversions", {}).items():
+        # Parse keys like "GWa_to_EJ/yr" into ("GWa", "EJ/yr")
+        if "_to_" in key:
+            source_unit, target_unit = key.split("_to_", 1)
+            conversions[(source_unit, target_unit)] = factor
 
-        return conversions
-
-    except Exception as e:
-        LOG.warning("Could not load unit conversions from %s: %s", path, e)
-        return {}
+    return conversions
 
 
 def convert_units_from_mapping(
@@ -285,17 +296,23 @@ def convert_units_from_mapping(
             converted_quantity = registry.Quantity(values_to_convert, orig_unit).to(
                 target_unit
             )
-
-            # Update the values in the DataFrame
-            df_converted.loc[indices, "value"] = converted_quantity.magnitude
-
-        except Exception as e:
-            # Log the error but continue processing
-            LOG.warning(
-                "Could not convert from %s to %s: %s", orig_unit, target_unit, e
+        except Exception as err:
+            # Breadth is safe here because we ALWAYS re-raise (pint's error
+            # taxonomy is unstable across versions). The former behavior —
+            # warn and keep the raw values stamped with the target unit —
+            # published numbers silently off by e.g. a heating value.
+            affected = sorted(
+                set(df.loc[indices].reset_index().get("iamc_name", pd.Series()))
             )
-            # Keep original values if conversion fails
-            continue
+            raise ValueError(
+                f"No unit conversion from {orig_unit!r} to {target_unit!r}: not in "
+                f"unit_conversions.yaml (domain {domain!r}) and iam_units cannot "
+                f"convert it. Affected variables: {affected}. Set original_unit "
+                "explicitly or add a conversion entry."
+            ) from err
+
+        # Update the values in the DataFrame
+        df_converted.loc[indices, "value"] = converted_quantity.magnitude
 
     # Apply stoichiometric factors if present (after unit conversion)
     # This converts commodity totals (e.g., ammonia in EJ) to hydrogen (EJ H2)
@@ -566,8 +583,7 @@ def compute_global_aggregates(
         Patterns are shell-style globs over full variable names. Matching runs
         against a snapshot of the input, so an aggregate never absorbs another
         aggregate from the same call. A leaf matched by several patterns of one
-        spec is summed once. A spec whose patterns match nothing emits nothing
-        and logs a warning (dead patterns are a config-check concern).
+        spec is summed once.
 
     Returns
     -------
@@ -577,8 +593,10 @@ def compute_global_aggregates(
     Raises
     ------
     ValueError
-        If the leaves matched by one spec do not all carry the spec's ``unit``
-        (e.g. an EJ/yr energy flow and an Mt/yr material flow under one glob).
+        If a spec's patterns match no variable at all (a renamed or removed
+        leaf orphaning the aggregate), or if the leaves matched by one spec do
+        not all carry the spec's ``unit`` (e.g. an EJ/yr energy flow and an
+        Mt/yr material flow under one glob).
     """
     data = py_df.data
     leaf_variables = data["variable"].unique()
@@ -592,12 +610,15 @@ def compute_global_aggregates(
             if fnmatch.fnmatchcase(v, pattern)
         }
         if not matched:
-            LOG.warning(
-                "Global aggregate %r: no variable matches its patterns; "
-                "nothing emitted",
-                spec["name"],
+            # Global aggregates only run on full-workflow reports
+            # (add_global_aggregates=False for partial-domain runs), so a
+            # dead pattern is a config error: a renamed leaf would silently
+            # orphan the aggregate while its stale value lives on upstream.
+            raise ValueError(
+                f"Global aggregate {spec['name']!r}: no variable matches its "
+                f"patterns {spec['patterns']}. A leaf was renamed or removed; "
+                "update the spec in aggregates_global.yaml."
             )
-            continue
         sub = data[data["variable"].isin(matched)]
         units = sorted(set(sub["unit"]))
         if units != [spec["unit"]]:
