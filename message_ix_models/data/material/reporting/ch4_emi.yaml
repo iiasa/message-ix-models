@@ -12,12 +12,14 @@ unit: Mt CH4/yr
 
 vars:
   Industrial Processes|Chemicals:
+    original_unit: Mt CH4/yr
     filter:
       { technology: [meth_ng, meth_ng_ccs], mode: feedstock }
     short:
       emi_ch4_ind_proc_chem
 
   Energy|Demand|Industry|Chemicals:
+    original_unit: Mt CH4/yr
     filter:
       { technology: [furnace_coal_petro, furnace_gas_petro, furnace_biomass_petro, furnace_foil_petro], mode: [high_temp, low_temp] }
     short:
@@ -33,6 +35,7 @@ vars:
 # not parametrized at the moment
 
   Energy|Demand|Industry|Non-Metallic Minerals|Cement:
+    original_unit: Mt CH4/yr
     filter:
       { technology: [furnace_coal_cement, furnace_gas_cement, furnace_biomass_cement, furnace_foil_cement], mode: [high_temp, low_temp] }
     short:
@@ -41,12 +44,14 @@ vars:
 
 # aluminum
   Industrial Processes|Non-Ferrous Metals|Aluminium:
+    original_unit: Mt CH4/yr
     filter:
       { technology: [prebake_aluminum, soderberg_aluminum], mode: M1}
     short:
       emi_ch4_ind_proc_alu
 
   Energy|Demand|Industry|Non-Ferrous Metals|Aluminium:
+    original_unit: Mt CH4/yr
     filter:
       { technology: [furnace_coal_aluminum, furnace_gas_aluminum, furnace_biomass_aluminum, furnace_foil_aluminum], mode: [high_temp, low_temp] }
     short:
@@ -55,6 +60,7 @@ vars:
 
 # iron and steel
   Industrial Processes|Iron and Steel:
+    original_unit: Mt CH4/yr
     filter:
       { technology: [DUMMY_limestone_supply_steel, prod_charcoal_steel, sinter_steel, pellet_steel, bf_steel, bof_steel,  eaf_steel, finishing_steel], mode: [M1, M2, M3, M4]}
     short:

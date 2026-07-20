@@ -14,54 +14,63 @@ vars:
   #chemicals
   #ammonia
   Chemicals|Ammonia|Coal|w/o CCS:
+    original_unit: Mt/yr
     filter:
         {technology: coal_NH3, mode: M1, commodity: NH3, level: secondary_material}
     short:
         prod_nh3_coal
 
   Chemicals|Ammonia|Coal|w/ CCS:
+    original_unit: Mt/yr
     filter:
       { technology: coal_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material }
     short:
       prod_nh3_coal_ccs
 
   Chemicals|Ammonia|Gases|w/o CCS:
+    original_unit: Mt/yr
     filter:
         {technology: gas_NH3, mode: M1, commodity: NH3, level: secondary_material}
     short:
         prod_nh3_gas
 
   Chemicals|Ammonia|Gases|w/ CCS:
+    original_unit: Mt/yr
     filter:
       { technology: gas_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material }
     short:
       prod_nh3_gas_ccs
 
   Chemicals|Ammonia|Biomass|w/o CCS:
+    original_unit: Mt/yr
     filter:
         {technology: biomass_NH3, mode: M1, commodity: NH3, level: secondary_material}
     short:
         prod_nh3_bio
 
   Chemicals|Ammonia|Biomass|w/ CCS:
+    original_unit: Mt/yr
     filter:
       { technology: biomass_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material }
     short:
       prod_nh3_bio_ccs
 
   Chemicals|Ammonia|Oil|w/o CCS:
+    original_unit: Mt/yr
     filter:
         {technology: fueloil_NH3, mode: M1, commodity: NH3, level: secondary_material}
     short:
         prod_nh3_oil
 
   Chemicals|Ammonia|Oil|w/ CCS:
+    original_unit: Mt/yr
     filter:
       { technology: fueloil_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material }
     short:
       prod_nh3_oil_ccs
 
   Chemicals|Ammonia|Hydrogen:
+    original_unit: Mt/yr
     filter:
         {technology: electr_NH3, mode: M1, commodity: NH3, level: secondary_material}
     short:
@@ -69,6 +78,7 @@ vars:
 
 
   Chemicals|Nitrogen Fertilizer:
+    original_unit: Mt/yr
     filter:
         {technology: NH3_to_N_fertil, mode: M1, commodity: Fertilizer Use|Nitrogen, level: final_material}
     short:
@@ -76,56 +86,57 @@ vars:
 
   # methanol
   Chemicals|Methanol|Coal|w/o CCS:
+    original_unit: GWa
     filter:
         {technology: meth_coal, mode: feedstock, commodity: methanol, level: primary_material}
     short:
         prod_meth_coal
-    unit: GWa
 
   Chemicals|Methanol|Coal|w/ CCS:
+    original_unit: GWa
     filter:
       { technology: meth_coal_ccs, mode: feedstock, commodity: methanol, level: primary_material }
     short:
       prod_meth_coal_ccs
-    unit: GWa
 
   Chemicals|Methanol|Gases|w/o CCS:
+    original_unit: GWa
     filter:
         {technology: meth_ng, mode: feedstock, commodity: methanol, level: primary_material}
     short:
         prod_meth_gas
-    unit: GWa
 
   Chemicals|Methanol|Gases|w/ CCS:
+    original_unit: GWa
     filter:
       { technology: meth_ng_ccs, mode: feedstock, commodity: methanol, level: primary_material }
     short:
       prod_meth_gas_ccs
-    unit: GWa
 
   Chemicals|Methanol|Biomass|w/o CCS:
+    original_unit: GWa
     filter:
         {technology: meth_bio, mode: feedstock, commodity: methanol, level: primary_material}
     short:
         prod_meth_bio
-    unit: GWa
 
   Chemicals|Methanol|Biomass|w/ CCS:
+    original_unit: GWa
     filter:
       { technology: meth_bio_ccs, mode: feedstock, commodity: methanol, level: primary_material }
     short:
       prod_meth_bio_ccs
-    unit: GWa
 
   Chemicals|Methanol|Hydrogen:
+    original_unit: GWa
     filter:
         {technology: meth_h2, mode: [feedstock_dac, feedstock_fic, feedstock_bic], commodity: methanol, level: primary_material}
     short:
         prod_meth_h2
-    unit: GWa
 
   # HVCs
   Chemicals|High-Value Chemicals|Ethylene|Steam Cracking|Naphtha:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: naphtha, commodity: ethylene, level: final_material}
           # TODO: think about how to add co-production inputs
@@ -133,42 +144,49 @@ vars:
         prod_ethy_sc_naphtha
 
   Chemicals|High-Value Chemicals|Ethylene|Steam Cracking|Atmospheric Gasoil:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: atm_gasoil, commodity: ethylene, level: final_material }
     short:
       prod_ethy_sc_ago
   
   Chemicals|High-Value Chemicals|Ethylene|Steam Cracking|Vacuum Gasoil:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: vacuum_gasoil, commodity: ethylene, level: final_material }
     short:
       prod_ethy_sc_vgo
 
   Chemicals|High-Value Chemicals|Ethylene|Steam Cracking|Ethane:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: ethane, commodity: ethylene, level: final_material }
     short:
       prod_ethy_sc_eth
 
   Chemicals|High-Value Chemicals|Ethylene|Steam Cracking|Propane:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: propane, commodity: ethylene, level: final_material }
     short:
       prod_ethy_sc_prop
 
   Chemicals|High-Value Chemicals|Ethylene|Ethanol Dehydration:
+    original_unit: Mt/yr
     filter:
       {technology: ethanol_to_ethylene_petro, mode: M1, commodity: ethylene, level: final_material}
     short:
         prod_ethy_bio
 
   Chemicals|High-Value Chemicals|Ethylene|Methanol-to-olefins:
+    original_unit: Mt/yr
     filter:
       {technology: MTO_petro, mode: M1, commodity: ethylene, level: final_material}
     short:
         prod_ethy_oth
 
   Chemicals|High-Value Chemicals|Propylene|Steam Cracking|Naphtha:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: naphtha, commodity: propylene, level: final_material}
           # TODO: think about how to add co-production inputs
@@ -177,42 +195,49 @@ vars:
 
 
   Chemicals|High-Value Chemicals|Propylene|Steam Cracking|Atmospheric Gasoil:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: atm_gasoil, commodity: propylene, level: final_material }
     short:
       prod_propy_sc_ago
   
   Chemicals|High-Value Chemicals|Propylene|Steam Cracking|Vacuum Gasoil:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: vacuum_gasoil, commodity: propylene, level: final_material }
     short:
       prod_propy_sc_vgo
 
   Chemicals|High-Value Chemicals|Propylene|Steam Cracking|Ethane:
+    original_unit: Mt/yr
     filter:
       { technology: steam_cracker_petro, mode: ethane, commodity: propylene, level: final_material }
     short:
       prod_propy_sc_eth
 
   Chemicals|High-Value Chemicals|Propylene|Steam Cracking|Propane:
+    original_unit: Mt/yr
     filter:
       { technology: steam_cracker_petro, mode: propane, commodity: propylene, level: final_material }
     short:
       prod_propy_sc_prop
 
   Chemicals|High-Value Chemicals|Propylene|Methanol-to-olefins:
+    original_unit: Mt/yr
     filter:
       {technology: MTO_petro, mode: M1, commodity: propylene, level: final_material}
     short:
         prod_propy_oth
 
   Chemicals|High-Value Chemicals|Propylene|Catalytic Cracking:
+    original_unit: Mt/yr
     filter:
       { technology: catalytic_cracking_ref, mode: [atm_gasoil, vacuum_gasoil], commodity: propylene, level: final_material }
     short:
       prod_propy_cc_prop
 
   Chemicals|High-Value Chemicals|BTX|Steam Cracking|Naphtha:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: naphtha, commodity: BTX, level: final_material}
           # TODO: think about how to add co-production inputs
@@ -220,24 +245,28 @@ vars:
         prod_btx_sc_naphtha
 
   Chemicals|High-Value Chemicals|BTX|Steam Cracking|Atmospheric Gasoil:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: atm_gasoil, commodity: BTX, level: final_material }
     short:
       prod_btx_sc_ago
 
   Chemicals|High-Value Chemicals|BTX|Steam Cracking|Vacuum Gasoil:
+    original_unit: Mt/yr
     filter:
       {technology: steam_cracker_petro, mode: vacuum_gasoil, commodity: BTX, level: final_material }
     short:
       prod_btx_sc_vgo
 
   Chemicals|High-Value Chemicals|BTX|Steam Cracking|Propane:
+    original_unit: Mt/yr
     filter:
       { technology: steam_cracker_petro, mode: propane, commodity: BTX, level: final_material }
     short:
       prod_btx_sc_prop
 
   Chemicals|High-Value Chemicals|BTX|Catalytic Reforming:
+    original_unit: Mt/yr
     filter:
       { technology: catalytic_reforming_ref, mode: M1, commodity: BTX, level: final_material }
     short:
@@ -246,24 +275,28 @@ vars:
 
   # cement
   Non-Metallic Minerals|Cement|Ballmill:
+    original_unit: Mt/yr
     filter:
       { technology: grinding_ballmill_cement, mode: M1, commodity: cement, level: product }
     short:
       prod_cement_bmill
 
   Non-Metallic Minerals|Cement|Vertical Mill:
+    original_unit: Mt/yr
     filter:
       { technology: grinding_vertmill_cement, mode: M1, commodity: cement, level: product }
     short:
       prod_cement_vmill
 
   Non-Metallic Minerals|Clinker|Wet:
+    original_unit: Mt/yr
     filter:
       { technology: clinker_wet_cement, mode: M1, commodity: clinker_cement, level: tertiary_material }
     short:
       prod_clinker_wet
 
   Non-Metallic Minerals|Clinker|Dry:
+    original_unit: Mt/yr
     filter:
       { technology: clinker_dry_cement, mode: M1, commodity: clinker_cement, level: tertiary_material }
     short:
@@ -272,12 +305,14 @@ vars:
 
   # aluminum
   Non-Ferrous Metals|Aluminium|Primary:
+    original_unit: Mt/yr
     filter:
       { technology: [prebake_aluminum, soderberg_aluminum], mode: M1, commodity: aluminum, level: final_material }
     short:
       prod_alu_sec
 
   Non-Ferrous Metals|Aluminium|Secondary:
+    original_unit: Mt/yr
     filter:
       { technology: [secondary_aluminum], mode: M1, commodity: aluminum, level: final_material }
     short:
@@ -286,24 +321,28 @@ vars:
 
   # steel
   Iron and Steel|Steel|Secondary|BOF:
+    original_unit: Mt/yr
     filter:
       { technology: [bof_steel], mode:[M1, M2], commodity: steel, level: final_material }
     short:
       prod_steel_sec_bof
 
   Iron and Steel|Steel|Secondary|EAF:
+    original_unit: Mt/yr
     filter:
       { technology: [ eaf_steel ], mode: [ M2], commodity: steel, level: final_material }
     short:
       prod_steel_sec_eaf
 
   Iron and Steel|Steel|Primary|EAF:
+    original_unit: Mt/yr
     filter:
       { technology: [eaf_steel], mode: [M1, M3], commodity: steel, level: final_material }
     short:
       prod_steel_prim_eaf
 
   Iron and Steel|Steel|Primary|BOF:
+    original_unit: Mt/yr
     filter:
       { technology: [ bof_steel ], mode: [ M1, M2 ], commodity: steel, level: final_material }
     short:

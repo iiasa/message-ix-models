@@ -12,12 +12,14 @@ iamc_prefix:
 
 vars:
   Non-Metallic Minerals|Clinker|Wet|CCS:
+    original_unit: Mt/yr
     filter:
         {technology: clinker_wet_ccs_cement, mode: M1}
     short:
         prod_clinker_ccs
 
   Non-Metallic Minerals|Clinker|Dry|CCS:
+    original_unit: Mt/yr
     filter:
         {technology: clinker_dry_ccs_cement, mode: M1}
     short:
