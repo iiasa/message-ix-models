@@ -36,7 +36,7 @@ vars:
     short: in_conE_ar_ethanol
 
   # Other final-level energy uses (mode M1). Not in the customer spec; kept as extras.
-  Chemicals|eth_rc|ethanol:
+  eth_rc|ethanol:
     filter: {technology: eth_rc, commodity: ethanol, level: final, mode: M1}
     original_unit: GWa
     short: in_eth_rc_ethanol

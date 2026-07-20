@@ -87,7 +87,7 @@ vars:
     short:
       in_h2_elec_pem_electr
 
-  h2_elec_soe|electricity:
+  h2_elec_soe|electr:
     filter:
       {technology: h2_elec_soe, mode: [M1, feedstock_bic, feedstock_dac, feedstock_fic, fuel_bic, fuel_dac, fuel_fic], commodity: electr, level: secondary}
     original_unit: GWa
