@@ -106,7 +106,7 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
                        importers_list = ["afr", "chn", "fsu", 
                                          "lam", "mea", "nam", 
                                          "pao", "pas", "rcpa", "sas"],
-                       cost_multiplier = 1.1)
+                       cost_multiplier = 1.2)
 
     # Add FSU trade friction
     fsu_bound = friction_dictionary()
