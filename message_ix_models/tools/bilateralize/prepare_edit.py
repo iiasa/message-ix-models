@@ -457,6 +457,7 @@ def build_emission_factor(
                 col_values=dict(unit=None, emission=emission_type),
             )
             df_ef_t["value"] = config_dict["tracked_emissions"][tec][emission_type]
+            df_ef_t["unit"] = "???"
             df_ef = pd.concat([df_ef, df_ef_t])
             df_ef = df_ef[df_ef['technology'].str.contains('_exp_')]
             
