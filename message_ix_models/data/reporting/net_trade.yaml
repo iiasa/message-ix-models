@@ -1,0 +1,71 @@
+# Net-trade family (#396; formula ratified under #403), consumed by
+# compute_net_trade in report/hydrogen/h2_reporting.py. This file sits OUTSIDE
+# the per-domain data/<domain>/reporting/ dirs on purpose (same rule as
+# aggregates_global.yaml): leaf auto-discovery (fetch_variables) must never pick
+# it up.
+#
+# FORMULA per commodity (legacy retr_trade convention, message_data
+# materials_dac_mt_tables.py:10196+):
+#   net_r = exp_r - imp_r - bunker_GLB * (exp_r / sum_r exp_r)
+# positive = net exporter. Only REGIONAL rows are emitted; the World step sums
+# them, so World reduces to sum(exp) - sum(imp) - bunker = -(trade-chain losses)
+# ~= 0, the ratified World convention.
+#
+# LEGS are the PUBLISHED gross out| leaves. STEP-0 probe (#396, MT baseline v3):
+# ACT x input == ACT x output fp-exact for all 8 trade techs (1:1 pass-through;
+# losses live in the *_trd pool tech), so out| == the legacy pp.inp (input)
+# basis and no new leaf variables are needed. BUNKER legs are the published
+# FE|Bunkers leaves (in|Shipping|*_bunker|*), keeping Trade and FE|Bunkers rows
+# arithmetically consistent within one deliverable.
+#
+# bunker_factor converts the bunker leg into leg_unit:
+#  - hydrogen/methanol/ethanol: bunker and legs both EJ/yr -> 1.0.
+#  - ammonia: legs Mt/yr, bunker EJ/yr -> 53.220035 (EJ->Mt), DERIVED from the
+#    scenario's NH3_tobunker coeffs (input NH3@export 1.67856, output NH3@final
+#    1.0 -> 1.67856 Mt/GWa; /0.03154 GWa->EJ = 53.220035). Cross-checked
+#    bit-exact against the closure identity exp-imp(Mt) == bunker(EJ)*factor in
+#    every bunker year. Ammonia stays honest Mt/yr (never the legacy false-EJ
+#    stamp); it deviates from the legacy #402 bug (netted vs lh2_exp/LH2_bunker)
+#    BY DESIGN.
+#
+# NAMING: curated stack names (Trade|Secondary Energy|Hydrogen, Trade|Goods|*).
+# Parent/child adjacency with legacy Trade|SE|<c>|Volume/|Value is parked with
+# Yiyi (#403, August); re-point later if her ruling differs. Trade|Goods|Ethanol
+# is NOT in Yiyi's spec -- recorded as a deviation (August batch).
+
+commodities:
+  - name: Trade|Secondary Energy|Hydrogen
+    exp_var: "out|lh2_exp"
+    imp_var: "out|lh2_imp"
+    bunker_var: "in|Shipping|LH2_bunker|hydrogen"
+    leg_unit: EJ/yr
+    bunker_unit: EJ/yr
+    bunker_factor: 1.0
+    unit: EJ/yr
+
+  - name: Trade|Goods|Methanol
+    exp_var: "out|meth_exp"
+    imp_var: "out|meth_imp"
+    bunker_var: "in|Shipping|meth_bunker|methanol"
+    leg_unit: EJ/yr
+    bunker_unit: EJ/yr
+    bunker_factor: 1.0
+    unit: EJ/yr
+
+  - name: Trade|Goods|Ethanol
+    exp_var: "out|eth_exp"
+    imp_var: "out|eth_imp"
+    bunker_var: "in|Shipping|eth_bunker|ethanol"
+    leg_unit: EJ/yr
+    bunker_unit: EJ/yr
+    bunker_factor: 1.0
+    unit: EJ/yr
+
+  - name: Trade|Goods|Ammonia
+    exp_var: "out|export_NH3"
+    imp_var: "out|import_NH3"
+    bunker_var: "in|Shipping|NH3_bunker|ammonia"
+    leg_unit: Mt/yr
+    bunker_unit: EJ/yr
+    bunker_factor: 53.220035
+    unit: Mt/yr
