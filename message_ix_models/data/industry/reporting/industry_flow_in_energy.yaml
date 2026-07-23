@@ -1,6 +1,6 @@
-# EFC industry INPUT energy flows: in|Industry|<Subsector>|<tech>|hydrogen (EJ/yr).
-# Hydrogen consumed by industry furnaces, fuel cells, refining hydrocracking and DRI
-# steel. All energy (GWa -> EJ/yr).
+# EFC industry INPUT energy flows: in|Industry|<Subsector>|<tech>|<commodity>.
+# Covers hydrogen demand plus the corrected refining, steel, and process-heat
+# ribbon inputs. Every leaf is native GWa converted to EJ/yr.
 #
 # Per-tech LEVEL and MODE are taken from the scenario `input` parameter (queried on
 # the ixmp-dev baseline), NOT assumed. Both vary and both are load-bearing:
@@ -113,3 +113,226 @@ vars:
     filter: {technology: h2_liq, commodity: hydrogen, level: secondary, mode: M1}
     original_unit: GWa
     short: in_h2_liq_hydrogen
+
+  # ---- Industry|Refining: cracking feedstock and process-heat inputs ----
+  Industry|Refining|catalytic_cracking_ref|atm_gasoil:
+    filter: {technology: catalytic_cracking_ref, commodity: atm_gasoil, level: desulfurized, mode: atm_gasoil}
+    original_unit: GWa
+    short: in_catalytic_cracking_ref_atm_gasoil
+
+  Industry|Refining|catalytic_cracking_ref|ht_heat:
+    filter: {technology: catalytic_cracking_ref, commodity: ht_heat, level: secondary, mode: [atm_gasoil, vacuum_gasoil]}
+    original_unit: GWa
+    short: in_catalytic_cracking_ref_ht_heat
+
+  Industry|Refining|catalytic_cracking_ref|vacuum_gasoil:
+    filter: {technology: catalytic_cracking_ref, commodity: vacuum_gasoil, level: desulfurized, mode: vacuum_gasoil}
+    original_unit: GWa
+    short: in_catalytic_cracking_ref_vacuum_gasoil
+
+  Industry|Refining|hydro_cracking_ref|ht_heat:
+    filter: {technology: hydro_cracking_ref, commodity: ht_heat, level: secondary, mode: cracking_loil}
+    original_unit: GWa
+    short: in_hydro_cracking_ref_ht_heat
+
+  Industry|Refining|hydro_cracking_ref|vacuum_gasoil:
+    filter: {technology: hydro_cracking_ref, commodity: vacuum_gasoil, level: desulfurized, mode: cracking_loil}
+    original_unit: GWa
+    short: in_hydro_cracking_ref_vacuum_gasoil
+
+  # ---- Industry|Iron and Steel: exact live ribbon inputs ----
+  Industry|Iron and Steel|dri_coal_steel|coal:
+    filter: {technology: dri_coal_steel, commodity: coal, level: final, mode: M1}
+    original_unit: GWa
+    short: in_dri_coal_steel_coal
+
+  Industry|Iron and Steel|dri_coal_steel|electr:
+    filter: {technology: dri_coal_steel, commodity: electr, level: final, mode: M1}
+    original_unit: GWa
+    short: in_dri_coal_steel_electr
+
+  Industry|Iron and Steel|dri_gas_ccs_steel|electr:
+    filter: {technology: dri_gas_ccs_steel, commodity: electr, level: final, mode: M1}
+    original_unit: GWa
+    short: in_dri_gas_ccs_steel_electr
+
+  Industry|Iron and Steel|dri_gas_steel|electr:
+    filter: {technology: dri_gas_steel, commodity: electr, level: final, mode: M1}
+    original_unit: GWa
+    short: in_dri_gas_steel_electr
+
+  Industry|Iron and Steel|dri_gas_steel|gas:
+    filter: {technology: dri_gas_steel, commodity: gas, level: final, mode: M1}
+    original_unit: GWa
+    short: in_dri_gas_steel_gas
+
+  Industry|Iron and Steel|bf_biomass_steel|charcoal:
+    filter: {technology: bf_biomass_steel, commodity: charcoal, level: final, mode: M1}
+    original_unit: GWa
+    short: in_bf_biomass_steel_charcoal
+
+  Industry|Iron and Steel|bf_biomass_steel|electr:
+    filter: {technology: bf_biomass_steel, commodity: electr, level: final, mode: M1}
+    original_unit: GWa
+    short: in_bf_biomass_steel_electr
+
+  Industry|Iron and Steel|bf_ccs_steel|electr:
+    filter: {technology: bf_ccs_steel, commodity: electr, level: final, mode: M2}
+    original_unit: GWa
+    short: in_bf_ccs_steel_electr
+
+  Industry|Iron and Steel|bf_steel|co_gas:
+    filter: {technology: bf_steel, commodity: co_gas, level: final, mode: [M1, M2, M3, M4]}
+    original_unit: GWa
+    short: in_bf_steel_co_gas
+
+  Industry|Iron and Steel|bf_steel|coal:
+    filter: {technology: bf_steel, commodity: coal, level: final, mode: [M1, M2, M3]}
+    original_unit: GWa
+    short: in_bf_steel_coal
+
+  Industry|Iron and Steel|bf_steel|coke_iron:
+    filter: {technology: bf_steel, commodity: coke_iron, level: final, mode: [M1, M2, M3, M4]}
+    original_unit: GWa
+    short: in_bf_steel_coke_iron
+
+  Industry|Iron and Steel|bf_steel|electr:
+    filter: {technology: bf_steel, commodity: electr, level: final, mode: [M1, M2, M3, M4]}
+    original_unit: GWa
+    short: in_bf_steel_electr
+
+  Industry|Iron and Steel|bf_steel|charcoal:
+    filter: {technology: bf_steel, commodity: charcoal, level: final, mode: [M3, M4]}
+    original_unit: GWa
+    short: in_bf_steel_charcoal
+
+  # ---- Industry|Other: process-heat technologies ----
+  Industry|Other|furnace_biomass_aluminum|biomass:
+    filter: {technology: furnace_biomass_aluminum, commodity: biomass, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_biomass_aluminum_biomass
+
+  Industry|Other|furnace_biomass_cement|biomass:
+    filter: {technology: furnace_biomass_cement, commodity: biomass, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_biomass_cement_biomass
+
+  Industry|Other|furnace_biomass_petro|biomass:
+    filter: {technology: furnace_biomass_petro, commodity: biomass, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_biomass_petro_biomass
+
+  Industry|Other|furnace_biomass_refining|biomass:
+    filter: {technology: furnace_biomass_refining, commodity: biomass, level: primary, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_biomass_refining_biomass
+
+  Industry|Other|furnace_coal_aluminum|coal:
+    filter: {technology: furnace_coal_aluminum, commodity: coal, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_coal_aluminum_coal
+
+  Industry|Other|furnace_coal_cement|coal:
+    filter: {technology: furnace_coal_cement, commodity: coal, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_coal_cement_coal
+
+  Industry|Other|furnace_coal_petro|coal:
+    filter: {technology: furnace_coal_petro, commodity: coal, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_coal_petro_coal
+
+  Industry|Other|furnace_coal_refining|coal:
+    filter: {technology: furnace_coal_refining, commodity: coal, level: secondary, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_coal_refining_coal
+
+  Industry|Other|furnace_coke_petro|pet_coke:
+    filter: {technology: furnace_coke_petro, commodity: pet_coke, level: intermediate, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_coke_petro_pet_coke
+
+  Industry|Other|furnace_coke_refining|pet_coke:
+    filter: {technology: furnace_coke_refining, commodity: pet_coke, level: intermediate, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_coke_refining_pet_coke
+
+  Industry|Other|furnace_elec_aluminum|electr:
+    filter: {technology: furnace_elec_aluminum, commodity: electr, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_elec_aluminum_electr
+
+  Industry|Other|furnace_elec_cement|electr:
+    filter: {technology: furnace_elec_cement, commodity: electr, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_elec_cement_electr
+
+  Industry|Other|furnace_elec_petro|electr:
+    filter: {technology: furnace_elec_petro, commodity: electr, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_elec_petro_electr
+
+  Industry|Other|furnace_elec_refining|electr:
+    filter: {technology: furnace_elec_refining, commodity: electr, level: secondary, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_elec_refining_electr
+
+  Industry|Other|furnace_foil_aluminum|fueloil:
+    filter: {technology: furnace_foil_aluminum, commodity: fueloil, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_foil_aluminum_fueloil
+
+  Industry|Other|furnace_foil_cement|fueloil:
+    filter: {technology: furnace_foil_cement, commodity: fueloil, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_foil_cement_fueloil
+
+  Industry|Other|furnace_foil_petro|fueloil:
+    filter: {technology: furnace_foil_petro, commodity: fueloil, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_foil_petro_fueloil
+
+  Industry|Other|furnace_foil_refining|fueloil:
+    filter: {technology: furnace_foil_refining, commodity: fueloil, level: secondary, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_foil_refining_fueloil
+
+  Industry|Other|furnace_gas_aluminum|gas:
+    filter: {technology: furnace_gas_aluminum, commodity: gas, level: final, mode: [high_temp, low_temp]}
+    original_unit: GWa
+    short: in_furnace_gas_aluminum_gas
+
+  Industry|Other|furnace_gas_cement|gas:
+    filter: {technology: furnace_gas_cement, commodity: gas, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_gas_cement_gas
+
+  Industry|Other|furnace_gas_petro|gas:
+    filter: {technology: furnace_gas_petro, commodity: gas, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_gas_petro_gas
+
+  Industry|Other|furnace_gas_refining|gas:
+    filter: {technology: furnace_gas_refining, commodity: gas, level: secondary, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_gas_refining_gas
+
+  Industry|Other|furnace_loil_aluminum|lightoil:
+    filter: {technology: furnace_loil_aluminum, commodity: lightoil, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_loil_aluminum_lightoil
+
+  Industry|Other|furnace_loil_cement|lightoil:
+    filter: {technology: furnace_loil_cement, commodity: lightoil, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_loil_cement_lightoil
+
+  Industry|Other|furnace_loil_petro|lightoil:
+    filter: {technology: furnace_loil_petro, commodity: lightoil, level: final, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_loil_petro_lightoil
+
+  Industry|Other|furnace_loil_refining|lightoil:
+    filter: {technology: furnace_loil_refining, commodity: lightoil, level: secondary, mode: high_temp}
+    original_unit: GWa
+    short: in_furnace_loil_refining_lightoil

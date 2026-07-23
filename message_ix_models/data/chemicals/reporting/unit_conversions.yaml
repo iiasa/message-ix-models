@@ -10,3 +10,8 @@ conversions:
   # BOTH bases (USD/kW x GW/yr and USD/(t/yr) x Mt/yr), in the model's USD_2005;
   # x1.10774 (US$2005->US$2010, legacy currency_unit_out_conv) / 1000
   million USD_2005/yr_to_billion USD_2010/yr: 0.00110774
+
+  # meth_h2 CO2-source inputs (bic_co2/fic_co2/dac_co2) are tracked on a carbon-mass basis
+  # in the model (producers stamp Mt C/yr); convert to reported Mt CO2/yr with the legacy
+  # conv_c2co2 = 44/12 factor (message_data data/report/default_units.yaml).
+  Mt C/yr_to_Mt CO2/yr: 3.6666666666666665

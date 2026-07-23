@@ -122,3 +122,13 @@ vars:
     filter: {technology: eth_bio_ccs, commodity: electr, level: secondary, mode: M1}
     original_unit: GWa
     short: in_eth_bio_ccs_electr
+
+  Industry|Chemicals|liq_bio_ccs|biomass:
+    filter: {technology: liq_bio_ccs, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_liq_bio_ccs_biomass
+
+  Industry|Chemicals|liq_bio|biomass:
+    filter: {technology: liq_bio, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_liq_bio_biomass

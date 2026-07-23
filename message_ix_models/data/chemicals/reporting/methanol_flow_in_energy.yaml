@@ -122,3 +122,71 @@ vars:
       mode: [feedstock_fic, fuel_fic]
     original_unit: GWa
     short: in_meth_h2_fic_hydrogen
+
+  # Methanol-route fuel/feedstock inputs requested by the ribbon inventory.
+  Industry|Chemicals|meth_bio_ccs|biomass:
+    filter: {technology: meth_bio_ccs, commodity: biomass, level: primary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_bio_ccs_biomass
+
+  Industry|Chemicals|meth_bio|biomass:
+    filter: {technology: meth_bio, commodity: biomass, level: primary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_bio_biomass
+
+  Industry|Chemicals|meth_coal_ccs|coal:
+    filter: {technology: meth_coal_ccs, commodity: coal, level: secondary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_coal_ccs_coal
+
+  Industry|Chemicals|meth_coal|coal:
+    filter: {technology: meth_coal, commodity: coal, level: secondary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_coal_coal
+
+  Industry|Chemicals|meth_ng_ccs|electr:
+    filter: {technology: meth_ng_ccs, commodity: electr, level: secondary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_ng_ccs_electr
+
+  Industry|Chemicals|meth_ng_ccs|gas:
+    filter: {technology: meth_ng_ccs, commodity: gas, level: secondary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_ng_ccs_gas
+
+  Industry|Chemicals|meth_ng|gas:
+    filter: {technology: meth_ng, commodity: gas, level: secondary, mode: [feedstock, fuel]}
+    original_unit: GWa
+    short: in_meth_ng_gas
+
+  # Electricity remains split by the six meth_h2 routes; the hydrogen leaves above
+  # retain their three source partitions and total aggregate unchanged.
+  Industry|Chemicals|meth_h2|BIC_CO2|fuel|electr:
+    filter: {technology: meth_h2, commodity: electr, level: secondary, mode: fuel_bic}
+    original_unit: GWa
+    short: in_meth_h2_fuel_bic_electr
+
+  Industry|Chemicals|meth_h2|FIC_CO2|fuel|electr:
+    filter: {technology: meth_h2, commodity: electr, level: secondary, mode: fuel_fic}
+    original_unit: GWa
+    short: in_meth_h2_fuel_fic_electr
+
+  Industry|Chemicals|meth_h2|DAC_CO2|fuel|electr:
+    filter: {technology: meth_h2, commodity: electr, level: secondary, mode: fuel_dac}
+    original_unit: GWa
+    short: in_meth_h2_fuel_dac_electr
+
+  Industry|Chemicals|meth_h2|BIC_CO2|feedstock|electr:
+    filter: {technology: meth_h2, commodity: electr, level: secondary, mode: feedstock_bic}
+    original_unit: GWa
+    short: in_meth_h2_feedstock_bic_electr
+
+  Industry|Chemicals|meth_h2|DAC_CO2|feedstock|electr:
+    filter: {technology: meth_h2, commodity: electr, level: secondary, mode: feedstock_dac}
+    original_unit: GWa
+    short: in_meth_h2_feedstock_dac_electr
+
+  Industry|Chemicals|meth_h2|FIC_CO2|feedstock|electr:
+    filter: {technology: meth_h2, commodity: electr, level: secondary, mode: feedstock_fic}
+    original_unit: GWa
+    short: in_meth_h2_feedstock_fic_electr

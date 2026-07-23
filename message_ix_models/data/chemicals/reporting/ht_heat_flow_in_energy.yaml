@@ -1,11 +1,8 @@
-# EFC olefins-process (MTO_petro + steam_cracker_petro) INPUT energy flows:
-#   in|<...>|<tech>|<carrier> (EJ/yr).
-# Non-feedstock energy inputs of the olefins processes -- high-temperature heat and
-# electricity -- drawn at the (energy) useful_petro / final levels (GWa -> EJ/yr). The
-# feedstocks themselves are mass: MTO_petro methanol -> methanol_flow_in_material; the
-# steam-cracker naphtha/gasoil/ethane/propane -> steam_cracker_flow_in_material (Mt).
-# Spec keys these sector-less (others_olefins): in|MTO_petro|ht_heat/electr,
-# in|steam_cracker_petro|ht_heat/electr.
+# EFC chemicals-process INPUT energy flows: in|<...>|<tech>|<carrier> (EJ/yr).
+# The original olefins leaves and the added resin, formaldehyde, gas-processing,
+# heat-pump, and ethanol-to-ethylene process inputs are all energy quantities
+# drawn at non-material levels (GWa -> EJ/yr). Material feedstocks remain in the
+# corresponding *_flow_in_material.yaml files.
 var: in
 iamc_prefix: "in|"
 unit: EJ/yr
@@ -39,3 +36,33 @@ vars:
       mode: [atm_gasoil, ethane, naphtha, propane, vacuum_gasoil]
     original_unit: GWa
     short: in_steam_cracker_petro_ht_heat
+
+  Industry|Chemicals|ethanol_to_ethylene_petro|ht_heat:
+    filter: {technology: ethanol_to_ethylene_petro, commodity: ht_heat, level: useful_petro, mode: M1}
+    original_unit: GWa
+    short: in_ethanol_to_ethylene_petro_ht_heat
+
+  Industry|Chemicals|gas_processing_petro|gas:
+    filter: {technology: gas_processing_petro, commodity: gas, level: final, mode: M1}
+    original_unit: GWa
+    short: in_gas_processing_petro_gas
+
+  Industry|Chemicals|hp_elec_petro|electr:
+    filter: {technology: hp_elec_petro, commodity: electr, level: final, mode: low_temp}
+    original_unit: GWa
+    short: in_hp_elec_petro_electr
+
+  Industry|Chemicals|CH2O_synth|electr:
+    filter: {technology: CH2O_synth, commodity: electr, level: final, mode: M1}
+    original_unit: GWa
+    short: in_CH2O_synth_electr
+
+  Chemicals|CH2O_to_resin|electr:
+    filter: {technology: CH2O_to_resin, commodity: electr, level: final, mode: M1}
+    original_unit: GWa
+    short: in_CH2O_to_resin_electr
+
+  Chemicals|CH2O_to_resin|ht_heat:
+    filter: {technology: CH2O_to_resin, commodity: ht_heat, level: useful_resins, mode: M1}
+    original_unit: GWa
+    short: in_CH2O_to_resin_ht_heat

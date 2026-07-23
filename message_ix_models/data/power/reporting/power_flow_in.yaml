@@ -1,8 +1,6 @@
 # EFC Power-sector input energy flows: in|<Sector>|<tech>|<commodity>.
-# Hydrogen consumed by the hydrogen combustion turbine (h2_ct), which burns H2 to make
-# electricity. Energy commodity -> GWa, converted to EJ/yr.
-# Filter verified against the v5 baseline scenario: h2_ct input = hydrogen/secondary/M1
-# (input coefficient 2.5 GWa-H2 per GWa-electricity).
+# Includes the existing h2_ct hydrogen demand and the corrected primary-fuel
+# ribbon inputs. Every leaf is native GWa converted to EJ/yr.
 var: in
 iamc_prefix: "in|"
 unit: EJ/yr
@@ -12,3 +10,103 @@ vars:
     filter: {technology: h2_ct, mode: M1, commodity: hydrogen, level: secondary}
     original_unit: GWa
     short: in_power_h2_ct_hydrogen
+
+  Power|bio_istig|biomass:
+    filter: {technology: bio_istig, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_bio_istig_biomass
+
+  Power|bio_istig_ccs|biomass:
+    filter: {technology: bio_istig_ccs, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_bio_istig_ccs_biomass
+
+  Power|bio_ppl|biomass:
+    filter: {technology: bio_ppl, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_bio_ppl_biomass
+
+  Power|coal_adv_ccs|coal:
+    filter: {technology: coal_adv_ccs, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_adv_ccs_coal
+
+  Power|coal_adv|coal:
+    filter: {technology: coal_adv, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_adv_coal
+
+  Power|coal_ppl_u|coal:
+    filter: {technology: coal_ppl_u, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_ppl_u_coal
+
+  Power|coal_ppl|coal:
+    filter: {technology: coal_ppl, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_ppl_coal
+
+  Power|foil_ppl|fueloil:
+    filter: {technology: foil_ppl, commodity: fueloil, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_foil_ppl_fueloil
+
+  Power|gas_cc|gas:
+    filter: {technology: gas_cc, commodity: gas, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_cc_gas
+
+  Power|gas_cc_ccs|gas:
+    filter: {technology: gas_cc_ccs, commodity: gas, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_cc_ccs_gas
+
+  Power|gas_ct|gas:
+    filter: {technology: gas_ct, commodity: gas, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_ct_gas
+
+  Power|gas_ppl|gas:
+    filter: {technology: gas_ppl, commodity: gas, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_ppl_gas
+
+  Power|igcc|coal:
+    filter: {technology: igcc, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_igcc_coal
+
+  Power|igcc_ccs|coal:
+    filter: {technology: igcc_ccs, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_igcc_ccs_coal
+
+  Power|loil_cc|lightoil:
+    filter: {technology: loil_cc, commodity: lightoil, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_loil_cc_lightoil
+
+  Power|loil_ppl|lightoil:
+    filter: {technology: loil_ppl, commodity: lightoil, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_loil_ppl_lightoil
+
+  Power|nuc_hc|u5:
+    filter: {technology: nuc_hc, commodity: u5, level: stocks, mode: M1}
+    original_unit: GWa
+    short: in_nuc_hc_u5
+
+  Power|nuc_lc|u5:
+    filter: {technology: nuc_lc, commodity: u5, level: stocks, mode: M1}
+    original_unit: GWa
+    short: in_nuc_lc_u5
+
+  Power|syn_liq_ccs|coal:
+    filter: {technology: syn_liq_ccs, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_syn_liq_ccs_coal
+
+  Power|syn_liq|coal:
+    filter: {technology: syn_liq, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_syn_liq_coal

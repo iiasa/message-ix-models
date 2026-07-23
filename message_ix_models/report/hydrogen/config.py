@@ -24,6 +24,7 @@ class Config:
         "GW/yr",
         "Mt H2/yr",
         "EJ/yr",
+        "Mt CO2/yr",
         "billion USD_2010/yr",
     ]
 

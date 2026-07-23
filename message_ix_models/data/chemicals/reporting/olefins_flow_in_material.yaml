@@ -30,3 +30,8 @@ vars:
     filter: {technology: CH2O_to_resin, commodity: BTX, level: final_material, mode: M1}
     original_unit: Mt/yr
     short: in_CH2O_to_resin_BTX
+
+  Chemicals|CH2O_to_resin|formaldehyde:
+    filter: {technology: CH2O_to_resin, commodity: formaldehyde, level: final_material, mode: M1}
+    original_unit: Mt/yr
+    short: in_CH2O_to_resin_formaldehyde

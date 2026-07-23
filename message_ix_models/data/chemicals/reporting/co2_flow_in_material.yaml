@@ -1,0 +1,42 @@
+# EFC meth_h2 carbon-dioxide INPUT flows by methanol route and CO2 source.
+# The model tracks these CO2-source commodities on a CARBON-mass basis: producers stamp
+# Mt C/yr (dac_hte/htg/lt, the CCS scrubbers), and the final-level rows carry co2_trans*'s
+# '-' stamp but the basis is unchanged. original_unit is therefore Mt C/yr; the engine
+# converts to the reported Mt CO2/yr via the legacy conv_c2co2 = 44/12 factor (registered in
+# unit_conversions.yaml). The six leaves remain distinct because feedstock and fuel modes
+# route separate methanol outputs. No common CO2 aggregate is defined: summing source-specific
+# commodities would obscure that routing.
+var: in
+iamc_prefix: "in|"
+unit: Mt CO2/yr
+
+vars:
+  Industry|Chemicals|meth_h2|BIC_CO2|fuel|bic_co2:
+    filter: {technology: meth_h2, commodity: bic_co2, level: final, mode: fuel_bic}
+    original_unit: Mt C/yr
+    short: in_meth_h2_fuel_bic_bic_co2
+
+  Industry|Chemicals|meth_h2|FIC_CO2|fuel|fic_co2:
+    filter: {technology: meth_h2, commodity: fic_co2, level: final, mode: fuel_fic}
+    original_unit: Mt C/yr
+    short: in_meth_h2_fuel_fic_fic_co2
+
+  Industry|Chemicals|meth_h2|DAC_CO2|fuel|dac_co2:
+    filter: {technology: meth_h2, commodity: dac_co2, level: final, mode: fuel_dac}
+    original_unit: Mt C/yr
+    short: in_meth_h2_fuel_dac_dac_co2
+
+  Industry|Chemicals|meth_h2|BIC_CO2|feedstock|bic_co2:
+    filter: {technology: meth_h2, commodity: bic_co2, level: final, mode: feedstock_bic}
+    original_unit: Mt C/yr
+    short: in_meth_h2_feedstock_bic_bic_co2
+
+  Industry|Chemicals|meth_h2|FIC_CO2|feedstock|fic_co2:
+    filter: {technology: meth_h2, commodity: fic_co2, level: final, mode: feedstock_fic}
+    original_unit: Mt C/yr
+    short: in_meth_h2_feedstock_fic_fic_co2
+
+  Industry|Chemicals|meth_h2|DAC_CO2|feedstock|dac_co2:
+    filter: {technology: meth_h2, commodity: dac_co2, level: final, mode: feedstock_dac}
+    original_unit: Mt C/yr
+    short: in_meth_h2_feedstock_dac_dac_co2

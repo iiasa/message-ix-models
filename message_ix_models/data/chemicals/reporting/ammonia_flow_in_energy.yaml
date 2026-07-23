@@ -1,6 +1,5 @@
-# EFC ammonia INPUT energy flow: in|Shipping|NH3_bunker|ammonia (EJ/yr). The leaf lives
-# in the chemicals domain (ammonia commodity) but is attributed to the Shipping SECTOR,
-# consistent with its sibling bunkers (meth/eth here; foil/LNG in the transport domain).
+# EFC ammonia-route INPUT energy flows (EJ/yr). Producer fuel/electricity leaves use
+# Industry|Chemicals names; the shipping leaf remains attributed to Shipping.
 # Ammonia is mass (Mt) everywhere EXCEPT the shipping-fuel pathway. NH3_tobunker converts
 # NH3@export (mass, Mt) -> NH3@final (energy, GWa) at 1/convert_nh3 = 1.67856 Mt/GWa
 # (LHV 18.8 MJ/kg; see message_data tools/utilities/update_shipping.py add_NH3_bunker).
@@ -24,3 +23,89 @@ vars:
              shp_chemical]
     original_unit: GWa
     short: in_NH3_bunker_ammonia
+
+  # Ammonia production inputs are energy quantities even though NH3 output is mass.
+  Industry|Chemicals|biomass_NH3_ccs|biomass:
+    filter: {technology: biomass_NH3_ccs, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_biomass_NH3_ccs_biomass
+
+  Industry|Chemicals|biomass_NH3_ccs|electr:
+    filter: {technology: biomass_NH3_ccs, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_biomass_NH3_ccs_electr
+
+  Industry|Chemicals|biomass_NH3|biomass:
+    filter: {technology: biomass_NH3, commodity: biomass, level: primary, mode: M1}
+    original_unit: GWa
+    short: in_biomass_NH3_biomass
+
+  Industry|Chemicals|biomass_NH3|electr:
+    filter: {technology: biomass_NH3, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_biomass_NH3_electr
+
+  Industry|Chemicals|coal_NH3_ccs|coal:
+    filter: {technology: coal_NH3_ccs, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_NH3_ccs_coal
+
+  Industry|Chemicals|coal_NH3_ccs|electr:
+    filter: {technology: coal_NH3_ccs, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_NH3_ccs_electr
+
+  Industry|Chemicals|coal_NH3|coal:
+    filter: {technology: coal_NH3, commodity: coal, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_NH3_coal
+
+  Industry|Chemicals|coal_NH3|electr:
+    filter: {technology: coal_NH3, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_coal_NH3_electr
+
+  Industry|Chemicals|electr_NH3|electr:
+    filter: {technology: electr_NH3, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_electr_NH3_electr
+
+  Industry|Chemicals|fueloil_NH3_ccs|electr:
+    filter: {technology: fueloil_NH3_ccs, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_fueloil_NH3_ccs_electr
+
+  Industry|Chemicals|fueloil_NH3_ccs|fueloil:
+    filter: {technology: fueloil_NH3_ccs, commodity: fueloil, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_fueloil_NH3_ccs_fueloil
+
+  Industry|Chemicals|fueloil_NH3|electr:
+    filter: {technology: fueloil_NH3, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_fueloil_NH3_electr
+
+  Industry|Chemicals|fueloil_NH3|fueloil:
+    filter: {technology: fueloil_NH3, commodity: fueloil, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_fueloil_NH3_fueloil
+
+  Industry|Chemicals|gas_NH3_ccs|electr:
+    filter: {technology: gas_NH3_ccs, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_NH3_ccs_electr
+
+  Industry|Chemicals|gas_NH3_ccs|gas:
+    filter: {technology: gas_NH3_ccs, commodity: gas, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_NH3_ccs_gas
+
+  Industry|Chemicals|gas_NH3|electr:
+    filter: {technology: gas_NH3, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_NH3_electr
+
+  Industry|Chemicals|gas_NH3|gas:
+    filter: {technology: gas_NH3, commodity: gas, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_gas_NH3_gas
