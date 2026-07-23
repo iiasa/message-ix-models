@@ -646,9 +646,19 @@ def check_region_purity(py_df: pyam.IamDataFrame, glb: str = "R12_GLB") -> None:
     get a ``glb`` row summed from their regional rows. A variable holding BOTH
     kinds of rows — typically a global aggregate whose patterns mix a GLB-native
     leaf into regional components — would keep its partial ``glb`` row as the
-    World value, silently understated. The zero-fill in
-    :func:`format_reporting_df` keeps GLB-native leaves present (as zeros) even
-    when idle, so this fires on config structure, not on activity levels.
+    World value, silently understated.
+
+    A variable is treated as GLB-native only if it carries a NON-ZERO ``glb``
+    row. An all-zero ``glb`` row is a zero-fill artifact, not a native total:
+    :func:`format_reporting_df` broadcasts an idle (missing) leaf over every
+    region present in its FILE, so when that file also holds a GLB-native sibling
+    (e.g. a ``*_bunker`` leaf contributing an ``R12_GLB`` row), the idle regional
+    leaf picks up a spurious all-zero ``R12_GLB`` row. Counting that artifact as
+    native would falsely flag the idle leaf as mixed-basis (the #439 failure on
+    baselines where a regional tech goes idle beside a GLB-native leaf). A real
+    mixed aggregate — the case this guard defends — carries a NON-ZERO ``glb``
+    row, so it still raises. The World step keeps the idle leaf's zero ``glb``
+    row as-is (World = 0, correct for an idle tech), so values are unaffected.
 
     Raises
     ------
@@ -658,7 +668,11 @@ def check_region_purity(py_df: pyam.IamDataFrame, glb: str = "R12_GLB") -> None:
         under ``in|Shipping|all``), or aggregate after the World step (an
         engine extension, deliberately not built).
     """
-    native = set(py_df.filter(region=glb).variable)
+    glb_df = py_df.filter(region=glb)
+    if glb_df.empty:
+        return
+    glb_rows = glb_df.as_pandas()
+    native = set(glb_rows.loc[glb_rows["value"] != 0, "variable"])
     regional = set(py_df.filter(region=glb, keep=False).variable)
     mixed = sorted(native & regional)
     if mixed:
