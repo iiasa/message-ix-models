@@ -638,6 +638,162 @@ def compute_global_aggregates(
     return pyam.IamDataFrame(pd.concat([data, *frames], ignore_index=True))
 
 
+def load_net_trade_specs() -> List[dict]:
+    """Load the specs from :file:`data/reporting/net_trade.yaml`.
+
+    The file lives outside the per-domain reporting directories so that leaf
+    auto-discovery (:func:`fetch_variables`) never picks it up — the same rule as
+    :func:`load_global_aggregate_specs`.
+    """
+    path = package_data_path("reporting", "net_trade.yaml")
+    doc = yaml.safe_load(path.read_text()) or {}
+    return list(doc.get("commodities") or [])
+
+
+def compute_net_trade(
+    py_df: pyam.IamDataFrame, specs: List[dict], glb: str = "R12_GLB"
+) -> pyam.IamDataFrame:
+    """Append net-trade variables derived from published gross leaf variables.
+
+    For each commodity spec the net export per region follows the legacy
+    ``retr_trade`` convention (message_data
+    ``materials_dac_mt_tables.py``:10196+)::
+
+        net_r = exp_r - imp_r - bunker_GLB * (exp_r / sum_r exp_r)
+
+    positive = net exporter. Only REGIONAL rows are emitted; the downstream World
+    step then sums them, so the World row reduces to
+    ``sum_r exp_r - sum_r imp_r - bunker`` — i.e. ``-`` the trade-chain losses
+    (``~0``), the ratified World convention (#403). The bunker leg is an INPUT to
+    the arithmetic, not a component, so :func:`check_region_purity` is untouched.
+
+    The export/import legs are the published GROSS ``out|`` leaves and the bunker
+    leg is the published ``in|Shipping|*_bunker|*`` leaf. The STEP-0 probe (#396)
+    confirmed ``ACT x input == ACT x output`` fp-exact for all eight trade techs,
+    so the ``out|`` leaves equal the legacy ``pp.inp`` (input) basis.
+
+    Parameters
+    ----------
+    py_df
+        Assembled report carrying the gross export/import leaves (regional) and
+        the shipping-bunker leaves (``glb``-native).
+    specs
+        One dict per commodity: ``name``, ``exp_var``, ``imp_var``,
+        ``bunker_var``, ``leg_unit``, ``bunker_unit``, ``bunker_factor``
+        (bunker -> leg-unit conversion, default ``1.0``), ``unit``.
+    glb
+        The World/global-pool node ID.
+
+    Raises
+    ------
+    ValueError
+        (a) a referenced leaf is absent from ``py_df`` (a partial-domain run
+        cannot supply every leg); (b) an exp/imp leg does not carry exactly
+        ``leg_unit`` or the bunker leg not exactly ``bunker_unit`` — this stage
+        is the one place mixed units are legitimate, so the report-wide unit
+        guards cannot cover it, and a wrong unit is silently off by a heating
+        value; (c) an exp/imp leg carries a ``glb`` row, or the bunker leg
+        carries a non-``glb`` row (region-ROLE guard —
+        :func:`check_region_purity` guards variables, not formula roles). Each
+        message names the culprit (#379 fail-loud contract).
+    """
+    data = py_df.data
+    variables = set(data["variable"].unique())
+    model = data["model"].iloc[0]
+    scenario = data["scenario"].iloc[0]
+
+    frames = []
+    for spec in specs:
+        name = spec["name"]
+        exp_var, imp_var, bunker_var = (
+            spec["exp_var"],
+            spec["imp_var"],
+            spec["bunker_var"],
+        )
+        leg_unit, bunker_unit = spec["leg_unit"], spec["bunker_unit"]
+        bunker_factor = spec.get("bunker_factor", 1.0)
+        out_unit = spec["unit"]
+
+        # Guard (a): every referenced leaf present.
+        missing = [v for v in (exp_var, imp_var, bunker_var) if v not in variables]
+        if missing:
+            raise ValueError(
+                f"Net-trade {name!r}: referenced leaf variable(s) {missing} absent "
+                "from the report. Net trade runs only in the full workflow; a "
+                "partial-domain run cannot supply every leg."
+            )
+
+        exp = data[data["variable"] == exp_var]
+        imp = data[data["variable"] == imp_var]
+        bunker = data[data["variable"] == bunker_var]
+
+        # Guard (b): per-leg unit homogeneity.
+        for leg_name, leg, want in (
+            (exp_var, exp, leg_unit),
+            (imp_var, imp, leg_unit),
+            (bunker_var, bunker, bunker_unit),
+        ):
+            got = sorted(set(leg["unit"]))
+            if got != [want]:
+                raise ValueError(
+                    f"Net-trade {name!r}: leg {leg_name!r} carries units {got}, "
+                    f"expected [{want!r}]. A wrong unit here is silently off by a "
+                    "heating value; fix the leaf's original_unit or the spec."
+                )
+
+        # Guard (c): region roles.
+        for leg_name, leg in ((exp_var, exp), (imp_var, imp)):
+            if (leg["region"] == glb).any():
+                raise ValueError(
+                    f"Net-trade {name!r}: export/import leg {leg_name!r} carries "
+                    f"{glb} rows; the exp/imp legs must be strictly regional."
+                )
+        if not (bunker["region"] == glb).all():
+            raise ValueError(
+                f"Net-trade {name!r}: bunker leg {bunker_var!r} carries non-{glb} "
+                f"rows; the bunker leg must be strictly {glb}-native."
+            )
+
+        # Year alignment: outer-join exp/imp on (region, year), missing -> 0.0.
+        e = exp.set_index(["region", "year"])["value"]
+        i = imp.set_index(["region", "year"])["value"]
+        legs = pd.concat({"exp": e, "imp": i}, axis=1).fillna(0.0).reset_index()
+
+        # Bunker per year at glb, converted to leg units.
+        b_by_year = bunker.groupby("year")["value"].sum() * bunker_factor
+
+        # Share of world exports per region-year; 0/0 -> 0 (legacy .fillna(0)).
+        exp_glb = legs.groupby("year")["exp"].transform("sum")
+        share = (legs["exp"] / exp_glb).fillna(0.0)
+        ship = legs["year"].map(b_by_year).fillna(0.0)
+        legs["value"] = legs["exp"] - legs["imp"] - ship * share
+
+        # Guard (d): unallocated bunker — bunker > 0 in a year with zero total
+        # exports cannot be pro-rata allocated (share == 0), so it drops out of
+        # the net and inflates the World row. Physically unexpected; warn only.
+        exp_by_year = legs.groupby("year")["exp"].sum()
+        for y, bval in b_by_year.items():
+            if bval > 0 and exp_by_year.get(y, 0.0) == 0.0:
+                LOG.warning(
+                    "Net-trade %r: bunker %.4g in %s with zero total exports; the "
+                    "unallocated bunker inflates the World row that year.",
+                    name,
+                    bval,
+                    y,
+                )
+
+        out = legs[["region", "year", "value"]].copy()
+        out["variable"] = name
+        out["unit"] = out_unit
+        out["model"] = model
+        out["scenario"] = scenario
+        frames.append(out)
+
+    if not frames:
+        return py_df
+    return pyam.IamDataFrame(pd.concat([data, *frames], ignore_index=True))
+
+
 def check_region_purity(py_df: pyam.IamDataFrame, glb: str = "R12_GLB") -> None:
     """Raise if any variable carries both native ``glb`` rows and regional rows.
 
@@ -835,6 +991,7 @@ def run_sectoral_reporting(
     domains: Optional[List[str]] = None,
     add_world: bool = True,
     add_global_aggregates: bool = False,
+    add_net_trade: bool = False,
 ) -> pyam.IamDataFrame:
     """Run reporting across one or more ``data/<domain>/reporting`` directories.
 
@@ -857,6 +1014,14 @@ def run_sectoral_reporting(
         World rolls the aggregates up too. Leave False for partial-domain runs:
         the global specs assume the full workflow domain set, and a subset of
         domains would emit silently partial totals.
+    add_net_trade
+        If True, run :func:`compute_net_trade` over the assembled leaves (specs
+        from :func:`load_net_trade_specs`) after the global aggregates and before
+        the World step, so the regional net rows are summed to World like any
+        other regional variable. Its legs span hydrogen + chemicals + transport,
+        so leave False for partial-domain runs. One-way door: because net trade
+        runs after :func:`compute_global_aggregates`, the net variables can never
+        be components of a global aggregate.
     """
     if domains is None:
         domains = ["hydrogen"]
@@ -882,6 +1047,11 @@ def run_sectoral_reporting(
 
     if add_global_aggregates:
         py_df = compute_global_aggregates(py_df, load_global_aggregate_specs())
+
+    # Net trade after global aggregates, before the World step: the regional net
+    # rows are then summed to R12_GLB by the World step (World ~ -trade losses).
+    if add_net_trade:
+        py_df = compute_net_trade(py_df, load_net_trade_specs())
 
     # Sum regional nodes → R12_GLB only for variables without native GLB rows
     # (chemicals bunkers already report at R12_GLB).

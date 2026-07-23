@@ -83,23 +83,16 @@ aggregates:
     unit: EJ/yr
 
   # --- Trade (Trade|Goods|* and Trade|Secondary Energy|*) ---
-  # PROVISIONAL: authored as GROSS EXPORTS under the spec name, pending Yiyi's
-  # net-vs-gross ruling (open-questions item 18). The gross per-direction leaves
-  # (out|meth_exp/meth_imp, out|export_NH3/import_NH3, out|lh2_exp/lh2_imp,
-  # out|eth_exp/eth_imp) are unambiguous and reported directly. Net trade cannot be
-  # built here -- compute_global_aggregates is sum-only, so exp-imp needs signed
-  # components; if Yiyi wants net, that is an engine change or a signed-leaf pair.
-  # Trade|Goods|Ammonia stays Mt/yr (the model basis); the spec's EJ/yr is filed
-  # as a unit deviation (item 18). No Trade|Goods|Ethanol in the spec (leaves only).
-  - name: Trade|Goods|Methanol
-    patterns: ["out|meth_exp"]
-    unit: EJ/yr
-  - name: Trade|Goods|Ammonia
-    patterns: ["out|export_NH3"]
-    unit: Mt/yr
-  - name: Trade|Secondary Energy|Hydrogen
-    patterns: ["out|lh2_exp"]
-    unit: EJ/yr
+  # NET exports per region are computed by compute_net_trade (data/reporting/
+  # net_trade.yaml), NOT here: net = exp - imp - pro-rata bunker needs signed
+  # components, which the sum-only compute_global_aggregates cannot express. The
+  # provisional GROSS specs that lived here (Trade|Goods|Methanol,
+  # Trade|Goods|Ammonia, Trade|Secondary Energy|Hydrogen) were removed in the
+  # same change that landed net_trade.yaml -- both alive would duplicate the
+  # variable names and make the pyam concat raise (#396 STEP 3, Yiyi's net ruling
+  # 2026-07-22). The per-tech gross out| leaves (out|meth_exp, out|export_NH3,
+  # out|lh2_exp, ...) stay published UNCHANGED as observability (Yiyi approved the
+  # leaf/aggregate duplication).
 
   # --- Per-commodity in|all / out|all totals ---
   # FAMILY SEMANTICS: in|all|<c> = REGIONAL consumption of <c>; international
