@@ -40,11 +40,6 @@ vars:
       { technology: [ gas_NH3, gas_NH3_ccs ], mode: M1, commodity: gas, level: secondary }
     short: fe_nh3_gas
 
-  Chemicals|Ammonia|Hydrogen:
-    filter:
-      { technology: h2_NH3, mode: M1, commodity: hydrogen, level: final }
-    short: fe_nh3_h2
-
 
   Chemicals|Methanol|Electricity:
     filter:
