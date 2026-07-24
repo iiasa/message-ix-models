@@ -4,7 +4,8 @@
 # energy-basis methanol set, USD/(t/yr) x Mt/yr for the mass-basis ammonia set),
 # and model costs are USD_2005, so one x1.10774/1000 factor covers all techs
 # (legacy convention: materials_dac_units.yaml currency_unit_out_conv=1.10774).
-# h2_NH3 deliberately not listed (absent from the model).
+# h2_NH3 (merchant-H2->NH3, regional hydrogen@final; #436) added to the model and
+# listed below, mass-basis (USD/(t/yr) x Mt/yr) like the other NH3 producers.
 
 var:
   inv
@@ -94,3 +95,8 @@ vars:
     filter: {technology: electr_NH3}
     original_unit: million USD_2005/yr
     short: inv_electr_NH3
+
+  h2_NH3:
+    filter: {technology: h2_NH3}
+    original_unit: million USD_2005/yr
+    short: inv_h2_NH3
