@@ -97,8 +97,8 @@ def run_friction_scenario(base_scenario_name:str,
     with use_scenario.transact("Remove constraints on shocked technologies"):
         for par in ["growth_activity_lo", "growth_activity_up", "initial_activity_lo", "initial_activity_up"]:
             basepar = use_scenario.par(par)
-            basepar_exp = basepar[(basepar['technology'].str.contains("_shipped_exp")) & (basepar['node_loc'] == 'R12_MEA')]
-            basepar_imp = basepar[basepar['technology'].str.contains("_shipped_imp")]
+            basepar_exp = basepar[(basepar['technology'].str.contains("_shipped_exp")) & (basepar['node_loc'] == 'R12_MEA') & (basepar['year_act'].isin([2030, 2035, 2040]))]
+            basepar_imp = basepar[(basepar['technology'].str.contains("_shipped_imp")) & (basepar['year_act'].isin([2030, 2035, 2040]))]
             
             if len(basepar) != 0:
                 print(f"...{par}")
