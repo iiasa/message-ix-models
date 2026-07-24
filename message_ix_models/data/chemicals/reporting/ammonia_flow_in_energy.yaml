@@ -109,3 +109,14 @@ vars:
     filter: {technology: gas_NH3, commodity: gas, level: secondary, mode: M1}
     original_unit: GWa
     short: in_gas_NH3_gas
+
+  # Merchant-hydrogen route: draws grid hydrogen@final, not captive/white hydrogen.
+  Industry|Chemicals|h2_NH3|hydrogen:
+    filter: {technology: h2_NH3, commodity: hydrogen, level: final, mode: M1}
+    original_unit: GWa
+    short: in_h2_NH3_hydrogen
+
+  Industry|Chemicals|h2_NH3|electr:
+    filter: {technology: h2_NH3, commodity: electr, level: secondary, mode: M1}
+    original_unit: GWa
+    short: in_h2_NH3_electr
