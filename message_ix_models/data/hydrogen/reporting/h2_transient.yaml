@@ -3,6 +3,9 @@
 # Transient hydrogen is defined as hydrogen production for 
 # the production of other commodities, such as ammonia and methanol.
 # each variable specifies a list of filter for genno.operator.select()
+# catalytic_reforming_ref is excluded because it directly outputs refinery hydrogen.
+# It is reported once as out|catalytic_reforming_ref|hydrogen, not converted from a
+# downstream commodity into this stoichiometric transient hierarchy.
 #
 # Stoichiometric factors convert output commodity (ammonia/methanol) to hydrogen content:
 # - Ammonia: 1.114 EJ H2 per EJ NH3
@@ -18,13 +21,6 @@ iamc_prefix:
 unit: EJ/yr
 
 vars:
-  # Refinery hydrogen production - transient hydrogen
-  Transient|Refinery:
-    filter:
-      { technology: [catalytic_reforming_ref], mode: M1, commodity: hydrogen, level: refinery }
-    original_unit: GWa
-    short: prod_h2_transient_refinery
-
   # Ammonia production - all technologies produce transient hydrogen
   # Factor: 1.114 EJ H2 per EJ NH3
 

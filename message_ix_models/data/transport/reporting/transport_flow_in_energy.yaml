@@ -13,6 +13,8 @@
 # DROPPED: the spec's "Iahe_trp|ethanol" -- no such tech in the model; it is a typo for
 # IAHe_ptrp, whose ethanol flow is already reported from data/chemicals/ (do not re-author
 # here, would double-count). Flag to Yiyi.
+# EXCLUDED: ICE_L_ptrp is historical-only (pre-2005), with zero input rows,
+# zero ACT, and no historical_activity; it has no reportable commodity flow.
 #
 # All 28 filter techs verified present in message_ix_models/data/transport/.
 # Source: results/reporting/coverage_20260625.csv (absent demand_s transport leaf rows).
@@ -88,16 +90,6 @@ vars:
     filter: {technology: HFC_ptrp, commodity: hydrogen, level: final, mode: all}
     original_unit: GWa
     short: in_HFC_ptrp_hydrogen
-
-  # DROPPED (verified BMT baseline v9, on-site 2026-06-30): ICE_L_ptrp is the
-  # historical-only pre-2005 LDV fleet tech -- it has NO input parameter (zero rows),
-  # ACT is identically zero, and it is absent from historical_activity, so this lightoil
-  # flow does not exist in the model. Kept commented (spec mapping_clean lists it) pending
-  # Yiyi sign-off on the spec deviation. See docs/reporting_open_questions_yiyi.md B5.
-  # Transportation|Light-Duty Vehicle|ICE_L_ptrp|lightoil:
-  #   filter: {technology: ICE_L_ptrp, commodity: lightoil, level: final, mode: all}
-  #   original_unit: GWa
-  #   short: in_ICE_L_ptrp_lightoil
 
   Transportation|Light-Duty Vehicle|ICE_conv|lightoil:
     filter: {technology: ICE_conv, commodity: lightoil, level: final, mode: all}
