@@ -23,20 +23,8 @@
 # parameter on 2026-07-07 (check_filter_coords: all coords present).
 # See docs/shipping_bunker_findings.md.
 #
-# NOT AUTHORED (spec lists them, the model does not support them -- flagged to Yiyi):
-#  * in|Shipping|loil_bunker|lightoil -- loil is NOT a shipping fuel in this model.
-#    Its fuel pathway is commented out of update_shipping.add_fuel_pathways
-#    (`for fuel in [...]:  # "loil"`), so loil_bunker has NO input and NO output;
-#    it is a hollow addon-PARENT (parent of the loil_occ_bunker OCC addon). Its
-#    nonzero ACT (e.g. 214 GWa @2060, all in shp_solid mode) is a DEGENERATE
-#    alternate-optimum artifact -- zero objective contribution, emissions unpriced
-#    in the baseline -- not lightoil consumption, and it serves no shipping
-#    (meth_bunker et al. supply shp_solid). Authoring it would emit a mislabeled
-#    zero/phantom. It also injects phantom shipping CO2 into CO2s_TCE (14-42% of
-#    reported shipping CO2). Root-cause + fix tracked on board #348.
-#  * in|Power|coal_adv_cfNH3|ammonia -- coal_adv_cfNH3 is absent from the model
-#    technology set entirely (only coal_NH3 / coal_NH3_ccs exist, which are ammonia
-#    PRODUCTION, not power co-firing). Phantom spec target; nothing to author.
+# EXCLUDED: loil_bunker's fuel path is disabled. The hollow addon parent has no
+# input/output; its nonzero ACT is degenerate/phantom, not a commodity flow.
 var: in
 iamc_prefix: "in|"
 unit: EJ/yr

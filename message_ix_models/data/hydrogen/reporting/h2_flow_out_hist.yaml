@@ -24,6 +24,14 @@ iamc_prefix:
 unit: EJ/yr
 
 vars:
+  # refinery
+  catalytic_reforming_ref|hydrogen:
+    filter:
+      {technology: catalytic_reforming_ref, mode: M1, commodity: hydrogen, level: refinery}
+    original_unit: GWa
+    short:
+      out_catalytic_reforming_ref
+
   # gas
   h2_smr|hydrogen:
     filter:

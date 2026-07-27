@@ -5,6 +5,8 @@
 # — the three electrolysers, electric pyrolysis, and the SMR-CCS capture penalty.
 # h2_smr/h2_coal/h2_coal_ccs/h2_bio/h2_bio_ccs are excluded: their electr input
 # coefficient is a hard zero (they emit electricity as a byproduct instead).
+# The earlier proposed Primary Energy|Electricity|Hydrogen label was superseded
+# by agreement on in|hydrogen|total electricity and was never formally reported.
 #
 # Aggregates sum already-converted IAMC values, so no original_unit/factors here.
 
