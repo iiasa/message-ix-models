@@ -113,11 +113,13 @@ aggregates:
   # in|all|hydrogen: all H2 consumption (EJ). Lists the meth_h2 CO2-source TOTAL
   # aggregate (in|Industry|Chemicals|meth_h2|hydrogen) and NOT its three split
   # leaves, so meth_h2 is counted once (a glob in|*|hydrogen would match both and
-  # double-count). Chemicals H2 consumers beyond h2_liq + meth_h2 would need adding.
+  # double-count). Chemicals H2 consumers beyond h2_liq + meth_h2 + h2_NH3 would
+  # need adding.
   - name: in|all|hydrogen
     patterns:
       - "in|Industry|Chemicals|h2_liq|hydrogen"
       - "in|Industry|Chemicals|meth_h2|hydrogen"
+      - "in|Industry|Chemicals|h2_NH3|hydrogen"
       - "in|Industry|Other|*|hydrogen"
       - "in|Industry|Iron and Steel|*|hydrogen"
       - "in|Industry|Refining|*|hydrogen"

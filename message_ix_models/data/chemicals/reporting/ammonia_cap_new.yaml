@@ -3,9 +3,9 @@
 # ACT/output is NH3@secondary_material in Mt/yr (C2-traced convention,
 # ammonia_flow_out_material.yaml), so capacity is Mt/yr — NOT the GW/yr the
 # spec lists (physics-driven deviation, tracked in the reconciliation CSV).
-# The spec's h2_NH3 does not exist in the model (no merchant-H2->NH3 route)
-# and is deliberately not listed — a listed-but-absent tech would emit
-# zero-fill noise. Basis evidence: scripts/verify/check_c3_capacity_basis.py.
+# h2_NH3 (standalone Haber-Bosch+ASU on regional merchant hydrogen@secondary) was
+# added to the model (#436) and is now listed below on the same Mt/yr mass basis
+# as its siblings. Basis evidence: scripts/verify/check_c3_capacity_basis.py.
 
 var:
   CAP_NEW
@@ -60,3 +60,8 @@ vars:
     filter: {technology: electr_NH3}
     original_unit: Mt/yr
     short: cap_new_electr_NH3
+
+  h2_NH3:
+    filter: {technology: h2_NH3}
+    original_unit: Mt/yr
+    short: cap_new_h2_NH3
