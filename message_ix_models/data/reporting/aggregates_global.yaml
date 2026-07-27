@@ -36,6 +36,85 @@ aggregates:
     patterns: ["in|Industry|Chemicals|meth_h2|FIC_CO2|hydrogen"]
     unit: EJ/yr
 
+  # --- Ammonia production inputs by feedstock and CCS route ---
+  - name: Final Energy|Industry|Chemicals|Ammonia|Gases|Gas|w/ CCS
+    patterns: ["in|Industry|Chemicals|gas_NH3_ccs|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Gases|Gas|w/o CCS
+    patterns: ["in|Industry|Chemicals|gas_NH3|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Gases|w/ CCS
+    patterns: ["in|Industry|Chemicals|gas_NH3_ccs|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Gases|w/o CCS
+    patterns: ["in|Industry|Chemicals|gas_NH3|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Liquids|Oil|w/ CCS
+    patterns: ["in|Industry|Chemicals|fueloil_NH3_ccs|fueloil"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Liquids|Oil|w/o CCS
+    patterns: ["in|Industry|Chemicals|fueloil_NH3|fueloil"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Liquids|w/ CCS
+    patterns: ["in|Industry|Chemicals|fueloil_NH3_ccs|fueloil"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Liquids|w/o CCS
+    patterns: ["in|Industry|Chemicals|fueloil_NH3|fueloil"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Solids|Biomass|w/ CCS
+    patterns: ["in|Industry|Chemicals|biomass_NH3_ccs|biomass"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Solids|Biomass|w/o CCS
+    patterns: ["in|Industry|Chemicals|biomass_NH3|biomass"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Solids|Coal|w/ CCS
+    patterns: ["in|Industry|Chemicals|coal_NH3_ccs|coal"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Solids|Coal|w/o CCS
+    patterns: ["in|Industry|Chemicals|coal_NH3|coal"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Solids|w/ CCS
+    patterns:
+      - "in|Industry|Chemicals|biomass_NH3_ccs|biomass"
+      - "in|Industry|Chemicals|coal_NH3_ccs|coal"
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Ammonia|Solids|w/o CCS
+    patterns:
+      - "in|Industry|Chemicals|biomass_NH3|biomass"
+      - "in|Industry|Chemicals|coal_NH3|coal"
+    unit: EJ/yr
+  # The legacy-owned parent Final Energy|Industry|Chemicals|Ammonia retains its
+  # established scope; this Genno child does not overwrite that parent.
+  - name: Final Energy|Industry|Chemicals|Ammonia|Hydrogen
+    patterns: ["in|Industry|Chemicals|h2_NH3|hydrogen"]
+    unit: EJ/yr
+
+  # --- Methanol production inputs by feedstock and CCS route ---
+  - name: Final Energy|Industry|Chemicals|Methanol|Gases|Gas|w/ CCS
+    patterns: ["in|Industry|Chemicals|meth_ng_ccs|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Gases|Gas|w/o CCS
+    patterns: ["in|Industry|Chemicals|meth_ng|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Gases|w/ CCS
+    patterns: ["in|Industry|Chemicals|meth_ng_ccs|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Gases|w/o CCS
+    patterns: ["in|Industry|Chemicals|meth_ng|gas"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Solids|Biomass|w/ CCS
+    patterns: ["in|Industry|Chemicals|meth_bio_ccs|biomass"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Solids|Biomass|w/o CCS
+    patterns: ["in|Industry|Chemicals|meth_bio|biomass"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Solids|Coal|w/ CCS
+    patterns: ["in|Industry|Chemicals|meth_coal_ccs|coal"]
+    unit: EJ/yr
+  - name: Final Energy|Industry|Chemicals|Methanol|Solids|Coal|w/o CCS
+    patterns: ["in|Industry|Chemicals|meth_coal|coal"]
+    unit: EJ/yr
+
   # --- Aviation (con_ar family; conE_ar ethanol confirmed in spec + model) ---
   - name: Final Energy|Transportation|Aviation|Liquids|Oil
     patterns: ["in|Transportation|Aviation|con_ar|lightoil"]
@@ -143,14 +222,32 @@ aggregates:
       - "in|Chemicals|residual_NH3|ammonia"
     unit: Mt/yr
   # out|all|methanol: total methanol PRODUCTION (EJ; producers are energy-basis,
-  # the Mt bridge is downstream at meth_t_d). Trade (out|meth_exp) is not a producer.
+  # the Mt bridge is downstream at meth_t_d). Exact producers prevent the
+  # material-basis meth_ind_fs output from entering this total.
   - name: out|all|methanol
-    patterns: ["out|*|methanol"]
+    patterns:
+      - "out|meth_bio|methanol"
+      - "out|meth_bio_ccs|methanol"
+      - "out|meth_coal|methanol"
+      - "out|meth_coal_ccs|methanol"
+      - "out|meth_h2|methanol"
+      - "out|meth_ng|methanol"
+      - "out|meth_ng_ccs|methanol"
     unit: EJ/yr
-  # out|all|NH3: total ammonia PRODUCTION (Mt). Trade (out|export_NH3) has no
-  # commodity segment so the glob does not match it.
+  # out|all|NH3: total ammonia PRODUCTION (Mt). Exact producers include h2_NH3
+  # and exclude the downstream residual_NH3 conversion.
   - name: out|all|NH3
-    patterns: ["out|*|NH3"]
+    patterns:
+      - "out|biomass_NH3|NH3"
+      - "out|biomass_NH3_ccs|NH3"
+      - "out|coal_NH3|NH3"
+      - "out|coal_NH3_ccs|NH3"
+      - "out|electr_NH3|NH3"
+      - "out|fueloil_NH3|NH3"
+      - "out|fueloil_NH3_ccs|NH3"
+      - "out|gas_NH3|NH3"
+      - "out|gas_NH3_ccs|NH3"
+      - "out|h2_NH3|NH3"
     unit: Mt/yr
   # Per-mode transport input totals (EJ; all transport fuels are energy-basis).
   # in|Shipping|all shares the in|Shipping|* match with Final Energy|Bunkers|Shipping

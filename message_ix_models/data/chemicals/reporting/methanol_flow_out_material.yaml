@@ -14,3 +14,9 @@ vars:
     filter: {technology: meth_t_d, commodity: methanol, level: final_material, mode: feedstock}
     original_unit: Mt/yr
     short: out_meth_t_d_methanol_feedstock_material
+
+  # Downstream industrial feedstock supply; excluded from energy-basis production.
+  meth_ind_fs|methanol:
+    filter: {technology: meth_ind_fs, commodity: methanol, level: demand, mode: M1}
+    original_unit: Mt/yr
+    short: out_meth_ind_fs_methanol
