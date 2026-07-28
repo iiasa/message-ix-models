@@ -875,14 +875,10 @@ def build_flow_Vcosts(
         )
 
     elif config_dict["flow_constraint"][tec] == "global":
-        exp0 = network_setup[tec]["exporter"].str.replace(message_regions + "_", "")
-        imp0 = network_setup[tec]["importer"].str.replace(message_regions + "_", "")
-        mode_use = exp0 + "-" + imp0
-
         df_vcost_base = message_ix.make_df(
             "var_cost",
             node_loc=network_setup[tec]["exporter"],
-            mode=mode_use,
+            mode="M1",
             technology=flow_tec,
             unit="USD/" + config_dict["flow_units"][tec],
             time="year",
@@ -891,7 +887,9 @@ def build_flow_Vcosts(
     if "shipped" in tec:
         df_vcost_base["value"] = 0.002  # Default is 0.002 USD/Mt-km
 
-    vcost_out = pd.concat([parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base])
+    vcost_out = pd.concat(
+        [parameter_outputs[tec]["flow"]["var_cost"], df_vcost_base]
+    ).drop_duplicates()
     parameter_outputs[tec]["flow"]["var_cost"] = vcost_out
 
     return parameter_outputs
