@@ -125,6 +125,16 @@ for model_scen in models_scenarios.keys():
                      trade_commodity_list = ['lightoil', 'fueloil'],
                      base_level = 'secondary')
 
+    print("Hold level of trade in 2030 for historical year as 2025 (FMY is 2035)")
+    hadf = out_scenario.par('historical_activity')
+    hadf = hadf[(hadf['technology'].str.contains("_imp"))|(hadf['technology'].str.contains("_exp_"))]
+    hadf = hadf[hadf['year_act'] == 2025]
+    hadf['year_act'] = 2030
+    print(hadf[0:10])
+    
+    with out_scenario.transact("hold level of trade in 2030"):
+        out_scenario.add_par('historical_activity', hadf)
+        
     print("Solve scenario")
     out_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
     mp.close_db()
