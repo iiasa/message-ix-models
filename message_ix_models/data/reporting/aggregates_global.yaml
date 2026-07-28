@@ -20,9 +20,9 @@
 #   covers every marine fuel actually reported.
 # - Shipping|Hydrogen sums the spec-named LH2 leaf in|Shipping|LH2_bunker|hydrogen
 #   (item-15 re-point done; data/hydrogen/reporting/lh2_shipping_flow_in.yaml).
-#   The legacy Use|LH2|Transportation|Shipping leaf still exists but is NOT
-#   referenced here -- listing it alongside the in|Shipping|* glob would
-#   double-count LH2 in the Bunkers|Shipping total.
+#   Its legacy Use|LH2|Transportation|Shipping twin was retired 2026-07-28; a
+#   re-added Use| duplicate must stay out of this file, since listing it
+#   alongside the in|Shipping|* glob would double-count LH2 in the total.
 
 aggregates:
   # --- Methanol-from-hydrogen by CO2 source (mode-split leaves, item 17) ---

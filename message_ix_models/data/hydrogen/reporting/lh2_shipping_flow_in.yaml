@@ -1,11 +1,12 @@
 # EFC Shipping LH2 bunker INPUT flow under the spec name (open-questions item 15):
 #   in|Shipping|LH2_bunker|hydrogen  (EJ/yr).
 #
-# Same flow as the legacy Use|LH2|Transportation|Shipping leaf in lh2_use.yaml
-# (which stays until verified inert); a separate file because that file's
-# iamc_prefix is Use|. Filter mirrors the legacy leaf: LH2_bunker serves the
-# 9 future ship-type modes only, commodity lh2 at level final, GWa in
-# (the 1.3 input coefficient is an in-energy liquefaction/boil-off loss).
+# Sole reporting home for this flow since 2026-07-28: the legacy Use|-prefixed
+# twin (lh2_use.yaml, leaf Use|LH2|Transportation|Shipping) was retired with the
+# rest of that file, whose other three leaves filtered coordinates absent from
+# the MT model. LH2_bunker serves the 9 future ship-type modes only, commodity
+# lh2 at level final, GWa in (the 1.3 input coefficient is an in-energy
+# liquefaction/boil-off loss).
 # The Final Energy|Bunkers|Shipping|Hydrogen global aggregate points at this
 # leaf (data/reporting/aggregates_global.yaml).
 
