@@ -94,7 +94,7 @@ for model_scen in models_scenarios.keys():
 
     mp = ixmp.Platform()
     base_scenario = message_ix.Scenario(mp, model='sparccle_trade', scenario=model_scen)
-    out_scenario = base_scenario.clone('sparccle_trade', model_scen)
+    out_scenario = base_scenario.clone('sparccle_trade', model_scen, keep_solution = False)
     out_scenario.set_as_default()
 
     print("Updating extraction constraints")
@@ -112,12 +112,6 @@ for model_scen in models_scenarios.keys():
         with out_scenario.transact("update growth activity to gas_extr_mpen"):
             out_scenario.remove_par(g, remdf)
             out_scenario.add_par(g, updf)
-
-   # print("Remove oil_imp_c relation activity")
-   # for p in ["relation_activity", "relation_upper", "relation_lower"]:
-   #     remdf = out_scenario.par(p, filters = {"relation": "oil_imp_c"})
-   #     with out_scenario.transact(f"remove relation {p}"):
-   #         out_scenario.remove_par(p, remdf)
 
     print("Remove balance equalities on piped/shipped")
     with out_scenario.transact("Remove balance equality"):

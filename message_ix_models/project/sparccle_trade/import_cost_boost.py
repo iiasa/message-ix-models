@@ -95,7 +95,7 @@ for in_scen in ['SSP3_NPiREF', 'SSP3_STS3']:
     base_scen = in_scen
     
     base_scenario = message_ix.Scenario(mp, model=base_model, scenario=base_scen)
-    out_scenario = base_scenario.clone('sparccle_trade', base_scen + "_impcosts_hi", keep_solution = False)
+    out_scenario = base_scenario.clone('sparccle_trade', base_scen + "_frictions", keep_solution = False)
     out_scenario.set_as_default()
 
     # Increase import costs
