@@ -47,7 +47,8 @@ def run_nam_boost(base_scenario_name: str,
     mp = ixmp.Platform()
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
     out_scenario = base_scenario.clone(model = 'weu_security', scenario = out_scenario_name, keep_solution = False)
-
+    out_scenario.set_as_default()
+    
     # Aggregate imports for bounds
     outputdf = base_scenario.par('output')
     outputdf = outputdf[outputdf['technology'].isin(bound_technologies)]
@@ -140,7 +141,7 @@ def run_nam_boost(base_scenario_name: str,
     mp.close_db()
 
 # Run scenarios
-for lev in [10, 15, 20, 25, 30]:
+for lev in [30, 25, 20, 15, 10]:
     gwa_level = lev * 31.71 # approximation of EJ to GWa
     print(f"Build and run: Base scenario = SSP2, Boost level = {lev}EJ")
     run_nam_boost(base_scenario_name = 'SSP2',

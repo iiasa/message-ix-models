@@ -75,7 +75,8 @@ def adjust_resource_supply_curves(base_scenario_name:str,
     base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
     out_scenario_name = f"{base_scenario_name}_{scenario_addition}"
     out_scenario = base_scenario.clone(model = 'weu_security', scenario = out_scenario_name, keep_solution = False)
-
+    out_scenario.set_as_default()
+    
     # Adjust resource supply curves
     for p in ['var_cost', 'inv_cost']:
         rsc_in = out_scenario.par(p, filters = {'technology': ['gas_extr_1', 'gas_extr_2', 'gas_extr_3',
