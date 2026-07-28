@@ -73,8 +73,8 @@ def calculate_port_distances(df: pd.DataFrame) -> pd.DataFrame:
     # Calculate distances between all port combinations
     distances = []
     for i, j in port_combinations:
-        port1 = ports_clean.iloc[i]
-        port2 = ports_clean.iloc[j]
+        port1 = ports_clean.loc[i]
+        port2 = ports_clean.loc[j]
 
         distance = marnet_geograph.get_shortest_path(
             origin_node={
