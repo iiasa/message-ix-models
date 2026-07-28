@@ -7,8 +7,8 @@
 # here in the transport domain, which is already wired into the workflow and
 # auto-discovers every *.yaml. The chemical marine fuels are reported from
 # data/chemicals/ (meth_bunker, eth_bunker, NH3_bunker, all keyed Shipping|...)
-# and LH2 from data/hydrogen/ (spec name in lh2_shipping_flow_in.yaml + legacy
-# Use| name in lh2_use.yaml until verified inert).
+# and LH2 from data/hydrogen/reporting/lh2_shipping_flow_in.yaml (the spec name;
+# its legacy Use| twin was retired 2026-07-28).
 #
 # Filters verified against the BMT baseline (v9, ixmp-dev), input parameter:
 #   foil_bunker: fueloil@final, 19 shp_* modes, coeff 1.0.
