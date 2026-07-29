@@ -16,6 +16,7 @@ from message_ix_models.project.efc import (
     aas_coal_growth_near_term,
     freeze_truck_history,
 )
+from message_ix_models.tools.policy import add_anchor
 from message_ix_models.workflow import Workflow
 
 # Hyway electrolyser techs that take over h2_elec's role as
@@ -254,6 +255,13 @@ def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.S
     return scenario
 
 
+def add_cpol(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Add current-policy (CPOL) anchors to the scenario."""
+    context.anchor_data_file = "20260727efc_current_policy.csv"
+    add_anchor(context, scenario)
+    return scenario
+
+
 def build_hydrogen(
     context: Context, scenario: message_ix.Scenario
 ) -> message_ix.Scenario:
@@ -425,7 +433,7 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step(
         "cpol added",
         "baseline reported",
-        placeholder,
+        add_cpol,
         target=f"{url}cpol",
         clone=c,
     )
