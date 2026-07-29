@@ -14,12 +14,17 @@ import yaml
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import local_data_path
+from message_ix_models.util import local_data_path, private_data_path
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     from typing import TypeVar
 
+    from message_ix_models.util.context import Context
+
     T = TypeVar("T", bound="Policy")
+
+log = logging.getLogger(__name__)
 
 
 class Policy(ABC):
@@ -79,8 +84,6 @@ def make_scenario_runner(
 ):
     """Create and initialize a ScenarioRunner for policy scenario generation."""
     from message_data.model.scenario_runner import ScenarioRunner
-
-    from message_ix_models.util import private_data_path
 
     biomass_trade = getattr(context, "biomass_trade", False)
 
@@ -404,13 +407,23 @@ def load_anchor_data(context: Context) -> pd.DataFrame:
 
     path = local_data_path("anchor", anchor_name, context=context)
     if not path.is_file():
-        log.warning(
-            "load_anchor_data: anchor CSV not found at %s "
-            "(expected under message-static-data/anchor/ "
-            "within message local data from ixmp config); returning empty DataFrame",
-            path.resolve(),
-        )
-        return pd.DataFrame(columns=cols)
+        private_path = private_data_path("anchor", anchor_name)
+        if private_path.is_file():
+            log.info(
+                "load_anchor_data: %s not found in local data; "
+                "falling back to private data at %s",
+                path.resolve(),
+                private_path.resolve(),
+            )
+            path = private_path
+        else:
+            log.warning(
+                "load_anchor_data: anchor CSV not found at %s or %s "
+                "(checked local data and message-data); returning empty DataFrame",
+                path.resolve(),
+                private_path.resolve(),
+            )
+            return pd.DataFrame(columns=cols)
 
     df = pd.read_csv(path)
     df = df.drop(columns=[c for c in _ANCHOR_DROP_COLUMNS if c in df.columns])
@@ -446,6 +459,110 @@ def load_anchor_data(context: Context) -> pd.DataFrame:
     return df
 
 
+def _anchor_growth(base_value: float, speed: float, step: int) -> float:
+    return base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
+
+
+# YJ: so far 3 arguments for emission_factor, input, share_comm*,
+# YJ: relation_activity; not good enough, later think about smarter refactoring
+def _apply_anchor_speed_depth(
+    df_update: pd.DataFrame,
+    df_loop: pd.DataFrame,
+    node_col: str,
+) -> None:
+    """Apply speed growth from year_act, capped/floored at depth_converted."""
+    for _, r in df_loop.loc[
+        df_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
+    ].iterrows():
+        if r.isna().any():
+            continue
+        start_year = int(r["year_act"])
+        speed = float(r["speed"])
+        depth_cap = float(r["depth_converted"])
+        for region, g in df_update.groupby(node_col):
+            base = g.loc[g["year_act"] == start_year, "value"]
+            if base.empty:
+                continue
+            base_value = float(base.iat[0])
+            years = sorted(y for y in g["year_act"].unique() if y >= start_year)
+            for step, year in enumerate(years, start=1):
+                idx = (df_update[node_col] == region) & (df_update["year_act"] == year)
+                candidate = base_value + _anchor_growth(base_value, speed, step)
+                if speed >= 0:
+                    df_update.loc[idx, "value"] = min(depth_cap, candidate)
+                else:
+                    df_update.loc[idx, "value"] = max(depth_cap, candidate)
+
+
+def _apply_anchor_speed_arrival(
+    df_update: pd.DataFrame,
+    df_loop: pd.DataFrame,
+    node_col: str,
+) -> None:
+    """Apply speed growth between year_act and arrival."""
+    for _, r in df_loop.loc[
+        df_loop["speed"].notna() & df_loop["arrival"].notna(),
+        ["year_act", "speed", "arrival"],
+    ].iterrows():
+        if r.isna().any():
+            continue
+        start_year = int(r["year_act"])
+        end_year = int(r["arrival"])
+        speed = float(r["speed"])
+        if end_year < start_year:
+            continue
+        for region, g in df_update.groupby(node_col):
+            base = g.loc[g["year_act"] == start_year, "value"]
+            if base.empty:
+                continue
+            base_value = float(base.iat[0])
+            years = sorted(
+                y for y in g["year_act"].unique() if start_year <= y <= end_year
+            )
+            for step, year in enumerate(years, start=1):
+                idx = (df_update[node_col] == region) & (df_update["year_act"] == year)
+                df_update.loc[idx, "value"] = base_value + _anchor_growth(
+                    base_value, speed, step
+                )
+
+
+def _apply_anchor_arrival_depth(
+    df_update: pd.DataFrame,
+    df_loop: pd.DataFrame,
+    node_col: str,
+) -> None:
+    """Set value to depth_converted from year_act onward for matching node."""
+    for _, r in df_loop.loc[
+        df_loop["arrival"].notna(), ["year_act", "depth_converted", "node"]
+    ].iterrows():
+        if r.isna().any():
+            continue
+        idx = (df_update["year_act"] >= int(r["year_act"])) & (
+            df_update[node_col] == r["node"]
+        )
+        df_update.loc[idx, "value"] = float(r["depth_converted"])
+
+
+def _apply_depth_speed_arrival(
+    df_initial: pd.DataFrame,
+    df_loop: pd.DataFrame,
+    node_col: str,
+) -> pd.DataFrame:
+    """Return an updated copy of *df_initial* using depth/speed/arrival logic."""
+    has_speed = df_loop["speed"].notna().any()
+    has_arrival = df_loop["arrival"].notna().any()
+    df_update = df_initial.copy()
+
+    if has_speed and not has_arrival:
+        _apply_anchor_speed_depth(df_update, df_loop, node_col)
+    elif has_speed and has_arrival:
+        _apply_anchor_speed_arrival(df_update, df_loop, node_col)
+    elif has_arrival and not has_speed:
+        _apply_anchor_arrival_depth(df_update, df_loop, node_col)
+
+    return df_update
+
+
 def add_anchor(
     context: Context,
     scenario: message_ix.Scenario,
@@ -457,6 +574,7 @@ def add_anchor(
     anchor_emission_factor(df_anchor, scenario)
     anchor_input(df_anchor, scenario)
     anchor_share_comm_lo(df_anchor, scenario)
+    anchor_relation_activity(df_anchor, scenario)
 
     return scenario
 
@@ -500,79 +618,9 @@ def anchor_emission_factor(  # noqa: C901
         )
 
         df_ef_loop = group.copy()
-
-        has_speed = df_ef_loop["speed"].notna().any()
-        has_arrival = df_ef_loop["arrival"].notna().any()
-
-        df_update = df_initial.copy()
-
-        # Anchor by speed and depth
-        if has_speed and not has_arrival:
-            for _, r in df_ef_loop.loc[
-                df_ef_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
-            ].iterrows():
-                if r.isna().any():
-                    continue
-                start_year = int(r["year_act"])
-                speed = float(r["speed"])
-                depth_cap = float(r["depth_converted"])
-                for region, g in df_update.groupby("node_loc"):
-                    base = g.loc[g["year_act"] == start_year, "value"]
-                    if base.empty:
-                        continue
-                    base_value = float(base.iat[0])
-                    years = sorted(y for y in g["year_act"].unique() if y >= start_year)
-                    for step, year in enumerate(years, start=1):
-                        idx = (df_update["node_loc"] == region) & (
-                            df_update["year_act"] == year
-                        )
-                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
-                        candidate = base_value + growth
-                        if speed >= 0:
-                            df_update.loc[idx, "value"] = min(depth_cap, candidate)
-                        else:
-                            df_update.loc[idx, "value"] = max(depth_cap, candidate)
-
-        # Anchor by speed and arrival
-        elif has_speed and has_arrival:
-            for _, r in df_ef_loop.loc[
-                df_ef_loop["speed"].notna() & df_ef_loop["arrival"].notna(),
-                ["year_act", "speed", "arrival"],
-            ].iterrows():
-                if r.isna().any():
-                    continue
-                start_year = int(r["year_act"])
-                end_year = int(r["arrival"])
-                speed = float(r["speed"])
-                if end_year < start_year:
-                    continue
-                for region, g in df_update.groupby("node_loc"):
-                    base = g.loc[g["year_act"] == start_year, "value"]
-                    if base.empty:
-                        continue
-                    base_value = float(base.iat[0])
-                    years = sorted(
-                        y for y in g["year_act"].unique() if start_year <= y <= end_year
-                    )
-                    for step, year in enumerate(years, start=1):
-                        idx = (df_update["node_loc"] == region) & (
-                            df_update["year_act"] == year
-                        )
-                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
-                        df_update.loc[idx, "value"] = base_value + growth
-
-        # Anchor by arrival and depth
-        elif has_arrival and not has_speed:
-            for _, r in df_ef_loop.loc[
-                df_ef_loop["arrival"].notna(), ["year_act", "depth_converted", "node"]
-            ].iterrows():
-                if r.isna().any():
-                    continue
-                idx = (df_update["year_act"] >= int(r["year_act"])) & (
-                    df_update["node_loc"] == r["node"]
-                )
-                df_update.loc[idx, "value"] = float(r["depth_converted"])
-
+        df_update = _apply_depth_speed_arrival(
+            df_initial, df_ef_loop, node_col="node_loc"
+        )
         updates.append(df_update)
 
     df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
@@ -634,80 +682,9 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
         )
 
         df_input_loop = group.copy()
-
-        has_speed = df_input_loop["speed"].notna().any()
-        has_arrival = df_input_loop["arrival"].notna().any()
-
-        df_update = df_initial.copy()
-
-        # Anchor by speed and depth
-        if has_speed and not has_arrival:
-            for _, r in df_input_loop.loc[
-                df_input_loop["speed"].notna(), ["year_act", "speed", "depth_converted"]
-            ].iterrows():
-                if r.isna().any():
-                    continue
-                start_year = int(r["year_act"])
-                speed = float(r["speed"])
-                depth_cap = float(r["depth_converted"])
-                for region, g in df_update.groupby("node_loc"):
-                    base = g.loc[g["year_act"] == start_year, "value"]
-                    if base.empty:
-                        continue
-                    base_value = float(base.iat[0])
-                    years = sorted(y for y in g["year_act"].unique() if y >= start_year)
-                    for step, year in enumerate(years, start=1):
-                        idx = (df_update["node_loc"] == region) & (
-                            df_update["year_act"] == year
-                        )
-                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
-                        candidate = base_value + growth
-                        if speed >= 0:
-                            df_update.loc[idx, "value"] = min(depth_cap, candidate)
-                        else:
-                            df_update.loc[idx, "value"] = max(depth_cap, candidate)
-
-        # Anchor by speed and arrival
-        elif has_speed and has_arrival:
-            for _, r in df_input_loop.loc[
-                df_input_loop["speed"].notna() & df_input_loop["arrival"].notna(),
-                ["year_act", "speed", "arrival"],
-            ].iterrows():
-                if r.isna().any():
-                    continue
-                start_year = int(r["year_act"])
-                end_year = int(r["arrival"])
-                speed = float(r["speed"])
-                if end_year < start_year:
-                    continue
-                for region, g in df_update.groupby("node_loc"):
-                    base = g.loc[g["year_act"] == start_year, "value"]
-                    if base.empty:
-                        continue
-                    base_value = float(base.iat[0])
-                    years = sorted(
-                        y for y in g["year_act"].unique() if start_year <= y <= end_year
-                    )
-                    for step, year in enumerate(years, start=1):
-                        idx = (df_update["node_loc"] == region) & (
-                            df_update["year_act"] == year
-                        )
-                        growth = base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
-                        df_update.loc[idx, "value"] = base_value + growth
-
-        # Anchor by arrival and depth
-        elif has_arrival and not has_speed:
-            for _, r in df_input_loop.loc[
-                df_input_loop["arrival"].notna(),
-                ["year_act", "depth_converted", "node"],
-            ].iterrows():
-                if r.isna().any():
-                    continue
-                idx = (df_update["year_act"] >= int(r["year_act"])) & (
-                    df_update["node_loc"] == r["node"]
-                )
-                df_update.loc[idx, "value"] = float(r["depth_converted"])
-
+        df_update = _apply_depth_speed_arrival(
+            df_initial, df_input_loop, node_col="node_loc"
+        )
         updates.append(df_update)
 
     df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
@@ -867,6 +844,168 @@ def anchor_share_comm_lo(  # noqa: C901
         len(df_map_share),
         len(df_map_total),
         len(df_share_lo),
+    )
+
+    return
+
+
+def anchor_relation_activity(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameters ``relation_activity`` and ``relation_lower``.
+
+    For each unique ``relation`` value in the anchor data the function:
+
+    * registers the relation name in the ``relation`` set,
+    * builds ``relation_activity`` rows (expanding comma-separated ``technology``
+      and ``mode`` fields into all cross-product pairs), and
+    * builds ``relation_lower`` rows using the depth/speed/arrival logic that is
+      shared with the other anchor functions.
+
+    Two anchor rows that share the same ``relation`` are merged into a single
+    ``relation_activity`` add (i.e. they contribute different technology/mode
+    combinations to the same relation constraint).
+    """
+
+    df_rel = df_anchor.loc[
+        df_anchor["parameter"].isin(["relation_activity", "relation_lower"])
+    ].copy()
+    if df_rel.empty:
+        log.info(
+            "anchor_relation_activity: no policies tuning "
+            "'relation_activity'/'relation_lower'"
+        )
+        return
+
+    # Collect rows per relation
+
+    relation_activity_rows: list[pd.DataFrame] = []
+    relation_lower_rows: list[pd.DataFrame] = []
+    relation_names: list[str] = []
+
+    df_rel_act = df_rel.loc[df_rel["parameter"] == "relation_activity"].copy()
+    df_rel_lo = df_rel.loc[df_rel["parameter"] == "relation_lower"].copy()
+
+    # Process relation_activity rows
+    if not df_rel_act.empty:
+        for relation_name, group in df_rel_act.groupby("relation", dropna=False):
+            relation_name = str(relation_name)
+            relation_names.append(relation_name)
+
+            act_rows: list[pd.DataFrame] = []
+            for _, row in group.iterrows():
+                # Expand comma-separated technology and mode lists
+                techs = [
+                    t.strip() for t in str(row["technology"]).split(",") if t.strip()
+                ]
+                modes = [m.strip() for m in str(row["mode"]).split(",") if m.strip()]
+                node = str(row["node"]).strip()
+                year_act = int(row["year_act"])
+
+                for tec in techs:
+                    for mode in modes:
+                        act_rows.append(
+                            make_df(
+                                "relation_activity",
+                                relation=relation_name,
+                                node_rel=node,
+                                year_rel=year_act,
+                                node_loc=node,
+                                technology=tec,
+                                year_act=year_act,
+                                mode=mode,
+                                value=float(row["depth_converted"]),
+                                unit="-",
+                            )
+                        )
+
+            if act_rows:
+                relation_activity_rows.append(
+                    pd.concat(act_rows, ignore_index=True).drop_duplicates()
+                )
+
+    # Process relation_lower rows
+    if not df_rel_lo.empty:
+        for relation_name, group in df_rel_lo.groupby("relation", dropna=False):
+            relation_name = str(relation_name)
+            if relation_name not in relation_names:
+                relation_names.append(relation_name)
+
+            df_loop = group.copy()
+
+            # Fetch existing relation_lower rows from the scenario (if any)
+            df_initial = scenario.par(
+                "relation_lower",
+                filters={"relation": [relation_name]},
+            )
+            log.info(
+                "Initial relation_lower, relation:%s, existing rows: %d",
+                relation_name,
+                len(df_initial),
+            )
+
+            if df_initial.empty:
+                # No existing rows — build from anchor depth directly
+                lo_rows: list[pd.DataFrame] = []
+                for _, row in df_loop.iterrows():
+                    lo_rows.append(
+                        make_df(
+                            "relation_lower",
+                            relation=relation_name,
+                            node_rel=str(row["node"]).strip(),
+                            year_rel=int(row["year_act"]),
+                            value=float(row["depth_converted"]),
+                            unit="-",
+                        )
+                    )
+                if lo_rows:
+                    relation_lower_rows.append(
+                        pd.concat(lo_rows, ignore_index=True).drop_duplicates()
+                    )
+            else:
+                df_updated = _apply_depth_speed_arrival(
+                    df_initial, df_loop, node_col="node_rel"
+                )
+                relation_lower_rows.append(df_updated)
+
+    df_ra = (
+        pd.concat(relation_activity_rows, ignore_index=True).drop_duplicates()
+        if relation_activity_rows
+        else pd.DataFrame()
+    )
+    df_rl = (
+        pd.concat(relation_lower_rows, ignore_index=True).drop_duplicates()
+        if relation_lower_rows
+        else pd.DataFrame()
+    )
+
+    # Debug dumps
+    debug_dir = local_data_path("anchor")
+    pd.DataFrame({"relation": sorted(set(relation_names))}).to_csv(
+        debug_dir / "_debug_anchor_relations.csv", index=False
+    )
+    if not df_ra.empty:
+        df_ra.to_csv(debug_dir / "_debug_anchor_relation_activity.csv", index=False)
+    if not df_rl.empty:
+        df_rl.to_csv(debug_dir / "_debug_anchor_relation_lower.csv", index=False)
+
+    if not relation_names:
+        log.info("anchor_relation_activity: nothing to commit")
+        return
+
+    with scenario.transact("apply anchor relation_activity / relation_lower"):
+        scenario.add_set("relation", sorted(set(relation_names)))
+        if not df_ra.empty:
+            scenario.add_par("relation_activity", df_ra)
+        if not df_rl.empty:
+            scenario.add_par("relation_lower", df_rl)
+
+    log.info(
+        "anchor_relation_activity: added %d relations, "
+        "%d relation_activity rows, %d relation_lower rows",
+        len(set(relation_names)),
+        len(df_ra),
+        len(df_rl),
     )
 
     return
