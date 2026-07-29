@@ -130,7 +130,6 @@ for model_scen in models_scenarios.keys():
     hadf = hadf[(hadf['technology'].str.contains("_imp"))|(hadf['technology'].str.contains("_exp_"))]
     hadf = hadf[hadf['year_act'] == 2025]
     hadf['year_act'] = 2030
-    print(hadf[0:10])
     
     with out_scenario.transact("hold level of trade in 2030"):
         out_scenario.add_par('historical_activity', hadf)
