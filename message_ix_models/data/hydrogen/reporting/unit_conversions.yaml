@@ -8,6 +8,10 @@ conversions:
   # 1 GWa = 1 GW * 1 year = 1e9 W * 365.25 * 24 * 3600 s = 3.15576e16 J = 0.0315576 EJ
   # But the original code used 0.03154, so we keep that for consistency
   GWa_to_EJ/yr: 0.03154
+
+  # Keep this NH3-specific: 0.03154 EJ/GWa divided by the model's
+  # NH3_tobunker bridge of 1.67856 Mt NH3/GWa.
+  Mt NH3/yr_to_EJ/yr: 0.018789915
   
   # Mass conversions for hydrogen
   # kt H2/yr (kilotonnes hydrogen per year) to Mt H2/yr (megatonnes hydrogen per year)
