@@ -231,6 +231,14 @@ class Config:
         dims: set[str] = set()
         dfs = []
         for iamc_name, values in data.items():
+            try:
+                original_unit = values["original_unit"]
+            except KeyError as error:
+                raise ValueError(
+                    f"Reporting variable {iamc_name!r} must declare "
+                    "'original_unit'; native MESSAGE units cannot be inferred safely."
+                ) from error
+
             filters = {
                 RENAME_DIMS[k]: [v] if isinstance(v, str) else v
                 for k, v in values["filter"].items()
@@ -244,7 +252,7 @@ class Config:
                     iamc_name=iamc_name,
                     short_name=values["short"],
                     unit=values.get("unit", self.unit),
-                    original_unit=values.get("original_unit", "GWa"),
+                    original_unit=original_unit,
                     stoichiometric_factor=values.get("stoichiometric_factor", 1.0),
                 )
             )
