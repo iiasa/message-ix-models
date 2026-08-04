@@ -454,11 +454,6 @@ def run_fs_reporting(
 
     prefix = "Final Energy|Non-Energy Use|"
     chem_aggs = {
-        "Chemicals": [
-            "Chemicals|Ammonia",
-            "Chemicals|Methanol",
-            "Chemicals|High-Value Chemicals",
-        ],
         "Chemicals|Electricity": [
             "Chemicals|Ammonia|Electricity",
             "Chemicals|Methanol|Electricity",
@@ -476,14 +471,15 @@ def run_fs_reporting(
         ],
         "Chemicals|Liquids": [
             "Chemicals|Ammonia|Liquids",
-            "Chemicals|High-Value Chemicals|Liquids",
+            "Chemicals|High-Value Chemicals|Liquids|Oil",
+            "Chemicals|High-Value Chemicals|Liquids|Biomass",
+            # do not include MTO (High-Value Chemicals|Liquids|Other) here
         ],
         "Chemicals|Liquids|Oil": [
             "Chemicals|Ammonia|Liquids|Oil",
             "Chemicals|High-Value Chemicals|Liquids|Oil",
         ],
         "Chemicals|Liquids|Biomass": ["Chemicals|High-Value Chemicals|Liquids|Biomass"],
-        "Chemicals|Liquids|Other": ["Chemicals|High-Value Chemicals|Liquids|Other"],
         "Chemicals|Solids": [
             "Chemicals|Ammonia|Solids",
             "Chemicals|Methanol|Solids",
@@ -512,7 +508,15 @@ def run_fs_reporting(
         py_df.aggregate(k, v, append=True)
     for k, v in fe_aggs.items():
         py_df.aggregate(k, v, append=True)
-
+    components = [
+        "Chemicals|Ammonia",
+        "Chemicals|Methanol",
+        "Chemicals|High-Value Chemicals|Gases",
+        "Chemicals|High-Value Chemicals|Liquids|Oil",
+        "Chemicals|High-Value Chemicals|Liquids|Biomass",
+    ]
+    py_df.aggregate(prefix + "Chemicals", [prefix + i for i in components], append=True)
+    py_df.aggregate(prefix[:-1], [prefix + i for i in components], append=True)
     py_df = split_mto_feedstock(rep, py_df, model_name, scen_name)
     df_final = (
         py_df.filter(unit="dimensionless", keep=False)
