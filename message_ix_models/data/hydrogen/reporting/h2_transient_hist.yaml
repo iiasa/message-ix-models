@@ -7,8 +7,8 @@
 # It is reported once as out|catalytic_reforming_ref|hydrogen, not converted from a
 # downstream commodity into this stoichiometric transient hierarchy.
 #
-# Stoichiometric factors convert output commodity (ammonia/methanol) to hydrogen content:
-# - Ammonia: 1.114 EJ H2 per EJ NH3
+# Stoichiometric factors convert output commodities to hydrogen content:
+# - Ammonia: 0.018789915 EJ/Mt converts NH3 mass to energy, then 1.114 EJ H2/EJ NH3
 # - Methanol (coal/bio/ng): 0.937 EJ H2 per EJ methanol
 # - Methanol (h2-based): 1.124 EJ H2 per EJ methanol
 
@@ -21,13 +21,13 @@ iamc_prefix:
 unit: EJ/yr
 
 vars:
-  # Ammonia production - all technologies produce transient hydrogen
-  # Factor: 1.114 EJ H2 per EJ NH3
+  # Ammonia producers output Mt NH3; the unit table converts to EJ before the
+  # 1.114 EJ H2 per EJ NH3 stoichiometric factor is applied.
 
   Transient|Ammonia|Biomass w/o CCS:
     filter:
       { technology: biomass_NH3, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_biomass
@@ -35,7 +35,7 @@ vars:
   Transient|Ammonia|Biomass w/ CCS:
     filter:
       { technology: biomass_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_biomass_ccs
@@ -43,7 +43,7 @@ vars:
   Transient|Ammonia|Electricity:
     filter:
       { technology: electr_NH3, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_electricity
@@ -51,7 +51,7 @@ vars:
   Transient|Ammonia|Gas w/o CCS:
     filter:
       { technology: gas_NH3, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_gas
@@ -59,7 +59,7 @@ vars:
   Transient|Ammonia|Gas w/ CCS:
     filter:
       { technology: gas_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_gas_ccs
@@ -67,7 +67,7 @@ vars:
   Transient|Ammonia|Coal w/o CCS:
     filter:
       { technology: coal_NH3, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_coal
@@ -75,7 +75,7 @@ vars:
   Transient|Ammonia|Coal w/ CCS:
     filter:
       { technology: coal_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_coal_ccs
@@ -83,7 +83,7 @@ vars:
   Transient|Ammonia|Oil w/o CCS:
     filter:
       { technology: fueloil_NH3, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_oil
@@ -91,7 +91,7 @@ vars:
   Transient|Ammonia|Oil w/ CCS:
     filter:
       { technology: fueloil_NH3_ccs, mode: M1, commodity: NH3, level: secondary_material}
-    original_unit: GWa
+    original_unit: Mt NH3/yr
     stoichiometric_factor: 1.114
     short:
       prod_h2_transient_nh3_oil_ccs
