@@ -12,7 +12,6 @@ from message_ix import Reporter
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report import STAGE, add_plots
-from message_ix_models.report.util import add_replacements
 
 from . import Config, plot
 from . import key as K
@@ -91,6 +90,26 @@ CONVERT_IAMC = (
     #     variable="debug CAP_NEW", base="CAP_NEW:nl-t-yv", var=["DEBUG", "t"], unit="-"
     # ),
 )
+
+#: Replacements applied to constructed IAMC ‘variable’ strings.
+#:
+#: These are used in :func:`convert_iamc`.
+#:
+#: 1. Quantity.name is prepended automatically; this occurs with quantities derived
+#:    from CAP and CAP_NEW. Remove the prefix.
+#: 2. For "Final Energy|…", use the “Vehicle” (vehicle technologies only) group total.
+#:
+#:    .. todo:: Drop ‘_T’, which includes usage technologies.
+#: 3. Replace "Air|…" technology names with "Domestic Aviation" to reflect that these
+#:    technologies are currently only used for domestic aviation.
+IAMC_VAR_REPLACE = {
+    r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2",
+    r"^(Final Energy\|Transportation)\|Vehicle": r"\1",
+    r"(Transportation\|)Air\|": r"\1Domestic Aviation\|",
+}
+
+# Default fallback for projects where `scenario.firstmodelyear` isn't available.
+IAMC_ZERO_MUTE_BEFORE_YEAR = 2020
 
 
 #: Quantities in which to select transport technologies only. See :func:`callback`.
@@ -296,27 +315,43 @@ def configure_legacy_reporting(config: dict) -> None:
 
 
 def convert_iamc(c: "Computer") -> None:
-    """Add tasks from :data:`.CONVERT_IAMC`."""
+    """Add tasks from :data:`.CONVERT_IAMC`.
+
+    Also:
+
+    - Call :func:`.report.util.add_replacements` for dimension "t" and all transport
+      technologies in :attr:`.transport.Config.spec`.
+    - Update :data:`.report.util.REPLACE_VARS` using :data:`IAMC_VAR_REPLACE`.
+    """
     from message_ix_models.report import iamc as handle_iamc
     from message_ix_models.report import util
 
     # Configure replacements for technology IDs in conversion to IAMC data structure
     cfg: Config = c.graph["context"].transport
-    add_replacements("t", cfg.spec.add.set["technology"])
+    util.add_replacements("t", cfg.spec.add.set["technology"])
 
     # Update replacements for fully-constructed IAMC variable codes
-    # - Quantity.name is prepended automatically; this occurs with quantities derived
-    #   from CAP and CAP_NEW. Remove the prefix.
-    util.REPLACE_VARS.update({r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2"})
+    util.REPLACE_VARS.update(IAMC_VAR_REPLACE)
 
     keys = []
     for info in CONVERT_IAMC:
         handle_iamc(c, deepcopy(info))
         keys.append(f"{info['variable']}::iamc")
 
-    # Concatenate IAMC-format tables
+    # Concatenate IAMC-format tables (use distinct key so mask can consume it)
+    k_raw = Key("transport raw", tag="iamc")
+    c.add(k_raw, "concat", *keys)
+
+    # Mask zeros for years before IAMC_ZERO_MUTE_BEFORE_YEAR (blank cells instead of 0)
+    year_cutoff = IAMC_ZERO_MUTE_BEFORE_YEAR
+    try:
+        scen = c.graph.get("scenario")
+        if scen is not None:
+            year_cutoff = int(getattr(scen, "firstmodelyear", year_cutoff))
+    except Exception:
+        pass
     k = Key("transport", tag="iamc")
-    c.add(k, "concat", *keys)
+    c.add(k, mask_iamc_zeros_before_year, k_raw, year_cutoff=year_cutoff)
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     c.apply(util.store_write_ts, k)
@@ -355,6 +390,58 @@ def convert_sdmx(c: "Computer") -> None:
 
     # Connect to the main report key
     c.graph[K.report.all] += (K.report.sdmx,)
+
+
+def mask_iamc_zeros_before_year(
+    data: pd.DataFrame, year_cutoff: int = IAMC_ZERO_MUTE_BEFORE_YEAR
+) -> pd.DataFrame:
+    """Replace zeros with NaN for years before `year_cutoff` in IAMC-format data.
+
+    Used so that pre-calibration years (e.g. before 2020) show blank cells instead of
+    zeros in exported reports. Only affects rows where year < year_cutoff and
+    value == 0.
+    So that the transport reporting merges into the legacy reporting properly.
+    """
+    # Unwrap IamDataFrame or Quantity to get the underlying DataFrame
+    try:
+        df = getattr(data, "data", data)
+        if callable(df):
+            df = df()
+    except Exception:
+        df = data
+    if not isinstance(df, pd.DataFrame):
+        return data
+    # IAMC long format: accept both lowercase and capitalized column names
+    year_col = (
+        "year" if "year" in df.columns else ("Year" if "Year" in df.columns else None)
+    )
+    value_col = (
+        "value"
+        if "value" in df.columns
+        else ("Value" if "Value" in df.columns else None)
+    )
+    if year_col is None or value_col is None:
+        return data
+    out = df.copy()
+    mask = (out[year_col].astype(int) < year_cutoff) & (out[value_col] == 0)
+    out.loc[mask, value_col] = float("nan")
+    # Return same type so write_report/store_ts get the expected type
+    if not isinstance(data, pd.DataFrame):
+        if type(data).__name__ == "IamDataFrame":
+            try:
+                import pyam
+
+                return pyam.IamDataFrame(out)
+            except ImportError:
+                pass
+        if hasattr(data, "data"):
+            try:
+                import genno
+
+                return genno.Quantity(out, name=getattr(data, "name", None))
+            except Exception:
+                pass
+    return out
 
 
 def misc(c: "Computer") -> None:

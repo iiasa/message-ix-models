@@ -769,28 +769,21 @@ def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
-def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"], str]:
+def indexer_scenario(config: dict) -> dict[Literal["scenario"], str]:
     """Indexer for the ``scenario`` dimension.
 
-    If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
-    "LED". Otherwise it is the final part of the :attr:`.transport.config.Config.ssp`
-    URN, e.g. "SSP(2024).1". In other words, this treats "LDV" as mutually exclusive
-    with an SSP scenario identifier (instead of orthogonal).
+    The final part of the :attr:`.transport.config.Config.ssp` URN, e.g. "SSP(2024).1".
 
     Parameters
     ----------
     config :
-        The genno.Computer "config" dictionary, with a key "transport" mapped to an
-        instance of :class:`.transport.Config`.
+        The :class:`genno.Computer` config dictionary, with a key "transport" mapped to
+        an instance of :class:`.transport.Config`.
     """
     # Retrieve the .transport.Config object from the genno.Computer "config" dict
     c: "Config" = config["transport"]
 
-    return dict(
-        scenario="LED"
-        if (with_LED and c.project.get("LED", False))
-        else c.ssp.urn.rpartition(":")[2]
-    )
+    return dict(scenario=c.ssp.urn.rpartition(":")[2])
 
 
 def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:
@@ -960,19 +953,30 @@ def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
     return result
 
 
-def scenario_codes() -> list[str]:
+def scenario_codes(config: dict) -> list[str]:
     """Return valid codes for a `scenario` dimension of some quantities.
 
     The list includes:
 
     - Values like "SSP(2024).1" for every member of the :data:`SSP_2024` enumeration.
     - The value "LED".
+    - :attr:`.transport.Config.label`
+    - :attr:`.transport.Config.label` as processed by every one of :data`.LABEL_SUBS`.
 
     For use with, for instance :func:`.broadcast_wildcard`.
     """
     from message_ix_models.project.ssp import SSP_2024
 
-    return [c.urn.rpartition(":")[2] for c in SSP_2024] + ["LED"]
+    from .data import LABEL_SUBS
+
+    cfg: Config = config["transport"]
+
+    return (
+        [c.urn.rpartition(":")[2] for c in SSP_2024]
+        + ["LED"]
+        + [cfg.label]
+        + [ls(cfg.label) for ls in LABEL_SUBS.values()]
+    )
 
 
 def share_weight(

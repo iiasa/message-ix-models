@@ -30,7 +30,6 @@ env:
   labels: >-
     [
       "SSP2",
-      "SSP2 exo price c59e",
       "SSP2 tax"
     ]
 

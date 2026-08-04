@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from message_ix_models.model.material.data_power_sector import gen_data_power_sector
+from message_ix_models.model.material.data_power_sector import (
+    gen_data_power_sector,
+    guess_model_version,
+    update_material_demand_estimate,
+)
 from message_ix_models.util import add_par_data
 
 if TYPE_CHECKING:
@@ -44,27 +48,23 @@ def _generate_vetting_csv(
         how="outer",
     ).fillna(0)
 
-    # Calculate subtraction amounts and percentages
-    vetting_data["subtracted_amount"] = (
+    # Calculate gap and gap share
+    vetting_data["gap"] = (
         vetting_data["value_original"] - vetting_data["value_modified"]
     )
 
-    # Calculate percentage subtracted (avoid division by zero)
-    vetting_data["subtraction_percentage"] = (
-        vetting_data["subtracted_amount"]
-        / vetting_data["value_original"].replace(0, 1)
-        * 100
+    # Calculate gap share (percentage) (avoid division by zero)
+    vetting_data["gap_share"] = (
+        vetting_data["gap"] / vetting_data["value_original"].replace(0, 1) * 100
     )
 
     # Replace infinite values with 0 (when original was 0)
-    vetting_data["subtraction_percentage"] = vetting_data[
-        "subtraction_percentage"
-    ].replace([float("inf"), -float("inf")], 0)
+    vetting_data["gap_share"] = vetting_data["gap_share"].replace(
+        [float("inf"), -float("inf")], 0
+    )
 
     # Round to reasonable precision
-    vetting_data["subtraction_percentage"] = vetting_data[
-        "subtraction_percentage"
-    ].round(2)
+    vetting_data["gap_share"] = vetting_data["gap_share"].round(2)
 
     # Select and rename columns for clarity
     output_columns = [
@@ -73,8 +73,8 @@ def _generate_vetting_csv(
         "commodity",
         "value_original",
         "value_modified",
-        "subtracted_amount",
-        "subtraction_percentage",
+        "gap",
+        "gap_share",
     ]
 
     vetting_data = vetting_data[output_columns].copy()
@@ -84,12 +84,12 @@ def _generate_vetting_csv(
         "commodity",
         "original_demand",
         "modified_demand",
-        "subtracted_amount",
-        "subtraction_percentage",
+        "gap",
+        "gap_share",
     ]
 
     # # Filter out rows where no subtraction occurred
-    # vetting_data = vetting_data[vetting_data["subtracted_amount"] > 0]
+    # vetting_data = vetting_data[vetting_data["gap"] > 0]
 
     # Sort by commodity, node, year for better readability
     vetting_data = vetting_data.sort_values(["commodity", "node", "year"])
@@ -101,10 +101,10 @@ def _generate_vetting_csv(
 
     # Log summary statistics
     if len(vetting_data) > 0:
-        avg_pct = vetting_data["subtraction_percentage"].mean()
-        max_pct = vetting_data["subtraction_percentage"].max()
-        log.info(f"Average subtraction percentage: {avg_pct:.2f}%")
-        log.info(f"Max subtraction percentage: {max_pct:.2f}%")
+        avg_pct = vetting_data["gap_share"].mean()
+        max_pct = vetting_data["gap_share"].max()
+        log.info(f"Average gap share: {avg_pct:.2f}%")
+        log.info(f"Max gap share: {max_pct:.2f}%")
 
 
 # Maybe it is better to have one function for each method?
@@ -115,7 +115,7 @@ def subtract_material_demand(
     sturm_c: pd.DataFrame,
     method: str = "bm_subtraction",
     generate_vetting_csv: bool = True,
-    vetting_output_path: str = "material_demand_subtraction_vetting.csv",
+    vetting_output_path: str = "material_haircut_buildings.csv",
 ) -> pd.DataFrame:
     """Subtract inter-sector material demand from existing demands in scenario.
 
@@ -145,7 +145,7 @@ def subtract_material_demand(
         Whether to generate a CSV file showing subtraction details (default: True)
     vetting_output_path : str, optional
         Path for the vetting CSV file (default:
-        "material_demand_subtraction_vetting.csv")
+        "material_haircut_buildings.csv")
 
     Returns
     -------
@@ -258,27 +258,35 @@ def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
     **kwargs
         Additional keyword arguments (ignored, for workflow compatibility).
     """
-    # Check if power sector material data already exists
-    if scenario.has_par("input_cap_new"):
-        try:
-            existing_data = scenario.par("input_cap_new")
-            if (
-                not existing_data.empty
-                and "cement" in existing_data.get("commodity", pd.Series()).values
-            ):
-                log.info(
-                    "Power sector material intensity data already exists "
-                    "(found cement in input_cap_new). Skipping build_pm."
-                )
-                return scenario
-        except Exception as e:
-            log.warning(f"Could not check existing input_cap_new data: {e}")
+
+    # Check if the power sector material data already exists
+    marker_commodity = "cement"
+    marker_technology = "coal_adv"
+    if "input_cap_new" in scenario.par_list():
+        existing = scenario.par(
+            "input_cap_new",
+            filters={
+                "commodity": marker_commodity,
+                "technology": marker_technology,
+            },
+        )
+        if existing is not None and len(existing) > 0:
+            log.info(
+                "Power sector material data already exists for %s / %s; "
+                "skipping build_PM.",
+                marker_technology,
+                marker_commodity,
+            )
+            return scenario
 
     log.info("Adding material intensity for power capacities...")
-    scenario.check_out()
     try:
         power_data = gen_data_power_sector(scenario, dry_run=False)
-        add_par_data(scenario, power_data, dry_run=False)
+        with scenario.transact():
+            add_par_data(scenario, power_data, dry_run=False)
+        if kwargs.get("iterate", False) is True:
+            version = guess_model_version(ScenarioInfo(scenario))
+            update_material_demand_estimate(scenario, version)
         # but actually do not know how to provide log info while adding those parameters
         log.info("Successfully added power sector material intensity data.")
     except Exception as e:

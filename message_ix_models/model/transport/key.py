@@ -85,13 +85,18 @@ c = Key("c::T")
 #: Shares of population with consumer group (`cg`) dimension.
 cg = Key("cg share:n-y-cg")
 
-#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, list[str]`.
-#: Keys are dimension IDs. Values are lists of coordinates along the respective
-#: dimension to index or select.
+#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, list[str]]`.
+#: Keys are dimension IDs. Values are lists of (1 or more) coordinates along the
+#: respective dimension to index or select.
 coord = Keys(
     c="coords:c:T",
     t="coords:t:T",
+    scenario_label_A="coords:scenario:label+A",
+    scenario_label_B="coords:scenario:label+B",
+    scenario_label_C="coords:scenario:label+C",
+    scenario="coords:scenario:T",
     yv_hist="coords:yv:T+historical",
+    yv_1plus="coords:yv:y1+",
 )
 
 cost = Key("cost", "nyct")

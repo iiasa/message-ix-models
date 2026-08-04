@@ -1,34 +1,36 @@
 """Structural metadata for the EDITS project."""
 
-import sdmx.urn
-from sdmx.model import common
+from sdmx.model.common import Codelist
 
-from message_ix_models.util.sdmx import ItemSchemeEnumType, URNLookupEnum, read
+from message_ix_models.util.sdmx import (
+    ItemSchemeEnumType,
+    StructureFactory,
+    URNLookupEnum,
+)
 
 
-def get_cl_scenario() -> "common.Codelist":
-    """Return a code list with the identifiers of EDITS MCE scenarios."""
-    cl: "common.Codelist" = common.Codelist(
-        id="EDITS_MCE_SCENARIO",
-        maintainer=read("IIASA_ECE:AGENCIES")["IIASA_ECE"],
-        version="0.1",
-        is_final=True,
-        is_external_reference=False,
-    )
+class CL_SCENARIO_EDITS_MCE(StructureFactory[Codelist]):
+    """List of codes for EDITS Model Complementarity Exercise (MCE) scenarios."""
 
-    for id_, name in (
-        ("CA", "Current ambition"),
-        ("HA", "High ambition"),
-        ("_Z", "Not applicable"),
-    ):
-        c = cl.setdefault(id=id_)
-        c.urn = sdmx.urn.make(c)
+    urn = "IIASA_ECE:CL_SCENARIO_EDITS_MCE"
+    version = "0.2.0"
 
-    return cl
+    @classmethod
+    def create(cls) -> Codelist:
+        cl = cls.maintainable(Codelist)
+
+        for id_, name in (
+            ("CA", "Current ambition"),
+            ("HA", "High ambition"),
+            ("_Z", "Not applicable"),
+        ):
+            cl.setdefault(id=id_)
+
+        return cl
 
 
 class SCENARIO(URNLookupEnum, metaclass=ItemSchemeEnumType):
     """Enumeration of EDITS MCE scenario IDs."""
 
-    def _get_item_scheme(self) -> "common.Codelist":
-        return get_cl_scenario()
+    def _get_item_scheme(self) -> Codelist:
+        return CL_SCENARIO_EDITS_MCE.get()

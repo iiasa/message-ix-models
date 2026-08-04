@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from genno import Computer
     from genno.types import AnyQuantity
 
+    from message_ix_models.types import MutableParameterData
+
     from .config import Config
 
 log = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ log = logging.getLogger(__name__)
 
 def dummy(
     commodities: list, nodes: list[str], y: list[int], config: dict
-) -> dict[str, pd.DataFrame]:
+) -> "MutableParameterData":
     """Dummy demands.
 
 
@@ -99,7 +101,7 @@ TASKS = [
     # Interpolate speed data
     (("speed:scenario-n-t-y:0", "interpolate", K.exo.speed, "y::coords"), EXTRAPOLATE),
     # Select speed data
-    ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", "indexers:scenario"),
+    ("speed:n-t-y", "select", "speed:scenario-n-t-y:0", K.coord.scenario),
     # Cost of transport (n, t, y)
     (K.cost, "cost", K.price, K.gdp_cap, "whour:", "speed:n-t-y", "votm:n-y", K.y),
     # Share weights (n, t, y)
@@ -238,7 +240,7 @@ def pdt_per_capita(c: "Computer") -> None:
 
     # Select 'elasticity' from "elasticity:scenario-n-y:P+exo"
     k_e = genno.Key(K.exo.elasticity_p.name, "ny")
-    c.add(k_e[0], "select", K.exo.elasticity_p, "indexers:scenario")
+    c.add(k_e[0], "select", K.exo.elasticity_p, K.coord.scenario)
 
     # Interpolate on "y" dimension
     c.add(k_e[1], "interpolate", k_e[0], "y::coords", **EXTRAPOLATE)

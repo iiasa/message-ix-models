@@ -29,7 +29,6 @@ from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, plot
 from . import key as K
-from .operator import indexer_scenario
 from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
@@ -171,10 +170,13 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
 
     # Miscellaneous data
-    kw = dict(nodes=context.model.regions, config=config)
+    kw = dict(nodes=context.model.regions)
     data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
+    data.InputVehicle.add_tasks(c, **kw, **c_s)
     data.Lifetime.add_tasks(c, **kw, **c_s)
-    data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
+    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **c_s)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
@@ -186,10 +188,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
     IEA_EWEB.add_tasks(c, **kw, **c_s)
-
-    # Add IEA Future of Trucks data
-    for kw in dict(measure=1), dict(measure=2):
-        data.IEA_Future_of_Trucks.add_tasks(c, **kw, **c_s)
 
     # Add ADVANCE data
     adv_common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
@@ -230,6 +228,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
+    # TODO Transfer this to a MultiFlow subclass in .transport.data; select path based
+    #      on .project.transport_futures values in Config.project_scenario_code.
     Dataflow(
         module=__name__,
         key="mode share:n-t:exo",
@@ -291,14 +291,13 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
-    ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
-    ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
+    (K.coord.scenario, "indexer_scenario", "config"),
     ("indexers::usage", "indexers_usage", K.t),
     (K.n, "nodes_ex_world", "n"),
     ("n:n:ex world", lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}), K.n),
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
-    ("scenario::all", "scenario_codes"),
+    ("scenario::all", "scenario_codes", "config"),
 )
 
 
@@ -327,9 +326,6 @@ def add_structure(c: Computer) -> None:
     - ``cg``: "consumer group" set elements.
     - ``indexers:cg``: ``cg`` as indexers.
     - ``nodes``: |n| in the base model.
-    - ``indexers:scenario``: :class:`dict` mapping "scenario" to the short form of
-      :attr:`Config.ssp <.transport.config.Config.ssp>` (for instance, "SSP1"), for
-      indexing.
     - ``t::transport``: all transport |t| to be added, :class:`list`.
     - ``t::transport agg``: :class:`dict` mapping "t" to the output of
       :func:`.get_technology_groups`. For use with operators like 'aggregate', 'select',
@@ -351,6 +347,7 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
+    from .data import LABEL_SUBS
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -386,6 +383,11 @@ def add_structure(c: Computer) -> None:
         (K.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
         ("y::y0", lambda v: dict(y=v[0]), "y::model"),
+        (
+            K.coord.yv_1plus,
+            lambda years: dict(yv=[y for y in years if y >= years[1]]),
+            "y::model",
+        ),
     ):
         try:
             c.add(*task, strict=True)
@@ -448,6 +450,15 @@ def add_structure(c: Computer) -> None:
     ]
 
     # Multiple static and dynamic tasks generated in loops etc.
+    # Coordinates for "select" based on .Config.label
+    tasks.extend(
+        (
+            getattr(K.coord, f"scenario_label_{x}"),
+            quote(dict(scenario=subs(config.label))),
+        )
+        for x, subs in LABEL_SUBS.items()
+    )
+
     # Quantities for broadcasting (t,) to (t, c, l) dimensions
     tasks.extend(
         (

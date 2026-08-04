@@ -3,10 +3,20 @@
 import logging
 
 import message_ix
+import pandas as pd
+from message_ix import make_df
 
-from message_ix_models import Context
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
+from message_ix_models.model.buildings.sturm import call_buildings_demand, call_sturm
+from message_ix_models.project.circeular.glomis import main as build_I
+from message_ix_models.tools.add_budget import main as add_budget
+from message_ix_models.tools.add_tax_emission import main as add_tax_emission
+from message_ix_models.tools.remove_emission_bounds import (
+    main as remove_emission_bounds,
+)
+from message_ix_models.util import broadcast, minimum_version, package_data_path
 from message_ix_models.workflow import Workflow
 
 # from message_ix_models.model.transport.build import build as build_T
@@ -20,38 +30,65 @@ def solve(
     context: Context, scenario: message_ix.Scenario, model="MESSAGE"
 ) -> message_ix.Scenario:
     """Plain solve."""
-    from message_ix.common import DEFAULT_CPLEX_OPTIONS
 
     # Use default CPLEX options and update with custom settings
-    solve_options = DEFAULT_CPLEX_OPTIONS.copy()
-    solve_options.update(
-        {
-            "advind": 0,
-            "lpmethod": 4,
-            "threads": 4,
-            "epopt": 1e-6,
-            "scaind": -1,
-            # "predual": 1,
-            "barcrossalg": 0,
-        }
-    )
+    solve_options = {
+        "advind": 0,
+        "lpmethod": 4,
+        "threads": 4,
+        "epopt": 1e-6,
+        "scaind": -1,
+        # "predual": 1,
+        "barcrossalg": 0,
+    }
 
-    scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=0"])
+    scenario.solve(model, solve_options=solve_options, cap_comm=True)
     scenario.set_as_default()
 
     return scenario
 
 
+def _set_as_default(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Set the scenario as the default version and return it."""
+    scenario.set_as_default()
+    log.info("Set as default: ixmp://%s/%s", scenario.platform.name, scenario.url)
+    return scenario
+
+
+def _run_transport_report(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Run transport reporting on the scenario (same as transport workflow report)."""
+    from message_ix_models.model.transport.key import report as k_report
+    from message_ix_models.model.transport.report import callback as transport_callback
+    from message_ix_models.report import prepare_reporter
+
+    if transport_callback not in context.report.callback:
+        context.report.register(transport_callback)
+    rep, _ = prepare_reporter(context, scenario=scenario)
+    rep.get(k_report.all)
+    return scenario
+
+
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Report the scenario."""
+    """Report the scenario (transport, materials, legacy that contains buildings."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
 
     from message_ix_models.model.material.report.run_reporting import (
         run as _materials_report,
     )
 
-    run_config = "materials_daccs_bmt_run_config.yaml"
-    # the building reporting is now embedded in the legacy reporting
+    report_config_check = scenario.par(
+        "demand", filters={"commodity": "transport pax UREAM"}
+    )
+    run_config = (
+        "materials_daccs_bmt_run_config.yaml"
+        if report_config_check is not None and len(report_config_check) > 0
+        else "materials_daccs_run_config.yaml"
+    )
+    log.info("Legacy report will use run_config=%s", run_config)
 
     def _legacy_report(scen):
         iamc_report_hackathon.report(
@@ -61,6 +98,26 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
             run_config=run_config,
         )
 
+    # 1. Transport reporting (only if transport is built)
+    if report_config_check is not None and len(report_config_check) > 0:
+        try:
+            _run_transport_report(context, scenario)
+        except Exception as e:
+            log.warning("Transport reporting skipped: %s", e)
+    else:
+        log.info("Transport reporting skipped (no transport pax demand).")
+
+    # message_data/tools/post_processing/iamc_report_hackathon.py#L320-L342
+    # legacy report merges scenario ts into each table by root
+    # (3 main tables: Final Energy, Emissions, Energy Service)
+    # TODO: so one needs to make sure that the transport report is mergable to
+    # legacy report, which is basically already covered in the transport
+    # test_report.py and transport parts in the 3 main tables of legacy report
+    # are deactivated so that no double counting happens. In the next report PR,
+    # ideally the B and T reporting can be handled in a way similar to
+    # message_data/blob/navigate5.3/.../navigate/report.py#L290-L298
+
+    # 2. Materials reporting
     try:
         scenario.check_out(timeseries_only=True)
     except ValueError:
@@ -69,9 +126,431 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     _materials_report(scenario, region="R12_GLB", upload_ts=True)
     scenario.commit("Add materials reporting")
 
+    # 3. Legacy reporting
     _legacy_report(scenario)
 
     return scenario
+
+
+def prep_for_macro(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Prepare scenario for macro calibration.
+
+    It adjusts (1) cat_year: removes initializeyear_macro and
+    baseyear_macro so macro years are not active yet; and (2) sector set:
+    removes rc_spec, rc_therm, and transport.
+    Then solves with MESSAGE only. Run after cloning with shift_first_model_year=2030.
+    """
+    log.info("Preparing scenario for macro calibration.")
+    scenario.set_as_default()
+
+    # cat_year: drop macro init/base years
+    df = scenario.set(
+        "cat_year", {"type_year": ["initializeyear_macro", "baseyear_macro"]}
+    )
+    if df is not None and len(df) > 0:
+        with scenario.transact("Remove init and baseyear for macro"):
+            scenario.remove_set("cat_year", df)
+
+    # sector: drop rc_spec, rc_therm, transport for BMT macro calibration
+    sectors_to_remove = ["rc_spec", "rc_therm", "transport"]
+    existing = set(scenario.set("sector").tolist())
+    to_remove = [s for s in sectors_to_remove if s in existing]
+    if to_remove:
+        with scenario.transact("Remove rc_spec, rc_therm, transport from sector set"):
+            scenario.remove_set("sector", to_remove)
+
+    solve(context, scenario, model="MESSAGE")
+    return scenario
+
+
+def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Update MACRO calibration file; add MACRO to the scenario; solve with MACRO."""
+    macro_file = getattr(context, "macro", None)
+    if macro_file is None:
+        bmt = getattr(context, "bmt", None)
+        macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
+    if macro_file is None:
+        ssp = getattr(context, "ssp", "SSP2")
+        macro_file = f"macro_calibration_input_{ssp}_bmt.xlsx"
+    # TODO: MACRO calibration input is static atm. Needs to be fixed for CircEUlar.
+    log.info("Calibrating macro: updating %s and adding MACRO", macro_file)
+
+    # basically even if the macro file contains more commodities than the scenario,
+    # the update_macro_calib_file and add_macro_materials will only use the commodities
+    # that are in the scenario
+    data = pd.read_excel(package_data_path("circeular", macro_file), sheet_name=None)
+    scenario = scenario.add_macro(data, check_convergence=False)
+    scenario.set_as_default()
+    log.info("MACRO calibrated, now solving with MACRO")
+    solve(context, scenario, model="MESSAGE-MACRO")
+
+    return scenario
+
+
+def remove_ELC100_near_term_infeasibility(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    log.info(
+        "Remove values from growth_new_capacity_up/lo to avoid near-term infeasibility",
+    )
+    for suffix in ["_up", "_lo"]:
+        bound = scenario.par(
+            f"bound_new_capacity{suffix}",
+            filters={"technology": "ELC_100", "year_vtg": [2020, 2025]},
+        )
+        grow = scenario.par(
+            f"growth_new_capacity{suffix}",
+            filters={col: bound[col].unique().tolist() for col in bound.columns[:-2]},
+        )
+        to_remove = pd.merge(
+            grow, bound[["node_loc", "technology", "year_vtg"]], how="inner"
+        )
+        bad_coeff = scenario.par(
+            f"bound_new_capacity{suffix}",
+            filters={
+                "technology": ["ELC_100", "PHEV_ptrp"],
+                "year_vtg": 2020,
+                "node_loc": "R12_SAS",
+            },
+        )
+
+        with scenario.transact():
+            scenario.remove_par(f"growth_new_capacity{suffix}", to_remove)
+            scenario.remove_par(f"bound_new_capacity{suffix}", bad_coeff)
+    return scenario
+
+
+def replace_cap_factor_vtg(scenario: message_ix.Scenario) -> message_ix.Scenario:
+    # load R scenario by replaceing the first character of the scenario name with "R"
+    ref = message_ix.Scenario(
+        scenario.platform, scenario.model, "R" + scenario.scenario[1:]
+    )
+    tecs = [
+        "ELC_100",
+        "HFC_ptrp",
+        "IAHe_ptrp",
+        "IAHm_ptrp",
+        "ICAe_ffv",
+        "ICAm_ptrp",
+        "ICE_conv",
+        "ICE_L_ptrp",
+        "ICE_nga",
+        "ICH_chyb",
+        "IGH_ghyb",
+        "PHEV_ptrp",
+    ]
+    vtgs = [i for i in range(1995, 2020, 5)]
+    par = "capacity_factor"
+    par_data = ref.par(par, filters={"technology": tecs, "year_vtg": vtgs})
+    del ref
+    with scenario.transact():
+        scenario.add_par(par, par_data)
+    return scenario
+
+
+def transport_quick_fixes(
+    context: Context, scenario: message_ix.Scenario, code
+) -> message_ix.Scenario:
+    remove_ELC100_near_term_infeasibility(context, scenario)
+    if code in ["N", "A"]:
+        replace_cap_factor_vtg(scenario)
+    return scenario
+
+
+# TODO: remove once project/ngfs_p6_bmt is merged to main and import from .project.ngfs
+def aas_coal_growth_near_term(
+    context,
+    scenario,
+    technologies: list[str] = [
+        "coal_adv",
+        # "coal_adv_ccs",
+        "coal_ppl",
+        # "igcc",
+        # "igcc_ccs",
+    ],
+    *,
+    start_year: int = 2020,
+    end_year: int = 2035,
+    limit: float = 0.03,
+) -> message_ix.Scenario:
+    """Add ``growth_activity_lo`` for coal power technologies.
+
+    Removes overlapping ``growth_activity_up`` entries for the same technologies,
+    nodes, and years before adding the lower bound.
+    """
+    # constrain coal phaseout speed in the near term
+    info = ScenarioInfo(scenario)
+    nodes = ["R12_CHN", "R12_SAS"]
+    years = [y for y in info.Y if start_year <= y <= end_year]
+
+    growth_up = scenario.par(
+        "growth_activity_up",
+        filters={
+            "technology": technologies,
+            "node_loc": nodes,
+            "year_act": years,
+        },
+    )
+
+    df = make_df(
+        "growth_activity_lo",
+        technology=technologies,
+        time="year",
+        value=limit,
+        unit="???",
+    ).pipe(
+        broadcast,
+        node_loc=nodes,
+        year_act=years,
+    )
+
+    with scenario.transact("Add growth_activity_lo for coal power technologies."):
+        if len(growth_up):
+            scenario.remove_par("growth_activity_up", growth_up)
+        scenario.add_par("growth_activity_lo", df)
+
+    log.info(
+        "Added growth_activity_lo=%s for technologies %s, "
+        "year_act %s–%s, nodes R12_CHN and R12_SAS (%d periods); "
+        "removed %d growth_activity_up rows",
+        limit,
+        technologies,
+        start_year,
+        end_year,
+        len(years),
+        len(growth_up),
+    )
+
+    return scenario
+
+
+def add_simple_budget(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    add_budget(scenario, 1100, True)
+    return scenario
+
+
+def solve_w_sturm(
+    context: Context, scenario: message_ix.Scenario, code
+) -> message_ix.Scenario:
+    context.buildings.code = code
+    for i in range(2):
+        scenario = solve(context, scenario, model="MESSAGE")
+        call_sturm(context, scenario)
+        scenario.remove_solution()
+        scenario = call_buildings_demand(context, scenario)
+    return scenario
+
+
+def gen_high_price(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    remove_emission_bounds(scenario, parameters=["bound_emission"])
+    add_tax_emission(scenario, 200)
+    solve(context, scenario, model="MESSAGE-MACRO")
+    return scenario
+
+
+def budget_run_macro(
+    context: Context, scenario: message_ix.Scenario, demand_scenario: str
+) -> message_ix.Scenario:
+    from message_data.tools.utilities import transfer_demands
+
+    source = message_ix.Scenario(scenario.platform, scenario.model, demand_scenario)
+    transfer_demands(source, scenario)
+    del source
+    solve(context, scenario, model="MESSAGE-MACRO")
+    return scenario
+
+
+def price_run_macro(
+    context: Context, scenario: message_ix.Scenario, demand_scenario: str
+) -> message_ix.Scenario:
+    from message_data.tools.utilities import transfer_demands
+
+    from message_ix_models.project.engage.workflow import retr_CO2_price
+
+    source = message_ix.Scenario(scenario.platform, scenario.model, demand_scenario)
+    transfer_demands(source, scenario)
+    del source
+
+    # Add tax_emission based on R scenario solution
+    df = retr_CO2_price(
+        message_ix.Scenario(
+            scenario.platform, scenario.model, "R baseline_BMTX_1100f macro"
+        )
+    ).assign(type_emission="TCE")
+    df = [df["node"] == "World"]
+    with scenario.transact():
+        scenario.add_par("tax_emission", df)
+
+    solve(context, scenario, model="MESSAGE-MACRO")
+    return scenario
+
+
+def add_steps(wf: "Workflow", base_step: str, prefix: str = "") -> str:
+    """Add BMT workflow steps to `wf`, starting from `base_step`.
+
+    Step names are prefixed with `prefix`, if any.
+    """
+    from message_ix_models.model.transport import workflow as transport
+
+    # Retrieve the Context instance associated with `wf`
+    context = wf.graph["context"]
+
+    # Define model name
+    model_name = context.bmt["model_name"]
+    # Template for formatting URLs
+    url = model_name + f"/{prefix}baseline_"
+
+    # Common keyword argument for cloning
+    c = dict(keep_solution=False)
+
+    name = base_step
+
+    # Clone the base scenario
+    name = wf.add_step(f"{prefix}M cloned", name, target=f"{url}M", clone=c)
+    name = wf.add_step(f"{prefix}M coal-power-fixed", name, aas_coal_growth_near_term)
+    wf.add_step(f"{prefix}M reported", name, report)
+
+    # Retrieve a 'Code' object with 'Annotations' that identify a particular
+    # MESSAGEix-Transport configuration. For reference:
+    # - .model.transport.config.CL_SCENARIO
+    # - .model.transport.config.ScenarioCodeAnnotations
+    # - .model.transport.config.Config.code
+    # scenario_code = CL_SCENARIO.get()[f"M {context.ssp}"]
+
+    # CL_SCENARIO (see .model.transport.config) is built from SDMX codelist
+    # data/sdmx/IIASA_ECE_CL_TRANSPORT_SCENARIO(1.3.0).xml. From that version each
+    # scenario has two codes: id "SSP{n}" (extra_modules=[]) and
+    # "M SSP{n}" (extra_modules=["material"]).
+    # Use the code without "M " to build transport without the material module.
+    # scenario_code = CL_SCENARIO.get()[context.ssp]
+
+    # Add step(s) on top of "M cloned" that build MESSAGEix-Transport. For reference:
+    # - .model.transport.workflow.add_steps
+    # - .model.workflow.from_codelist, which makes a similar call
+    #
+    # `name` is the name of the final step
+    from message_ix_models.project.circeular.structure import CL_SCENARIO
+
+    cl = CL_SCENARIO.get()
+    context.transport.project_scenario_code = cl[prefix.strip()]
+    name = transport.add_steps(wf, name, context.transport.code, label=prefix.strip())
+
+    # Clone to the URL desired for this workflow, at a step named "MT built".
+    # After cloning, set the scenario as default so it is the one used by later steps
+    name = wf.add_step(
+        f"{prefix}MT built", name, _set_as_default, target=f"{url}MT", clone=True
+    )
+    name = wf.add_step(
+        f"{prefix}MT built T quick-fix",
+        name,
+        transport_quick_fixes,
+        code=prefix.strip(),
+    )
+    # TODO: check if Paul's action already has something to set as default
+
+    # NB .model.transport.workflow.generate sets context.solve including
+    #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
+    #    MESSAGEix-Transport.
+
+    wf.add_step(f"{prefix}MT solved", name, solve)
+    # Transport report step (from .model.transport.workflow: callback + "transport all")
+    wf.add_step(f"{prefix}MT reported", f"{prefix}MT solved", report)
+
+    name = wf.add_step(
+        f"{prefix}BMT built",
+        name,
+        build_B,
+        target=f"{url}BMT",
+        clone=c,
+        code=prefix,
+    )
+    wf.add_step(f"{prefix}BMT solved", name, solve)
+    wf.add_step(f"{prefix}BMT reported", f"{prefix}BMT solved", report)
+    name = wf.add_step(
+        f"{prefix}BMTP built",
+        name,
+        build_PM,
+        target=f"{url}BMTP",
+        clone=c,
+    )
+    name = wf.add_step(
+        f"{prefix}BMTPI built",
+        name,
+        build_I,
+        target=f"{url}BMTPI",
+        clone=c,
+        code=prefix.strip(),
+    )
+    wf.add_step(f"{prefix}BMTPI baseline solved", f"{prefix}BMTPI built", solve)
+    name = wf.add_step(f"{prefix}BMTX baseline solved", name, solve)
+    name = wf.add_step(f"{prefix}BMTX baseline reported", name, report)
+
+    # make sure the scenario before this step is reported
+    name = wf.add_step(
+        f"{prefix}BMTX prep macro",
+        f"{prefix}BMTX baseline reported",
+        # f"{prefix}BMT reported",
+        prep_for_macro,
+        target=f"{url}BMTX_message",
+        clone=dict(shift_first_model_year=2030),
+    )
+
+    # the add_macro generate another target scenario with the suffix _macro
+    # baseline_BMTX_message_macro
+    # the scenario will not be cloned to the target,
+    # but the next step will report from the target in the previous step
+    name = wf.add_step(
+        f"{prefix}BMTX baseline macro",
+        name,
+        add_macro,
+        target=f"{url}BMTX_message_macro",
+    )
+
+    name = wf.add_step(f"{prefix}BMTX baseline macro reported", name, report)
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f built",
+        name,
+        add_simple_budget,
+        clone=True,
+        target=f"{url}BMTX_1100f",
+    )
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f sturm-feedback", name, solve_w_sturm, code=prefix.strip()
+    )
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f high-price",
+        name,
+        gen_high_price,
+        clone=True,
+        target=f"{url}BMTX_high_price",
+    )
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f macro",
+        f"{prefix}BMTX 1100f sturm-feedback",
+        budget_run_macro,
+        clone=True,
+        target=f"{url}BMTX_1100f macro",
+        demand_scenario=f"{prefix}baseline_BMTX_high_price",
+    )
+    name = wf.add_step(f"{prefix}BMTX 1100f reported", name, report)
+    # extra steps for non R scenarios
+    name = wf.add_step(
+        f"{prefix}BMTX 1100f macro price",
+        f"{prefix}BMTX baseline macro reported",
+        price_run_macro,
+        clone=True,
+        target=f"{url}BMTX_1100f macro price",
+        demand_scenario=f"{prefix}baseline_BMTX_high_price",
+    )
+    name = wf.add_step(f"{prefix}BMTX 1100f price reported", name, report)
+
+    return name
 
 
 def generate(context: Context) -> Workflow:
@@ -100,41 +579,24 @@ def generate(context: Context) -> Workflow:
 
     .. todo:: Include a prepared version of :file:`bmt-workflow.svg` here.
     """
-    from message_ix_models.model.bmt.config import load_buildings_config
+    from message_ix_models.model.bmt.config import apply_bmt_config
 
     wf = Workflow(context)
+
+    # Configure
     context.ssp = "SSP2"
     context.model.regions = "R12"
+    apply_bmt_config(context)
+    log.info(repr(context.asdict()))
 
-    # Load BMT buildings config (paths, with_materials) for build_B
-    context.buildings = load_buildings_config()
-
-    # Define model name
-    model_name = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-BMT-R12"
-    # Template for formatting URLs
-    url = model_name + "/baseline_"
+    # TODO Move this to a .Config.base_url setting on an appropriate config class
+    #      (probably .model.workflow.Config).
     base_url = "ixmp://ixmp-dev/SSP_SSP2_v6.5/baseline_DEFAULT_step_14"
 
-    # Common keyword argument for cloning
-    c = dict(keep_solution=False)
-
+    # Load the base scenario
     name = wf.add_step("M", None, target=base_url)
-    name = wf.add_step("M cloned", name, target=f"{url}M", clone=c)
-    name = wf.add_step("BM built", name, build_B, target=f"{url}BM_20260308", clone=c)
-    name = wf.add_step("BM solved", name, solve)
 
-    # This step requires the message_data branch `bmt_ssp`
-    name = wf.add_step("BM reported", name, report)
-
-    name = wf.add_step("BMT built", name, target=f"{url}BMT", clone=c)
-    # calling build in transport workflow
-    # and move build transport before buildings (to be added in next PR)
-
-    name = wf.add_step("BMT solved", name, solve)
-    name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=False)
-    name = wf.add_step(
-        "BMTX baseline solved", name, solve, target=f"{url}BMTX", clone=False
-    )
-    # NB At this point, clone and shift firstmodelyear to 2030
+    # Add the remaining steps
+    add_steps(wf, name, prefix="")
 
     return wf

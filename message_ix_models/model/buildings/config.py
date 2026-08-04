@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NotRequired
 
 import ixmp
 
@@ -21,6 +21,8 @@ if TYPE_CHECKING:
         sturm_r: Path
         sturm_c: Path
         demand_static: Path
+        sturm_r_ref: NotRequired[Path]
+        sturm_c_ref: NotRequired[Path]
 
 
 log = logging.getLogger(__name__)
@@ -41,6 +43,8 @@ class METHOD(Enum):
     A = auto()
     #: Code path with :func:`~.prepare_data_B`, used by :mod:`.model.bmt`.
     B = auto()
+    #: Code path with :func:`~.prepare_data_C`, used by :mod:`.project.circeular`.
+    C = auto()
 
 
 def _code_dir_factory() -> Path:
@@ -88,6 +92,9 @@ class Config(ConfigHelper):
 
     #: Name or ID of STURM scenario to run.
     sturm_scenario: str
+
+    #: STURM / MIXB scenario key written to ``scenario_config.yaml`` (e.g. ``"R"``).
+    code: str = "R"
 
     #: Climate scenario. Either `BL` or `2C`.
     climate_scenario: str = "BL"

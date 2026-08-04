@@ -20,10 +20,18 @@ def scenario(request: "FixtureRequest", test_context: "Context") -> "Scenario":
     return bare_res(request, test_context, solved=False)
 
 
-def test_read_material_intensities(scenario: "Scenario") -> None:
+EXP_LEN = {1: 52416, 2: 145152}
+
+
+@pytest.mark.parametrize("version", (1, 2))
+def test_read_material_intensities(scenario: "Scenario", version) -> None:
+    if version == 1:
+        # simulate old MESSAGEix-GLOBIOM version by removing proxy technology
+        with scenario.transact():
+            scenario.remove_set("technology", "solar_res_hist_2000")
     result = read_material_intensities(ScenarioInfo(scenario))
 
     # Data is generated for expected parameters
-    assert 52416 == result.index.size
+    assert EXP_LEN[version] == result.index.size
 
     # TODO Extend assertions

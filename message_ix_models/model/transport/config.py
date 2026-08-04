@@ -2,7 +2,7 @@ import logging
 import re
 from collections.abc import Iterator
 from dataclasses import InitVar, dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from genno import Quantity
 from genno.operator import as_quantity
@@ -10,7 +10,6 @@ from genno.operator import as_quantity
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.project.navigate import T35_POLICY as NAVIGATE_SCENARIO
 from message_ix_models.project.ssp import SSP_2024, ssp_field
-from message_ix_models.project.transport_futures import SCENARIO as FUTURES_SCENARIO
 from message_ix_models.util import package_data_path, short_hash
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.sdmx import AnnotationsMixIn, StructureFactory
@@ -149,6 +148,8 @@ class Config(ConfigHelper):
     #: passenger km / capita / year (Schafer & Victor 2000).
     #: Original comment (DLM): “Assume only half the speed (330 km/h) and not as steep a
     #: curve.”
+    #: For the :mod:`.transport_futures` scenario with ID "A---", the value 275000 km /
+    #: year is used.
     fixed_pdt: Quantity = quantity_field("132495 km / year")
 
     #: Load factors for vehicles [tonne km per vehicle km].
@@ -168,12 +169,6 @@ class Config(ConfigHelper):
     #: Period in which LDV costs match those of a reference region.
     #: Dimensions: (node,).
     ldv_cost_catch_up_year: dict = field(default_factory=dict)
-
-    #: Method for calibrating LDV stock and sales:
-    #:
-    #: - :py:`"A"`: use data from :file:`ldv-new-capacity.csv`, if it exists.
-    #: - :py:`"B"`: use func:`.ldv.stock`; see the function documentation.
-    ldv_stock_method: Literal["A", "B"] = "B"
 
     #: Tuples of (node, technology (transport mode), commodity) for which minimum
     #: activity should be enforced. See :func:`.non_ldv.bound_activity_lo`.
@@ -210,10 +205,11 @@ class Config(ConfigHelper):
     #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
     #: settings in documented ways.
     project: dict[str, Any] = field(
-        default_factory=lambda: dict(
-            futures=FUTURES_SCENARIO.BASE, navigate=NAVIGATE_SCENARIO.REF
-        )
+        default_factory=lambda: dict(navigate=NAVIGATE_SCENARIO.REF)
     )
+
+    #: Full URN of a particular scenario.
+    project_scenario_code: "common.Code | None" = None
 
     #: Scaling factors for production function [0]
     scaling: float = 1.0
@@ -250,19 +246,14 @@ class Config(ConfigHelper):
     #: :attr:`.modules`.
     extra_modules: InitVar[str | list[str]] = []
 
-    #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
-    #: :meth:`.ScenarioFlags.parse_futures`.
-    futures_scenario: InitVar[str] = None
-
     #: Identifiers of NAVIGATE T3.5 demand-side scenarios, used to update
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(self, extra_modules, futures_scenario, navigate_scenario) -> None:
+    def __post_init__(self, extra_modules, navigate_scenario) -> None:
         self.use_modules(extra_modules)
 
-        # Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`
-        self.set_futures_scenario(futures_scenario)
+        # Handle value for :attr:`navigate_scenario`
         self.set_navigate_scenario(navigate_scenario)
 
     @classmethod
@@ -351,8 +342,8 @@ class Config(ConfigHelper):
 
     @code.setter
     def code(self, value: "str | common.Code") -> None:
-        from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
-        from message_ix_models.project.edits.structure import SCENARIO as EDITS
+        from message_ix_models.project.digsy.structure import CL_SCENARIO_DIGSY
+        from message_ix_models.project.edits.structure import CL_SCENARIO_EDITS_MCE
 
         c = self._code = CL_SCENARIO.get()[value] if isinstance(value, str) else value
 
@@ -369,8 +360,19 @@ class Config(ConfigHelper):
 
         # Update `project`
         self.project["LED"] = sca.is_LED_scenario
-        self.project["DIGSY"] = DIGSY.by_urn(sca.DIGSY_scenario_URN)
-        self.project["EDITS"] = EDITS.by_urn(sca.EDITS_scenario_URN)
+
+        # Update `project_scenario_code`
+        # TODO Avoid branching; use a lookup utility that locates the correct codelist
+        codelist = None
+        if "DIGSY" in sca.project_scenario_URN:
+            codelist = CL_SCENARIO_DIGSY.get()
+        elif "EDITS" in sca.project_scenario_URN:
+            codelist = CL_SCENARIO_EDITS_MCE.get()
+        if codelist:
+            # Identify the Code in the given codelist that matches the URN
+            self.project_scenario_code = next(
+                c for c in codelist if c.urn == sca.project_scenario_URN
+            )
 
         self.use_modules(sca.extra_modules)
 
@@ -380,17 +382,15 @@ class Config(ConfigHelper):
 
         Compared to :attr:`code.id <code>`, this is a longer, more explicit label,
         suitable for (part of) a :attr:`message_ix.Scenario.scenario` name in an
-        :mod:`ixmp` database, for instance "SSP_2024.3".
+        :mod:`ixmp` database, for instance "SSP_2024.3". It can also be used by used by
+        :class:`.transport.data.MultiFile` subclasses to identify specific input data
+        for a scenario.
         """
+        psc = self.project_scenario_code
+        if psc and psc.parent and "CIRCEULAR" in (psc.urn or ""):
+            # Specific label for CircEUlar scenarios
+            return f"CircEUlar-{psc.id}"
         return re.sub("^(M )?SSP", "SSP_2024.", self.code.id)
-
-    def check(self):
-        """Check consistency of :attr:`project`."""
-        s1 = self.project["futures"]
-        s2 = self.project["navigate"]
-
-        if all(map(lambda s: s.value > 0, [s1, s2])):
-            raise ValueError(f"Scenario settings {s1} and {s2} are not compatible")
 
     def get_target_url(self, context: "Context") -> str:
         """Construct a target URL for a built MESSAGEix-Transport scenario.
@@ -436,36 +436,16 @@ class Config(ConfigHelper):
 
             return f"{model_name}/{scenario_name}"
 
-    def set_futures_scenario(self, value: str | None) -> None:
-        """Update :attr:`project` from a string indicating a Transport Futures scenario.
-
-        See :meth:`ScenarioFlags.parse_futures`. This method alters :attr:`mode_share`
-        and :attr:`fixed_demand` according to the `value` (if any).
-        """
-        if value is None:
-            return
-
-        s = FUTURES_SCENARIO.parse(value)
-        self.project.update(futures=s)
-        self.check()
-
-        self.mode_share = s.id()
-
-        if self.mode_share == "A---":
-            log.info(f"Set fixed demand for TF scenario {value!r}")
-            self.fixed_demand = as_quantity("275000 km / year")
-
     def set_navigate_scenario(self, value: str | None) -> None:
         """Update :attr:`project` from a string representing a NAVIGATE scenario.
 
-        See :meth:`ScenarioFlags.parse_navigate`.
+        See :class:`.navigate.T35_POLICY`.
         """
         if value is None:
             return
 
         s = NAVIGATE_SCENARIO.parse(value)
         self.project.update(navigate=s)
-        self.check()
 
     def use_modules(self, *module_names: str) -> None:
         """Handle extra_modules."""
@@ -478,7 +458,8 @@ class Config(ConfigHelper):
                     except ValueError:
                         pass
                 else:
-                    self.modules.append(m)
+                    if m not in self.modules:
+                        self.modules.append(m)
 
 
 @dataclass
@@ -496,11 +477,8 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
     #: :data:`True` if the scenario is a "Low Energy Demand" scenario.
     is_LED_scenario: bool
 
-    #: URN of a code from :class:`.digsy.structure.SCENARIO`.
-    DIGSY_scenario_URN: str
-
-    #: URN of a code from :class:`.edits.structure.SCENARIO`.
-    EDITS_scenario_URN: str
+    #: URN of a code from a project-specific list of codes.
+    project_scenario_URN: str
 
     #: :mod:`ixmp` URL of a base scenario on which the MESSAGEix-Transport scenario is
     #: to be built.
@@ -522,15 +500,15 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
 
 
 class CL_SCENARIO(StructureFactory["common.Codelist"]):
-    """SDMX code list ``IIASA_ECE:CL_TRANSPORT_SCENARIO``.
+    """SDMX code list ``IIASA_ECE:CL_SCENARIO_TRANSPORT``.
 
-    This code lists contains unique IDs for scenarios supported by the
+    This code list contains unique IDs for scenarios supported by the
     MESSAGEix-Transport workflow (:mod:`.transport.workflow`). Each code has the set
     of annotations described by :class:`ScenarioCodeAnnotations`.
     """
 
-    urn = "IIASA_ECE:CL_TRANSPORT_SCENARIO"
-    version = "1.4.0"
+    urn = "IIASA_ECE:CL_SCENARIO_TRANSPORT"
+    version = "1.5.0"
 
     #: Base scenario URL, including model name and scenario name.
     #:
@@ -552,35 +530,25 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
     def create(cls) -> "common.Codelist":
         from sdmx.model import common
 
-        import message_ix_models.project.digsy.structure
-        import message_ix_models.project.edits.structure
+        from message_ix_models.project.digsy.structure import CL_SCENARIO_DIGSY
+        from message_ix_models.project.edits.structure import CL_SCENARIO_EDITS_MCE
         from message_ix_models.util.sdmx import read
 
         # Other data structures
-        IIASA_ECE = read("IIASA_ECE:AGENCIES")["IIASA_ECE"]
         cl_ssp_2024 = read("ICONICS:SSP(2024)")
-        cl_edits = message_ix_models.project.edits.structure.get_cl_scenario()
-        cl_digsy = message_ix_models.project.digsy.structure.get_cl_scenario()
 
         # Create an empty code list
-        cl: "common.Codelist" = common.Codelist(
-            id="CL_TRANSPORT_SCENARIO",
-            maintainer=IIASA_ECE,
-            version=cls.version,
-            is_external_reference=False,
-            is_final=True,
-        )
+        cl = cls.maintainable(common.Codelist)
 
         def _append_codes(
             id: str,
             name: str,
             ssp: str,
             led: bool = False,
-            edits: str = "_Z",
-            digsy: str = "_Z",
+            project_urn: str = "",
             policy: "Policy | None" = None,
         ) -> None:
-            """Shorthand to append Codes to `cl` with the given setttings.
+            """Shorthand to append Codes to `cl` with the given settings.
 
             For each call, 2 codes are appended. One has the ID ``"M {id}"``, and
             includes settings for using :mod:`.transport.material`.
@@ -589,8 +557,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
             sca = ScenarioCodeAnnotations(
                 cl_ssp_2024[ssp].urn,  # Expand e.g. "1" to a full URN
                 led,
-                cl_digsy[digsy].urn,
-                cl_edits[edits].urn,
+                project_urn,
                 # Format base scenario URL
                 # - For SSP2 only, use v6.6 in the base model name
                 cls.base_url.format(ssp).replace(
@@ -611,6 +578,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
 
         # Baselines and policy scenarios for each SSP
         te = TaxEmission(1000.0)
+        _ep = " with exogenous emission price"
         for ssp in "12345":
             id_ = name = f"SSP{ssp}"
             _append_codes(id_, name + " baseline", ssp)
@@ -620,32 +588,38 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
 
             # PRICE_EMISSION from exogenous data file
             for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
-                name += " with exogenous price"
-                _append_codes(f"{id_} exo price {hash}", name, ssp, policy=eep)
+                _append_codes(f"{id_} exo price {hash}", name + _ep, ssp, policy=eep)
 
         # LED
-        name = "Low Energy Demand/High-with-Low scenario with SSP{} demographics"
         for ssp in "12":
-            _append_codes(f"LED-SSP{ssp}", name.format(ssp), ssp, led=True)
+            id_ = f"LED-SSP{ssp}"
+            name = f"Low Energy Demand/High-with-Low with SSP{ssp} socioeconomics"
+            _append_codes(id_, name + ", baseline", ssp, led=True)
+
+            # PRICE_EMISSION from exogenous data file
+            for eep, hash in iter_price_emission("R12", "LED"):
+                _append_codes(f"{id_} exo price {hash}", name + _ep, ssp, policy=eep)
 
         # DIGSY
-        ssp, name = "2", "DIGSY {!r} scenario with SSP2"
-        for id_ in ("BEST-C", "BEST-S", "WORST-C", "WORST-S"):
-            _append_codes(f"DIGSY-{id_}", name.format(id_), ssp, digsy=id_)
+        ssp = "2"
+        name = "DIGSY {!r} scenario with SSP2"
+        for c in filter(lambda c: c.id not in ("BASE", "_Z"), CL_SCENARIO_DIGSY.get()):
+            _append_codes(f"DIGSY-{c.id}", name.format(c.id), ssp, project_urn=c.urn)
 
             # PRICE_EMISSION from exogenous data file
             for eep, hash in iter_price_emission("R12", f"SSP{ssp}"):
                 _append_codes(
-                    f"DIGSY-{id_} exo price {hash}",
-                    name.format(id_) + " with exogenous price",
+                    f"DIGSY-{c.id} exo price {hash}",
+                    name.format(c.id) + _ep,
                     ssp,
+                    project_urn=c.urn,
                     policy=eep,
                 )
 
         # EDITS
-        ssp, name = "2", "EDITS scenario with ITF PASTA {!r} activity"
-        for id_ in ("CA", "HA"):
-            _append_codes(f"EDITS-{id_}", name.format(id_), ssp, edits=id_)
+        name = "EDITS scenario with ITF PASTA {!r} activity"
+        for c in filter(lambda c: c.id != "_Z", CL_SCENARIO_EDITS_MCE.get()):
+            _append_codes(f"EDITS-{c.id}", name.format(c.id), ssp, project_urn=c.urn)
 
         return cl
 

@@ -157,15 +157,9 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # The following replicates a deleted .transport.test_data.test_get_freight_data()
     freight.TARGET: (
         ContainsDataForParameters(
-            {
-                "demand",
-                "capacity_factor",
-                "input",
-                "output",
-                "technical_lifetime",
-            }
+            {"demand", "capacity_factor", "input", "output", "technical_lifetime"}
         ),
-        # HasCoords({"technology": ["f rail electr"]}),
+        HasCoords({"technology": ["f rail electr"]}),
     ),
     "output::F+ixmp": (
         HasCoords(
@@ -174,6 +168,10 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     ),
     # .freight.other()
     "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
+    # input values are generated for usage technologies
+    "usage input::F+ixmp": (
+        HasCoords({"technology": ["transport F RAIL usage", "transport F ROAD usage"]}),
+    ),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
     "mode share:n-t-y:base": (HasUnits(""),),
@@ -301,7 +299,15 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
 
 
 def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
-    """Insert :data:`CHECKS` into `c`."""
+    """Insert :data:`CHECKS` into `c`.
+
+    Parameters
+    ----------
+    verbosity :
+        Passed to :func:`.verbose_check`.
+    path :
+        Passed to :func:`.verbose_check`.
+    """
     context: "Context" = c.graph["context"]  # noqa: F841
     info: "ScenarioInfo" = c.get("info")
 

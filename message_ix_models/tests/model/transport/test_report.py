@@ -14,9 +14,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
 from message_ix_models.model.transport.report import configure_legacy_reporting, multi
 from message_ix_models.model.transport.testing import (
-    MARK,
     built_transport,
-    make_mark,
     simulated_solution,
 )
 from message_ix_models.report import prepare_reporter
@@ -47,7 +45,7 @@ def scenario_code() -> "Code":
     return CL_SCENARIO.get()["SSP2"]
 
 
-@pytest.mark.xfail(
+@mark.xfail(
     reason="Requires variables in .report.legacy.default_tables that have not been "
     "migrated from message_data"
 )
@@ -77,8 +75,8 @@ def test_configure_legacy():
         assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
-@pytest.mark.ece_db
-@pytest.mark.parametrize(
+@mark.ece_db
+@mark.parametrize(
     "url, key, verbosity",
     (
         (
@@ -131,15 +129,16 @@ def test_debug(
     del tmp
 
 
-@MARK[10]
+@mark.ci_linux_only
+@mark.transport_build_data
 @build.get_computer.minimum_version
-@pytest.mark.parametrize(
+@mark.parametrize(
     "regions, years",
     (
-        param("R11", "A", marks=make_mark[2](RuntimeError)),
+        param("R11", "A", marks=mark.no_data("R11", RuntimeError)),
         ("R12", "B"),
-        param("R14", "A", marks=MARK[9]),
-        param("ISR", "A", marks=MARK[3]),
+        param("R14", "A", marks=mark.R14_no_data),
+        param("ISR", "A", marks=mark.ISR_no_data),
     ),
 )
 def test_bare(
@@ -195,8 +194,9 @@ def test_multi(test_context: "Context") -> None:
         multi(test_context, [])
 
 
+@mark.ci_linux_only
 @build.get_computer.minimum_version
-@MARK[10]
+@mark.transport_build_data
 @mark.usefixtures("quiet_genno")
 @mark.parametrize(
     "build",
@@ -241,13 +241,13 @@ def test_simulated(
     assert p.joinpath("DF_POPULATION_IN.xml").exists()
 
 
-@pytest.mark.skipif(
+@mark.skipif(
     GHA
     and ((V("3.8") <= V(version("ixmp")) < V("3.11")) or platform.system() != "Linux"),
     reason="Fails on GHA with ixmp/message_ix v3.8–v3.10 or their dependencies",
 )
 @build.get_computer.minimum_version
-@MARK[10]
+@mark.transport_build_data
 def test_simulated_iamc(
     request: "pytest.FixtureRequest",
     tmp_path_factory,
@@ -305,10 +305,10 @@ def test_simulated_iamc(
 
 
 @build.get_computer.minimum_version
-@MARK[11]
-@MARK[10]
+@mark.ci_timeout
+@mark.transport_build_data
 @mark.usefixtures("quiet_genno")
-@pytest.mark.parametrize(
+@mark.parametrize(
     "plot_name",
     # # All plots
     # list(PLOTS.keys()),
