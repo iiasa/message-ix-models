@@ -269,8 +269,12 @@ def main(
             n = 1
         else:
             if len(vtg_years) == 1:
+                # pandas 3 dropped the implicit scalar conversion of a
+                # one-element Series, so take the element before converting.
                 div = int(
-                    scenario.par("duration_period", filters={"year": vtg_years}).value
+                    scenario.par(
+                        "duration_period", filters={"year": vtg_years}
+                    ).value.iloc[0]
                 )
             else:
                 div = min(np.diff(vtg_years))

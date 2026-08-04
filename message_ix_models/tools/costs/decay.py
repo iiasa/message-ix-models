@@ -406,8 +406,18 @@ def project_ref_region_inv_costs_using_reduction_rates(
             cost_region_reduc_year=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
             b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_reduc_year,
+            # The cost columns arrive as object dtype, because
+            # apply_regional_differentiation builds them through np.where. numpy
+            # then looks for a .log() method on each element instead of running
+            # the ufunc over a float array. Cast to float first: a no-op on a
+            # float column, and correct on an object column of floats.
             r=lambda x: (1 / (config.reduction_year - config.base_year))
-            * np.log((x.cost_region_reduc_year - x.b) / (x.reg_cost_base_year - x.b)),
+            * np.log(
+                (
+                    (x.cost_region_reduc_year - x.b)
+                    / (x.reg_cost_base_year - x.b)
+                ).astype(float)
+            ),
             reference_region=config.ref_region,
         )
     )

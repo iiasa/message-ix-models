@@ -786,4 +786,21 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         .reset_index(drop=True)
     )
 
+    # np.where returns an object array wherever its inputs are object, and the
+    # cost columns are built through several such calls, so they leave this
+    # function holding Python floats in object columns. Callers then hit
+    # "unsupported operand type(s)" in pandas eval and "loop of ufunc does not
+    # support argument 0 of type float" in numpy. Restore the numeric dtype
+    # here, where the columns are produced, rather than at each point of use.
+    # pandas 2 produced float columns already, so this is a no-op there.
+    numeric = [
+        "base_year_reference_region_cost",
+        "reg_cost_ratio",
+        "fix_ratio",
+        "reg_cost_base_year",
+    ]
+    all_tech = all_tech.astype(
+        {c: float for c in numeric if c in all_tech.columns}
+    )
+
     return all_tech

@@ -373,8 +373,10 @@ def report(
             }
         )
         col_yr = pp_utils.numcols(df)
+        # pandas 3 dropped the implicit scalar conversion of a one-element
+        # Series, so take the element before converting.
         model_year = int(
-            scen.set("cat_year", {"type_year": ["firstmodelyear"]})["year"]
+            scen.set("cat_year", {"type_year": ["firstmodelyear"]})["year"].iloc[0]
         )
         ix_regions = {regions[n]: n for n in regions}
         ix_upload.region = ix_upload.region.replace(ix_regions)

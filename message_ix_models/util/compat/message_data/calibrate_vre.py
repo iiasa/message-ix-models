@@ -933,7 +933,9 @@ def _add_par_for_res(scen, data_df, df, years, h_years, m_years, opt_years):
     # Calculate the activity and capacity values that will be
     # added to the model
     for y in years:
-        per_len = float(scen.par("duration_period", {"year": y})["value"])
+        # pandas 3 dropped the implicit scalar conversion of a one-element
+        # Series, so take the element before converting.
+        per_len = float(scen.par("duration_period", {"year": y})["value"].iloc[0])
 
         # The activity is calculated by the either using the "actual" CF
         # if it is <= to the res CF, otherwise the res CF is used.
