@@ -2,7 +2,6 @@
 
 import logging
 import re
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -12,7 +11,8 @@ from message_ix import Reporter
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report import STAGE, add_plots
-from message_ix_models.report.util import add_replacements
+from message_ix_models.report.key import all_iamc
+from message_ix_models.report.util import IAMCConversion, add_replacements
 
 from . import Config, plot
 from . import key as K
@@ -33,42 +33,38 @@ _FE_UNIT = "EJ/yr"
 CONVERT_IAMC = (
     # NB these are currently tailored to produce the variable names expected for the
     #    NGFS project
-    dict(
-        variable="T activity",
-        base="out:nl-t-ya-c:T",
-        var=["Energy Service|Transportation", "t", "c"],
+    IAMCConversion(
+        base=Key("out:nl-t-ya-c:T"),
+        var_parts=["Energy Service|Transportation", "t", "c"],
         sums=["c"],
+        unit="km",
     ),
-    dict(
-        variable="T stock",
-        base="CAP:nl-t-ya:T",
-        var=["Stocks|Transportation", "t"],
+    IAMCConversion(
+        base=Key("CAP:nl-t-ya:T"),
+        var_parts=["Stocks|Transportation", "t"],
         unit="Mvehicle",
     ),
-    dict(
-        variable="T sales",
-        base="CAP_NEW:nl-t-yv:T",
-        var=["Sales|Transportation", "t"],
+    IAMCConversion(
+        base=Key("CAP_NEW:nl-t-yv:T"),
+        var_parts=["Sales|Transportation", "t"],
         unit="Mvehicle",
     ),
     # Final energy
     #
     # The following are 4 different partial sums of in::transport, in which
     # individual technologies are already aggregated to modes
-    dict(
-        variable="T final energy",
-        base="in:nl-t-ya-c:T",
-        var=["Final Energy|Transportation", "t", "c"],
+    IAMCConversion(
+        base=Key("in:nl-t-ya-c:T"),
+        var_parts=["Final Energy|Transportation", "t", "c"],
         sums=["c"],
         unit=_FE_UNIT,
     ),
     # Emissions using MESSAGEix emission_factor parameter
     # base: auto-sum over dimensions yv, m, h
     # var: Same as in data/report/global.yaml
-    # dict(
-    #     variable="transport emi 0",
+    # IAMCConversion(
     #     base="emi:nl-t-ya-e-gwp metric-e equivalent:gwpe+agg",
-    #     var=[
+    #     var_parts=[
     #         "Emissions|CO2|Energy|Demand|Transportation",
     #         "t",
     #         "e",
@@ -76,20 +72,17 @@ CONVERT_IAMC = (
     #         "gwp metric",
     #     ],
     # ),
-    # dict(
-    #     variable="transport emi 1",
+    # IAMCConversion(
     #     base="emi:nl-t-ya-e:transport+units",
-    #     var=["Emissions", "e", "Energy|Demand|Transportation", "t"],
-    #     sums=["t"],
+    #     var_parts=["Emissions", "e", "Energy|Demand|Transportation", "t"],
     #     unit="Mt/yr",
+    #     sums=["t"],
     # ),
     #
     # # For debugging
-    # dict(variable="debug ACT", base="ACT:nl-t-ya", var=["DEBUG", "t"], unit="-"),
-    # dict(variable="debug CAP", base="CAP:nl-t-ya", var=["DEBUG", "t"], unit="-"),
-    # dict(
-    #     variable="debug CAP_NEW", base="CAP_NEW:nl-t-yv", var=["DEBUG", "t"], unit="-"
-    # ),
+    # IAMCConversion(base="ACT:nl-t-ya", var=["DEBUG", "t"], unit="-"),
+    # IAMCConversion(base="CAP:nl-t-ya", var=["DEBUG", "t"], unit="-"),
+    # IAMCConversion(base="CAP_NEW:nl-t-yv", var=["DEBUG", "t"], unit="-"),
 )
 
 
@@ -297,7 +290,6 @@ def configure_legacy_reporting(config: dict) -> None:
 
 def convert_iamc(c: "Computer") -> None:
     """Add tasks from :data:`.CONVERT_IAMC`."""
-    from message_ix_models.report import iamc as handle_iamc
     from message_ix_models.report import util
 
     # Configure replacements for technology IDs in conversion to IAMC data structure
@@ -309,14 +301,15 @@ def convert_iamc(c: "Computer") -> None:
     #   from CAP and CAP_NEW. Remove the prefix.
     util.REPLACE_VARS.update({r"^CAP(_NEW)?\|(S(ale|tock)s\|Transportation)": r"\2"})
 
-    keys = []
-    for info in CONVERT_IAMC:
-        handle_iamc(c, deepcopy(info))
-        keys.append(f"{info['variable']}::iamc")
+    # List of keys in all::iamc
+    keys_pre = set(c.graph[all_iamc][1:])
+    for conversion in CONVERT_IAMC:
+        conversion.add_tasks(c)
+    added = set(c.graph[all_iamc][1:]) - keys_pre
 
     # Concatenate IAMC-format tables
-    k = Key("transport", tag="iamc")
-    c.add(k, "concat", *keys)
+    k = Key("transport::iamc")
+    c.add(k, "concat", *added)
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     c.apply(util.store_write_ts, k)

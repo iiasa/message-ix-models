@@ -83,6 +83,7 @@ __all__ = [
     "same_node",
     "same_time",
     "show_versions",
+    "short_hash",
     "silence_log",
     "strip_par_data",
 ]
@@ -782,9 +783,9 @@ def _(data: "MutableParameterData") -> "MutableParameterData":
     return data
 
 
-def short_hash(value: str, len: int = 3) -> str:
+def short_hash(value: Any, len: int = 3) -> str:
     """Return a short (length `len`) hash of `value`."""
-    return blake2s(value.encode()).hexdigest()[:len]
+    return blake2s(str(value).encode()).hexdigest()[:len]
 
 
 def show_versions() -> str:

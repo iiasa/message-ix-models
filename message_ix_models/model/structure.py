@@ -1,10 +1,11 @@
 import logging
 import re
-from collections import ChainMap
-from collections.abc import Mapping, MutableMapping
+from collections import ChainMap, defaultdict
+from collections.abc import Iterator, Mapping, MutableMapping
 from copy import copy
 from functools import cache
-from itertools import product
+from itertools import product, starmap
+from typing import Literal
 
 import click
 import pandas as pd
@@ -15,7 +16,7 @@ from sdmx.model.common import Code, Codelist
 from sdmx.model.v21 import Annotation
 
 from message_ix_models.util import load_package_data, package_data_path
-from message_ix_models.util.sdmx import as_codes
+from message_ix_models.util.sdmx import as_codes, leaf_ids
 
 log = logging.getLogger(__name__)
 
@@ -217,6 +218,57 @@ def generate_set_elements(data: MutableMapping, name) -> None:
         data[name]["indexers"] = indexers
 
 
+@cache
+def get_technology_groups() -> dict[Literal["t"], dict[str, list[str]]]:
+    """Return a mapping of technology groups.
+
+    The mapping includes 1 group for every unique combination of (input level,
+    input commodity, output level, output commodity) in :ref:`technology-yaml`. Group
+    keys are either as given by :func:`technology_group_keys` or, if an explicit name
+    is given in the code list, that name. Group members are lists of IDs of
+    technologies belonging to the respective group.
+
+    Groups with only 1 member are omitted; these **should** be referred to be the ID
+    of the technology directly.
+
+    See also
+    --------
+    get_codelist
+    technology_group_keys
+    """
+    cl = get_codelist("technology")
+
+    group0: MutableMapping[str, set[str]] = defaultdict(set)
+    rename = {}
+
+    for tech in cl:
+        if tech.eval_annotation(id="report-only") is True:
+            if len(tech.child):
+                # Groups based on parent/child hierarchy
+                group0[str(tech.name)] = set(leaf_ids(tech))
+            else:
+                # A reporting name. Map the longest associated key to the group name
+                key = sorted(technology_group_keys(tech), key=len, reverse=True)[0]
+                rename[key] = str(tech.name)
+        else:
+            for key in technology_group_keys(tech):
+                group0[key].add(tech.id)
+
+    # Iterate over the completed mapping
+    group1 = {}
+    for key, v in group0.items():
+        # Omit:
+        # - The "* * → * *" catch-all key
+        # - Entries with only 1 technology
+        if key == "* * → * *" or len(v) == 1:
+            continue
+
+        # Apply name mapping
+        group1[rename.get(key, key)] = sorted(v)
+
+    return dict(t=group1)
+
+
 def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
     """Process an annotation on `code` with id="units".
 
@@ -303,6 +355,53 @@ def process_technology_codes(codes):
             anno = Annotation(id="vintaged", text=repr(False))
 
         code.annotations.append(anno)
+
+
+def technology_group_keys(tech: Code) -> Iterator[str]:
+    """Generate group keys for a `tech` based on its ``input``/``output`` annotations.
+
+    For a technology annotated like:
+
+    .. code-block:: yaml
+
+       tech:
+         input: [c_foo, l_bar]
+         output: [c_baz, l_qux]
+
+    …this yields 8 strings with either the given commodity/level or a "*" character,
+    including:
+
+    - "l_bar c_foo → l_qux c_baz"
+    - "* c_foo → l_qux c_baz"
+    - "l_bar * → l_qux c_baz"
+    - "* * → l_qux c_baz"
+    - …
+    - "* * → * *"
+    """
+    # Starting lists of coords
+    coords = dict(c_in=["*"], c_out=["*"], l_in=["*"], l_out=["*"])
+
+    # Process input and output annotations
+    for io in ("input", "output"):
+        # Retrieve annotation
+        c_l = tech.eval_annotation(id=io)
+
+        # Transform to an iterable of (c, l) tuples. Some techs are annotated with a
+        # list of 2-tuples, representing multiple inputs or outputs.
+        if c_l is None or len(c_l) != 2:
+            c_l = []  # No annotation or length-1 collection → do nothing
+        elif isinstance(c_l[0], str):
+            c_l = [c_l]  # Single (c, l) tuple
+
+        # Extend each of the coords
+        for commodity, level in c_l:
+            coords[f"c_{io[:-3]}"].append(commodity)
+            coords[f"l_{io[:-3]}"].append(level)
+
+    yield from starmap(
+        "{} {} → {} {}".format,
+        product(coords["l_in"], coords["c_in"], coords["l_out"], coords["c_out"]),
+    )
 
 
 @click.command(name="techs")

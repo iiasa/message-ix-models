@@ -13,6 +13,7 @@ from message_ix_models.model.structure import (
     generate_set_elements,
     get_codes,
     get_region_codes,
+    get_technology_groups,
     process_commodity_codes,
     process_units_anno,
 )
@@ -271,6 +272,23 @@ def test_generate_set_elements(colour_expr, expected):
 
     # Codes are generated according to the contents of the _generate annotation
     assert expected == set(map(str, data["technology"]["add"]))
+
+
+def test_get_technology_groups() -> None:
+    # Function runs
+    result = get_technology_groups()
+
+    # Top-level: single key "t"
+    assert {"t"} == set(result)
+
+    # Next level: expecte number of groups
+    assert 524 == len(result["t"])
+
+    # Certain keys are present
+    assert "* * → secondary electr" in result["t"]
+
+    # Keys contain expected members
+    assert ["h2_smr", "h2_smr_ccs"] == result["t"]["* gas → secondary hydrogen"]
 
 
 def test_process_units_anno():

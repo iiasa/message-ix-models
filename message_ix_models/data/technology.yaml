@@ -1139,7 +1139,7 @@ gas_extr_1:
   type: primary
   sector: extraction
   input: [resource]
-  output: [primary]
+  output: [gas, primary]
 
 gas_extr_2:
   name: gas_extr_2
@@ -1147,7 +1147,7 @@ gas_extr_2:
   type: primary
   sector: extraction
   input: [resource]
-  output: [primary]
+  output: [gas, primary]
 
 gas_extr_3:
   name: gas_extr_3
@@ -1155,7 +1155,7 @@ gas_extr_3:
   type: primary
   sector: extraction
   input: [resource]
-  output: [primary]
+  output: [gas, primary]
 
 gas_extr_4:
   name: gas_extr_4
@@ -1163,7 +1163,7 @@ gas_extr_4:
   type: primary
   sector: extraction
   input: [resource]
-  output: [primary]
+  output: [gas, primary]
 
 gas_extr_5:
   name: gas_extr_5
@@ -1171,7 +1171,7 @@ gas_extr_5:
   type: primary
   sector: extraction
   input: [resource]
-  output: [primary]
+  output: [gas, primary]
 
 gas_extr_6:
   name: gas_extr_6
@@ -1179,7 +1179,7 @@ gas_extr_6:
   type: primary
   sector: extraction
   input: [resource]
-  output: [primary]
+  output: [gas, primary]
 
 gas_extr_mpen:
   name: gas_extr_mpen
