@@ -392,7 +392,23 @@ def generate(context: Context) -> Workflow:
 
     apply_bmt_config(context)
 
-    # EFC workflow: clone from parent BMT-R12 baseline on ixmp-dev into EFC model name.
+    # EFC workflow: clone the parent scenario on ixmp-dev into the EFC model name.
+    #
+    # The parent URL reads as BMT but the scenario is MT-built, and the two must
+    # not be confused: the MODEL name says "2.1-BMT-R12" while the SCENARIO
+    # inside it is "baseline_MT". The model name is an upstream naming legacy
+    # (that model houses several MT scenarios); the scenario itself never ran the
+    # Buildings step. Verified on ixmp-dev: baseline_MT#6 has ZERO technologies
+    # matching *afofio* and retains the original _rc names (eth_rc, h2_rc,
+    # elec_rc, gas_rc, foil_rc), which is the Buildings discriminator — Buildings
+    # renames residential/commercial _rc -> _afofio in model/buildings/build.py.
+    # So the whole EFC chain is MT, and reporting filters must use _rc names.
+    # Re-check with EFC_2026 scripts/verify/check_mt_vs_bmt_lineage.py.
+    #
+    # Do not "fix" the parent's naming: that model/scenario is owned upstream
+    # (all baseline_MT versions are cre_user juyiyi) and other scenarios depend
+    # on it. apply_bmt_config() above is likewise not a Buildings build step —
+    # it is a Context configurator required for transport reporting.
     model_name = "ixmp://ixmp-dev/" + EFC_MODEL_NAME
     url = model_name + "/"
     base_url = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12/baseline_MT#6"
