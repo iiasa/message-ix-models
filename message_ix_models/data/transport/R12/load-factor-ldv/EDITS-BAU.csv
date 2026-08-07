@@ -1,10 +1,4 @@
-# Load factor (occupancy) of LDVs
-#
-# Source: Constructed by @r-aneeque
-#
-# Units: passenger / vehicle
-#
-node,     year, value
+node,year,value
 R12_AFR,2015,2.241640342
 R12_AFR,2019,2.194992539
 R12_AFR,2020,2.057786723

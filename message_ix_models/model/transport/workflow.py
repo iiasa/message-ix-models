@@ -31,7 +31,7 @@ SOLVE_CONFIG = WorkflowConfig(
         solve_options=dict(
             iis=1,
             lpmethod=6,
-            scaind=0,
+            scaind=1,
             threads=8,
             tilim=45 * 60,
         ),
