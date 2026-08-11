@@ -89,15 +89,17 @@ def pyam_df_from_rep(
                 },
             )
             # ixmp's Scenario.var() does not return a 'unit' column for GAMS
-            # variables (unlike parameters), so PRICE_COMMODITY's denominator
-            # can't be read off the result. The legacy reporting pipeline
-            # (pp_utils.py:_retr_ene_prc) hardcodes the same assumption for
-            # this exact variable, and it matches how costs are declared for
-            # these technologies (fix_cost/var_cost: "USD/GWa", see
-            # prepare_edit.py / historical_calibration.py) -- so PRICE_COMMODITY
-            # is USD/GWa here, same as `out`'s native unit, requiring no
-            # GWa-scale conversion (value_scale = 1.0).
-            value_scale = 1.0
+            # variables, so this can't be read off the result -- verified
+            # empirically instead: a non-trade, final-level PRICE_COMMODITY
+            # value came back as 138, consistent with USD_2010/kWa (the
+            # documented message_ix_models convention, global.yaml:22), not
+            # USD/GWa (which would put it in the hundreds of millions).
+            # historical_calibration.py's fix_cost/var_cost are *labelled*
+            # "USD/GWa" but computed as VALUE(MUSD)/ENERGY(GWa), which is
+            # numerically identical to USD/kWa (the two 1e6 factors cancel) --
+            # so that label is misleading, not evidence of a GWa scale.
+            # `out` is native GWa (1 GWa = 1e6 kWa).
+            value_scale = 1e6
 
             price_df = price_df.rename(
                 columns={"node": "nl", "commodity": "c", "level": "l", "year": "ya", "lvl": "price"}
