@@ -118,7 +118,7 @@ def pyam_df_from_rep(
                 df[0] = new_vals
 
             df = (
-                df.groupby(["nl", "nd", "ya", "t", "iamc_name"])
+                df.groupby(["nl", "nd", "ya", "t", "iamc_name", "unit"])
                   .sum(numeric_only=True)
                 )
             dfn = df.index.to_frame(index = False)
