@@ -9,43 +9,97 @@ unit: EJ/yr
 vars:
 
 # Shipped biomass trade
-  Trade|Primary Energy|Biomass [Volume]|Shipped:
+  Trade|Primary Energy|Biomass|Volume|Shipped:
     filter:
       { technology: [biomass_shipped_exp], mode: M1, commodity: biomass, level: [shipped] }
     short:
       biomass_shipped_exp
 
 # Shipped coal trade
-  Trade|Primary Energy|Coal [Volume]|Shipped:
+  Trade|Primary Energy|Coal|Volume|Shipped:
     filter:
       { technology: [coal_shipped_exp], mode: M1, commodity: coal, level: [shipped] }
     short:
       coal_shipped_exp
 
 # Piped crude trade
-  Trade|Primary Energy|Oil [Volume]|Piped:
+  Trade|Primary Energy|Oil|Volume|Piped:
     filter:
       { technology: [crudeoil_piped_exp, foil_piped_exp, loil_piped_exp], mode: M1, commodity: crudeoil, level: [piped] }
     short:
       oil_piped_exp
 
 # Shipped oil trade
-  Trade|Primary Energy|Oil [Volume]|Shipped:
+  Trade|Primary Energy|Oil|Volume|Shipped:
     filter:
       { technology: [crudeoil_shipped_exp, foil_shipped_exp, loil_shipped_exp], mode: M1, commodity: crudeoil, level: [shipped] }
     short:
       oil_shipped_exp
 
 # Piped gas imports
-  Trade|Primary Energy|Gas [Volume]|Piped:
+  Trade|Primary Energy|Gas|Volume|Piped:
     filter:
       { technology: [gas_piped_exp], mode: M1, commodity: gas, level: [piped] }
     short:
       gas_piped_exp
 
 # Shipped LNG imports
-  Trade|Primary Energy|Gas [Volume]|Shipped:
+  Trade|Primary Energy|Gas|Volume|Shipped:
     filter:
       { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: [shipped] }
     short:
       LNG_shipped_exp
+
+# Shipped biomass trade value
+  Trade|Primary Energy|Biomass|Value|Shipped:
+    filter:
+      { technology: [biomass_shipped_exp], mode: M1, commodity: biomass, level: [shipped] }
+    short:
+      biomass_shipped_exp_value
+    unit:
+      billion US$/yr
+
+# Shipped coal trade value
+  Trade|Primary Energy|Coal|Value|Shipped:
+    filter:
+      { technology: [coal_shipped_exp], mode: M1, commodity: coal, level: [shipped] }
+    short:
+      coal_shipped_exp_value
+    unit:
+      billion US$/yr
+
+# Piped crude trade value
+  Trade|Primary Energy|Oil|Value|Piped:
+    filter:
+      { technology: [crudeoil_piped_exp, foil_piped_exp, loil_piped_exp], mode: M1, commodity: crudeoil, level: [piped] }
+    short:
+      oil_piped_exp_value
+    unit:
+      billion US$/yr
+
+# Shipped oil trade value
+  Trade|Primary Energy|Oil|Value|Shipped:
+    filter:
+      { technology: [crudeoil_shipped_exp, foil_shipped_exp, loil_shipped_exp], mode: M1, commodity: crudeoil, level: [shipped] }
+    short:
+      oil_shipped_exp_value
+    unit:
+      billion US$/yr
+
+# Piped gas imports value
+  Trade|Primary Energy|Gas|Value|Piped:
+    filter:
+      { technology: [gas_piped_exp], mode: M1, commodity: gas, level: [piped] }
+    short:
+      gas_piped_exp_value
+    unit:
+      billion US$/yr
+
+# Shipped LNG imports value
+  Trade|Primary Energy|Gas|Value|Shipped:
+    filter:
+      { technology: [LNG_shipped_exp], mode: M1, commodity: LNG, level: [shipped] }
+    short:
+      LNG_shipped_exp_value
+    unit:
+      billion US$/yr

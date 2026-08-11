@@ -17,6 +17,8 @@ from message_ix_models.util import broadcast, package_data_path
 
 from message_ix_models.tools.bilateralize.reporting.config import Config
 
+VALUE_UNIT = "billion US$/yr" # Value unit instead of physical volume unit, which is used in the reporting yaml files. This will be used to convert "out" with PRICE_COMMODITY.
+
 def load_config(name: str) -> "Config":
     """Load a config for a given reporting variable category from the YAML files.
 
@@ -71,13 +73,52 @@ def pyam_df_from_rep(
             df_hist = pd.DataFrame()
         df_model = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-m-c-l"))
 
+        # When VALUE UNIT is used: map entries for monetary trade. Fetch PRICE_COMMODITY once for commodity/level pairs
+        # involved and join to 'out'. 
+        is_value_entry = mapping_df['unit'] == VALUE_UNIT
+        if is_value_entry.any():
+            price_df = scenario.var(
+                "PRICE_COMMODITY",
+                filters={
+                    "commodity": list(
+                        mapping_df.index.get_level_values('c')[is_value_entry].unique()
+                    ),
+                    "level": list(
+                        mapping_df.index.get_level_values('l')[is_value_entry].unique()
+                    ),
+                },
+            )
+            price_df = price_df.rename(
+                columns={"node": "nl", "commodity": "c", "level": "l", "year": "ya", "lvl": "price"}
+            )[["nl", "c", "l", "ya", "price"]]
+        else:
+            price_df = pd.DataFrame(columns=["nl", "c", "l", "ya", "price"])
+
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
             if dfv.empty:
                 continue
-            df = dfv.join(mapping_df[['iamc_name', 'unit']])
-            df = (df.dropna()
-                  .groupby(["nl", "nd", "ya", "t", "iamc_name"])
+            df = dfv.join(mapping_df[['iamc_name', 'unit']]).dropna()
+
+            is_value = (df['unit'] == VALUE_UNIT).to_numpy()
+            if is_value.any():
+                idx = df.index.to_frame(index=False)
+                idx["_row"] = range(len(idx))
+                # PRICE_COMMODITY is USD_2010/kWa; `out` is native GWa
+                # (1 GWa = 1e6 kWa). Dividing by 1e3 lands on billion US$/yr.
+                price = (
+                    idx[["_row", "nl", "c", "l", "ya"]]
+                    .merge(price_df, on=["nl", "c", "l", "ya"], how="left")
+                    .sort_values("_row")["price"]
+                    .fillna(0)
+                    .to_numpy()
+                )
+                new_vals = df[0].to_numpy(copy=True)
+                new_vals[is_value] = new_vals[is_value] * price[is_value] / 1e3
+                df[0] = new_vals
+
+            df = (
+                df.groupby(["nl", "nd", "ya", "t", "iamc_name"])
                   .sum(numeric_only=True)
                 )
             dfn = df.index.to_frame(index = False)
@@ -119,9 +160,12 @@ def bilat_trade_reporting(rep: Reporter,
     df['Scenario'] = scenario.scenario
     df['Region'] = df['nl']
     df['Variable'] = df['iamc_name']
-    df['Unit'] = 'EJ/yr'
+    df['Unit'] = df['unit']
     df['year'] = df['ya']
-    df['value'] = df['value'] * .03154
+    # Volumes come out of the Reporter in native GWa; convert to EJ/yr. Value
+    # rows (Unit == VALUE_UNIT) were already converted in pyam_df_from_rep.
+    is_volume = df['Unit'] != VALUE_UNIT
+    df.loc[is_volume, 'value'] = df.loc[is_volume, 'value'] * .03154
     df = df[['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year', 'value']]
     df = df.groupby(['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year'])['value'].sum().reset_index()
 
