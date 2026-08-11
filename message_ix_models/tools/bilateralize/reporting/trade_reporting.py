@@ -88,6 +88,28 @@ def pyam_df_from_rep(
                     ),
                 },
             )
+            # `out` is native GWa. PRICE_COMMODITY's own denominator determines
+            # the scale factor to land on VALUE_UNIT (billion US$/yr) -- don't
+            # assume it; read it from the returned 'unit' column. GWA_PER_UNIT
+            # gives how many of that unit equal 1 GWa.
+            GWA_PER_UNIT = {"gwa": 1.0, "mwa": 1e3, "kwa": 1e6, "wa": 1e9}
+            price_units = price_df["unit"].dropna().unique()
+            if len(price_units) > 1:
+                raise ValueError(
+                    f"PRICE_COMMODITY returned mixed units {list(price_units)!r}; "
+                    "cannot infer a single value scale factor."
+                )
+            elif len(price_units) == 1:
+                denom = price_units[0].rsplit("/", 1)[-1].strip().lower()
+                if denom not in GWA_PER_UNIT:
+                    raise ValueError(
+                        f"Unrecognized PRICE_COMMODITY unit {price_units[0]!r}; "
+                        f"add its denominator to GWA_PER_UNIT."
+                    )
+                value_scale = GWA_PER_UNIT[denom]
+            else:
+                value_scale = 1.0  # no PRICE_COMMODITY rows returned at all
+
             price_df = price_df.rename(
                 columns={"node": "nl", "commodity": "c", "level": "l", "year": "ya", "lvl": "price"}
             )[["nl", "c", "l", "ya", "price"]]
@@ -104,8 +126,6 @@ def pyam_df_from_rep(
             if is_value.any():
                 idx = df.index.to_frame(index=False)
                 idx["_row"] = range(len(idx))
-                # PRICE_COMMODITY is USD_2010/kWa; `out` is native GWa
-                # (1 GWa = 1e6 kWa). Dividing by 1e3 lands on billion US$/yr.
                 price = (
                     idx[["_row", "nl", "c", "l", "ya"]]
                     .merge(price_df, on=["nl", "c", "l", "ya"], how="left")
@@ -114,7 +134,9 @@ def pyam_df_from_rep(
                     .to_numpy()
                 )
                 new_vals = df[0].to_numpy(copy=True)
-                new_vals[is_value] = new_vals[is_value] * price[is_value] / 1e3
+                # out(GWa) * value_scale -> out in PRICE_COMMODITY's own unit,
+                # times price -> raw US$; /1e9 -> billion US$/yr (VALUE_UNIT).
+                new_vals[is_value] = new_vals[is_value] * price[is_value] * value_scale / 1e9
                 df[0] = new_vals
 
             df = (
