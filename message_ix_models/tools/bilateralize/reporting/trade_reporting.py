@@ -169,6 +169,28 @@ def bilat_trade_reporting(rep: Reporter,
     df = df[['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year', 'value']]
     df = df.groupby(['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year'])['value'].sum().reset_index()
 
+    # Per-region net exports: in addition to the bilateral-pair rows above
+    # (Region == "A>B"), add one row per single region ("A") equal to that
+    # region's total exports (sum of "A>*") minus total imports (sum of
+    # "*>A"), across all partners and modes, under the same Variable/Unit.
+    is_bilateral = df['Region'].str.contains('>', regex=False)
+    bilat = df[is_bilateral].copy()
+    if not bilat.empty:
+        bilat[['Origin', 'Dest']] = bilat['Region'].str.split('>', expand=True)
+        key = ['Model', 'Scenario', 'Variable', 'Unit', 'year']
+        exports = (
+            bilat.groupby(key + ['Origin'])['value'].sum()
+            .reset_index().rename(columns={'Origin': 'Region', 'value': 'exports'})
+        )
+        imports = (
+            bilat.groupby(key + ['Dest'])['value'].sum()
+            .reset_index().rename(columns={'Dest': 'Region', 'value': 'imports'})
+        )
+        net = exports.merge(imports, on=key + ['Region'], how='outer').fillna(0)
+        net['value'] = net['exports'] - net['imports']
+        df = pd.concat([df, net[['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year', 'value']]], ignore_index=True)
+        df = df.groupby(['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year'])['value'].sum().reset_index()
+
     # Make wide. The preceding groupby already guarantees a unique row per
     # (Model, Scenario, Region, Variable, Unit, year), so no dedup is needed
     # here — a post-pivot drop_duplicates() would compare only the year-value
