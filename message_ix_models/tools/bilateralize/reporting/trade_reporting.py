@@ -169,11 +169,15 @@ def bilat_trade_reporting(rep: Reporter,
     df = df[['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year', 'value']]
     df = df.groupby(['Model', 'Scenario', 'Region', 'Variable', 'Unit', 'year'])['value'].sum().reset_index()
 
-    # Make wide
+    # Make wide. The preceding groupby already guarantees a unique row per
+    # (Model, Scenario, Region, Variable, Unit, year), so no dedup is needed
+    # here — a post-pivot drop_duplicates() would compare only the year-value
+    # columns, ignoring the index, and can silently drop a real row (e.g. an
+    # aggregate like "Gas|Volume" whose values happen to equal its only
+    # nonzero component, "Gas|Volume|Piped", for a given region).
     df = df.pivot(index = ['Model', 'Scenario', 'Region', 'Variable', 'Unit'], columns = 'year', values = 'value')
-    df = df.drop_duplicates()
-    
-    return df 
+
+    return df
 
 # Call reporter
 def trade_reporting(mp: ixmp.Platform,
