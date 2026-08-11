@@ -88,27 +88,16 @@ def pyam_df_from_rep(
                     ),
                 },
             )
-            # `out` is native GWa. PRICE_COMMODITY's own denominator determines
-            # the scale factor to land on VALUE_UNIT (billion US$/yr) -- don't
-            # assume it; read it from the returned 'unit' column. GWA_PER_UNIT
-            # gives how many of that unit equal 1 GWa.
-            GWA_PER_UNIT = {"gwa": 1.0, "mwa": 1e3, "kwa": 1e6, "wa": 1e9}
-            price_units = price_df["unit"].dropna().unique()
-            if len(price_units) > 1:
-                raise ValueError(
-                    f"PRICE_COMMODITY returned mixed units {list(price_units)!r}; "
-                    "cannot infer a single value scale factor."
-                )
-            elif len(price_units) == 1:
-                denom = price_units[0].rsplit("/", 1)[-1].strip().lower()
-                if denom not in GWA_PER_UNIT:
-                    raise ValueError(
-                        f"Unrecognized PRICE_COMMODITY unit {price_units[0]!r}; "
-                        f"add its denominator to GWA_PER_UNIT."
-                    )
-                value_scale = GWA_PER_UNIT[denom]
-            else:
-                value_scale = 1.0  # no PRICE_COMMODITY rows returned at all
+            # ixmp's Scenario.var() does not return a 'unit' column for GAMS
+            # variables (unlike parameters), so PRICE_COMMODITY's denominator
+            # can't be read off the result. The legacy reporting pipeline
+            # (pp_utils.py:_retr_ene_prc) hardcodes the same assumption for
+            # this exact variable, and it matches how costs are declared for
+            # these technologies (fix_cost/var_cost: "USD/GWa", see
+            # prepare_edit.py / historical_calibration.py) -- so PRICE_COMMODITY
+            # is USD/GWa here, same as `out`'s native unit, requiring no
+            # GWa-scale conversion (value_scale = 1.0).
+            value_scale = 1.0
 
             price_df = price_df.rename(
                 columns={"node": "nl", "commodity": "c", "level": "l", "year": "ya", "lvl": "price"}
