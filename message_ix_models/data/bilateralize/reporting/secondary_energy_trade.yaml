@@ -92,7 +92,7 @@ vars:
       billion US$/yr
 
 # Shipped light oil imports value
-    Trade|Secondary Energy|Light Oil|Value|Shipped:
+  Trade|Secondary Energy|Light Oil|Value|Shipped:
     filter:
       { technology: [loil_shipped_exp], mode: M1, commodity: lightoil, level: [shipped] }
     short:

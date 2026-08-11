@@ -1,0 +1,43 @@
+level_1:
+
+# Light Oil: sum of Piped + Shipped volume
+  Trade|Secondary Energy|Light Oil|Volume:
+    short:
+      lightoil_volume_total
+    components:
+      [lightoil_piped_exp, lightoil_shipped_exp]
+
+# Light Oil: sum of Piped + Shipped value
+  Trade|Secondary Energy|Light Oil|Value:
+    short:
+      lightoil_value_total
+    components:
+      [lightoil_piped_exp_value, lightoil_shipped_exp_value]
+
+# Fuel Oil: sum of Piped + Shipped volume
+  Trade|Secondary Energy|Fuel Oil|Volume:
+    short:
+      fueloil_volume_total
+    components:
+      [fueloil_piped_exp, fueloil_shipped_exp]
+
+# Fuel Oil: sum of Piped + Shipped value
+  Trade|Secondary Energy|Fuel Oil|Value:
+    short:
+      fueloil_value_total
+    components:
+      [fueloil_piped_exp_value, fueloil_shipped_exp_value]
+
+# Methanol: sum of Piped + Shipped volume
+  Trade|Secondary Energy|Methanol|Volume:
+    short:
+      methanol_volume_total
+    components:
+      [methanol_piped_exp, methanol_shipped_exp]
+
+# Methanol: sum of Piped + Shipped value
+  Trade|Secondary Energy|Methanol|Value:
+    short:
+      methanol_value_total
+    components:
+      [methanol_piped_exp_value, methanol_shipped_exp_value]

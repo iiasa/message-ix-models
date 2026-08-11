@@ -1,0 +1,29 @@
+level_1:
+
+# Gas: sum of Piped + Shipped (LNG) volume
+  Trade|Primary Energy|Gas|Volume:
+    short:
+      gas_volume_total
+    components:
+      [gas_piped_exp, LNG_shipped_exp]
+
+# Gas: sum of Piped + Shipped (LNG) value
+  Trade|Primary Energy|Gas|Value:
+    short:
+      gas_value_total
+    components:
+      [gas_piped_exp_value, LNG_shipped_exp_value]
+
+# Oil: sum of Piped + Shipped volume
+  Trade|Primary Energy|Oil|Volume:
+    short:
+      oil_volume_total
+    components:
+      [oil_piped_exp, oil_shipped_exp]
+
+# Oil: sum of Piped + Shipped value
+  Trade|Primary Energy|Oil|Value:
+    short:
+      oil_value_total
+    components:
+      [oil_piped_exp_value, oil_shipped_exp_value]
