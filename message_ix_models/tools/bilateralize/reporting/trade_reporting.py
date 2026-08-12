@@ -2,6 +2,7 @@
 """
 HHI reporting
 """
+from functools import lru_cache
 from typing import List
 
 import message_ix
@@ -10,6 +11,7 @@ import pandas as pd
 import pyam
 import ixmp
 import os
+import yaml
 
 from genno.core.exceptions import MissingKeyError
 from message_ix.report import Reporter
@@ -25,6 +27,31 @@ def load_config(name: str) -> "Config":
     This is a thin wrapper around :meth:`.Config.from_files`.
     """
     return Config.from_files(name)
+
+@lru_cache(maxsize=1)
+def _trade_import_levels() -> dict:
+    """Map (trade commodity, trade level) -> "import_level".
+
+    "import_level" is the level immediately downstream of the trade level in a
+    trade technology's own config (e.g. gas piped -> gas secondary; biomass
+    shipped -> biomass primary), read from
+    :file:`message_ix_models/data/bilateralize/configs/*.yaml`. Used to price
+    trade flows at the importer's own price for that level, rather than the
+    trade-level price at the exporter.
+    """
+    mapping: dict = {}
+    for path in package_data_path("bilateralize", "configs").glob("*.yaml"):
+        if path.stem in {"base_config", "template"}:
+            continue
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        for tec_cfg in data.values():
+            commodity = tec_cfg.get("trade_commodity")
+            trade_level = tec_cfg.get("trade_level")
+            import_level = tec_cfg.get("import_level")
+            if commodity and trade_level and import_level:
+                mapping[(commodity, trade_level)] = import_level
+    return mapping
 
 def pyam_df_from_rep(
     rep: message_ix.Reporter, scenario: message_ix.Scenario, reporter_var: str, mapping_df: pd.DataFrame
@@ -73,20 +100,32 @@ def pyam_df_from_rep(
             df_hist = pd.DataFrame()
         df_model = pd.DataFrame(rep.get(f"out:nl-nd-t-ya-m-c-l"))
 
-        # When VALUE UNIT is used: map entries for monetary trade. Fetch PRICE_COMMODITY once for commodity/level pairs
-        # involved and join to 'out'. 
+        # When VALUE UNIT is used: map entries for monetary trade. Price each flow
+        # at the importer's (nd) own PRICE_COMMODITY for the level immediately
+        # downstream of the trade level (e.g. gas piped -> gas secondary; see
+        # _trade_import_levels), rather than the trade-level price at the
+        # exporter -- this matches how legacy reporting values net trade at the
+        # (domestic) consuming region's price.
+        import_levels = _trade_import_levels()
         is_value_entry = mapping_df['unit'] == VALUE_UNIT
         if is_value_entry.any():
+            commodities = list(
+                mapping_df.index.get_level_values('c')[is_value_entry].unique()
+            )
+            trade_levels = list(
+                mapping_df.index.get_level_values('l')[is_value_entry].unique()
+            )
+            price_levels = sorted(
+                {
+                    import_levels[(c, l)]
+                    for c in commodities
+                    for l in trade_levels
+                    if (c, l) in import_levels
+                }
+            )
             price_df = scenario.var(
                 "PRICE_COMMODITY",
-                filters={
-                    "commodity": list(
-                        mapping_df.index.get_level_values('c')[is_value_entry].unique()
-                    ),
-                    "level": list(
-                        mapping_df.index.get_level_values('l')[is_value_entry].unique()
-                    ),
-                },
+                filters={"commodity": commodities, "level": price_levels},
             )
             # ixmp's Scenario.var() does not return a 'unit' column for GAMS
             # variables, so this can't be read off the result -- verified
@@ -102,10 +141,10 @@ def pyam_df_from_rep(
             value_scale = 1e6
 
             price_df = price_df.rename(
-                columns={"node": "nl", "commodity": "c", "level": "l", "year": "ya", "lvl": "price"}
-            )[["nl", "c", "l", "ya", "price"]]
+                columns={"node": "nd", "commodity": "c", "level": "import_level", "year": "ya", "lvl": "price"}
+            )[["nd", "c", "import_level", "ya", "price"]]
         else:
-            price_df = pd.DataFrame(columns=["nl", "c", "l", "ya", "price"])
+            price_df = pd.DataFrame(columns=["nd", "c", "import_level", "ya", "price"])
 
         df_out = pd.DataFrame()
         for dfv in [df_hist, df_model]:
@@ -117,9 +156,16 @@ def pyam_df_from_rep(
             if is_value.any():
                 idx = df.index.to_frame(index=False)
                 idx["_row"] = range(len(idx))
+                # Rows whose (c, l) has no known import_level (e.g. no matching
+                # bilateralize tech config) get import_level=None, which will not
+                # match price_df below, so price falls back to 0 -- the same
+                # fallback used for any other unresolved commodity/level.
+                idx["import_level"] = [
+                    import_levels.get((c, l)) for c, l in zip(idx["c"], idx["l"])
+                ]
                 price = (
-                    idx[["_row", "nl", "c", "l", "ya"]]
-                    .merge(price_df, on=["nl", "c", "l", "ya"], how="left")
+                    idx[["_row", "nd", "c", "import_level", "ya"]]
+                    .merge(price_df, on=["nd", "c", "import_level", "ya"], how="left")
                     .sort_values("_row")["price"]
                     .fillna(0)
                     .to_numpy()
