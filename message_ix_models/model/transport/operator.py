@@ -908,28 +908,40 @@ def uniform_in_dim(value: "TQuantity", dim: str = "y") -> "TQuantity":
 
 
 def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
-    """Return fractions of current vehicle stock that should be added in prior years.
+    """Fractions of current vehicle stock that should be added in prior years.
+
+    The returned quantity has the same dimensionality as `age`. For each unique
+    combination on the dimensions other than |y| (or |yV|), values are 1.0 / `age`;
+    that is, a uniform distribution across 1 or more years up to and including the
+    single |y| (or |yV|) coordinate in the input. Every integer year is included; that
+    is, the result is **not** aggregated to multi-year periods (called ``year`` in
+    MESSAGE).
 
     Parameters
     ---
     age : genno.Quantity
-        Mean age of vehicle stock. Must have dimension "y" and at least 1 other
-        dimension. For every unique combination of those other dimensions, there must be
-        only one value/|y|-coordinate. This is taken as the *rightmost* end of a uniform
-        distribution with mean age given by the respective value.
+        Mean age of vehicle stock. Must have either dimension "y" or "yv", and at least
+        1 other dimension. For every unique combination of those other dimensions, there
+        must be only one value/|y|-coordinate. This is taken as the *rightmost* end of a
+        uniform distribution with mean age given by the respective value.
 
     Returns
     -------
     genno.Quantity
-        Same dimensionality as `age`, with sufficient |y| coordinates to cover all years
-        in which. Every integer year is included, i.e. the result is **not** aggregated
-        to multi-year periods (called ``year`` in MESSAGE).
-    """
-    # - Group by all dims other than `y`.
-    # - Apply the function to each scalar value.
-    dims = list(filter(lambda d: d != "y", age.dims))
 
-    result = cast("TQuantity", age.groupby(dims).apply(uniform_in_dim))
+    See also
+    --------
+    .uniform_in_dim
+    """
+    # Dimension on which to apply uniform_in_dim()
+    d = ({"y", "yv"} & set(age.dims)).pop()
+
+    # All other dimensions, for grouping
+    d_groupby = list(age.dims)
+    d_groupby.remove(d)
+
+    # Apply uniform_in_dim() within each group
+    result = cast("TQuantity", age.groupby(d_groupby).apply(uniform_in_dim, dim=d))
     # NB Necessary for pandas 3.0 but not 2.3.x: attrs of the return values of
     #    uniform_in_dim() are not propagated when the groups are reassembled to a full
     #    AttrSeries.
