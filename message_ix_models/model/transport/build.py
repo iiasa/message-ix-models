@@ -301,6 +301,7 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
     ("scenario::all", "scenario_codes", "config"),
+    (K.coord.yv_0, lambda year: dict(yv=year), "y0"),
 )
 
 
