@@ -363,7 +363,7 @@ class Lifetime(ExoDataSource):
     options: ActivityVehicle.Options
 
     filename = "lifetime.csv"
-    key = Key("lifetime:nl-t-yv:exo")
+    key = Key("lifetime:n-t-y:exo")
 
     path: "Path"
 
@@ -378,11 +378,11 @@ class Lifetime(ExoDataSource):
         k = base_key
 
         # Interpolate on "y" dimension
-        c.add(k[0], "interpolate", base_key, "yv::coords", **EXTRAPOLATE)
+        c.add(k[0], "interpolate", base_key, "y::coords", **EXTRAPOLATE)
 
         # Broadcast to all scenarios and nodes
         coords = ["scenario::all", K.n]
-        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "nl"))
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "n"))
 
         # Select values for the current scenario; drop the 'scenario' dimension
         c.add(k[2], "select", k[1], K.coord.scenario_label_B)
