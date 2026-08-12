@@ -13,7 +13,7 @@ F RAIL,          *,         growth_activity_lo,       -0.0192
 F RAIL,          electr,    growth_activity_lo,        0.0
 
 F RAIL,          *,         growth_new_capacity_up,    0.0192
-F RAIL,          *,         initial_new_capacity_up,   2.0
+F RAIL,          *,         initial_new_capacity_up,   3.0
 
 F ROAD,          *,         growth_activity_lo,       -0.0192
 F ROAD,          electr,    growth_activity_lo,        0.0
