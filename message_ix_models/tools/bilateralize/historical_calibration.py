@@ -857,6 +857,22 @@ def build_historical_price(
     bacidf["MESSAGE COMMODITY"] = bacidf["MESSAGE COMMODITY"] + "_shipped"
     bacidf = bacidf[bacidf["YEAR"] > 2020]
 
+    # Deflate nominal trade values to constant 2010 USD, per transaction year,
+    # before years are aggregated together below (US GDP implicit price
+    # deflator, FRED series GDPDEF, annual average, rebased to 2010=1.0)
+    deflator = pd.read_csv(package_data_path("bilateralize", "us_gdp_deflator.csv"))
+    bacidf = bacidf.merge(deflator, left_on="YEAR", right_on="year", how="left")
+    if bacidf["deflator_index_2010"].isnull().any():
+        missing_years = sorted(
+            bacidf.loc[bacidf["deflator_index_2010"].isnull(), "YEAR"].unique()
+        )
+        raise ValueError(
+            f"No GDP deflator available for BACI year(s) {missing_years}; "
+            "update us_gdp_deflator.csv"
+        )
+    bacidf["VALUE (1000USD)"] = bacidf["VALUE (1000USD)"] / bacidf["deflator_index_2010"]
+    bacidf = bacidf.drop(columns=["year", "deflator_index_2010"])
+
     bacidf["ENERGY (GWa)"] = bacidf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
     bacidf["VALUE (MUSD)"] = bacidf["VALUE (1000USD)"] * 1e-3
     bacidf["PRICE (MUSD/GWa)"] = bacidf["VALUE (MUSD)"] / bacidf["ENERGY (GWa)"]
@@ -889,7 +905,6 @@ def build_historical_price(
     )
     outdf["unit"] = "USD/GWa"
 
-    outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
     print(outdf)
     
