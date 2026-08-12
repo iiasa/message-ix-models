@@ -54,6 +54,7 @@ mer_to_ppp = Key("MERtoPPP", "ny")
 agg = Keys(
     c="agg:c:T",
     t="agg:t:T",
+    y_annual="agg:y:T+annual",
 )
 
 #: Quantities for broadcasting (t) to (t, c, l). See :func:`.broadcast_t_c_l`.
@@ -86,9 +87,10 @@ c = Key("c::T")
 #: Shares of population with consumer group (`cg`) dimension.
 cg = Key("cg share:n-y-cg")
 
-#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, list[str]]`.
-#: Keys are dimension IDs. Values are lists of (1 or more) coordinates along the
-#: respective dimension to index or select.
+#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, ...]` in
+#: which the keys are dimension IDs, and values are lists of (1 or more) coordinates
+#: along the respective dimension to index or select; or a single coord to select and
+#: also drop the respective dimension.
 coord = Keys(
     c="coords:c:T",
     t="coords:t:T",
@@ -97,7 +99,9 @@ coord = Keys(
     scenario_label_C="coords:scenario:label+C",
     scenario_label_D="coords:scenario:label+D",
     scenario="coords:scenario:T",
-    yv_0="coords:yv:y0",
+    y_0="coords:y:y0",
+    y_0_drop="coords:y:y0+drop",
+    y_to_y0="coords:y:to y0",
     yv_hist="coords:yv:T+historical",
     yv_1plus="coords:yv:y1+",
 )
@@ -156,7 +160,7 @@ report = SimpleNamespace(
 
 sw = Key("share weight", "nty")
 
-# Keys for (partial or full) sets or indexers
+# Keys for (partial or full) sets
 
 #: List of nodes, excepting "World" or "*_GLB".
 n = "n::ex world"
@@ -167,13 +171,11 @@ t = Key("t::T")
 #: List of transport modes.
 t_modes = "t::transport modes"
 
-#: Model periods.
+#: List of model periods.
 y = "y::model"
 
 y_ = Keys(
-    annual_agg="y::annual agg",
     historical="y::historical",
-    to_y0="y::to y0",
 )
 
 #: Keys referring to input data flows (exogenous data loaded from files and possibly

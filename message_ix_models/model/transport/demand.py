@@ -259,8 +259,7 @@ def pdt_per_capita(c: "Computer") -> None:
     ):
         # Reverse transform
         c.add(x[3], "add", start, genno.Quantity(1.0))
-        c.add("y::y0", lambda v: dict(y=v), "y0")
-        c.add(x["log"] + "y0", "select", x["log"], "y::y0")
+        c.add(x["log"] + "y0", "select", x["log"], K.coord.y_0_drop)
         c.add(x[4], "mul", x[3], x["log"] + "y0")
         c.add(x[5], np.exp, x[4])
         c.add(x[6], "assign_units", x[5], units=units)

@@ -301,7 +301,15 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
     ("scenario::all", "scenario_codes", "config"),
-    (K.coord.yv_0, lambda year: dict(yv=year), "y0"),
+    (K.coord.y_0, lambda y0: dict(y=[y0]), "y0"),
+    (K.coord.y_0_drop, lambda y0: dict(y=y0), "y0"),
+    (K.coord.y_to_y0, lambda Y, y0: dict(y=[y for y in Y if y <= y0]), "y", "y0"),
+    (K.coord.yv_1plus, lambda Y, y0: dict(yv=[y for y in Y if y > y0]), "y", "y0"),
+    (K.coord.yv_hist, lambda Y, y0: dict(yv=[y for y in Y if y < y0]), "y", "y0"),
+    # Duration_period up to and including y0
+    ("duration_period:y:to y0", "select", "duration_period:y", K.coord.y_to_y0),
+    # Groups for aggregating annual to period data
+    (K.agg.y_annual, "groups_y_annual", "duration_period:y"),
 )
 
 
@@ -320,7 +328,6 @@ def add_structure(c: Computer) -> None:
         :py:`("firstmodelyear", y0)`.
       - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`.
       - ``y0``: The first model period, :class:`int`.
-      - ``y::y0``: ``y0`` as an indexer.
 
     - All tasks from :data:`STRUCTURE_STATIC`.
     - ``c::transport``: the |c| set of the :attr:`~.Spec.add` member of
@@ -386,12 +393,8 @@ def add_structure(c: Computer) -> None:
         ),
         (K.y, "model_periods", "y", "cat_year"),
         ("y0", itemgetter(0), "y::model"),
-        ("y::y0", lambda v: dict(y=v[0]), "y::model"),
-        (
-            K.coord.yv_1plus,
-            lambda years: dict(yv=[y for y in years if y >= years[1]]),
-            "y::model",
-        ),
+        # Convert duration_period to Quantity
+        ("duration_period:y", "duration_period", "info"),
     ):
         try:
             c.add(*task, strict=True)
@@ -494,28 +497,6 @@ def add_structure(c: Computer) -> None:
         dims=("t",),
         on_missing="raise",
     )
-
-    # Identify the subset of periods up to and including y0
-    c.add(
-        K.y_.historical,
-        lambda periods, y0: list(filter(lambda y: y < y0, periods)),
-        "y",
-        "y0",
-    )
-    c.add(
-        K.y_.to_y0,
-        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
-        "y",
-        "y0",
-    )
-    # Convert duration_period to Quantity
-    c.add("duration_period:y", "duration_period", "info")
-    # Duration_period up to and including y0
-    c.add("duration_period:y:to y0", "select", "duration_period:y", K.y_.to_y0)
-    # Groups for aggregating annual to period data
-    c.add(K.y_.annual_agg, "groups_y_annual", "duration_period:y")
-    # Indexers
-    c.add(K.coord.yv_hist, lambda periods: dict(yv=periods), K.y_.historical)
 
 
 @minimum_version("genno 1.28")
