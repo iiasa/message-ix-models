@@ -116,6 +116,7 @@ Quick links to each of the data flows:
 :class:`~.data.ActivityVehicle`
 :data:`~.data.age_ldv`
 :data:`~.data.cap_new`
+:class:`~.data.CapShareT`
 :data:`~.data.class_ldv`
 :data:`~.data.constraint_dynamic`
 :data:`~.data.disutility`
@@ -152,7 +153,6 @@ Quick links to each of the data flows:
 :data:`~.data.population_suburb_share`
 :data:`~.data.speed`
 :data:`~.data.stock_cap`
-:data:`~.data.t_share_ldv`
 
 .. autodata:: message_ix_models.model.transport.data.act_non_ldv
 .. autodata:: message_ix_models.model.transport.data.activity_freight
@@ -181,6 +181,12 @@ Quick links to each of the data flows:
 
 .. autodata:: message_ix_models.model.transport.data.age_ldv
 .. autodata:: message_ix_models.model.transport.data.cap_new
+.. autoclass:: message_ix_models.model.transport.data.CapShareT
+
+   Values for R12 and F ROAD were derived from (and replaced) values formerly in :py:`act_non_ldv`.
+   Those values specified the (absolute) *activity* of *some* technologies of this mode,
+   while the current form specifies the *share of initial period capacity* for *every* technology.
+
 .. autodata:: message_ix_models.model.transport.data.class_ldv
 .. autodata:: message_ix_models.model.transport.data.constraint_dynamic
 
@@ -293,7 +299,6 @@ Quick links to each of the data flows:
    In MESSAGE(V)-Transport, values from Schäefer et al. (2010) were used.
 
 .. autodata:: message_ix_models.model.transport.data.stock_cap
-.. autodata:: message_ix_models.model.transport.data.t_share_ldv
 
 Other data sources
 ==================

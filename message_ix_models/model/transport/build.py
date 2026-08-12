@@ -172,6 +172,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Miscellaneous input data flows
     kw = dict(nodes=context.model.regions)
     data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.CapShareT.add_tasks(c, **kw, **c_s)
     data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
     data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
     data.InputVehicle.add_tasks(c, **kw, **c_s)

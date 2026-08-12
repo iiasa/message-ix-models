@@ -166,6 +166,40 @@ class ActivityVehicle(ExoDataSource):
         return self.key
 
 
+class CapShareT(ExoDataSource):
+    """Share of first period stock by technology.
+
+    - Values must sum to 1 across the 't' dimension for each unique combination of other
+      dimensions.
+    - Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be
+      omitted or have zero values. If not, incompatible/infeasible constraint values are
+      created.
+    """
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    filename = "cap-share-t.csv"
+    key = Key("tech share:n-t:T+exo")
+
+    path: "Path"
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Transform input data.
+
+        "*" values in the |n| dimension are broadcast over all nodes.
+        """
+        c.add(self.key, "broadcast_wildcard2", base_key, K.n, dim=("n",))
+        return self.key
+
+
 class IEA_Future_of_Trucks(ExoDataSource):
     """Retrieve IEA “Future of Trucks” data.
 
@@ -877,6 +911,7 @@ In particular, values up to 2015 (the final period before |y0|) are used for
     units="Mvehicle",
 )
 
+
 class_ldv = _input_dataflow(
     path="ldv-class",
     dims=("n", "vehicle_class"),
@@ -1115,17 +1150,6 @@ stock_cap = _input_dataflow(
     units="vehicle / passenger",
 )
 
-t_share_ldv = _input_dataflow(
-    path="ldv-t-share",
-    key="tech share:n-t:ldv+exo",
-    name="Share of total stock for LDV technologies",
-    description="""
-- Values must sum to 1 across the 't' dimension.
-- Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be omitted
-  or have zero values. If not, incompatible/infeasible constraint values are created.
-""",
-    units="dimensionless",
-)
 
 # Output data flows (for reporting / model integration)
 

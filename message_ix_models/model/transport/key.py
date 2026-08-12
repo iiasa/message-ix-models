@@ -186,6 +186,7 @@ y_ = Keys(
 #:    <activity:n-t-y:non-ldv+exo>
 exo = Keys(
     activity_vehicle=data.ActivityVehicle.key,
+    cap_share_t=data.CapShareT.key,
     inv_cost=data.InvestmentCost.key,
     lifetime=data.Lifetime.key,
     load_factor_ldv=data.LoadFactorLDV.key,
