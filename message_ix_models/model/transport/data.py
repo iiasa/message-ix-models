@@ -863,10 +863,10 @@ age_ldv = _input_dataflow(
     units="years",
 )
 
-cap_new_ldv = _input_dataflow(
-    path="ldv-new-capacity",
-    key="cap_new:nl-t-yv:ldv+exo",
-    name="New capacity values for LDVs",
+cap_new = _input_dataflow(
+    path="new-capacity",
+    key="cap_new:nl-t-yv:T+exo",
+    name="Fixed new capacity of transport technologies",
     description="""Applied as historical_new_capacity and bound_new_capacity_{lo,up}
 values for LDVs.
 
@@ -875,7 +875,6 @@ In particular, values up to 2015 (the final period before |y0|) are used for
 :py:`bound_new_capacity_lo` and :py:`bound_new_capacity_up`.
 """,
     units="Mvehicle",
-    required=False,
 )
 
 class_ldv = _input_dataflow(

@@ -115,7 +115,7 @@ Quick links to each of the data flows:
 :data:`~.data.activity_freight`
 :class:`~.data.ActivityVehicle`
 :data:`~.data.age_ldv`
-:data:`~.data.cap_new_ldv`
+:data:`~.data.cap_new`
 :data:`~.data.class_ldv`
 :data:`~.data.constraint_dynamic`
 :data:`~.data.disutility`
@@ -180,7 +180,7 @@ Quick links to each of the data flows:
    .. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1944227441>`__.
 
 .. autodata:: message_ix_models.model.transport.data.age_ldv
-.. autodata:: message_ix_models.model.transport.data.cap_new_ldv
+.. autodata:: message_ix_models.model.transport.data.cap_new
 .. autodata:: message_ix_models.model.transport.data.class_ldv
 .. autodata:: message_ix_models.model.transport.data.constraint_dynamic
 

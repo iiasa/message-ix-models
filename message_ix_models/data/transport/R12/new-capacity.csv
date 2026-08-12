@@ -1,4 +1,4 @@
-# historical_new_capacity and bound_new_capacity_{lo,up} values for LDVs
+# historical_new_capacity and bound_new_capacity_{lo,up} values
 #
 # See .transport.vehicle.stock for usage. As of 2026-06-02, only values
 # from 2025 onwards are used.
