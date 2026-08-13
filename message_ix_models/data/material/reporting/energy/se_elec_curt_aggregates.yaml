@@ -1,0 +1,23 @@
+# collection of industry specific final energy reporting variables
+# grouped by sector
+# each variable specifies a list of filter
+
+var:
+  "out:nl-t-ya-m-c:curtailed_renewables"
+
+iamc_prefix:
+  Secondary Energy|Electricity|
+
+unit: GWa
+
+level_1:
+  Wind:
+    short: se_elec_wind
+    components:
+      [ se_elec_wind_off,
+        se_elec_wind_on ]
+  Solar|PV:
+    short: se_elec_solar_pv
+    components:
+      [ se_elec_pv_comm,
+        se_elec_pv_resid ]

@@ -1,0 +1,53 @@
+SSP1 - Low Emissions:
+  SSP_SSP1_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP1_v6.5_INDC2030i_uncon: [ 2030 ]
+  SSP_SSP1_v6.5_INDC2030i_uncon_SSP1 - Low Emissions: "2035+"
+SSP1 - Very Low Emissions:
+  SSP_SSP1_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP1_v6.5_INDC2030i: [ 2030 ]
+  SSP_SSP1_v6.5_SSP1 - Very Low Emissions: "2035+"
+
+SSP2 - Low Emissions:
+  SSP_SSP2_v6.5_baseline_DEFAULT_step_14: [2020, 2025]
+  SSP_SSP2_v6.5_INDC2030i_weak: [2030]
+  SSP_SSP2_v6.5_INDC2030i_weak_SSP2 - Low Emissions_c: "2035+"
+SSP2 - Low Overshoot:
+  SSP_SSP2_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP2_v6.5_NPi2030: [ 2030 ]
+  SSP_SSP2_v6.5_NPiREF: [ 2035 ]
+  SSP_SSP2_v6.5_NPiREF_SSP2 - Low Overshootf: "2040+"
+SSP2 - Medium-Low Emissions:
+  SSP_SSP2_v6.5_baseline_DEFAULT_step_14: [2020, 2025]
+  SSP_SSP2_v6.5_NPi2030: [2030]
+  SSP_SSP2_v6.5_NPiREF: [2035, 2040]
+  SSP_SSP2_v6.5_NPiREF_SSP2 - Medium-Low Emissionsf: "2045+"
+SSP2 - Medium Emissions:
+  SSP_SSP2_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP2_v6.5_NPi2030: [ 2030 ]
+  SSP_SSP2_v6.5_NPiREF: "2035+"
+SSP2 - Very Low Emissions:
+#  SSP_SSP2_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+#  SSP_SSP2_v6.5_INDC2030i: [ 2030 ]
+#  SSP_SSP2_v6.5_SSP2 - Very Low Emissions: "2035+"
+  SSP_LED_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_LED_v6.5_INDC2030i: [ 2030 ]
+  SSP_LED_v6.5_SSP2 - Very Low Emissions: "2035+"
+
+SSP3 - High Emissions:
+  SSP_SSP3_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP3_v6.5_baseline: "2030+"
+
+SSP4 - Low Overshoot:
+  SSP_SSP4_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP4_v6.5_NPi2030: [ 2030 ]
+  SSP_SSP4_v6.5_NPiREF: [ 2035 ]
+  SSP_SSP4_v6.5_NPiREF_SSP4 - Low Overshootf: "2040+"
+
+SSP5 - High Emissions:
+  SSP_SSP5_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP5_v6.5_baseline: "2030+"
+SSP5 - Low Overshoot:
+  SSP_SSP5_v6.5_baseline_DEFAULT_step_14: [ 2020, 2025 ]
+  SSP_SSP5_v6.5_NPi2030: [ 2030 ]
+  SSP_SSP5_v6.5_NPiREF: [ 2035 ]
+  SSP_SSP5_v6.5_NPiREF_SSP5 - Low Overshootf: "2040+"

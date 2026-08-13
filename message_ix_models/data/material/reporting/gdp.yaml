@@ -1,0 +1,12 @@
+var:
+  bound_activity_up
+
+iamc_prefix:
+  ""
+
+unit: "million US$2005/yr"
+
+vars:
+  GDP|PPP:
+    filter: { technology: [ GDP_PPP ], mode: P }
+    short: gdp_ppp

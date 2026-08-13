@@ -1,0 +1,12 @@
+var:
+  ACT
+
+iamc_prefix:
+  ""
+
+unit: million
+
+vars:
+  Population:
+    filter: { technology: [ Population ], mode: P }
+    short: pop
