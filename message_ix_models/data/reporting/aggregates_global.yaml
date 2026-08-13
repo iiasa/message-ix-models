@@ -135,6 +135,32 @@ aggregates:
     patterns: ["in|Transportation|Aviation|*"]
     unit: EJ/yr
 
+  # --- Road transport carriers (exact leaves from MESSAGEix-Transport) ---
+  - name: Final Energy|Transportation|Bus|Hydrogen
+    patterns: ["in|Transportation|Bus|FC_bus|hydrogen"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Bus|Gases|Gas
+    patterns:
+      - "in|Transportation|Bus|FCg_bus|gas"
+      - "in|Transportation|Bus|ICG_bus|gas"
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Light-Duty Vehicle|Hydrogen
+    patterns: ["in|Transportation|Light-Duty Vehicle|HFC_ptrp|hydrogen"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Light-Duty Vehicle|Gases|Gas
+    patterns:
+      - "in|Transportation|Light-Duty Vehicle|ICE_nga|gas"
+      - "in|Transportation|Light-Duty Vehicle|IGH_ghyb|gas"
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Truck|Hydrogen
+    patterns: ["in|Transportation|Truck|FR_FCH|hydrogen"]
+    unit: EJ/yr
+  - name: Final Energy|Transportation|Truck|Gases|Gas
+    patterns:
+      - "in|Transportation|Truck|f road gas fc|gas"
+      - "in|Transportation|Truck|f road gas ic|gas"
+    unit: EJ/yr
+
   # --- Shipping (Final Energy|Bunkers|Shipping family) ---
   - name: Final Energy|Bunkers|Shipping|Methanol
     patterns: ["in|Shipping|meth_bunker|methanol"]
