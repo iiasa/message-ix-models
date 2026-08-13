@@ -34,6 +34,8 @@ from .structure import get_commodity_groups, get_technology_groups
 if TYPE_CHECKING:
     from typing import TypedDict
 
+    from genno.types import KeyLike
+
     from message_ix_models.tools.exo_data import ExoDataSource
 
     AddTasksKw = TypedDict("AddTasksKw", {"context": Context, "strict": bool})
@@ -276,7 +278,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("add transport data", []),
     (K.report.all, "summarize"),
-    ("info", lambda c: c.transport.base_model_info, "context"),
     (
         "transport info",
         lambda c: c.transport.base_model_info | c.transport.spec.add,
@@ -318,17 +319,8 @@ def add_structure(c: Computer) -> None:
 
     These include:
 
-    - The following keys *only* if not already present in `c`. If, for example, `c` is
-      a :class:`.Reporter` prepared from an already-solved :class:`.Scenario`, the
-      existing tasks referring to the Scenario contents are not changed.
-
-      - ``n``: |n| as :class:`list` of :class:`str`.
-      - ``y``: |y| in the base model.
-      - ``cat_year``: simulated data structure for "cat_year" with at least 1 row
-        :py:`("firstmodelyear", y0)`.
-      - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`.
-      - ``y0``: The first model period, :class:`int`.
-
+    - ``info``: :class:`.transport.Config.base_model_info`.
+    - Tasks added by :func:`structure_from_scenarioinfo`.
     - All tasks from :data:`STRUCTURE_STATIC`.
     - ``c::transport``: the |c| set of the :attr:`~.Spec.add` member of
       :attr:`Config.spec <.transport.config.Config.spec>`, transport commodities to be
@@ -382,25 +374,11 @@ def add_structure(c: Computer) -> None:
         }
     )
 
-    # Tasks only to be added if not already present in `c`. These must be done
-    # separately because add_queue does not support the strict/pass combination.
-    for task in (
-        ("n", quote(list(map(str, info.set["node"])))),
-        ("y", quote(info.set["year"])),
-        (
-            "cat_year",
-            pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
-        ),
-        (K.y, "model_periods", "y", "cat_year"),
-        ("y0", itemgetter(0), "y::model"),
-        # Convert duration_period to Quantity
-        ("duration_period:y", "duration_period", "info"),
-    ):
-        try:
-            c.add(*task, strict=True)
-        except KeyExistsError:  # Already present
-            # log.debug(f"Use existing {c.describe(task[0])}")
-            pass
+    # Retrieve the base model's ScenarioInfo from transport Config instance
+    c.add("info", lambda c: c.transport.base_model_info, "context")
+
+    # Structure from the base model's ScenarioInfo
+    structure_from_scenarioinfo(c, "info")
 
     # Assemble a queue of tasks; first, `static` tasks
     tasks: list[tuple] = list(STRUCTURE_STATIC)
@@ -685,3 +663,43 @@ def main(
     log.info(f"Built {scenario.url} and set as default version")
 
     return scenario
+
+
+def structure_from_scenarioinfo(c: Computer, info_key: "KeyLike") -> None:
+    """Add tasks to `c` for structures based on :class:`.ScenarioInfo`.
+
+    The following keys/tasks are added *only* if not already present in `c`. If, for
+    instance, `c` is a :class:`.Reporter` prepared from an already-solved
+    :class:`.Scenario`, the existing tasks referring to the Scenario contents are not
+    changed. Otherwise, they are derived from a :class:`.ScenarioInfo` instance found
+    at `info_key`:
+
+    - ``n``: |n| as :class:`list` of :class:`str`.
+    - ``y``: all |y| in the model, including historical periods.
+    - ``cat_year``: simulated data structure for "cat_year" with at least 1 row
+        :py:`("firstmodelyear", y0)`.
+    - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`;
+      the output of :func:`.report.operator.model_periods`.
+    - ``y0``: the first model period, :class:`int`.
+    - ``duration_period:y``: the output of :func:`.transport.operator.duration_period`.
+    """
+    for task in (
+        ("n", lambda info: list(map(str, info.set["node"])), info_key),
+        ("y", lambda info: info.set["year"], info_key),
+        (
+            "cat_year",
+            lambda info: pd.DataFrame(
+                [["firstmodelyear", info.y0]], columns=["type_year", "year"]
+            ),
+            info_key,
+        ),
+        (K.y, "model_periods", "y", "cat_year"),
+        ("y0", itemgetter(0), K.y),
+        # Convert duration_period to Quantity
+        ("duration_period:y", "duration_period", info_key),
+    ):
+        try:
+            c.add(*task, strict=True)
+        except KeyExistsError:  # Already present
+            # log.debug(f"Use existing {c.describe(task[0])}")
+            pass
