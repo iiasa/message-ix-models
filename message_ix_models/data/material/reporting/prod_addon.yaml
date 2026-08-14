@@ -11,20 +11,14 @@ iamc_prefix:
   Production|
 
 vars:
-  Non-Metallic Minerals|Clinker|Wet|w/ CCS:
+  Non-Metallic Minerals|Clinker|Wet|CCS:
     filter:
         {technology: clinker_wet_ccs_cement, mode: M1}
     short:
-        prod_clinker_ccs_wet
+        prod_clinker_ccs
 
-  Non-Metallic Minerals|Clinker|Dry|w/ CCS:
+  Non-Metallic Minerals|Clinker|Dry|CCS:
     filter:
         {technology: clinker_dry_ccs_cement, mode: M1}
     short:
-        prod_clinker_ccs_dry
-
-  Non-Metallic Minerals|Clinker|w/ CCS:
-    filter:
-      { technology: [clinker_dry_ccs_cement, clinker_wet_ccs_cement], mode: M1 }
-    short:
-      prod_clinker_ccs
+        prod_clinker_ccs

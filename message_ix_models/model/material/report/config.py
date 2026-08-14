@@ -39,7 +39,7 @@ class Config:
     )
 
     @classmethod
-    def from_files(cls, category: str, subcategory: str) -> "Config":
+    def from_files(cls, category: str) -> "Config":
         """Create a Config instance from 1 or 2 YAML files.
 
         A file like :file:`message_ix_models/data/material/reporting/{category}.yaml` is
@@ -57,26 +57,12 @@ class Config:
         import yaml
 
         # Handle basic configuration file
-        path = package_data_path(
-            "material", "reporting", category, f"{subcategory}.yaml"
-        )
+        path = package_data_path("material", "reporting", f"{category}.yaml")
         with open(path) as f:  # Raises FileNotFoundError on missing file
             kw = yaml.safe_load(f)  # Raises on invalid YAML
 
         # Remove the "vars" top-level key from the file
         vars = kw.pop("vars")
-        from .reporter_utils import HIST_TRUE
-
-        if HIST_TRUE:
-            replacements = {
-                "out": "out_hist",
-                "in": "in_hist",
-                "ACT": "historical_activity",
-                "rel": "rel_hist",
-            }
-            for old, new in replacements.items():
-                if kw["var"].startswith(old):
-                    kw["var"] = new + kw["var"].removeprefix(old)
 
         # Create a ReporterConfig instance
         result = cls(**kw)
@@ -85,20 +71,10 @@ class Config:
         result.use_vars_dict(vars)
 
         # Handle aggregates configuration file
-        path_agg = path.with_name(f"{subcategory}_aggregates.yaml")
+        path_agg = path.with_name(f"{category}_aggregates.yaml")
         try:
             with open(path_agg) as f:
                 data_agg = yaml.safe_load(f)
-                if HIST_TRUE:
-                    replacements = {
-                        "out": "out_hist",
-                        "in": "in_hist",
-                        "ACT": "historical_activity",
-                        "rel": "rel_hist",
-                    }
-                    for old, new in replacements.items():
-                        if data_agg["var"].startswith(old):
-                            data_agg["var"] = new + data_agg["var"].removeprefix(old)
         except FileNotFoundError:
             data_agg = dict()  # No aggregates file
 
