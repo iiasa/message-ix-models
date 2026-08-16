@@ -519,6 +519,7 @@ LDV:
     In MESSAGE-V, the output of these technologies was labelled: h-u
   child: [ICE_H_moto, ELE_moto]
   units: Gv km
+  output: {commodity: transport vehicle 2w, level: useful}
   iea-eweb-flow: [ROAD]
 
 F ROAD:
