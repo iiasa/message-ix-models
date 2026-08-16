@@ -140,7 +140,7 @@ Quick links to each of the data flows:
 :class:`~.data.InputVehicle`
 :class:`~.data.InvestmentCost`
 :class:`~.data.Lifetime`
-:data:`~.data.load_factor_f`
+:class:`~.data.LoadFactorF`
 :data:`~.data.load_factor_p`
 :class:`~.data.LoadFactorLDV`
 :data:`~.data.mer_to_ppp`
@@ -252,7 +252,7 @@ Quick links to each of the data flows:
      <https://doi.org/10.1016/j.apenergy.2023.122411>`_
 
 .. autoclass:: message_ix_models.model.transport.data.Lifetime
-.. autodata:: message_ix_models.model.transport.data.load_factor_f
+.. autoclass:: message_ix_models.model.transport.data.LoadFactorF
 .. autodata:: message_ix_models.model.transport.data.load_factor_p
 .. autoclass:: message_ix_models.model.transport.data.LoadFactorLDV
 

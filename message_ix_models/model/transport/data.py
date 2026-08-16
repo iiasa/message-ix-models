@@ -541,6 +541,48 @@ class MultiFile(ExoDataSource):
         return self.key
 
 
+class LoadFactorF(ExoDataSource):
+    """Load factor of freight vehicles."""
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    #: Input data file name. :func:`.region_path_fallback` is used.
+    filename = "load-factor-f.csv"
+    key = Key("load factor:n-t-y:F+exo")
+    units: str = "tonne / vehicle"
+
+    path: "Path"
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Transform data from the file.
+
+        1. Broadcast to "scenario::all" along the "scenario" dimension.
+        2. Select using :data:`.transport.key.coord.scenario_label_A`.
+        3. Extrapolate along the |y| dimension to all periods, including historical
+           periods.
+        """
+        k = base_key
+
+        # Broadcast to all scenarios
+        c.add(k[0], "broadcast_wildcard2", k, "scenario::all", dim=("scenario",))
+
+        # Select values for the current scenario; drop the 'scenario' dimension
+        c.add(k[1], "select", k[0], K.coord.scenario_label_A)
+
+        # Interpolate on "y" dimension
+        c.add(self.key, "interpolate", k[1], "y::coords", **EXTRAPOLATE)
+
+        return self.key
+
+
 class LoadFactorLDV(MultiFile):
     """Load factor (occupancy) of LDVs.
 
@@ -1063,13 +1105,6 @@ input_share = _input_dataflow(
     key="input-share:t-c-y:exo",
     name="Share of input of LDV technologies from each commodity",
     units="dimensionless",
-)
-
-load_factor_f = _input_dataflow(
-    key="load factor:t:F+exo",
-    name="Load factor of freight vehicles",
-    path="load-factor-f.csv",
-    units="tonne / vehicle",
 )
 
 load_factor_p = _input_dataflow(

@@ -178,6 +178,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     data.InputVehicle.add_tasks(c, **kw, **c_s)
     data.InvestmentCost.add_tasks(c, **kw, **c_s)
     data.Lifetime.add_tasks(c, **kw, **c_s)
+    data.LoadFactorF.add_tasks(c, **kw, **c_s)
     data.LoadFactorLDV.add_tasks(c, config=config, **kw, **c_s)
 
     # Add data for MERtoPPP

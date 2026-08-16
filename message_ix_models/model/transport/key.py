@@ -189,6 +189,7 @@ exo = Keys(
     cap_share_t=data.CapShareT.key,
     inv_cost=data.InvestmentCost.key,
     lifetime=data.Lifetime.key,
+    load_factor_f=data.LoadFactorF.key,
     load_factor_ldv=data.LoadFactorLDV.key,
 )
 

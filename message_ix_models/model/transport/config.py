@@ -152,17 +152,6 @@ class Config(ConfigHelper):
     #: year is used.
     fixed_pdt: Quantity = quantity_field("132495 km / year")
 
-    #: Load factors for vehicles [tonne km per vehicle km].
-    #:
-    #: ``F ROAD``: similar to IEA “Future of Trucks” (2017) values; see
-    #: .transport.freight. Alternately use 5.0, similar to Roadmap 2017 values.
-    load_factor: dict = field(
-        default_factory=lambda: {
-            "F ROAD": 10.0,
-            "F RAIL": 10.0,
-        }
-    )
-
     #: Logit share exponents or cost distribution parameters [0]
     lamda: float = -2.0
 
