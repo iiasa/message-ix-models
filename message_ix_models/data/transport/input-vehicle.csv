@@ -5,6 +5,13 @@
 # Units: MJ / (vehicle km)
 #
 node, technology,      value
+#
+# 2W
+# TODO Replace placeholder values with prepared data
+*,    ELE_moto,        0.1
+*,    ICE_H_moto,      0.15
+#
+# F RAIL
 # Ratio of values from https://github.com/iiasa/message_data/issues/608#issuecomment-2842282743
 # = 34.17 (catenary electric) × 80.91 (diesel) = 0.422
 # …multiplied by the value for "f rail lightoil"
