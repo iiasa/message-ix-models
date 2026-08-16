@@ -4,10 +4,12 @@ Some calculations for LDVs are more complex, and are handled in :mod:`.transport
 """
 
 import logging
+from operator import add
 from typing import TYPE_CHECKING, Any
 
 from genno import Key, Keys
 
+from message_ix_models.util import convert_units
 from message_ix_models.util.genno import Collector
 
 from . import key as K
@@ -60,17 +62,25 @@ def prepare_computer(c: "Computer") -> None:
         capacity_factor(c, mode)
         stock(c, mode)
 
+    # Data for ``input`` and ``output``
+    input_output(c)
+
     # Add data for MESSAGE parameter ``inv_cost``
     ic = "inv_cost"
     # Convert to MESSAGE data structure
     collect(
-        f"{ic}::vehicle", "as_message_df", K.exo.inv_cost, name=ic, dims=DIMS, common={}
+        f"{ic}::vehicle",
+        "as_message_df",
+        K.exo.inv_cost,
+        name=ic,
+        dims=util.DIMS,
+        common={},
     )
 
     # Add data for MESSAGE parameter ``technical_lifetime``
     tl = "technical_lifetime"
     # Convert to MESSAGE data structure
-    dims = DIMS | dict(node_loc="n", year_vtg="y")
+    dims = DIMS | dict(year_vtg="y")
     collect(
         f"{tl}::vehicle", "as_message_df", K.exo.lifetime, name=tl, dims=dims, common={}
     )
@@ -90,21 +100,61 @@ def capacity_factor(c: "Computer", mode: str) -> None:
         coords_y=f"coords:yv:{cf}+{mode}",
     )
 
-    # Use only vintages from the maximum technical lifetime (1995)
-    # This reduces the result size from 195k to about 90k observations
-    c.add(k.coords_y, lambda years: dict(yv=[y for y in years if y >= 1995]), "y")
-    c.add(k.bcast_y, "select", K.bcast_y.all, k.coords_y)
-
     # Expand from "t" modes to all actual technologies
     # TODO Move this into ActivityVehicle
     c.add(k.cf[0], "call", "t::transport map", K.exo.activity_vehicle[mode])
 
     # Broadcast y → (yV, yA)
-    prev = c.add(k.cf[1], "mul", k.cf[0], k.bcast_y)
+    # prev = c.add(k.cf[1], "mul", k.cf[0], k.bcast_y) # Using limited vintages
+    prev = c.add(k.cf[1], "mul", k.cf[0], K.bcast_y.all)  # Using all vintages
 
     # Convert to MESSAGE data structure
-    dims = DIMS | dict(node_loc="n")
-    collect(f"{cf}::{mode}", "as_message_df", prev, name=cf, dims=dims, common=COMMON)
+    collect(f"{cf}::{mode}", "as_message_df", prev, name=cf, dims=DIMS, common=COMMON)
+
+
+def input_output(c: "Computer") -> None:
+    """Prepare calculation of ``input``, ``output`` parameters for vehicle technologies.
+
+    For the ``input`` parameter, this uses data from:
+
+    - :class:`.InputVehicle` for "2W" and "F RAIL" technologies.
+    - :class:`.IEA_Future_of_Trucks` for "F ROAD" technologies.
+    """
+    from .data import InputVehicle
+
+    NTY = tuple("nty")
+    ### `input`
+    k = Key("input", NTY, "vehicle")
+
+    # Concatenate data from (a) file (InputVehicle.key) and (b) IEA Future of Trucks
+    c.add(k[0], "concat", InputVehicle.key, "energy intensity of VDT:n-t")
+
+    # Broadcast over dimensions (c, l, y, yv, ya)
+    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.all)
+
+    # Convert to MESSAGE data structure; add to `target`
+    collect(
+        "input::vehicle", "as_message_df", prev, name="input", dims=DIMS, common=COMMON
+    )
+
+    ### `output`
+    k = Key("output", NTY, "vehicle")
+
+    # Create base quantity
+    c.add(k[0], wildcard(1.0, "dimensionless", NTY))
+    # Freight and P ex LDV technologies; omit LDV which are handled in .ldv
+    c.add("t::vehicle", add, K.t["F"], K.t["P ex LDV"])
+    # Broadcast over all nodes, technologies, and periods (including historical)
+    c.add(k[1], "broadcast_wildcard", k[0], K.n, "t::vehicle", "y", dim=NTY)
+    # Broadcast over dimensions (c, l, y, yv, ya)
+    prev = c.add(k[2], "mul", k[1], K.bcast_tcl.output, K.bcast_y.all)
+    # Convert to MESSAGE data structure
+    prev = c.add(k[3], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
+    # Reduce entries to a diagonal band
+    prev = c.add(k[4], "yv_ya_banded", prev, "y0", diff=30)
+    # Convert units; add to `TARGET`
+    # TODO convert_units appears to have no effect; check and adjust/remove
+    collect("output::vehicle", convert_units, prev, "transport info")
 
 
 #: 3-:class:`tuple` of keys for each :data:`MODE`:
