@@ -72,6 +72,7 @@ __all__ = [
     "transport_check",
     "transport_data",
     "votm",
+    "yv_ya_banded",
 ]
 
 
@@ -1288,3 +1289,34 @@ def write_sdmx_structures(structure_message, path: "Path", *args) -> "Path":
     )
 
     return path
+
+
+def yv_ya_banded(
+    data: dict[str, "pd.DataFrame"], ya_min: int = 0, diff: int = -1
+) -> dict[str, "pd.DataFrame"]:
+    r"""Convert `data` into an upper-banded matrix on the (|yV|, |yA|) dimension.
+
+    Rows in `data` are retained which satisfy:
+
+    1. :math:`y^A - y^V \leq \text{diff}`.
+    2. If `ya_min` is given, :math:`y^A \geq \text{ya_min}`.
+
+    For each unique combination of other dimensions, the result is an upper-banded
+    matrix, in which the only non-empty entries are on the diagonal or above.
+
+    Parameters
+    ----------
+    data :
+        :mod:`ixmp` parameter data with columns "year_vtg", "year_act", and any others.
+    ya_min :
+        Minimum value for |yA|, for instance the first model period.
+    diff :
+        Maximum difference between |yA| and |yV|, for instance the technical lifetime of
+        a technology (or maximum technical lifetime of a group of technologies).
+
+    .. todo:: Convert to a single-dispatch method.
+    """
+    return {
+        k: df[((df.year_act - df.year_vtg) <= diff) & (df.year_act >= ya_min)]
+        for k, df in data.items()
+    }
