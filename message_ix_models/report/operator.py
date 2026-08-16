@@ -12,7 +12,7 @@ from collections.abc import (
     Sequence,
 )
 from functools import cache, reduce
-from itertools import filterfalse, product
+from itertools import filterfalse, product, zip_longest
 from typing import TYPE_CHECKING, Any, Literal
 
 import genno
@@ -58,6 +58,7 @@ __all__ = [
     "compound_growth",
     "filter_ts",
     "from_url",
+    "full",
     "get_commodity_groups",
     "get_ts",
     "gwp_factors",
@@ -524,6 +525,41 @@ def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
     _FROM_URL_REF.add(ts)
     _FROM_URL_REF.add(mp)
     return ts
+
+
+def full(
+    *coords, dims: Sequence[Hashable], fill_value: float = 1.0, units=""
+) -> "AnyQuantity":
+    """Return a new Quantity with given `dims` and `coords`, filled with `fill_value`.
+
+    Parameters
+    ----------
+    coords :
+        1 or more sequences of coordinates.
+    dims:
+        Dimension labels. Must be of the same length as `coords`.
+    """
+    # Match `dims` and `coords` in the same order
+    _coords = {dim: labels for dim, labels in zip_longest(dims, coords)}
+    if None in set(_coords.keys()):
+        raise ValueError(
+            f"Too few ID(s) {tuple(filter(None, _coords.keys()))} for {len(_coords)} "
+            "dimension(s)/coords"
+        )
+    try:
+        # Construct a complete np.array in the correct shape
+        data = np.full(tuple(len(c) for c in _coords.values()), fill_value)
+    except TypeError:
+        missing = sum(int(c is None) for c in _coords.values())
+        raise ValueError(
+            f"Too few ({len(_coords) - missing}) coords for "
+            f"{len(_coords)} dimension(s) {tuple(_coords.keys())}"
+        )
+
+    try:
+        return genno.Quantity(data, coords=_coords, units=units)
+    except TypeError:  # genno < 1.25
+        return genno.Quantity(fill_value, units).expand_dims(_coords)
 
 
 def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":

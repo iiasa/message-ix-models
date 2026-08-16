@@ -20,6 +20,7 @@ from message_ix_models.report.operator import (
     compound_growth,
     filter_ts,
     from_url,
+    full,
     get_ts,
     gwp_factors,
     latest_reporting,
@@ -96,6 +97,32 @@ def test_from_url(scenario):
     result = from_url(full_url, message_ix.Scenario)
     assert result.__class__ is message_ix.Scenario
     assert scenario.url == result.url
+
+
+@pytest.mark.parametrize(
+    "coords, dims, exp_len",
+    (
+        ([], (), 1),  # No dimensions
+        ([["x1", "x2"]], ("x",), 2),  # 1-D
+        ([["x1", "x2"], ["y1", "y2", "y3"]], ("x", "y"), 6),  # 2-D
+        pytest.param(  # Too few coords
+            [["x1", "x2"]],
+            ("x", "y"),
+            0,
+            marks=pytest.mark.xfail(raises=ValueError),
+        ),
+        pytest.param(  # Too few IDs
+            [["x1", "x2"], ["y1", "y2", "y3"]],
+            ("x",),
+            0,
+            marks=pytest.mark.xfail(raises=ValueError),
+        ),
+    ),
+)
+def test_full(coords: list, dims: tuple, exp_len: int) -> None:
+    result = full(*coords, dims=dims)
+
+    assert exp_len == len(result)
 
 
 def test_get_remove_ts(caplog, scenario):
