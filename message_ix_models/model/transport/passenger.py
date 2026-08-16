@@ -7,13 +7,11 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 from genno import Computer, Key, Quantity, quote
-from message_ix import make_df
 from sdmx.model.v21 import Code
 
 from message_ix_models.util import (
     broadcast,
     make_io,
-    make_matched_dfs,
     merge_data,
     package_data_path,
     same_node,
@@ -25,7 +23,6 @@ from . import key as K
 
 if TYPE_CHECKING:
     from message_ix_models import Context
-    from message_ix_models.types import ParameterData
 
     from .config import Config
 
@@ -79,9 +76,6 @@ def prepare_computer(c: Computer):
     else:
         raise ValueError(f"Unknown source for non-LDV data: {source!r}")
 
-    # Dummy/placeholder data for 2-wheelers (not present in IKARUS)
-    collect("2W", get_2w_dummies, K.n, K.t["2W"], K.y)
-
     # TODO add these steps within the above, using a utility function
     # # Compute CO₂ emissions factors
     # for k in map(Key, list(keys[:-1])):
@@ -121,37 +115,6 @@ def prepare_computer(c: Computer):
 
     # Add other constraints on activity of non-LDV technologies
     bound_activity(c)
-
-
-def get_2w_dummies(
-    nodes: list[str], techs: list["Code"], years: list[int]
-) -> "ParameterData":
-    """Generate dummy, equal-cost output for two- and three-wheeler technologies."""
-    # Convert list of Code to list of str
-    t = list(map(str, techs))
-
-    # 'output' parameter values: all 1.0 (ACT units == output units)
-    # - Broadcast across nodes, all 2W technologies, and all periods.
-    output = (
-        make_df(
-            "output",
-            value=1.0,
-            commodity="transport vehicle 2w",
-            unit="Gv * km",
-            level="useful",
-            mode="all",
-            time="year",
-        )
-        .pipe(broadcast, node_loc=nodes, technology=t, year_act=years, year_vtg=years)
-        .pipe(same_node)
-        .pipe(same_time)
-    )
-
-    # Add matching data for 'capacity_factor' and 'var_cost'
-    data = make_matched_dfs(output, capacity_factor=1.0, var_cost=1.0)
-    data["output"] = output
-
-    return data
 
 
 def bound_activity(c: "Computer") -> None:
