@@ -25,7 +25,7 @@ from . import key as K
 from . import util
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
-from .util import COMMON, wildcard
+from .util import COMMON
 
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
@@ -160,12 +160,10 @@ def prepare_tech_econ(
     # FIXME Avoid hard-coding this period
     c.add("y::LDV", lambda y: list(filter(lambda x: 1995 <= x, y)), "y")
 
-    # Create base quantity for "output" parameter
-    k = output_base = Key("output:n-t-y:LDV+base")
-    c.add(k[0], wildcard(1.0, "Gv km", k.dims))
-
-    # Broadcast over (n, t, y) dimensions
-    c.add(k[1], "broadcast_wildcard", k[0], K.n, K.t["LDV"], K.y, dim=k.dims)
+    # Create base quantity for "output" parameter with value 1.0
+    NTY = tuple("nty")
+    output_base = Key("output", NTY, "LDV+base")
+    c.add(output_base, "full", K.n, K.t["LDV"], K.y, dims=NTY, units="Gv km")
 
     # Broadcast `exo.input_share` over (c, t) dimensions. This produces a large Quantity
     # with 1.0 everywhere except explicit entries in the input data file.
@@ -181,7 +179,7 @@ def prepare_tech_econ(
     ### Convert input and output to MESSAGE data structure
     for par_name, base, bcast in (
         ("input", efficiency, input_bcast),
-        ("output", output_base[1], K.bcast_tcl.output),
+        ("output", output_base, K.bcast_tcl.output),
     ):
         k = Key(par_name, base.dims, "LDV")
 

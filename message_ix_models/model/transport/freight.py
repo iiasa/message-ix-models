@@ -12,7 +12,7 @@ from message_ix_models.util.genno import Collector
 from . import key as K
 from . import util
 from .demand import _DEMAND_KW
-from .util import COMMON, EXTRAPOLATE, wildcard
+from .util import COMMON, EXTRAPOLATE
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -139,11 +139,10 @@ def usage(c: "Computer") -> None:
     # Input intensity
     k = Key("input", NTY, "F usage")
 
-    # - Construct a quantity with value 1.0 and "*" for each dimension (n, t, y).
-    # - Broadcast over all nodes, usage technologies, and model periods.
+    # - Construct a quantity with value 1.0 and all nodes, usage technologies, and model
+    #   periods.
     # - Broadcast over the (c, l, yV, yA) dimensions, same as above.
     # - Convert to MESSAGE data structure.
-    c.add(k[0], wildcard(1.0, "gigavehicle km", NTY))
-    c.add(k[1], "broadcast_wildcard", k[0], K.n, K.t["F usage"], K.y, dim=NTY)
-    prev = c.add(k[2], "mul", k[1], K.bcast_tcl.input, K.bcast_y.no_vintage)
+    c.add(k[0], "full", K.n, K.t["F usage"], K.y, dims=NTY, units="Gv km")
+    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.no_vintage)
     collect(u + k.name, "as_message_df", prev, name=k.name, dims=DIMS, common=COMMON)

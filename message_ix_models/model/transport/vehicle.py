@@ -14,7 +14,7 @@ from message_ix_models.util.genno import Collector
 
 from . import key as K
 from . import util
-from .util import COMMON, wildcard
+from .util import COMMON
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -140,18 +140,18 @@ def input_output(c: "Computer") -> None:
     ### `output`
     k = Key("output", NTY, "vehicle")
 
-    # Create base quantity
-    c.add(k[0], wildcard(1.0, "dimensionless", NTY))
-    # Freight and P ex LDV technologies; omit LDV which are handled in .ldv
+    # Create base quantity:
+    # - All notes and periods, including historical.
+    # - Freight and P ex LDV technologies; omit LDV which are handled in .ldv.
     c.add("t::vehicle", add, K.t["F"], K.t["P ex LDV"])
-    # Broadcast over all nodes, technologies, and periods (including historical)
-    c.add(k[1], "broadcast_wildcard", k[0], K.n, "t::vehicle", "y", dim=NTY)
+    c.add(k[0], "full", K.n, "t::vehicle", "y", dims=NTY, fill_value=1.0)
+
     # Broadcast over dimensions (c, l, y, yv, ya)
-    prev = c.add(k[2], "mul", k[1], K.bcast_tcl.output, K.bcast_y.all)
+    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.output, K.bcast_y.all)
     # Convert to MESSAGE data structure
-    prev = c.add(k[3], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
+    prev = c.add(k[2], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
     # Reduce entries to a diagonal band
-    prev = c.add(k[4], "yv_ya_banded", prev, "y0", diff=30)
+    prev = c.add(k[3], "yv_ya_banded", prev, "y0", diff=30)
     # Convert units; add to `TARGET`
     # TODO convert_units appears to have no effect; check and adjust/remove
     collect("output::vehicle", convert_units, prev, "transport info")
