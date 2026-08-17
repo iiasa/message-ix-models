@@ -6,13 +6,16 @@ import re
 import subprocess
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import ixmp
 import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
 from message_ix_models import Context
+
+if TYPE_CHECKING:
+    from message_ix_models.model.buildings.config import Config
 
 log = logging.getLogger(__name__)
 
@@ -206,25 +209,6 @@ def scenario_name(name: str) -> str:
     }.get(result, result)
 
 
-def _message_buildings_install_dir() -> Path:
-    """Return MESSAGEix-Buildings path from ixmp (``message_buildings_dir``)."""
-    message_buildings_dir = None
-    for key in ("message_buildings_dir", "message buildings dir"):
-        try:
-            value = ixmp.config.get(key)
-        except (AttributeError, KeyError):
-            continue
-        if value:
-            message_buildings_dir = value
-            break
-    if not message_buildings_dir:
-        raise ValueError(
-            "ixmp config key 'message_buildings_dir' (or 'message buildings dir') is "
-            "not set."
-        )
-    return Path(message_buildings_dir).expanduser().resolve()
-
-
 # MIXB demand CSV basenames under ``sturm/message_linking``
 # ({code} = context.buildings.code).
 _MIXB_DEMAND_CSV = (
@@ -257,8 +241,9 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     ``PRICE_COMMODITY`` (with floors), write ``input_prices_R12.csv``, update
     ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
     """
-    buildings_root = _message_buildings_install_dir()
-    sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
+    config: "Config" = context.buildings
+    sturm_dir = config.code_dir.joinpath("message_ix_buildings", "sturm")
+    assert sturm_dir.exists()
     price_dir = sturm_dir.joinpath("data")
 
     price_default = price_dir.joinpath("input_prices_R12_default.csv")
@@ -274,14 +259,7 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
         "PRICE_COMMODITY",
         filters={
             "level": "final",
-            "commodity": [
-                "biomass",
-                "coal",
-                "lightoil",
-                "gas",
-                "electr",
-                "d_heat",
-            ],
+            "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
         },
     )
 
@@ -370,10 +348,11 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
 
 def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
     """Retrieve MIXB buildings demand from ``sturm/message_linking`` and add it."""
-    buildings_root = _message_buildings_install_dir()
-    linking_dir = buildings_root.joinpath(
+    config: "Config" = context.buildings
+    linking_dir = config.code_dir.joinpath(
         "message_ix_buildings", "sturm", "message_linking"
     )
+    assert linking_dir.exists()
     code = context.buildings.code
     demand = pd.concat(
         [
