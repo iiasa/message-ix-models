@@ -24,6 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from ixmp import ModelError
 from message_ix import make_df
 
 from message_ix_models import Context
@@ -271,26 +272,34 @@ def test_prep_for_macro(test_context, request, monkeypatch):
     assert solve_calls == ["MESSAGE"]
 
 
-def test_add_macro(test_context, request, monkeypatch):
-    """add_macro updates macro calibration and solves with MESSAGE-MACRO."""
+def test_add_macro(
+    capfd: pytest.CaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+    test_context: Context,
+) -> None:
+    """:func:`add_macro` uses the configured file and solves with MESSAGE-MACRO."""
     scenario = bare_res(request, test_context)
     test_context.ssp = "SSP2"
     test_context.bmt = {"macro": "custom_macro.xlsx"}
-    macro_calls = []
 
-    monkeypatch.setattr(
-        "message_ix_models.model.bmt.workflow.add_macro_materials",
-        lambda scen, macro_file: macro_calls.append(macro_file) or scen,
-    )
-    monkeypatch.setattr(
-        "message_ix_models.model.bmt.workflow.solve",
-        lambda ctx, scen, model="MESSAGE-MACRO": scen,
-    )
+    # Do not actually call add_macro_materials(); only check an argument value
+    def _check(scen, macro_file):
+        assert "custom_macro.xlsx" == macro_file
+        return scen
 
-    result = add_macro(test_context, scenario)
+    mm = "message_ix_models.model"
+    monkeypatch.setattr(f"{mm}.bmt.workflow.add_macro_materials", _check)
 
-    assert result is scenario
-    assert macro_calls == ["custom_macro.xlsx"]
+    # Force solve() to skip the res_marg() step
+    monkeypatch.setattr(f"{mm}.workflow._TESTING", True)
+
+    # The function call raises an exception because `scenario` is empty
+    with pytest.raises(ModelError):
+        add_macro(test_context, scenario)
+
+    # The solve() call attempted to run MESSAGE-MACRO
+    assert "Job MESSAGE-MACRO_run.gms" in capfd.readouterr().out
 
 
 # --- Tests for build_PM (BMTX built step) ---

@@ -8,6 +8,8 @@ from message_ix_models import Context
 from message_ix_models.model.bmt.utils import build_PM
 from message_ix_models.model.buildings.build import main as build_B
 from message_ix_models.model.material.data_util import add_macro_materials
+from message_ix_models.model.workflow import Config as ModelConfig
+from message_ix_models.model.workflow import solve
 from message_ix_models.util import minimum_version
 from message_ix_models.workflow import Workflow
 
@@ -15,29 +17,30 @@ from message_ix_models.workflow import Workflow
 
 log = logging.getLogger(__name__)
 
+
+def solve_args(model: str = "MESSAGE") -> dict:
+    """Return keyword arguments for :func:`message_ix_models.workflow.solve`."""
+    return dict(
+        set_as_default=True,
+        config=ModelConfig(
+            solve=dict(
+                model=model,
+                gams_args=["--cap_comm=1"],
+                solve_options={
+                    "advind": 0,
+                    "lpmethod": 4,
+                    "threads": 4,
+                    "epopt": 1e-6,
+                    "scaind": -1,
+                    # "predual": 1,
+                    "barcrossalg": 0,
+                },
+            ),
+        ),
+    )
+
+
 # Functions for individual workflow steps
-
-
-def solve(
-    context: Context, scenario: message_ix.Scenario, model="MESSAGE"
-) -> message_ix.Scenario:
-    """Plain solve."""
-
-    # Use default CPLEX options and update with custom settings
-    solve_options = {
-        "advind": 0,
-        "lpmethod": 4,
-        "threads": 4,
-        "epopt": 1e-6,
-        "scaind": -1,
-        # "predual": 1,
-        "barcrossalg": 0,
-    }
-
-    scenario.solve(model, solve_options=solve_options, gams_args=["--cap_comm=1"])
-    scenario.set_as_default()
-
-    return scenario
 
 
 def _set_as_default(
@@ -153,7 +156,7 @@ def prep_for_macro(
         with scenario.transact("Remove rc_spec, rc_therm, transport from sector set"):
             scenario.remove_set("sector", to_remove)
 
-    solve(context, scenario, model="MESSAGE")
+    solve(context, scenario, **solve_args())
     return scenario
 
 
@@ -174,7 +177,7 @@ def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Sce
     scenario = add_macro_materials(scenario, macro_file)
     scenario.set_as_default()
     log.info("MACRO calibrated, now solving with MACRO")
-    solve(context, scenario, model="MESSAGE-MACRO")
+    solve(context, scenario, **solve_args("MESSAGE-MACRO"))
 
     return scenario
 
@@ -261,14 +264,14 @@ def generate(context: Context) -> Workflow:
     #    model="MESSAGE", i.e. excluding MACRO, which is not expected to work on
     #    MESSAGEix-Transport.
 
-    name = wf.add_step("MT solved", name, solve)
+    name = wf.add_step("MT solved", name, solve, **solve_args())
 
     # Transport report step (from .model.transport.workflow: callback + "transport all")
     name = wf.add_step("MT reported", name, report)
     name = wf.add_step("BMT built", "MT solved", build_B, target=f"{url}BMT", clone=c)
-    name = wf.add_step("BMT solved", name, solve)
+    name = wf.add_step("BMT solved", name, solve, **solve_args())
     name = wf.add_step("BMTX built", name, build_PM, target=f"{url}BMTX", clone=c)
-    name = wf.add_step("BMTX baseline solved", name, solve)
+    name = wf.add_step("BMTX baseline solved", name, solve, **solve_args())
     name = wf.add_step("BMT reported", "BMT solved", report)
 
     # make sure the scenario before this step is reported
