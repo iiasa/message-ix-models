@@ -849,42 +849,97 @@ def anchor_share_comm_lo(  # noqa: C901
     return
 
 
+def _build_relation_bound_rows(
+    df_bound: pd.DataFrame,
+    scenario: message_ix.Scenario,
+    par_name: str,
+    relation_names: list[str],
+) -> list[pd.DataFrame]:
+    """Build ``relation_lower`` or ``relation_upper`` rows from *df_bound*."""
+    rows: list[pd.DataFrame] = []
+    if df_bound.empty:
+        return rows
+
+    for relation_name, group in df_bound.groupby("relation", dropna=False):
+        relation_name = str(relation_name)
+        if relation_name not in relation_names:
+            relation_names.append(relation_name)
+
+        df_loop = group.copy()
+        df_initial = scenario.par(par_name, filters={"relation": [relation_name]})
+        log.info(
+            "Initial %s, relation:%s, existing rows: %d",
+            par_name,
+            relation_name,
+            len(df_initial),
+        )
+
+        if df_initial.empty:
+            bound_rows: list[pd.DataFrame] = []
+            for _, row in df_loop.iterrows():
+                bound_rows.append(
+                    make_df(
+                        par_name,
+                        relation=relation_name,
+                        node_rel=str(row["node"]).strip(),
+                        year_rel=int(row["year_act"]),
+                        value=float(row["depth_converted"]),
+                        unit="-",
+                    )
+                )
+            if bound_rows:
+                rows.append(pd.concat(bound_rows, ignore_index=True).drop_duplicates())
+        else:
+            rows.append(
+                _apply_depth_speed_arrival(df_initial, df_loop, node_col="node_rel")
+            )
+
+    return rows
+
+
+def _concat_or_empty(frames: list[pd.DataFrame]) -> pd.DataFrame:
+    """Concatenate *frames*, or return an empty DataFrame if there are none."""
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True).drop_duplicates()
+
+
 def anchor_relation_activity(  # noqa: C901
     df_anchor: pd.DataFrame, scenario: message_ix.Scenario
 ) -> None:
-    """Apply anchor settings to parameters ``relation_activity`` and ``relation_lower``.
+    """Apply anchor settings to ``relation_activity`` and optional bound parameters.
 
     For each unique ``relation`` value in the anchor data the function:
 
-    * registers the relation name in the ``relation`` set,
+    * registers the relation name in the ``relation`` set if it is not already
+      present,
     * builds ``relation_activity`` rows (expanding comma-separated ``technology``
       and ``mode`` fields into all cross-product pairs), and
-    * builds ``relation_lower`` rows using the depth/speed/arrival logic that is
-      shared with the other anchor functions.
+    * if paired ``relation_lower`` and/or ``relation_upper`` rows are present,
+      builds those bound rows using the depth/speed/arrival logic shared with
+      the other anchor functions. Missing bounds are skipped; activity rows are
+      still added.
 
     Two anchor rows that share the same ``relation`` are merged into a single
     ``relation_activity`` add (i.e. they contribute different technology/mode
     combinations to the same relation constraint).
     """
 
+    bound_pars = ("relation_lower", "relation_upper")
     df_rel = df_anchor.loc[
-        df_anchor["parameter"].isin(["relation_activity", "relation_lower"])
+        df_anchor["parameter"].isin(["relation_activity", *bound_pars])
     ].copy()
     if df_rel.empty:
         log.info(
             "anchor_relation_activity: no policies tuning "
-            "'relation_activity'/'relation_lower'"
+            "'relation_activity'/'relation_lower'/'relation_upper'"
         )
         return
 
-    # Collect rows per relation
-
     relation_activity_rows: list[pd.DataFrame] = []
-    relation_lower_rows: list[pd.DataFrame] = []
     relation_names: list[str] = []
 
     df_rel_act = df_rel.loc[df_rel["parameter"] == "relation_activity"].copy()
-    df_rel_lo = df_rel.loc[df_rel["parameter"] == "relation_lower"].copy()
 
     # Process relation_activity rows
     if not df_rel_act.empty:
@@ -924,60 +979,20 @@ def anchor_relation_activity(  # noqa: C901
                     pd.concat(act_rows, ignore_index=True).drop_duplicates()
                 )
 
-    # Process relation_lower rows
-    if not df_rel_lo.empty:
-        for relation_name, group in df_rel_lo.groupby("relation", dropna=False):
-            relation_name = str(relation_name)
-            if relation_name not in relation_names:
-                relation_names.append(relation_name)
-
-            df_loop = group.copy()
-
-            # Fetch existing relation_lower rows from the scenario (if any)
-            df_initial = scenario.par(
-                "relation_lower",
-                filters={"relation": [relation_name]},
+    bound_frames: dict[str, pd.DataFrame] = {}
+    for par_name in bound_pars:
+        bound_frames[par_name] = _concat_or_empty(
+            _build_relation_bound_rows(
+                df_rel.loc[df_rel["parameter"] == par_name].copy(),
+                scenario,
+                par_name,
+                relation_names,
             )
-            log.info(
-                "Initial relation_lower, relation:%s, existing rows: %d",
-                relation_name,
-                len(df_initial),
-            )
+        )
 
-            if df_initial.empty:
-                # No existing rows — build from anchor depth directly
-                lo_rows: list[pd.DataFrame] = []
-                for _, row in df_loop.iterrows():
-                    lo_rows.append(
-                        make_df(
-                            "relation_lower",
-                            relation=relation_name,
-                            node_rel=str(row["node"]).strip(),
-                            year_rel=int(row["year_act"]),
-                            value=float(row["depth_converted"]),
-                            unit="-",
-                        )
-                    )
-                if lo_rows:
-                    relation_lower_rows.append(
-                        pd.concat(lo_rows, ignore_index=True).drop_duplicates()
-                    )
-            else:
-                df_updated = _apply_depth_speed_arrival(
-                    df_initial, df_loop, node_col="node_rel"
-                )
-                relation_lower_rows.append(df_updated)
-
-    df_ra = (
-        pd.concat(relation_activity_rows, ignore_index=True).drop_duplicates()
-        if relation_activity_rows
-        else pd.DataFrame()
-    )
-    df_rl = (
-        pd.concat(relation_lower_rows, ignore_index=True).drop_duplicates()
-        if relation_lower_rows
-        else pd.DataFrame()
-    )
+    df_ra = _concat_or_empty(relation_activity_rows)
+    df_rl = bound_frames["relation_lower"]
+    df_ru = bound_frames["relation_upper"]
 
     # Debug dumps
     debug_dir = local_data_path("anchor")
@@ -988,24 +1003,37 @@ def anchor_relation_activity(  # noqa: C901
         df_ra.to_csv(debug_dir / "_debug_anchor_relation_activity.csv", index=False)
     if not df_rl.empty:
         df_rl.to_csv(debug_dir / "_debug_anchor_relation_lower.csv", index=False)
+    if not df_ru.empty:
+        df_ru.to_csv(debug_dir / "_debug_anchor_relation_upper.csv", index=False)
 
-    if not relation_names:
+    existing_relations = set(map(str, scenario.set("relation")))
+    new_relations = sorted(set(relation_names) - existing_relations)
+
+    if not new_relations and df_ra.empty and df_rl.empty and df_ru.empty:
         log.info("anchor_relation_activity: nothing to commit")
         return
 
-    with scenario.transact("apply anchor relation_activity / relation_lower"):
-        scenario.add_set("relation", sorted(set(relation_names)))
+    with scenario.transact(
+        "apply anchor relation_activity / relation_lower / relation_upper"
+    ):
+        if new_relations:
+            scenario.add_set("relation", new_relations)
         if not df_ra.empty:
             scenario.add_par("relation_activity", df_ra)
         if not df_rl.empty:
             scenario.add_par("relation_lower", df_rl)
+        if not df_ru.empty:
+            scenario.add_par("relation_upper", df_ru)
 
     log.info(
-        "anchor_relation_activity: added %d relations, "
-        "%d relation_activity rows, %d relation_lower rows",
-        len(set(relation_names)),
+        "anchor_relation_activity: added %d new relations "
+        "(%d already in set), %d relation_activity rows, "
+        "%d relation_lower rows, %d relation_upper rows",
+        len(new_relations),
+        len(set(relation_names) & existing_relations),
         len(df_ra),
         len(df_rl),
+        len(df_ru),
     )
 
     return
