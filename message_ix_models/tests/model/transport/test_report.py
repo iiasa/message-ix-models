@@ -5,8 +5,6 @@ from copy import deepcopy
 from importlib.metadata import version
 from typing import TYPE_CHECKING
 
-import numpy as np
-import pandas as pd
 import pytest
 from genno import ComputationError
 from packaging.version import Version as V
@@ -14,12 +12,7 @@ from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
-from message_ix_models.model.transport.report import (
-    IAMC_ZERO_MUTE_BEFORE_YEAR,
-    configure_legacy_reporting,
-    mask_iamc_zeros_before_year,
-    multi,
-)
+from message_ix_models.model.transport.report import configure_legacy_reporting, multi
 from message_ix_models.model.transport.testing import (
     built_transport,
     simulated_solution,
@@ -50,62 +43,6 @@ def quiet_genno(caplog):
 @pytest.fixture(scope="session")
 def scenario_code() -> "Code":
     return CL_SCENARIO.get()["SSP2"]
-
-
-@pytest.mark.parametrize(
-    "year_col, value_col",
-    (("year", "value"), ("Year", "Value")),
-)
-def test_mask_iamc_zeros_before_year(year_col, value_col):
-    """Zeros before year_cutoff are masked; other values are unchanged."""
-    df = pd.DataFrame(
-        {
-            year_col: [2010, 2010, 2025, 2025],
-            value_col: [0.0, 1.5, 0.0, 2.0],
-        }
-    )
-
-    result = mask_iamc_zeros_before_year(df, year_cutoff=2020)
-
-    assert result.loc[0, value_col] is np.nan or pd.isna(result.loc[0, value_col])
-    assert result.loc[1, value_col] == 1.5
-    assert result.loc[2, value_col] == 0.0
-    assert result.loc[3, value_col] == 2.0
-
-
-def test_mask_iamc_zeros_before_year_missing_columns():
-    """Data without year/value columns is returned unchanged."""
-    df = pd.DataFrame({"region": ["R12_AFR"], "lvl": [1.0]})
-
-    result = mask_iamc_zeros_before_year(df)
-
-    pd.testing.assert_frame_equal(result, df)
-
-
-def test_mask_iamc_zeros_before_year_non_dataframe():
-    """Non-DataFrame input is returned unchanged."""
-    assert mask_iamc_zeros_before_year("not a dataframe") == "not a dataframe"
-
-
-class _QuantityLike:
-    """Minimal wrapper exercising the re-wrap branch in mask_iamc_zeros_before_year."""
-
-    def __init__(self, data, name=None):
-        self.data = data
-        self.name = name
-
-
-def test_mask_iamc_zeros_before_year_quantity():
-    """Objects with a .data attribute are unwrapped and re-wrapped."""
-    df = pd.DataFrame({"year": [2010], "value": [0.0]})
-    wrapped = _QuantityLike(df, name="transport test")
-
-    result = mask_iamc_zeros_before_year(
-        wrapped, year_cutoff=IAMC_ZERO_MUTE_BEFORE_YEAR
-    )
-
-    assert isinstance(result, pd.DataFrame)
-    assert pd.isna(result.loc[0, "value"])
 
 
 @mark.xfail(
