@@ -8,16 +8,7 @@ Next release
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
 - Add :class:`.model.water.Config` to collect water module settings (:pull:`509`).
-- Add :doc:`/api/model-bmt` (:pull:`433`).
-
-  - Add
-    :data:`.buildings.config.DEFAULT_DATA_PATHS`,
-    :class:`~.buildings.config.METHOD`,
-    :attr:`.buildings.Config.data_paths`, and
-    :attr:`~.buildings.Config.method`.
-  - Add :func:`.buildings.build.prepare_data_B`;
-    rename :py:`prepare_data()` to :func:`~.buildings.build.prepare_data_A`.
-
+- Add :doc:`/api/model-bmt` (:pull:`433`, :pull:`486`).
 - :doc:`/project/circeular`:
   Distinguish :class:`~.circeular.structure.CL_SCENARIO`
   (project-wide scenario code list) (:pull:`497`).
@@ -34,7 +25,27 @@ Next release
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
 - Improve :func:`~.report.report` output when :attr:`.Config.verbose` is :py:`True`
   (:pull:`497`).
-- Improve :doc:`/transport/index` (:pull:`497`):
+- Improve :doc:`/buildings/index` (:pull:`433`, :pull:`486`):
+
+  - Expand docstring of :func:`.buildings.build_and_solve`.
+  - New submodules :mod:`.buildings.workflow` and
+    :mod:`.buildings.testing`.
+  - New functions
+    :func:`.build.get_prices_B`,
+    :func:`.build.prepare_data_B`
+    (rename :py:`prepare_data()` to :func:`~.build.prepare_data_A`.)
+  - New configuration settings and data
+    :data:`.buildings.config.DEFAULT_DATA_PATHS`,
+    :class:`~.buildings.config.METHOD`,
+    :attr:`.buildings.Config.code`,
+    :attr:`.buildings.Config.data_paths`,
+    :attr:`~.buildings.Config.method`,
+    :attr:`~.buildings.Config.sturm_code_dir`,
+    :attr:`~.buildings.Config.sturm_input_dir`.
+  - Add :class:`sturm.METHOD <.buildings.sturm.METHOD>` enumeration.
+  - New :func:`_sturm_rscript_B` to call updated versions of MESSAGEix-Buildings.
+
+- Improve :doc:`/transport/index` (:pull:`497`, except where noted):
 
   - Consolidate handling of vehicle stock, input, and output intensities in
     :mod:`.transport.vehicle`, from :mod:`.transport.freight`
@@ -64,6 +75,7 @@ Next release
     - Use IAMC preferred “Freight|Rail”
       and “Light-Duty Vehicle” fragments in ‘variable’ dimension labels.
     - Add common :data:`.IAMC_VAR_REPLACE` for replacements.
+    - Remove zero values prior to the first model period (:pull:`486`).
 
   - Simplify :class:`~.transport.config.Config`:
 
@@ -83,18 +95,27 @@ Next release
   - New :mod:`genno` operator :func:`~.operator.yv_ya_banded`.
   - Handle |yV| dimension in :func:`.sales_fraction_annual`.
 
-- New reporting operator :func:`~.operator.full` (:pull:`497`).
+- New reporting operators
+  :func:`~.operator.full` (:pull:`497`) and
+  :func:`~.operator.remove_zeros` (:pull:`486`).
+- Add :obj:`.adapt_R12_R11`
+  to adapt data from the :ref:`R12` to the :ref:`R11` node list (:pull:`486`).
+  (Note this is the reverse of :obj:`.adapt_R11_R12`.)
 - New utility class :class:`.Substitutions` for manipulating labels
   and scenario names
   (:pull:`497`).
 - Add :meth:`.StructureFactory.create` abstract
   and :meth:`~.StructureFactory.maintainable` utility methods
   (:pull:`497`).
+- :class:`Adapter` now handles coversion of :class:`pandas.DataFrame`
+  containing :mod:`message_ix` variable data,
+  instead of only parameter data (:pull:`486`).
 - Simplify definition and usage of :data:`testing.MARK <message_ix_models.testing.MARK>`
   using Pytest hooks
   (:pull:`497`),
   add :class:`.MarkFactory` utility class,
   and adjust existing tests.
+- New utility :func:`.import_from_fqn` (:pull:`486`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
 
 v2026.4.17
