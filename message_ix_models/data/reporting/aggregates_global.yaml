@@ -83,11 +83,6 @@ aggregates:
       - "in|Industry|Chemicals|biomass_NH3|biomass"
       - "in|Industry|Chemicals|coal_NH3|coal"
     unit: EJ/yr
-  # The legacy-owned parent Final Energy|Industry|Chemicals|Ammonia retains its
-  # established scope; this Genno child does not overwrite that parent.
-  - name: Final Energy|Industry|Chemicals|Ammonia|Hydrogen
-    patterns: ["in|Industry|Chemicals|h2_NH3|hydrogen"]
-    unit: EJ/yr
 
   # --- Methanol production inputs by feedstock and CCS route ---
   - name: Final Energy|Industry|Chemicals|Methanol|Gases|Gas|w/ CCS
@@ -218,13 +213,11 @@ aggregates:
   # in|all|hydrogen: all H2 consumption (EJ). Lists the meth_h2 CO2-source TOTAL
   # aggregate (in|Industry|Chemicals|meth_h2|hydrogen) and NOT its three split
   # leaves, so meth_h2 is counted once (a glob in|*|hydrogen would match both and
-  # double-count). Chemicals H2 consumers beyond h2_liq + meth_h2 + h2_NH3 would
-  # need adding.
+  # double-count). Chemicals H2 consumers beyond h2_liq + meth_h2 would need adding.
   - name: in|all|hydrogen
     patterns:
       - "in|Industry|Chemicals|h2_liq|hydrogen"
       - "in|Industry|Chemicals|meth_h2|hydrogen"
-      - "in|Industry|Chemicals|h2_NH3|hydrogen"
       - "in|Industry|Other|*|hydrogen"
       - "in|Industry|Iron and Steel|*|hydrogen"
       - "in|Industry|Refining|*|hydrogen"
@@ -260,8 +253,8 @@ aggregates:
       - "out|meth_ng|methanol"
       - "out|meth_ng_ccs|methanol"
     unit: EJ/yr
-  # out|all|NH3: total ammonia PRODUCTION (Mt). Exact producers include h2_NH3
-  # and exclude the downstream residual_NH3 conversion.
+  # out|all|NH3: total ammonia PRODUCTION (Mt). Exact producers exclude the
+  # downstream residual_NH3 conversion.
   - name: out|all|NH3
     patterns:
       - "out|biomass_NH3|NH3"
@@ -273,7 +266,6 @@ aggregates:
       - "out|fueloil_NH3_ccs|NH3"
       - "out|gas_NH3|NH3"
       - "out|gas_NH3_ccs|NH3"
-      - "out|h2_NH3|NH3"
     unit: Mt/yr
   # Per-mode transport input totals (EJ; all transport fuels are energy-basis).
   # in|Shipping|all shares the in|Shipping|* match with Final Energy|Bunkers|Shipping

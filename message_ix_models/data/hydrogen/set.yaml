@@ -18,7 +18,6 @@ hydrogen:
     - h2_elec_soe
     - h2_elec_pem
     - h2_ct
-    - h2_NH3
     - carbon_black_stor
     - carbon_black_trans
     remove:

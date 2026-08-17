@@ -55,10 +55,6 @@ vars:
     original_unit: Mt/yr
     short: out_fueloil_NH3_ccs_ammonia
 
-  h2_NH3|NH3:
-    filter: {technology: h2_NH3, commodity: NH3, level: secondary_material, mode: M1}
-    original_unit: Mt/yr
-    short: out_h2_NH3_ammonia
 
   # Downstream residual-demand conversion; excluded from out|all|NH3 production.
   residual_NH3|NH3:

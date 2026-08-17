@@ -1,9 +1,7 @@
 # CAP|<tech> — cumulative net installed capacity of the ammonia production
 # technologies. NOT in mapping_clean; built alongside CAP_NEW per user decision
 # 2026-07-01, final keep-or-drop pending confirmation with Yiyi. Mass-basis
-# (see ammonia_cap_new.yaml): natively Mt/yr. h2_NH3 now exists in the model
-# (#436) but CAP|h2_NH3 is intentionally NOT among the requested reporting targets
-# (CAP_NEW|h2_NH3 + Investment|h2_NH3 only); add here if CAP is confirmed with Yiyi.
+# (see ammonia_cap_new.yaml): natively Mt/yr.
 
 var:
   CAP

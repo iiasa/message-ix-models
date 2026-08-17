@@ -4,8 +4,12 @@
 # mix-models efc run --from="base" "cpol reported" --dry-run
 
 import logging
+from typing import TYPE_CHECKING
 
 import message_ix  # type: ignore
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 from message_ix_models import Context
 from message_ix_models.model.hydrogen.data_hydrogen import add_hydrogen_techs
@@ -24,11 +28,24 @@ from message_ix_models.workflow import Workflow
 # h2_pyro_elec and h2_ct are excluded — pyro is a separate turquoise framing;
 # h2_ct consumes H2.
 METHANOL_ADDON_PARENTS = ["h2_elec_alk", "h2_elec_pem", "h2_elec_soe"]
+METH_H2_CO2_RELATIONS = ("CO2_Emission", "CO2_Emission_Global_Total")
+METH_H2_CO2_COEFFICIENT = 0.549
 
 log = logging.getLogger(__name__)
 
 # EFC ixmp model name (single source of truth for cloned scenario targets).
 EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
+
+
+def configure_context(context: Context) -> None:
+    """Configure *context* for every EFC workflow and reporting entry point."""
+    context.ssp = "SSP2"
+    context.model.regions = "R12"
+
+    from message_ix_models.model.bmt.config import apply_bmt_config
+
+    apply_bmt_config(context)
+
 
 # Donor scenario for 1p5c ``bound_emission`` / ``tax_emission`` policy data.
 _1P5C_SOURCE_MODEL = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C2"
@@ -128,12 +145,10 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
             run_config=run_config,
         )
 
-    # 1. Transport reporting (only if transport is built)
+    # Transport output is required whenever the scenario contains transport
+    # demand. Propagate failures: continuing would publish a partial workbook.
     if report_config_check is not None and len(report_config_check) > 0:
-        try:
-            _run_transport_report(context, scenario)
-        except Exception as e:
-            log.warning("Transport reporting skipped: %s", e, exc_info=True)
+        _run_transport_report(context, scenario)
     else:
         log.info("Transport reporting skipped (no transport pax demand).")
 
@@ -262,6 +277,50 @@ def add_cpol(context: Context, scenario: message_ix.Scenario) -> message_ix.Scen
     return scenario
 
 
+def _meth_h2_co2_rows(rows: "pd.DataFrame") -> "pd.DataFrame":
+    """Select and validate the meth_h2 relation rows removed upstream."""
+    selected = rows[
+        (rows["technology"] == "meth_h2")
+        & (rows["relation"].isin(METH_H2_CO2_RELATIONS))
+    ]
+    bad = selected[(selected["value"] - METH_H2_CO2_COEFFICIENT).abs() > 1e-9]
+    if not bad.empty:
+        raise RuntimeError(
+            "Unexpected meth_h2 CO2 relation coefficients: "
+            f"{sorted(bad['value'].unique())}"
+        )
+    return selected
+
+
+def _remove_meth_h2_co2_relations(scenario: message_ix.Scenario) -> None:
+    """Match upstream PR #537 by removing both meth_h2 CO2 relation charges."""
+    rows = scenario.par(
+        "relation_activity",
+        filters={
+            "technology": "meth_h2",
+            "relation": list(METH_H2_CO2_RELATIONS),
+        },
+    )
+    selected = _meth_h2_co2_rows(rows)
+    if selected.empty:
+        log.info("meth_h2 CO2 relation charges are already absent")
+        return
+
+    scenario.remove_par("relation_activity", selected)
+    remaining = scenario.par(
+        "relation_activity",
+        filters={
+            "technology": "meth_h2",
+            "relation": list(METH_H2_CO2_RELATIONS),
+        },
+    )
+    if not remaining.empty:
+        raise RuntimeError(
+            f"Failed to remove {len(remaining)} meth_h2 CO2 relation rows"
+        )
+    log.info("Removed %d meth_h2 CO2 relation rows", len(selected))
+
+
 def build_hydrogen(
     context: Context, scenario: message_ix.Scenario
 ) -> message_ix.Scenario:
@@ -291,6 +350,9 @@ def build_hydrogen(
         message="Yoga meth_h2 mode-parity port for hyway electrolysers"
     ):
         apply_meth_h2_mode_parity(scenario, METHANOL_ADDON_PARENTS)
+
+    with scenario.transact(message="Remove erroneous meth_h2 CO2 relation charges"):
+        _remove_meth_h2_co2_relations(scenario)
 
     return scenario
 
@@ -379,18 +441,7 @@ _scen_all = [
 # main function to generate the workflow
 def generate(context: Context) -> Workflow:
     wf = Workflow(context)
-    context.ssp = "SSP2"
-    context.model.regions = "R12"
-
-    # Build context.transport (and the rest of the BMT config) before any report
-    # step runs. Without this the CLI path never configures transport, so
-    # _run_transport_report -> prepare_reporter builds the transport graph against
-    # an unconfigured context and raises — surfacing as an empty
-    # "Transport reporting skipped:" message. Mirrors the call in
-    # scripts/verify/report_efc_workflow.py.
-    from message_ix_models.model.bmt.config import apply_bmt_config
-
-    apply_bmt_config(context)
+    configure_context(context)
 
     # EFC workflow: clone the parent scenario on ixmp-dev into the EFC model name.
     #

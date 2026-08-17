@@ -6,10 +6,13 @@ methanol_synthesis_addon parent and broadcasts its feedstock/fuel modes into
 the six split modes (``{feedstock, fuel}_{bic, dac, fic}``). In the hydrogen
 module, ``add_hydrogen_techs`` removes ``h2_elec`` and adds the hyway techs
 (h2_elec_alk/pem/soe + h2_pyro_elec + h2_ct), each populated from per-tech
-CSVs that still carry the pre-Yoga mode shape: addon_conversion/addon_up in
-feedstock/fuel modes, everything else in M1. Without the broadcast, meth_h2
-(which already has the 6 split modes upstream) cannot bind to any electrolyser
-parent and ``ADDON_ACTIVITY_UP`` collapses — meth_h2 silently zeros.
+CSVs that still carry the pre-Yoga mode shape: addon_conversion/addon_up and
+historical_activity in feedstock/fuel modes, everything else in M1. The
+historical activity is absolute, so this module restores its pre-broadcast
+mode total after replicating the per-unit parameters. Without the broadcast,
+meth_h2 (which already has the 6 split modes upstream) cannot bind to any
+electrolyser parent and ``ADDON_ACTIVITY_UP`` collapses — meth_h2 silently
+zeros.
 
 This module ports Yoga's broadcast logic onto a configurable list of parent
 techs. Call after ``add_hydrogen_techs`` has populated the parameter data:
@@ -39,6 +42,122 @@ SPLIT_MODES: list[str] = [
     f"{base}_{sfx}" for base in ORIGINAL_MODES for sfx in SPLIT_SUFFIXES
 ]
 
+# ACTIVITY_CONSTRAINT_UP/LO sum historical activity over mode.
+HISTORY_KEYS = ["node_loc", "technology", "year_act", "time"]
+HISTORY_ATOL = 1e-9
+
+
+def _history_totals(rows: pd.DataFrame) -> pd.DataFrame:
+    """Return historical activity totalled over mode."""
+    if rows.empty:
+        return pd.DataFrame(columns=HISTORY_KEYS + ["value"])
+
+    required = HISTORY_KEYS + ["mode", "value"]
+    missing = [column for column in required if column not in rows]
+    if missing:
+        raise ValueError(f"Historical activity is missing columns: {missing}")
+    if rows[required].isna().any().any():
+        raise ValueError("Historical activity contains null keys, modes, or values")
+
+    return rows.groupby(HISTORY_KEYS, as_index=False)["value"].sum()
+
+
+def _verify_history_restored(before: pd.DataFrame, after_rows: pd.DataFrame) -> None:
+    """Raise unless every post-broadcast mode total matches its source total."""
+    after = _history_totals(after_rows)
+    merged = before.merge(
+        after,
+        on=HISTORY_KEYS,
+        how="outer",
+        suffixes=("_before", "_after"),
+    ).fillna(0.0)
+    delta = (merged["value_before"] - merged["value_after"]).abs()
+    bad = merged[delta > HISTORY_ATOL]
+    if not bad.empty:
+        raise RuntimeError(
+            "historical_activity totals differ from their pre-parity values in "
+            f"{len(bad)} group(s); worst delta {delta.loc[bad.index].max():.6g}"
+        )
+
+
+def _restored_history_rows(rows: pd.DataFrame, before: pd.DataFrame) -> pd.DataFrame:
+    """Return split-mode rows rescaled to preserve pre-broadcast totals."""
+    if rows.empty and before.empty:
+        return rows.copy()
+    if (rows["value"] < -HISTORY_ATOL).any():
+        raise RuntimeError("historical_activity contains negative values")
+
+    try:
+        _verify_history_restored(before, rows)
+    except RuntimeError:
+        pass
+    else:
+        return rows.iloc[0:0].copy()
+
+    split = rows[rows["mode"].isin(SPLIT_MODES)]
+    untouched = rows[~rows["mode"].isin(SPLIT_MODES)]
+    if split.empty:
+        raise RuntimeError(
+            "historical_activity totals changed without any split-mode rows"
+        )
+
+    split_now = _history_totals(split).rename(columns={"value": "split_now"})
+    untouched_now = _history_totals(untouched).rename(columns={"value": "untouched"})
+    target = before.rename(columns={"value": "total_before"}).merge(
+        untouched_now, on=HISTORY_KEYS, how="left"
+    )
+    target["untouched"] = target["untouched"].fillna(0.0)
+    target["target_split"] = target["total_before"] - target["untouched"]
+
+    groups = target[HISTORY_KEYS + ["target_split"]].merge(
+        split_now, on=HISTORY_KEYS, how="outer", indicator=True
+    )
+    unexpected = groups[groups["_merge"] == "right_only"]
+    missing = groups[
+        (groups["_merge"] == "left_only")
+        & (groups["target_split"].abs() > HISTORY_ATOL)
+    ]
+    if not unexpected.empty or not missing.empty:
+        raise RuntimeError(
+            "split historical_activity groups do not match the pre-parity source groups"
+        )
+
+    groups = groups[groups["_merge"] == "both"].drop(columns="_merge")
+    negative = groups[groups["target_split"] < -HISTORY_ATOL]
+    zero_source = groups[
+        (groups["split_now"].abs() <= HISTORY_ATOL)
+        & (groups["target_split"].abs() > HISTORY_ATOL)
+    ]
+    if not negative.empty:
+        raise RuntimeError("untouched historical_activity exceeds the pre-parity total")
+    if not zero_source.empty:
+        raise RuntimeError(
+            "nonzero historical_activity target has zero split-mode activity"
+        )
+
+    groups["factor"] = 1.0
+    nonzero = groups["split_now"].abs() > HISTORY_ATOL
+    groups.loc[nonzero, "factor"] = (
+        groups.loc[nonzero, "target_split"] / groups.loc[nonzero, "split_now"]
+    )
+    changed = groups[(groups["factor"] - 1.0).abs() > HISTORY_ATOL]
+    if changed.empty:
+        raise RuntimeError(
+            "historical_activity totals differ but no split-mode scaling is available"
+        )
+
+    adjusted_split = split.merge(
+        groups[HISTORY_KEYS + ["factor"]], on=HISTORY_KEYS, how="left"
+    )
+    adjusted_split["value"] *= adjusted_split["factor"]
+    adjusted_split = adjusted_split.drop(columns="factor")
+    candidate = pd.concat([untouched, adjusted_split], ignore_index=True)
+    _verify_history_restored(before, candidate)
+
+    return adjusted_split.merge(changed[HISTORY_KEYS], on=HISTORY_KEYS, how="inner")[
+        rows.columns
+    ]
+
 
 def _ensure_split_modes_in_set(scenario: message_ix.Scenario) -> None:
     existing = set(scenario.set("mode").tolist())
@@ -48,9 +167,7 @@ def _ensure_split_modes_in_set(scenario: message_ix.Scenario) -> None:
         log.info(f"Added split modes to `mode` set: {to_add}")
 
 
-def _broadcast_parent_modes(
-    scenario: message_ix.Scenario, parent: str
-) -> None:
+def _broadcast_parent_modes(scenario: message_ix.Scenario, parent: str) -> None:
     """Port one parent tech's mode-indexed parameter rows.
 
     Two patterns, applied per parameter:
@@ -72,9 +189,7 @@ def _broadcast_parent_modes(
         feedstock_rows = scenario.par(
             par, filters={"technology": parent, "mode": "feedstock"}
         )
-        fuel_rows = scenario.par(
-            par, filters={"technology": parent, "mode": "fuel"}
-        )
+        fuel_rows = scenario.par(par, filters={"technology": parent, "mode": "fuel"})
 
         # Yoga pattern: feedstock/fuel → 6 split modes; drop originals.
         for original_mode, original_rows in (
@@ -85,9 +200,7 @@ def _broadcast_parent_modes(
                 continue
             df = original_rows.copy(deep=True)
             df["mode"] = None
-            split_for_orig = [
-                f"{original_mode}_{sfx}" for sfx in SPLIT_SUFFIXES
-            ]
+            split_for_orig = [f"{original_mode}_{sfx}" for sfx in SPLIT_SUFFIXES]
             df = df.pipe(broadcast, mode=split_for_orig)
             scenario.add_par(par, df)
             scenario.remove_par(par, original_rows)
@@ -102,9 +215,7 @@ def _broadcast_parent_modes(
         # the relation, not the tech's operating mode — we still broadcast it
         # so the tech's contribution applies in all modes it can operate in).
         if feedstock_rows.empty and fuel_rows.empty:
-            m1_rows = scenario.par(
-                par, filters={"technology": parent, "mode": "M1"}
-            )
+            m1_rows = scenario.par(par, filters={"technology": parent, "mode": "M1"})
             if m1_rows.empty:
                 continue
             df = m1_rows.copy(deep=True)
@@ -164,10 +275,28 @@ def apply_meth_h2_mode_parity(
             "Run add_hydrogen_techs first."
         )
 
+    history_before = _history_totals(
+        scenario.par("historical_activity", filters={"technology": parents})
+    )
+
     _ensure_split_modes_in_set(scenario)
 
     for parent in parents:
         _broadcast_parent_modes(scenario, parent)
+
+    history_after = scenario.par("historical_activity", filters={"technology": parents})
+    restored = _restored_history_rows(history_after, history_before)
+    if not restored.empty:
+        scenario.add_par("historical_activity", restored)
+        log.info(
+            "Rescaled %d split historical_activity rows to preserve pre-parity "
+            "mode totals",
+            len(restored),
+        )
+    _verify_history_restored(
+        history_before,
+        scenario.par("historical_activity", filters={"technology": parents}),
+    )
 
     _register_in_map_tec_addon(scenario, parents)
 
