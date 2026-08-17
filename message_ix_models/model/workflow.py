@@ -141,7 +141,7 @@ def solve(
     *,
     config: Config | None = None,
     set_as_default: bool = False,
-):
+) -> Scenario:
     """Common model solve step for ENGAGE, NAVIGATE, and other workflows.
 
     The steps respond to settings from a :class:`Config` instance. In order of
