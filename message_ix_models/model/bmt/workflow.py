@@ -68,7 +68,7 @@ def _run_transport_report(
 
 
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Report the scenario (transport, materials, legacy that contains buildings."""
+    """Report the scenario (transport, materials, legacy that contains buildings)."""
     from message_data.tools.post_processing import iamc_report_hackathon  # type: ignore
 
     from message_ix_models.model.material.report.run_reporting import (
@@ -130,12 +130,14 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 def prep_for_macro(
     context: Context, scenario: message_ix.Scenario
 ) -> message_ix.Scenario:
-    """Prepare scenario for macro calibration.
+    """Prepare scenario for MACRO calibration.
 
-    It adjusts (1) cat_year: removes initializeyear_macro and
-    baseyear_macro so macro years are not active yet; and (2) sector set:
-    removes rc_spec, rc_therm, and transport.
-    Then solves with MESSAGE only. Run after cloning with shift_first_model_year=2030.
+    1. Adjust cat_year by removing initializeyear_macro and baseyear_macro, so that
+       MACRO years are not active yet.
+    2. Adjust sector set, by removing rc_spec, rc_therm, and transport.
+    3. Solve with :py:`model="MESSAGE"` only.
+
+    This function should be after cloning with :py:`shift_first_model_year=2030`.
     """
     log.info("Preparing scenario for macro calibration.")
     scenario.set_as_default()
@@ -217,7 +219,7 @@ def generate(context: Context) -> Workflow:
     context.model.regions = "R12"
 
     apply_bmt_config(context)
-    print(repr(context.asdict()))
+    # log.debug(repr(context.asdict()))  # DEBUG Show contents of `context`
 
     # Define model name
     model_name = context.bmt["model_name"]

@@ -1,32 +1,4 @@
-"""BMT workflow configuration.
-
-This module loads a file :file:`data/bmt/config.yaml`. This YAML file has top-level
-keys:
-
-.. code-block:: yaml
-
-   buildings:
-      # ...
-   macro: "..."
-   materials:
-      # ...
-   transport:
-      # ...
-
-Loads :file:`data/bmt/config.yaml` once into :attr:`context.bmt`, then sets:
-
-- :attr:`context.buildings` — :class:`~.buildings.config.Config` (``data_paths``,
-  ``code`` for STURM, etc.) from the ``buildings`` mapping.
-- :attr:`context.macro` — ``macro`` string (macro calibration workbook).
-- :attr:`context.transport` — full
-  :class:`message_ix_models.model.transport.config.Config` from
-  :meth:`~message_ix_models.model.transport.config.Config.from_context`, with the
-  YAML ``transport`` section passed as ``options`` (e.g. ``code: "M SSP2"``).
-
-The transport object must stay as that :class:`Config` class: the rest of
-MESSAGEix-Transport reads ``context.transport.spec``, ``.modules``, etc., not a raw
-dict.
-"""
+"""BMT workflow configuration."""
 
 from typing import TYPE_CHECKING
 
@@ -39,7 +11,41 @@ if TYPE_CHECKING:
 
 
 def apply_bmt_config(context: "Context", path: "Path | None" = None) -> None:
-    """Load BMT YAML into ``context`` (bmt, buildings, macro, transport)."""
+    """Load BMT configuration file into `context` (bmt, buildings, macro, transport).
+
+    The file given by `path` **must** be in YAML format and have the top-level keys:
+
+    .. code-block:: yaml
+
+       model_name: "..."
+       buildings:
+          # ...
+       macro: "..."
+       materials:  # Optional
+          # ...
+       transport:  # Optional
+          # ...
+
+    All data from the file is stored at the key :py:`context.bmt` as a :class:`dict`.
+    The function then sets or converts other values:
+
+    - :attr:`context.buildings`: an instance of :class:`~.buildings.config.Config`
+      (including :attr:`.Config.data_paths`, :attr`~code`` for STURM, etc.) from the
+      ``buildings`` mapping.
+    - :attr:`context.macro`: ``macro`` string (macro calibration workbook).
+    - :attr:`context.transport`: and instance of :class:`transport.config.Config` using
+      :meth:`~.transport.config.Config.from_context`, with the YAML ``transport``
+      mapping passed as `options` (e.g. ``code: "M SSP2"``).
+
+      .. note:: The :py:`context.transport` key must be an instance of that class,
+         because :mod:`.model.transport` code expects its various attributes.
+
+    Parameters
+    ----------
+    path :
+        Configuration file path. If not given, defaults to :file:`data/bmt/config.yaml`.
+        This file **must** be in YAML format has top-leve
+    """
     import yaml
 
     from message_ix_models.model.buildings.config import METHOD
