@@ -25,6 +25,9 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: Testing-only flag to change the behaviour of solve().
+_TESTING: bool = False
+
 
 class STAGE(Enum):
     """Enumeration of common workflow stages."""
@@ -168,6 +171,7 @@ def solve(
     4. :meth:`.set_as_default` is called if the keyword argument `set_as_default` is
        :obj:`True`.
     """
+    from message_ix_models.util import HAS_MESSAGE_DATA
 
     # Identify configuration
     try:
@@ -176,7 +180,8 @@ def solve(
         config = Config()
 
     # Set reserve margin values
-    if config.reserve_margin:
+    # Skip if _TESTING flag is set and message_data is not available
+    if config.reserve_margin and not (_TESTING and not HAS_MESSAGE_DATA):
         # FIXME Use an analogous function in message-ix-models, with tests
         from message_data.scenario_generation.reserve_margin import res_marg
 
