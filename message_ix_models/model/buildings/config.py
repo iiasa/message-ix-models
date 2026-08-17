@@ -89,7 +89,9 @@ class Config(ConfigHelper):
     #: Name or ID of STURM scenario to run.
     sturm_scenario: str
 
-    #: STURM / MIXB scenario key written to ``scenario_config.yaml`` (e.g. ``"R"``).
+    #: STURM / MESSAGEix-Buildings scenario key written to :file:`scenario_config.yaml`.
+    #: This is the :class:`str` ID of a code in
+    #: :class:`.circeular.structure.CL_SCENARIO`, for instance :py:`"R"`.
     code: str = "R"
 
     #: Climate scenario. Either `BL` or `2C`.
