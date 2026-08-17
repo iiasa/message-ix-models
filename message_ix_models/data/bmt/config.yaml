@@ -7,6 +7,7 @@
 model_name: "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12"
 
 buildings:
+  # An ID from CL_SCENARIO_CIRCEULAR, e.g. "R" for "Reference"
   code: "R"
   data_paths:
       # Input file names under private_data_path("buildings")
