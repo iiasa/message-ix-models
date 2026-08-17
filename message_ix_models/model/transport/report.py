@@ -336,7 +336,10 @@ def convert_iamc(c: "Computer") -> None:
 
     # Concatenate IAMC-format tables
     k = Key("transport", tag="iamc")
-    c.add(k, "concat", *keys)
+    c.add(k[0], "concat", *keys)
+
+    # Remove zeros for years before y₀.
+    c.add(k, "remove_zeros", k[0], "y0")
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     c.apply(util.store_write_ts, k)
