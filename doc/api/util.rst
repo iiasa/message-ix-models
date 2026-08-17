@@ -218,6 +218,7 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.pytest
 
 .. automodule:: message_ix_models.util.pytest
+   :members:
 
 :mod:`.util._re`
 ================
