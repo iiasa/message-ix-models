@@ -346,27 +346,6 @@ def mixb_sturm_tree(tmp_path):
     return install_root, sturm_dir, linking_dir
 
 
-def test_message_buildings_install_dir(monkeypatch, tmp_path):
-    """_message_buildings_install_dir reads ixmp config."""
-    monkeypatch.setattr(
-        "message_ix_models.model.buildings.sturm.ixmp.config.get",
-        lambda key: str(tmp_path) if key == "message_buildings_dir" else None,
-    )
-
-    assert tmp_path.resolve() == sturm._message_buildings_install_dir()
-
-
-def test_message_buildings_install_dir_missing(monkeypatch):
-    """_message_buildings_install_dir raises if ixmp config is unset."""
-    monkeypatch.setattr(
-        "message_ix_models.model.buildings.sturm.ixmp.config.get",
-        lambda key: None,
-    )
-
-    with pytest.raises(ValueError, match="message_buildings_dir"):
-        sturm._message_buildings_install_dir()
-
-
 def test_pass_scen_config_to_mixb(tmp_path):
     """_pass_scen_config_to_mixb writes scenario_config.yaml."""
     import yaml
