@@ -20,13 +20,14 @@ Coverage notes:
 """
 
 import logging
+from pathlib import Path
 
 import pandas as pd
 import pytest
 from message_ix import make_df
 
 from message_ix_models import Context
-from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
+from message_ix_models.model.bmt.utils import build_PM, generate_vetting_csv
 from message_ix_models.model.bmt.workflow import (
     _set_as_default,
     add_macro,
@@ -372,34 +373,28 @@ def test_build_PM_callable(test_context, request):
 # --- Tests for _generate_vetting_csv (utils.py) ---
 
 
-def test_generate_vetting_csv(tmp_path):
-    """_generate_vetting_csv writes CSV of original/modified demand and subtraction."""
-    original_demand = pd.DataFrame(
+def test_generate_vetting_csv(tmp_path: Path) -> None:
+    """generate_vetting_csv writes CSV of original/modified demand and subtraction."""
+    base = pd.DataFrame(
         {
             "node": ["R12_AFR", "R12_AFR"],
             "year": [2020, 2030],
             "commodity": ["cement", "cement"],
-            "value": [10.0, 20.0],
         }
     )
-    modified_demand = pd.DataFrame(
-        {
-            "node": ["R12_AFR", "R12_AFR"],
-            "year": [2020, 2030],
-            "commodity": ["cement", "cement"],
-            "value": [7.0, 15.0],
-        }
-    )
+    original_demand = base.assign(value=[10.0, 20.0])
+    modified_demand = base.assign(value=[7.0, 15.0])
+
     out = tmp_path / "vetting.csv"
 
-    _generate_vetting_csv(original_demand, modified_demand, str(out))
+    generate_vetting_csv(original_demand, modified_demand, out)
 
     assert out.exists()
     df = pd.read_csv(out)
     assert list(df.columns) == [
+        "commodity",
         "node",
         "year",
-        "commodity",
         "original_demand",
         "modified_demand",
         "gap",
@@ -410,17 +405,14 @@ def test_generate_vetting_csv(tmp_path):
     assert df["gap_share"].tolist() == [30.0, 25.0]
 
 
-def test_generate_vetting_csv_zero_original(tmp_path):
-    """_generate_vetting_csv handles zero original demand (no div-by-zero)."""
-    original_demand = pd.DataFrame(
-        {"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"], "value": [0.0]}
-    )
-    modified_demand = pd.DataFrame(
-        {"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"], "value": [0.0]}
-    )
+def test_generate_vetting_csv_zero_original(tmp_path: Path) -> None:
+    """generate_vetting_csv handles zeros in original_demand."""
+    base = pd.DataFrame({"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"]})
+    original_demand = base.assign(value=[0.0])
+    modified_demand = base.assign(value=[0.0])
     out = tmp_path / "vetting_zero.csv"
 
-    _generate_vetting_csv(original_demand, modified_demand, str(out))
+    generate_vetting_csv(original_demand, modified_demand, out)
 
     assert out.exists()
     df = pd.read_csv(out)

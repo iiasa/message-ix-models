@@ -9,6 +9,8 @@ from message_ix_models.model.material.data_power_sector import gen_data_power_se
 from message_ix_models.util import add_par_data
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from message_ix import Scenario
 
     from message_ix_models import ScenarioInfo
@@ -16,91 +18,56 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def _generate_vetting_csv(
-    original_demand: pd.DataFrame,
-    modified_demand: pd.DataFrame,
-    output_path: str,
+def generate_vetting_csv(
+    original_demand: pd.DataFrame, modified_demand: pd.DataFrame, output_path: "Path"
 ) -> None:
     """Generate a CSV file showing material demand subtraction details.
 
     Parameters
     ----------
     original_demand : pd.DataFrame
-        Original demand data before subtraction
+        Original demand data before subtraction.
     modified_demand : pd.DataFrame
-        Modified demand data after subtraction
+        Modified demand data after subtraction.
     output_path : str
-        Path where to save the vetting CSV file
+        Path for the generated file.
     """
     # Reset index to work with columns
     orig = original_demand.reset_index()
     mod = modified_demand.reset_index()
 
-    # Merge original and modified data
-    vetting_data = orig.merge(
-        mod,
-        on=["node", "year", "commodity"],
-        suffixes=("_original", "_modified"),
-        how="outer",
-    ).fillna(0)
+    # Dimensions for merging and sorting
+    dims = ["commodity", "node", "year"]
 
-    # Calculate gap and gap share
-    vetting_data["gap"] = (
-        vetting_data["value_original"] - vetting_data["value_modified"]
+    # 1. Merge original (_o) and modified (_m) data on (c, n, y).
+    # 2. Fill NaN with zeros.
+    # 3. Calculate:
+    #    - "gap" (absolute) between original and modified values.
+    #    - "gap_share" [%]; avoid division by zero and round to 2 places.
+    # 4. Select some columns; rename "value_o" → "original_demand" etc.
+    # 5. Sort by (c, n, y).
+    vetting_data = (
+        orig.merge(mod, on=dims, suffixes=("_o", "_m"), how="outer")
+        .fillna(0)
+        .assign(
+            gap=lambda df: df.value_o - df.value_m,
+            gap_share=lambda df: (df.gap / df.value_o.replace(0, 1) * 100).round(2),
+        )[dims + ["value_o", "value_m", "gap", "gap_share"]]
+        .rename(columns={"value_o": "original_demand", "value_m": "modified_demand"})
+        # commented: Filter out rows where no subtraction occurred
+        # .query("gap > 0")
+        .sort_values(dims)
     )
-
-    # Calculate gap share (percentage) (avoid division by zero)
-    vetting_data["gap_share"] = (
-        vetting_data["gap"] / vetting_data["value_original"].replace(0, 1) * 100
-    )
-
-    # Replace infinite values with 0 (when original was 0)
-    vetting_data["gap_share"] = vetting_data["gap_share"].replace(
-        [float("inf"), -float("inf")], 0
-    )
-
-    # Round to reasonable precision
-    vetting_data["gap_share"] = vetting_data["gap_share"].round(2)
-
-    # Select and rename columns for clarity
-    output_columns = [
-        "node",
-        "year",
-        "commodity",
-        "value_original",
-        "value_modified",
-        "gap",
-        "gap_share",
-    ]
-
-    vetting_data = vetting_data[output_columns].copy()
-    vetting_data.columns = [
-        "node",
-        "year",
-        "commodity",
-        "original_demand",
-        "modified_demand",
-        "gap",
-        "gap_share",
-    ]
-
-    # # Filter out rows where no subtraction occurred
-    # vetting_data = vetting_data[vetting_data["gap"] > 0]
-
-    # Sort by commodity, node, year for better readability
-    vetting_data = vetting_data.sort_values(["commodity", "node", "year"])
 
     # Save to CSV
     vetting_data.to_csv(output_path, index=False)
-
-    log.info(f"Vetting CSV saved to: {output_path}")
+    log.info(f"Vetting data saved to: {output_path}")
 
     # Log summary statistics
     if len(vetting_data) > 0:
-        avg_pct = vetting_data["gap_share"].mean()
-        max_pct = vetting_data["gap_share"].max()
-        log.info(f"Average gap share: {avg_pct:.2f}%")
-        log.info(f"Max gap share: {max_pct:.2f}%")
+        desc = vetting_data.describe()
+        log.info(f"Average gap share: {desc.loc['mean', 'gap_share']:.2f}%")
+        log.info(f"Max gap share: {desc.loc['max', 'gap_share']:.2f}%")
 
 
 # Maybe it is better to have one function for each method?
@@ -209,7 +176,9 @@ def subtract_material_demand(
 
             # Generate vetting CSV if requested
             if generate_vetting_csv and original_demand is not None:
-                _generate_vetting_csv(original_demand, mat_demand, vetting_output_path)
+                # Fetch the fucntion, since its name overlaps with the argument name
+                func = globals()["generate_vetting_csv"]
+                func(original_demand, mat_demand, vetting_output_path)
 
     elif method == "im_subtraction":
         # TODO: to be implemented
