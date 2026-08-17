@@ -1,30 +1,36 @@
 """Transport Futures project."""
 
-from enum import Enum, auto
+from sdmx.model.common import Codelist
+
+from message_ix_models.util.sdmx import (
+    ItemSchemeEnumType,
+    StructureFactory,
+    URNLookupEnum,
+)
 
 
-class SCENARIO(Enum):
-    """Identifiers of Transport Futures scenarios."""
+class CL_SCENARIO_FUTURES(StructureFactory[Codelist]):
+    """Code lists with identifiers of Transport Futures scenarios."""
 
-    BASE = 0
-    A___ = auto()  # NB use underscores because "-" is invalid in Python names
-    AS__ = auto()
-    ASI_ = auto()
-    ASIF = auto()
-    DEBUG = auto()
+    urn = "IIASA_ECE:CL_SCENARIO_FUTURES"
+    version = "1.0"
 
     @classmethod
-    def parse(cls, value):
-        if isinstance(value, cls):
-            return value
-        try:
-            return cls[(value or "BASE").upper().replace("-", "_")]
-        except KeyError:
-            raise ValueError(f"Unknown Transport Futures scenario {value!r}")
+    def create(cls) -> Codelist:
+        cl = cls.maintainable(Codelist)
 
-    def id(self) -> str:
-        return (
-            self.name.replace("_", "-")
-            if self.name not in ("BASE", "DEBUG")
-            else self.name.lower()
-        )
+        cl.setdefault(id="BASE", name="Base scenario")
+        cl.setdefault(id="A___", name="Activity")
+        cl.setdefault(id="AS__", name="Activity, structure")
+        cl.setdefault(id="ASI_", name="Activity, structure, intensity")
+        cl.setdefault(id="ASIF", name="Activity, structure, intensity, fuels")
+        cl.setdefault(id="DEBUG", name="Additional scenario for debugging")
+
+        return cl
+
+
+class SCENARIO(URNLookupEnum, metaclass=ItemSchemeEnumType):
+    """Enumeration of Transport Futures scenario IDs."""
+
+    def _get_item_scheme(self) -> Codelist:
+        return CL_SCENARIO_FUTURES.get()

@@ -747,12 +747,6 @@ general:
   args:
     units: 'GWa / year'
 
-- key: gdp_ppp
-  comp: product
-  inputs:
-  - GDP
-  - MERtoPPP
-
 # CH4 emissions from GLOBIOM: select only the subset
 - key: land_out:n-s-y-c-l-h:CH4_0
   comp: select

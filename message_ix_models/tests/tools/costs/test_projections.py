@@ -82,6 +82,7 @@ def test_create_cost_projections(config, exp_fix, exp_inv) -> None:
         assert values <= set(inv_cost[column].unique())
 
 
+@pytest.mark.ci_linux_only
 @pytest.mark.parametrize(
     "node",
     (
@@ -121,6 +122,7 @@ def test_bare_res(request, test_context, node):
     scenario.solve()
 
 
+@pytest.mark.ci_linux_only
 @pytest.mark.parametrize(
     "module",
     (

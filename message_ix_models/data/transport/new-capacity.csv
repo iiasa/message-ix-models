@@ -1,0 +1,5 @@
+# historical_new_capacity and bound_new_capacity_{lo,up} values
+#
+# Units: Mvehicle
+#
+node_loc, technology, year_vtg, value

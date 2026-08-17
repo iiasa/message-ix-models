@@ -16,6 +16,8 @@ Submodules:
    node
    pooch
    pycountry
+   pytest
+   _re
    scenarioinfo
    sdmx
    zipfile
@@ -29,6 +31,7 @@ Commonly used:
    ~context.Context
    ~scenarioinfo.ScenarioInfo
    ~scenarioinfo.Spec
+   ~_re.Substitutions
    .adapt_R11_R12
    .adapt_R11_R14
    .as_codes
@@ -206,6 +209,21 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.pycountry
 
 .. automodule:: message_ix_models.util.pycountry
+   :members:
+
+:mod:`.util.pytest`
+===================
+
+.. currentmodule:: message_ix_models.util.pytest
+
+.. automodule:: message_ix_models.util.pytest
+
+:mod:`.util._re`
+================
+
+.. currentmodule:: message_ix_models.util._re
+
+.. automodule:: message_ix_models.util._re
    :members:
 
 :mod:`.util.scenarioinfo`

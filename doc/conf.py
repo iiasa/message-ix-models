@@ -83,6 +83,7 @@ rst_prolog = r"""
 .. |t| replace:: :math:`t`
 .. |y| replace:: :math:`y`
 .. |y0| replace:: :math:`y_0`
+.. |yV| replace:: :math:`y^V`
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
 

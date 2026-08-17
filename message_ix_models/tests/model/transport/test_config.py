@@ -1,24 +1,20 @@
 from collections.abc import Iterator
 
 import pytest
+import xarray as xr
+from genno.operator import as_quantity
+from genno.testing import assert_qty_equal
+from iam_units import registry
 
 from message_ix_models import Context
 from message_ix_models.model.transport.config import (
     CL_SCENARIO,
     Config,
+    DataSourceConfig,
     iter_price_emission,
 )
 from message_ix_models.project.navigate import T35_POLICY
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
-from message_ix_models.project.transport_futures import SCENARIO as TF_SCENARIO
-
-FUTURES = (
-    ("", TF_SCENARIO.BASE),
-    ("base", TF_SCENARIO.BASE),
-    ("A---", TF_SCENARIO.A___),
-    ("debug", TF_SCENARIO.DEBUG),
-    pytest.param("foo", None, marks=pytest.mark.xfail(raises=ValueError)),
-)
 
 NAVIGATE = (
     ("", T35_POLICY.REF),
@@ -44,6 +40,83 @@ class TestConfig:
     def c(self) -> Iterator[Config]:
         yield Config()
 
+    @pytest.mark.parametrize(
+        "regions",
+        [
+            None,  # Default per message_ix_models.model.Config
+            "R11",
+            "R12",
+            "R14",
+            pytest.param("ISR", marks=pytest.mark.xfail(raises=AssertionError)),
+        ],
+    )
+    def test_from_context0(self, test_context, regions) -> None:
+        """Configuration can be read from files.
+
+        This exercises :meth:`.Config.from_context`.
+        """
+        # Set the regional aggregation to be used
+        ctx = test_context
+        if regions:
+            ctx.model.regions = regions
+
+        # Returns the same object stored as Context["transport"]
+        cfg = Config.from_context(ctx)
+
+        assert cfg is ctx["transport"]
+
+        # Attributes have the correct types
+        assert isinstance(cfg.data_source, DataSourceConfig)
+
+        # Scalar parameters are loaded
+        assert cfg.scaling
+        assert_qty_equal(
+            as_quantity("200 * 8 hours / passenger / year"), cfg.work_hours
+        )
+
+        # Codes for the consumer_group set are generated
+        codes = cfg.spec.add.set["consumer_group"]
+        RUEAA = codes[codes.index("RUEAA")]
+        assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
+
+        # xarray objects are generated for advanced indexing
+        indexers = cfg.spec.add.set["consumer_group indexers"]
+        assert all(isinstance(da, xr.DataArray) for da in indexers.values())  # type: ignore [attr-defined]
+
+        # Codes for commodities are generated
+        codes = cfg.spec.add.set["commodity"]
+        RUEAA = codes[codes.index("transport pax RUEAA")]
+        assert RUEAA.eval_annotation("demand") is True
+
+        # …with expected units
+        r = dict(registry=registry)
+        assert registry.Unit("Gp km") == RUEAA.eval_annotation("units", r)
+
+        # Codes for technologies are generated, with annotations giving their units
+        codes = cfg.spec.add.set["technology"]
+        ELC_100 = codes[codes.index("ELC_100")]
+        assert registry.Unit("Gv km") == ELC_100.eval_annotation("units", r)
+
+        # If "ISR" was given as 'regions', then the corresponding config file was loaded
+        if regions == "ISR":
+            # Check one config value to confirm
+            assert {"Israel"} == set(cfg.node_to_census_division.keys())
+
+    @pytest.mark.parametrize(
+        "options",
+        [
+            {},
+            pytest.param(
+                {"mode-share": "default"}, marks=pytest.mark.xfail(raises=TypeError)
+            ),
+            {"mode_share": "default"},
+            {"mode_share": "INVALID"},
+        ],
+    )
+    def test_from_context1(self, test_context, options) -> None:
+        """:meth:`.Config.from_context` operates with various options."""
+        Config.from_context(test_context, options=options)
+
     def test_fields(self, c: Config) -> None:
         """Settable class property included in :meth:`.ConfigHelper._fields`."""
         assert {"code"} & c._fields()
@@ -60,18 +133,6 @@ class TestConfig:
         c.ssp = input
         assert expected == c.ssp
 
-    @pytest.mark.parametrize("input, expected", FUTURES)
-    def test_futures_scenario0(self, input, expected):
-        """Set Transport Futures scenario through the constructor."""
-        c = Config(futures_scenario=input)  # Call succeeds
-        assert expected == c.project["futures"]  # The expected enum value is set
-
-    @pytest.mark.parametrize("input, expected", FUTURES)
-    def test_futures_scenario1(self, c, input, expected):
-        """Set Transport Futures scenario on an existing instance."""
-        c.set_futures_scenario(input)
-        assert expected == c.project["futures"]
-
     @pytest.mark.parametrize("input, expected", NAVIGATE)
     def test_navigate_scenario0(self, input, expected):
         """Set NAVIGATE scenario through the constructor."""
@@ -84,17 +145,33 @@ class TestConfig:
         c.set_navigate_scenario(input)
         assert expected == c.project["navigate"]
 
-    def test_scenario_conflict(self):
-        # Giving both raises an exception
-        at = "(ACT|TEC)"  # Order differs in Python 3.9
-        expr = rf"SCENARIO.A___ and T35_POLICY.{at}\|{at} are not compatible"
-        with pytest.raises(ValueError, match=expr):
-            c = Config(futures_scenario="A---", navigate_scenario="act+tec")
+    @pytest.mark.parametrize(
+        "args",
+        (
+            ("a b c",),
+            ("a b c a",),  # Duplicates are ignored
+            ("a b -b b -b b b b b c",),
+            ("a -freight b c",),  # Mix of additions and removals
+            (["a", "b", "c"],),
+            (["a"], ["b -freight"], "c"),  # Multiple lists, one with a " "-sep string
+        ),
+    )
+    def test_use_modules(self, args: tuple[str | list[str], ...]) -> None:
+        # Call use_modules() explicitly
+        c = Config()
+        c.use_modules(*args)
 
-        # Also a conflict
-        c = Config(navigate_scenario="act+tec")
-        with pytest.raises(ValueError, match=expr):
-            c.set_futures_scenario("A---")
+        # Modules a, b, and c are added, only once each, as the last in sequence
+        assert ["a", "b", "c"] == c.modules[-3:]
+        assert len(set(c.modules)) == len(c.modules)  # No duplicates
+
+        if len(args) > 1:
+            return  # Config(extra_modules=…) may only be *one* str or list[str]
+
+        # Implicit call via extra_modules InitVar
+        c = Config(extra_modules=args[0])
+        assert ["a", "b", "c"] == c.modules[-3:]
+        assert len(set(c.modules)) == len(c.modules)  # No duplicates
 
 
 class TestCL_SCENARIO:
@@ -102,7 +179,7 @@ class TestCL_SCENARIO:
         result = CL_SCENARIO.get(force=True)
 
         # Code list has the expected length
-        assert 366 == len(result)
+        assert 386 == len(result)
 
         # Code list contains codes with the expected IDs
         assert {
@@ -134,11 +211,21 @@ class TestCL_SCENARIO:
         assert "material" in cfg.modules
 
         # Codes with policies discovered in the data dir are present
+        c = result["LED-SSP2 exo price 1aa5"]
         c = result["M SSP2 exo price 2e17"]
 
         assert "SSP_SSP2_v5.3.1/SSP2 - Low Emissions#2" in str(
             c.get_annotation(id="policy").text
         )
+
+        # Codes with project-specific scenario information can be inspected
+        cfg = Config()
+        cfg.code = result["DIGSY-BEST-C"]
+
+        assert cfg.project_scenario_code is not None
+        assert "BEST-C" == cfg.project_scenario_code.id
+        assert cfg.project_scenario_code.parent is not None
+        assert "CL_SCENARIO_DIGSY" == cfg.project_scenario_code.parent.id
 
 
 @pytest.mark.parametrize(
