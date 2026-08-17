@@ -11,7 +11,7 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from functools import cache, reduce
+from functools import cache, reduce, singledispatch
 from itertools import filterfalse, product, zip_longest
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -19,6 +19,7 @@ import genno
 import ixmp
 import numpy as np
 import pandas as pd
+import pyam
 from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
@@ -73,6 +74,7 @@ __all__ = [
     "nodes_world_agg",
     "quantity_from_iamc",
     "remove_ts",
+    "remove_zeros",
     "select_allow_empty",
     "select_expand",
     "share_curtailment",
@@ -504,6 +506,30 @@ def remove_ts(
         scenario.discard_changes()
     else:
         scenario.commit(f"Remove time series data ({__name__}.remove_all_ts)")
+
+
+@singledispatch
+def remove_zeros(data: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Remove zeros in IAMC-like data in years before `year`.
+
+    Parameters
+    ----------
+    data :
+        Either :class:`pyam.IamDataFrame` or :class:`pandas.DataFrame`. In the latter
+        case, **must** have at least columns "year" (dtype :class:`int`) and "value".
+
+    Returns
+    -------
+    same type as `data`
+        Any values with year < `year` and value == 0 are removed.
+    """
+    return data.query("year >= @year or value != 0")
+
+
+@remove_zeros.register
+def _(idf: pyam.IamDataFrame, year: int) -> pyam.IamDataFrame:
+    # Convert to pandas → pipe through pd.DataFrame implementation → restore.
+    return type(idf)(idf.as_pandas().pipe(remove_zeros, year=year))
 
 
 # Non-weak references to objects to keep them alive
