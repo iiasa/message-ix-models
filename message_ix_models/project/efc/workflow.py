@@ -445,24 +445,28 @@ def generate(context: Context) -> Workflow:
 
     # EFC workflow: clone the parent scenario on ixmp-dev into the EFC model name.
     #
-    # The parent URL reads as BMT but the scenario is MT-built, and the two must
-    # not be confused: the MODEL name says "2.1-BMT-R12" while the SCENARIO
-    # inside it is "baseline_MT". The model name is an upstream naming legacy
-    # (that model houses several MT scenarios); the scenario itself never ran the
-    # Buildings step. Verified on ixmp-dev: baseline_MT#6 has ZERO technologies
-    # matching *afofio* and retains the original _rc names (eth_rc, h2_rc,
-    # elec_rc, gas_rc, foil_rc), which is the Buildings discriminator — Buildings
-    # renames residential/commercial _rc -> _afofio in model/buildings/build.py.
-    # So the whole EFC chain is MT, and reporting filters must use _rc names.
+    # The parent is the MT chain rebuilt on 2026-08-18 from the step_14b shipping
+    # patch, which restores loil_bunker's input/output (deleted upstream in model
+    # v6.5; a hollow addon-parent with degenerate activity inflated shipping CO2).
+    # It is cre_user juyiyi and lives under the EFC model name, but it is NOT ours
+    # to overwrite: pin the version and clone, never build in place.
+    #
+    # The chain is MT, never BMT, even though the previous parent URL named a
+    # "2.1-BMT-R12" model: that was an upstream naming legacy and the scenario
+    # inside it never ran the Buildings step. The discriminator is the Buildings
+    # rename of residential/commercial _rc -> _afofio in model/buildings/build.py;
+    # the parent has ZERO *afofio* technologies and the full _rc set (eth_rc,
+    # h2_rc, elec_rc, gas_rc, foil_rc), so reporting filters must use _rc names.
     # Re-check with EFC_2026 scripts/verify/check_mt_vs_bmt_lineage.py.
     #
-    # Do not "fix" the parent's naming: that model/scenario is owned upstream
-    # (all baseline_MT versions are cre_user juyiyi) and other scenarios depend
-    # on it. apply_bmt_config() above is likewise not a Buildings build step —
-    # it is a Context configurator required for transport reporting.
+    # apply_bmt_config() above is not a Buildings build step either — it is a
+    # Context configurator required for transport reporting.
     model_name = "ixmp://ixmp-dev/" + EFC_MODEL_NAME
     url = model_name + "/"
-    base_url = "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12/baseline_MT#6"
+    base_url = (
+        "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
+        "/baseline_MT_calibrated#1"
+    )
 
     # Common keyword argument for cloning (without solution; smaller DB writes)
     c = dict(keep_solution=False)
