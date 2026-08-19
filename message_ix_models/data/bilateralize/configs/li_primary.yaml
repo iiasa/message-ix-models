@@ -1,0 +1,59 @@
+#######################
+# CMM shipped trade #
+#######################
+li_primary_trade:
+  trade_technology:
+    li
+  trade_tech_suffix: 
+  trade_tech_number:
+    1 
+  trade_commodity:
+    li
+  trade_commodity_suffix:
+  trade_units:
+    Mt
+  trade_form:
+    shp
+  export_level:
+    primary
+  trade_level:
+    shipped
+  import_level:
+    primary
+  flow_technologies:
+    - bulk_carrier_loil
+  flow_tech_suffix:
+  flow_constraint:
+    global
+  flow_fuel_input:
+    bulk_carrier_loil:
+      - lightoil
+  flow_material_input:
+  flow_commodity_output:
+    bulk_carrier_capacity
+  flow_units:
+    Mt-km
+  supply_technologies:
+    - li_brine_extr_A
+    - li_brine_extr_B
+    - li_brine_extr_C
+    - li_brine_extr_D
+    - li_hardrock_extr_A
+    - li_hardrock_extr_B
+    - li_hardrock_extr_C
+    - li_hardrock_extr_D
+    - li_uncon_extr_A
+    - li_uncon_extr_B
+    - li_uncon_extr_C
+    - li_uncon_extr_D
+  specify_network:
+    False
+  tracked_emissions: # List of tracked emission types
+  bunker_technology:
+    material_bulk_carrier_loil:
+      loil_tobunker
+  trade_technical_lifetime:
+      1
+  flow_technical_lifetime:
+      20
+      
