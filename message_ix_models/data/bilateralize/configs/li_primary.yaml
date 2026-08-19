@@ -2,6 +2,7 @@
 # CMM shipped trade #
 #######################
 li_primary_trade:
+  base_trade_technology: # [Optional] no equivalent technology in the base scenario
   trade_technology:
     li
   trade_tech_suffix: 
@@ -10,6 +11,7 @@ li_primary_trade:
   trade_commodity:
     li
   trade_commodity_suffix:
+    primary
   trade_units:
     Mt
   trade_form:
@@ -49,6 +51,7 @@ li_primary_trade:
   specify_network:
     False
   tracked_emissions: # List of tracked emission types
+  emission_factor: # CO2 combustion factor of the traded commodity; blank for non-combusted minerals (li) — same as eth_shipped/biomass_shipped/lh2_shipped
   bunker_technology:
     material_bulk_carrier_loil:
       loil_tobunker
