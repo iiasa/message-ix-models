@@ -31,6 +31,7 @@ from .context import Context
 if TYPE_CHECKING:
     from os import PathLike
 
+    import pandas as pd
     import pint
     from genno import Computer, Key
     from sdmx.message import StructureMessage
@@ -715,6 +716,44 @@ def eval_anno(obj: common.AnnotableArtefact, id: str):
     except Exception as e:  # Something that can't be eval()'d, e.g. a plain string
         log.debug(f"Could not eval({value!r}): {e}")
         return value
+
+
+def fetch_data(source: str, dataflow: str, key: str, **params: str) -> "pd.Series":
+    """Retrieve data from an SDMX web service.
+
+    Parameters
+    ----------
+    source
+        ID of a data source known to :mod:`sdmx`, for instance "ESTAT" or "UNSD"; this
+        supplies the URL of the web service.
+    dataflow
+        ID of a data flow provided by that service.
+    key
+        Positional data key: the labels selected on each dimension of `dataflow`, in the
+        order in which that data flow declares its dimensions, separated by ".". An
+        empty part selects every label on the corresponding dimension. A key whose parts
+        are in another order is *answered* by the service rather than rejected, with
+        data for a selection that was not requested, so callers **must** construct it
+        from the dimension order of `dataflow` itself.
+    params
+        Further query parameters, for instance :py:`startPeriod="2000"`.
+
+    Returns
+    -------
+    pandas.Series
+        with one level per dimension of `dataflow` on its index, labelled with the
+        dimension IDs used by the service.
+    """
+    log.info(f"Query {source} {dataflow} for key {key!r}")
+    message = sdmx.Client(source).data(dataflow, key=key, params=params)
+
+    # Convert the single data set, not the message: sdmx.to_pandas() applied to a
+    # DataMessage returns a list if the message carries more than 1 data set. Compare
+    # .tools.wb.assign_income_groups().
+    result = sdmx.to_pandas(message.data[0])
+    log.info(f"{len(result)} observation(s)")
+
+    return result
 
 
 def get(urn: str) -> "common.MaintainableArtefact | None":

@@ -1,9 +1,12 @@
 import logging
 import re
 import sys
+from types import SimpleNamespace
 
 import genno
+import pandas as pd
 import pytest
+import sdmx
 from genno import Computer, Key
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
@@ -15,6 +18,7 @@ from message_ix_models.util.sdmx import (
     ItemSchemeEnumType,
     URNLookupEnum,
     eval_anno,
+    fetch_data,
     read,
 )
 
@@ -120,6 +124,53 @@ class TestDataflow:
 
 
 _urn_prefix = "urn:sdmx:org.sdmx.infomodel"
+
+
+class TestFetchData:
+    """Test :func:`.fetch_data`."""
+
+    @pytest.fixture
+    def client(self, monkeypatch):
+        """Replace :class:`sdmx.Client`; yield a record of what it was asked for."""
+        calls: dict = {}
+
+        class Stub:
+            def __init__(self, source: str) -> None:
+                calls.update(source=source)
+
+            def data(self, dataflow, key, params):
+                calls.update(dataflow=dataflow, key=key, params=params)
+                # A message carrying more than 1 data set
+                return SimpleNamespace(data=["data set 0", "data set 1"])
+
+        def to_pandas(obj):
+            calls.update(converted=obj)
+            return pd.Series([1.0])
+
+        monkeypatch.setattr(sdmx, "Client", Stub)
+        monkeypatch.setattr(sdmx, "to_pandas", to_pandas)
+
+        yield calls
+
+    def test_query(self, client) -> None:
+        result = fetch_data("UNSD", "DF_FOO", "398..HSO", startPeriod="2000")
+
+        assert "UNSD" == client["source"]
+        assert "DF_FOO" == client["dataflow"]
+        assert "398..HSO" == client["key"]
+        assert dict(startPeriod="2000") == client["params"]
+        assert 1 == len(result)
+
+    def test_convert_one_data_set(self, client) -> None:
+        """The single data set is converted, not the message.
+
+        :func:`sdmx.to_pandas` applied to a data message carrying more than 1 data set
+        returns a :class:`list`, not a :class:`pandas.Series`. Callers use the result as
+        a Series, so the mistake surfaces far from here.
+        """
+        fetch_data("UNSD", "DF_FOO", "398..HSO")
+
+        assert "data set 0" == client["converted"]
 
 
 class TestItemSchemeEnum:

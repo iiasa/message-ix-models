@@ -11,6 +11,16 @@ Tools for specific data sources
 .. automodule:: message_ix_models.tools.cepii
    :members:
 
+.. _tools-eurostat:
+
+Eurostat (:mod:`.tools.eurostat`)
+=================================
+
+.. currentmodule:: message_ix_models.tools.eurostat
+
+.. automodule:: message_ix_models.tools.eurostat
+   :members:
+
 .. _tools-gfei:
 
 Global Fuel Economy Initiative (GFEI) (:mod:`.tools.gfei`)
@@ -187,4 +197,14 @@ NewClimate Institute (:mod:`.tools.newclimate`)
 ===============================================
 
 .. automodule:: message_ix_models.tools.newclimate
+   :members:
+
+.. _tools-unsd:
+
+UN Statistics Division (UNSD) (:mod:`.tools.unsd`)
+==================================================
+
+.. currentmodule:: message_ix_models.tools.unsd
+
+.. automodule:: message_ix_models.tools.unsd
    :members:
