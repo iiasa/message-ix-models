@@ -33,7 +33,7 @@ Next release
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
 - Improve :func:`~.report.report` output when :attr:`.Config.verbose` is :py:`True`
   (:pull:`497`).
-- Improve :doc:`/transport/index` (:pull:`497`):
+- Improve :doc:`/transport/index` (:pull:`497`, :pull:`541`):
 
   - Consolidate handling of vehicle stock, input, and output intensities in
     :mod:`.transport.vehicle`, from :mod:`.transport.freight`
