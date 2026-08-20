@@ -4,7 +4,7 @@ from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from re import escape
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from warnings import warn
 
 import genno.config
@@ -20,12 +20,14 @@ from message_ix_models.model.workflow import STAGE
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
-from .plot import prepare_computer as add_plots
 
 if TYPE_CHECKING:
     from genno.core.key import KeyLike  # TODO Import from genno.types
 
     from .config import Callback
+
+    # Provided at runtime by __getattr__(), below
+    from .plot import prepare_computer as add_plots
 
 __all__ = [
     "NOT_IMPLEMENTED_IAMC",
@@ -38,6 +40,15 @@ __all__ = [
     "register",
     "report",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    # Import .plot on demand: it requires plotnine, from the "report" extra
+    if name == "add_plots":
+        from .plot import prepare_computer
+
+        return prepare_computer
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 log = logging.getLogger(__name__)

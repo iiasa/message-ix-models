@@ -23,13 +23,22 @@ ComputerT = TypeVar("ComputerT", bound="genno.Computer")
 Callback = Callable[[ComputerT, "Context"], None]
 
 
-def _default_callbacks() -> list[Callback]:
+def _plot_callback(c: "genno.Computer", context: "Context") -> None:
+    """Call :func:`.report.plot.callback`.
+
+    The :mod:`.report.plot` import is deferred to here because it requires
+    :mod:`plotnine`, from the "report" extra.
+    """
     from message_ix_models.report import plot
 
+    plot.callback(c, context)
+
+
+def _default_callbacks() -> list[Callback]:
     from . import defaults, extraction
 
     # NB When updating this list, also update the docstring of Config.callback
-    return [defaults, extraction.callback, plot.callback]
+    return [defaults, extraction.callback, _plot_callback]
 
 
 @dataclass
