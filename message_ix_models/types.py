@@ -1,12 +1,14 @@
 """Types for hinting."""
 
 from collections.abc import Mapping, MutableMapping
-from typing import Any, Protocol, TypedDict
+from typing import TYPE_CHECKING, Any, Protocol, TypedDict
 
 import pandas as pd
 import sdmx.model.common
 from genno.core.key import KeyLike  # TODO Import from genno.types, when possible
-from plotnine import ggplot
+
+if TYPE_CHECKING:
+    from plotnine import ggplot
 
 try:
     from genno.core.quantity import AnyQuantity
@@ -35,7 +37,7 @@ MutableParameterData = MutableMapping[str, pd.DataFrame]
 
 
 class PlotAddable(Protocol):
-    def __radd__(self, other: ggplot) -> ggplot: ...
+    def __radd__(self, other: "ggplot") -> "ggplot": ...
 
 
 # For sdmx1
