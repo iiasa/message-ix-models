@@ -23,8 +23,20 @@
 # parameter on 2026-07-07 (check_filter_coords: all coords present).
 # See docs/shipping_bunker_findings.md.
 #
-# EXCLUDED: loil_bunker's fuel path is disabled. The hollow addon parent has no
-# input/output; its nonzero ACT is degenerate/phantom, not a commodity flow.
+# loil RE-INCLUDED 2026-08-20, reversing the #348 exclusion. It was dropped
+# while loil_bunker was a hollow addon-parent with no input/output and
+# degenerate ACT; the step_14b re-parametrisation gave it a real lightoil@final
+# input and shp_*@useful output, and the EFC baseline is now built from that
+# lineage. Holding the exclusion past the rebuild would understate marine light
+# oil -- a wrong number in the other direction.
+# Filters verified against baseline#9 (ixmp-dev), input parameter:
+#   loil_bunker:     lightoil@final, 19 shp_* modes, coeff 1.0.
+#   loil_occ_bunker: lightoil@final, 19 shp_* modes, coeff 1.0.
+# All four fossil bunker pairs share the same 19-mode input set.
+# loil_occ_bunker is idle in baseline#9 (ACT zero in every year), but it is a
+# present technology with valid coordinates and addon_conversion 1.0, and its
+# foil twin only deploys from 2090 -- a genuine zero of a real flow, not a flow
+# that cannot exist.
 var: in
 iamc_prefix: "in|"
 unit: EJ/yr
@@ -56,6 +68,19 @@ vars:
     original_unit: GWa
     short: in_LNG_bunker_LNG
 
+  Shipping|loil_bunker|lightoil:
+    filter:
+      technology: loil_bunker
+      commodity: lightoil
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_loil_bunker_lightoil
+
   Shipping|foil_occ_bunker|fueloil:
     filter:
       technology: foil_occ_bunker
@@ -81,3 +106,16 @@ vars:
              shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
     original_unit: GWa
     short: in_LNG_occ_bunker_LNG
+
+  Shipping|loil_occ_bunker|lightoil:
+    filter:
+      technology: loil_occ_bunker
+      commodity: lightoil
+      level: final
+      mode: [shp_bulk_long_current, shp_bulk_long_future, shp_bulk_short_current, shp_bulk_short_future,
+             shp_chemical, shp_container_long_current, shp_container_long_future, shp_container_short_current,
+             shp_container_short_future, shp_general_long_current, shp_general_long_future,
+             shp_general_short_current, shp_general_short_future, shp_oil, shp_roro_long_current,
+             shp_roro_long_future, shp_roro_short_current, shp_roro_short_future, shp_solid]
+    original_unit: GWa
+    short: in_loil_occ_bunker_lightoil

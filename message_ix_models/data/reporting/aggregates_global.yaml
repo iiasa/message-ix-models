@@ -11,8 +11,11 @@
 # EFC_2026/scripts/verify/check_aggregates_config.py -- run it on every edit.
 #
 # Provenance decisions carried from docs/reporting_c4_aggregates_trade.md:
-# - loil_bunker is EXCLUDED everywhere (hollow addon-parent, phantom activity):
-#   both Liquids|Oil rows equal the foil-only sum by construction.
+# - loil_bunker is INCLUDED again since 2026-08-20 (board #517), reversing the
+#   #348 exclusion: step_14b gave the technology a real lightoil@final input, and
+#   the EFC baseline now descends from that lineage, so Liquids|Oil is once more
+#   the foil + loil sum the C4 spec asks for. Liquids|Oil|loil is the spec row
+#   that was held back while the technology was hollow.
 # - OCC addons (foil/LNG_occ_bunker) are INCLUDED in per-fuel totals (ribbon
 #   plots them; legacy misses them; final say with the shipping-module owners).
 # - Shipping|Ammonia is a spec ADDITION pending ratification (open-questions
@@ -172,8 +175,15 @@ aggregates:
   - name: Final Energy|Bunkers|Shipping|Liquids|Oil|foil
     patterns: ["in|Shipping|foil_bunker|fueloil", "in|Shipping|foil_occ_bunker|fueloil"]
     unit: EJ/yr
+  - name: Final Energy|Bunkers|Shipping|Liquids|Oil|loil
+    patterns: ["in|Shipping|loil_bunker|lightoil", "in|Shipping|loil_occ_bunker|lightoil"]
+    unit: EJ/yr
   - name: Final Energy|Bunkers|Shipping|Liquids|Oil
-    patterns: ["in|Shipping|foil_bunker|fueloil", "in|Shipping|foil_occ_bunker|fueloil"]
+    patterns:
+      - "in|Shipping|foil_bunker|fueloil"
+      - "in|Shipping|foil_occ_bunker|fueloil"
+      - "in|Shipping|loil_bunker|lightoil"
+      - "in|Shipping|loil_occ_bunker|lightoil"
     unit: EJ/yr
   - name: Final Energy|Bunkers|Shipping|Ammonia
     patterns: ["in|Shipping|NH3_bunker|ammonia"]
