@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`546`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
 - Add :class:`.model.water.Config` to collect water module settings (:pull:`509`).
