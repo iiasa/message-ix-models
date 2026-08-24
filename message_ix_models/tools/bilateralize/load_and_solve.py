@@ -403,9 +403,8 @@ def load_and_solve(
     log.info("Loading and solving scenario")
 
     # Load the scenario
-    mp = ixmp.Platform()
-
     if scenario is None:
+        mp = ixmp.Platform()
         scen = load_and_clone(
             mp=mp,
             log=log,
@@ -418,6 +417,7 @@ def load_and_solve(
     else:
         log.info(f"Using existing scenario: {scenario.model}/{scenario.scenario}")
         scen = scenario
+        mp = scen.platform
 
     # Add sets and parameters for each covered technology
     covered_tec = config_base.get("covered_trade_technologies")

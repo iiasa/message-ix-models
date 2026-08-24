@@ -22,19 +22,13 @@ li_primary_trade:
     shipped
   import_level:
     primary
-  flow_technologies:
-    - bulk_carrier_loil
+  flow_technologies: [] # no separate shipping/flow layer — trade linked directly
   flow_tech_suffix:
   flow_constraint:
-    global
   flow_fuel_input:
-    bulk_carrier_loil:
-      - lightoil
   flow_material_input:
   flow_commodity_output:
-    bulk_carrier_capacity
   flow_units:
-    Mt-km
   supply_technologies:
     - li_brine_extr_A
     - li_brine_extr_B
@@ -52,11 +46,7 @@ li_primary_trade:
     False
   tracked_emissions: # List of tracked emission types
   emission_factor: # CO2 combustion factor of the traded commodity; blank for non-combusted minerals (li) — same as eth_shipped/biomass_shipped/lh2_shipped
-  bunker_technology:
-    material_bulk_carrier_loil:
-      loil_tobunker
+  bunker_technology: # required key (read unconditionally in load_and_solve.py), blank since there's no flow tech to bunker fuel for
   trade_technical_lifetime:
       1
   flow_technical_lifetime:
-      20
-      

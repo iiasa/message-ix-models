@@ -43,7 +43,11 @@ def broadcast_years(
     all_new_rows = []
     for _, row in df.iterrows():
         for y in year_list:
-            new_row = row.copy()
+            # .astype(object): a row that's all-string (e.g. no numeric
+            # "value" column filled in yet) comes back from iterrows() as an
+            # Arrow-backed string Series under pandas >=3.0, which rejects
+            # assigning a plain int in place — object dtype allows the mix.
+            new_row = row.copy().astype(object)
             new_row[year_type] = int(y)
             all_new_rows.append(new_row)
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
@@ -90,7 +94,8 @@ def broadcast_yv_ya(
 
             # Create new rows for each vintage year
             for yv in yv_list:
-                new_row = row.copy()
+                # See broadcast_years() above for why .astype(object) is needed.
+                new_row = row.copy().astype(object)
                 new_row["year_act"] = int(ya)
                 new_row["year_vtg"] = int(yv)
                 all_new_rows.append(new_row)
@@ -219,7 +224,15 @@ def build_parameter_sheets(
 
             for csv_file in csv_files:
                 key = csv_file.stem
-                data_dict[ty][key] = pd.read_csv(csv_file)
+                try:
+                    data_dict[ty][key] = pd.read_csv(csv_file)
+                except pd.errors.EmptyDataError:
+                    # A tec with no flow technologies (flow_technologies: [])
+                    # still gets flow_technology/*.csv scaffolded by
+                    # export_edit_files() — those never get populated with
+                    # columns, so skip rather than crash on an empty bare file.
+                    log.info(f"Skipping empty bare file: {csv_file}")
+                    continue
 
         # Broadcast the data
         for ty in ["trade", "flow"]:
