@@ -107,6 +107,13 @@ def define_networks(
             node_df_tec = ndt_out.copy()
 
         node_df_tec["import_technology"] = config_dict["trade_technology"][tec] + "_imp"
+        if config_dict["trade_tech_suffix"][tec] is not None:
+            node_df_tec["import_technology"] = (
+                node_df_tec["import_technology"]
+                + "_"
+                + config_dict["trade_tech_suffix"][tec]
+            )
+            
         node_df_tec["INCLUDE? (No=0, Yes=1)"] = ""
 
         # Specify network (the function will stop to allow specification)

@@ -371,6 +371,7 @@ def load_and_solve(
     extra_parameter_updates: dict | None = None,
     gdx_location: str | None = None,
     MESSAGEix_GLOBIOM: bool = True,
+    mp_name: str = "default",
 ):
     """
     Clone and update scenario.
@@ -404,7 +405,7 @@ def load_and_solve(
 
     # Load the scenario
     if scenario is None:
-        mp = ixmp.Platform()
+        mp = ixmp.Platform(name = mp_name)
         scen = load_and_clone(
             mp=mp,
             log=log,

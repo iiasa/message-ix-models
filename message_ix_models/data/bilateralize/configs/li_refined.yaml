@@ -1,28 +1,28 @@
 #######################
 # CMM shipped trade #
 #######################
-li_primary_trade:
+li_refined_trade:
   base_trade_technology: # [Optional] no equivalent technology in the base scenario
   trade_technology:
     li
   trade_tech_suffix: 
-    primary
+    refined
   trade_tech_number:
     1 
   trade_commodity:
     li
   trade_commodity_suffix:
-    primary
+    refined
   trade_units:
     Mt
   trade_form:
     shp
   export_level:
-    primary
+    refined
   trade_level:
     shipped
   import_level:
-    primary
+    refined
   trade_technical_lifetime:
     1
   flow_technologies: [] # no separate shipping/flow layer — trade linked directly
@@ -33,18 +33,7 @@ li_primary_trade:
   flow_commodity_output:
   flow_units:
   supply_technologies:
-    - li_brine_extr_A
-    - li_brine_extr_B
-    - li_brine_extr_C
-    - li_brine_extr_D
-    - li_hardrock_extr_A
-    - li_hardrock_extr_B
-    - li_hardrock_extr_C
-    - li_hardrock_extr_D
-    - li_uncon_extr_A
-    - li_uncon_extr_B
-    - li_uncon_extr_C
-    - li_uncon_extr_D
+    - li_process
   specify_network:
     False
   tracked_emissions: # List of tracked emission types

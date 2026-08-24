@@ -11,7 +11,9 @@ scenario:
 # COVERED TRADE TECHNOLOGIES
 covered_trade_technologies:
   - li_primary
-
+  - li_refined
+  - battery
+  
 # SHIPPING FUELS (how much of each shipping technology is propelled by each fuel)
 shipping_fuels:
   LNG_tanker:
