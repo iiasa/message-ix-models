@@ -19,13 +19,22 @@ ssp = 1
 # Call scenario
 mp = ixmp.Platform()
 msg_df = pd.DataFrame()
-for ssp in [1, 2]:
-    scen = message_ix.Scenario(mp, "oil-test", f"SSP{ssp} - High Emissions")
+for ssp in [1, 2, 3, 4, 5]:
+    scen = message_ix.Scenario(mp, f"SSP_SSP{ssp}_v6.5_rep_upd2", f"SSP{ssp} - High Emissions")
 
-    # Collect activity from model
+    # Collect historical activity from model
+    df = scen.par('historical_activity', filters = {'technology': ['oil_exp', 'oil_imp']})
+    df['value'] = df['value'].astype(float)*0.03154 # to EJ
+    df = df.groupby(['node_loc', 'technology', 'year_act'])['value'].sum().reset_index()
+    df = df.rename(columns = {'value': 'lvl'})
+    df = df[['node_loc', 'technology', 'year_act', 'lvl']]
+    df_hist = df.copy()
+    
+    # Collect model activity from model
     df = scen.var("ACT", filters = {"technology": ["oil_exp", "oil_imp"]})
     df['lvl'] = df['lvl'].astype(float)*0.03154 # To EJ
     df = df.groupby(['node_loc', 'technology', 'year_act'])['lvl'].sum().reset_index()
+    df = pd.concat([df_hist, df])
 
     exdf = df[df['technology'] == 'oil_exp']
     impdf = df[df['technology'] == 'oil_imp']
@@ -40,6 +49,7 @@ for ssp in [1, 2]:
     message_df['SSP'] = ssp
     msg_df = pd.concat([msg_df, message_df])
 msg_df.to_csv(f"oil_trade_MIX.csv", index=False)
+mp.close_db()
 
 # Collect trade data from IEA
 GITHUB_REPO      = "iiasa/message-ix-models"
@@ -139,7 +149,8 @@ def check_iea_balances(
         if "child" in region_schema[k].keys():
             iea["node"] = np.where(iea['ISO3'].isin(region_schema[k]['child']), k, iea["node"])
 
-    iea = iea.groupby(['YEAR', 'FLOW', 'COMMODITY' 'node'])['IEA-WEB VALUE'].sum().reset_index()
+    iea = iea.groupby(['YEAR', 'FLOW', 'COMMODITY', 'node'])['IEA-WEB VALUE'].sum().reset_index()
+    iea['IEA-WEB VALUE'] = iea['IEA-WEB VALUE'] * 10^-6 # TJ to EJ
     
     # Split into exports and imports
     exports = iea[iea["FLOW"] == "EXPORTS"]
@@ -159,8 +170,8 @@ def check_iea_balances(
 iea_df = check_iea_balances(project_name="diagnose-oil", config_name="config.yaml")
 
 # Combine MIX and IEA data
-iea_df = iea_df[iea_df['Commodity'] == 'Crude Oil']
-iea_df = iea_df[['node', 'YEAR', 'exports_IEA', 'imports_IEA', 'net_exports_IEA']]
+iea_df = iea_df[iea_df['COMMODITY'] == 'Crude Oil']
+iea_df = iea_df[['node', 'YEAR', 'exports_IEA', 'imports_IEA', 'net_exports_IEA']].drop_duplicates()
 
 msg_df = msg_df[['SSP','node_loc', 'year_act', 'exports_MIX', 'imports_MIX', 'net_exports_MIX']]
 msg_df = msg_df.rename(columns = {'node_loc': 'node', 'year_act': 'YEAR'})
