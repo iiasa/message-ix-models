@@ -18,24 +18,28 @@ ssp = 1
 
 # Call scenario
 mp = ixmp.Platform()
-scen = message_ix.Scenario(mp, "oil-test", f"SSP{ssp} - High Emissions")
+msg_df = pd.DataFrame()
+for ssp in [1, 2]:
+    scen = message_ix.Scenario(mp, "oil-test", f"SSP{ssp} - High Emissions")
 
-# Collect activity from model
-df = scen.var("ACT", filters = {"technology": ["oil_exp", "oil_imp"]})
-df['lvl'] = df['lvl'].astype(float)*0.03154 # To EJ
-df = df.groupby(['node_loc', 'technology', 'year_act'])['lvl'].sum().reset_index()
+    # Collect activity from model
+    df = scen.var("ACT", filters = {"technology": ["oil_exp", "oil_imp"]})
+    df['lvl'] = df['lvl'].astype(float)*0.03154 # To EJ
+    df = df.groupby(['node_loc', 'technology', 'year_act'])['lvl'].sum().reset_index()
 
-exdf = df[df['technology'] == 'oil_exp']
-impdf = df[df['technology'] == 'oil_imp']
+    exdf = df[df['technology'] == 'oil_exp']
+    impdf = df[df['technology'] == 'oil_imp']
 
-exdf = exdf.rename(columns = {'lvl': 'exports'})[['node_loc', 'year_act', 'exports']]
-impdf = impdf.rename(columns = {'lvl': 'imports'})[['node_loc', 'year_act', 'imports']]
-df = pd.merge(exdf, impdf, on = ['node_loc', 'year_act'], how = 'outer')
-df['exports'] = df['exports'].fillna(0)
-df['imports'] = df['imports'].fillna(0)
-df['net_exports'] = df['exports'] - df['imports']
-
-df.to_csv(f"oil_trade_{ssp}.csv", index=False)
+    exdf = exdf.rename(columns = {'lvl': 'exports'})[['node_loc', 'year_act', 'exports']]
+    impdf = impdf.rename(columns = {'lvl': 'imports'})[['node_loc', 'year_act', 'imports']]
+    message_df = pd.merge(exdf, impdf, on = ['node_loc', 'year_act'], how = 'outer')
+    message_df['exports'] = message_df['exports'].fillna(0)
+    message_df['imports'] = message_df['imports'].fillna(0)
+    message_df['net_exports_MIX'] = message_df['exports'] - message_df['imports']
+    message_df = message_df.rename(columns = {'exports': 'exports_MIX', 'imports': 'imports_MIX'})
+    message_df['SSP'] = ssp
+    msg_df = pd.concat([msg_df, message_df])
+msg_df.to_csv(f"oil_trade_MIX.csv", index=False)
 
 # Collect trade data from IEA
 GITHUB_REPO      = "iiasa/message-ix-models"
@@ -135,12 +139,31 @@ def check_iea_balances(
         if "child" in region_schema[k].keys():
             iea["node"] = np.where(iea['ISO3'].isin(region_schema[k]['child']), k, iea["node"])
 
+    iea = iea.groupby(['YEAR', 'FLOW', 'COMMODITY' 'node'])['IEA-WEB VALUE'].sum().reset_index()
+    
     # Split into exports and imports
     exports = iea[iea["FLOW"] == "EXPORTS"]
+    exports = exports.rename(columns = {'IEA-WEB VALUE': 'exports'})
+    exports = exports.drop(columns = ['FLOW'])
+
     imports = iea[iea["FLOW"] == "IMPORTS"]
+    imports = imports.rename(columns = {'IEA-WEB VALUE': 'imports'})
+    imports = imports.drop(columns = ['FLOW'])
 
-    return exports, imports
+    iea_df = pd.merge(exports, imports, on = ['YEAR', 'COMMODITY', 'node'], how = 'outer')
+    iea_df['net_exports_IEA'] = iea_df['exports'] - iea_df['imports']
+    iea_df = iea_df.rename(columns = {'exports': 'exports_IEA', 'imports': 'imports_IEA'})
+    
+    return iea_df
 
-iea_exports, iea_imports = check_iea_balances(project_name="diagnose-oil", config_name="config.yaml")
-iea_exports.to_csv(f"iea_exports.csv", index=False)
-iea_imports.to_csv(f"iea_imports.csv", index=False)
+iea_df = check_iea_balances(project_name="diagnose-oil", config_name="config.yaml")
+
+# Combine MIX and IEA data
+iea_df = iea_df[iea_df['Commodity'] == 'Crude Oil']
+iea_df = iea_df[['node', 'YEAR', 'exports_IEA', 'imports_IEA', 'net_exports_IEA']]
+
+msg_df = msg_df[['SSP','node_loc', 'year_act', 'exports_MIX', 'imports_MIX', 'net_exports_MIX']]
+msg_df = msg_df.rename(columns = {'node_loc': 'node', 'year_act': 'YEAR'})
+
+outdf = pd.merge(msg_df, iea_df, on = ['YEAR', 'node'], how = 'outer')
+outdf.to_csv(f"oil_trade_comparison.csv", index=False)
