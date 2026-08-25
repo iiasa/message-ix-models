@@ -35,6 +35,24 @@ df['net_exports'] = df['exports'] - df['imports']
 df.to_csv(f"oil_trade_{ssp}.csv", index=False)
 
 # Collect trade data from IEA
+GITHUB_REPO      = "iiasa/message-ix-models"
+GITHUB_REF       = os.environ.get("MESSAGE_IX_MODELS_REF", "main")
+GITHUB_NODE_PATH = "message_ix_models/data/node"
+
+_github_list_cache = None
+_github_yaml_cache = {}
+
+def _github_schema_yaml(name):
+    """Raw yaml text for one schema, or None if it doesn't exist at this ref."""
+    if name not in _github_yaml_cache:
+        url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_REF}/{GITHUB_NODE_PATH}/{name}.yaml"
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        _github_yaml_cache[name] = resp.text
+    return _github_yaml_cache[name]
+
 def setup_datapath(project_name: str | None = "diagnose-oil", 
                    config_name: str | None = "config.yaml"):
     """
@@ -74,7 +92,7 @@ def setup_datapath(project_name: str | None = "diagnose-oil",
     return data_paths
 
 def check_iea_balances(
-    indf, project_name: str | None = None, config_name: str | None = None
+    project_name: str | None = None, config_name: str | None = None
 ):
     """
     Check against IEA balances.
@@ -93,64 +111,32 @@ def check_iea_balances(
         iea["FLOW"] == "EXPORTS", iea["IEA-WEB VALUE"] * -1, iea["IEA-WEB VALUE"]
     )
 
-    # LNG and pipe gas are directly from IEA
-    indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
-
+    # Reclassify to MESSAGE commodities
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
     with open(dict_dir, "r", encoding="utf8") as f:
         commodity_codes = yaml.safe_load(f)
 
     iea["COMMODITY"] = ""
-    indf["COMMODITY"] = ""
     for c in commodity_codes.keys():
         iea["COMMODITY"] = np.where(
             iea["IEA-WEB COMMODITY"].isin(commodity_codes[c]["IEA-WEB"]),
             c,
             iea["COMMODITY"],
         )
-        indf["COMMODITY"] = np.where(
-            indf["MESSAGE COMMODITY"] == commodity_codes[c]["MESSAGE Commodity"],
-            c,
-            indf["COMMODITY"],
-        )
+    
+    # Reclassify to MESSAGE nodes
+    region_schema = yaml.safe_load(_github_schema_yaml("R12"))
+    iea["node"] = None
+    for k in region_schema.keys():
+        if "child" in region_schema[k].keys():
+            iea["node"] = np.where(iea['ISO3'].isin(region_schema[k]['child']), k, iea["node"])
 
-    exports = (
-        indf.groupby(["YEAR", "EXPORTER", "COMMODITY"])["ENERGY (TJ)"]
-        .sum()
-        .reset_index()
-    )
-    imports = (
-        indf.groupby(["YEAR", "IMPORTER", "COMMODITY"])["ENERGY (TJ)"]
-        .sum()
-        .reset_index()
-    )
-
-    exports = exports.merge(
-        iea[iea["FLOW"] == "EXPORTS"][
-            ["ISO", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
-        ],
-        left_on=["YEAR", "EXPORTER", "COMMODITY"],
-        right_on=["YEAR", "ISO", "COMMODITY"],
-        how="left",
-    )
-    imports = imports.merge(
-        iea[iea["FLOW"] == "IMPORTS"][
-            ["ISO", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
-        ],
-        left_on=["YEAR", "IMPORTER", "COMMODITY"],
-        right_on=["YEAR", "ISO", "COMMODITY"],
-        how="left",
-    )
-
-    exports["DIFFERENCE"] = (
-        exports["ENERGY (TJ)"] - exports["IEA-WEB VALUE"]
-    ) / exports["IEA-WEB VALUE"]
-    imports["DIFFERENCE"] = (
-        imports["ENERGY (TJ)"] - imports["IEA-WEB VALUE"]
-    ) / imports["IEA-WEB VALUE"]
+    # Split into exports and imports
+    exports = iea[iea["FLOW"] == "EXPORTS"]
+    imports = iea[iea["FLOW"] == "IMPORTS"]
 
     return exports, imports
 
-iea_exports, iea_imports = check_iea_balances(df, project_name="diagnose-oil", config_name="config.yaml")
+iea_exports, iea_imports = check_iea_balances(project_name="diagnose-oil", config_name="config.yaml")
 iea_exports.to_csv(f"iea_exports.csv", index=False)
 iea_imports.to_csv(f"iea_imports.csv", index=False)
