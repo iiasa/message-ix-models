@@ -16,7 +16,8 @@ for ssp in [1, 2, 3, 4, 5]:
     # Load scenario
     mp = ixmp.Platform()
     base = message_ix.Scenario(mp, model_name, scen_name)
-    scen = base.clone("oil-test", scen_name)
-
+    scen = base.clone("oil-test", scen_name, keep_solution = False)
+    scen.set_as_default()
+    
     # Run scenario
     scen.solve()
