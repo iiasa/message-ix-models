@@ -9,6 +9,7 @@ import plotnine
 import numpy as np
 import os
 import yaml
+import requests
 
 from message_ix_models.tools.bilateralize.utils import load_config
 from message_ix_models.util import package_data_path
@@ -17,16 +18,18 @@ ssp = 1
 
 # Call scenario
 mp = ixmp.Platform()
-scen = message_ix.Scenario("oil-test", f"SSP{ssp} - High Emissions")
+scen = message_ix.Scenario(mp, "oil-test", f"SSP{ssp} - High Emissions")
 
 # Collect activity from model
 df = scen.var("ACT", filters = {"technology": ["oil_exp", "oil_imp"]})
-df['value'] = df['value'].astype(float)*0.03154 # To EJ
+df['lvl'] = df['lvl'].astype(float)*0.03154 # To EJ
+df = df.groupby(['node_loc', 'technology', 'year_act'])['lvl'].sum().reset_index()
+
 exdf = df[df['technology'] == 'oil_exp']
 impdf = df[df['technology'] == 'oil_imp']
 
-exdf = exdf.rename(columns = {'value': 'exports'})[['node_loc', 'year_act', 'exports']]
-impdf = impdf.rename(columns = {'value': 'imports'})[['node_loc', 'year_act', 'imports']]
+exdf = exdf.rename(columns = {'lvl': 'exports'})[['node_loc', 'year_act', 'exports']]
+impdf = impdf.rename(columns = {'lvl': 'imports'})[['node_loc', 'year_act', 'imports']]
 df = pd.merge(exdf, impdf, on = ['node_loc', 'year_act'], how = 'outer')
 df['exports'] = df['exports'].fillna(0)
 df['imports'] = df['imports'].fillna(0)
@@ -105,11 +108,12 @@ def check_iea_balances(
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
 
     iea = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
-    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_iso3.csv"))
     iea = iea.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
     iea["IEA-WEB VALUE"] = np.where(
         iea["FLOW"] == "EXPORTS", iea["IEA-WEB VALUE"] * -1, iea["IEA-WEB VALUE"]
     )
+    iea = iea.groupby(["YEAR", "ISO3", "IEA-WEB COMMODITY", "IEA-WEB UNIT", "FLOW"])["IEA-WEB VALUE"].sum().reset_index()
 
     # Reclassify to MESSAGE commodities
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
