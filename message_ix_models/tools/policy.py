@@ -634,10 +634,34 @@ def _apply_depth_speed_arrival(
 def add_anchor(
     context: Context,
     scenario: message_ix.Scenario,
+    policy_ids: Collection[str] | None = None,
 ) -> message_ix.Scenario:
-    """Add anchor data to the scenario."""
+    """Add anchor data to the scenario.
+
+    Parameters
+    ----------
+    policy_ids : collection of str, optional
+        If given, only rows with these ``policy_id`` values are applied.
+
+    Examples
+    --------
+    Direct call::
+
+        add_anchor(context, scenario, policy_ids=["gp_1", "gp_2"])
+
+    In a :class:`~message_ix_models.workflow.Workflow` step, pass ``policy_ids``
+    as a keyword argument to :meth:`~message_ix_models.workflow.Workflow.add_step`::
+
+        wf.add_step("with anchors", "base", add_anchor, policy_ids=["gp_1"])
+    """
 
     df_anchor = load_anchor_data(context)
+
+    if policy_ids is not None:
+        ids = {str(p) for p in policy_ids}
+        df_anchor = df_anchor.loc[df_anchor["policy_id"].astype(str).isin(ids)].copy()
+        if df_anchor.empty:
+            log.warning("add_anchor: no anchor rows match policy_ids=%s", sorted(ids))
 
     anchor_emission_factor(df_anchor, scenario)
     anchor_input_output(df_anchor, scenario)
