@@ -24,12 +24,19 @@ Callback = Callable[[ComputerT, "Context"], None]
 
 
 def _default_callbacks() -> list[Callback]:
-    from message_ix_models.report import plot
-
     from . import defaults, extraction
 
     # NB When updating this list, also update the docstring of Config.callback
-    return [defaults, extraction.callback, plot.callback]
+    result: list[Callback] = [defaults, extraction.callback]
+
+    try:
+        from message_ix_models.report import plot
+
+        result.append(plot.callback)
+    except ImportError:  # pragma: no cover
+        pass  # Plotnine is not installed
+
+    return result
 
 
 @dataclass

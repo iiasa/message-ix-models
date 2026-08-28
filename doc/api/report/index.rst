@@ -138,8 +138,11 @@ API reference
 
 .. currentmodule:: message_ix_models.report
 
+
 .. automodule:: message_ix_models.report
    :members:
+
+   :mod:`.report` requires the ``report`` :ref:`optional dependencies <install-dependencies>`.
 
    General-purpose code:
 

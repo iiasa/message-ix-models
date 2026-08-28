@@ -20,7 +20,11 @@ from message_ix_models.model.workflow import STAGE
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
-from .plot import prepare_computer as add_plots
+
+try:
+    from .plot import prepare_computer as add_plots
+except ImportError:  # pragma: no cover
+    pass  # Plotnine not installed
 
 if TYPE_CHECKING:
     from genno.core.key import KeyLike  # TODO Import from genno.types
