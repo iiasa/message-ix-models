@@ -802,19 +802,21 @@ def anchor_growth_activity(  # noqa: C901
         ):
             nodes = _nodes(group) or nodes_ex_world(info.N)
             years = [int(y) for y in info.Y]
-            df_initial = make_df(
-                par_name,
-                technology=technology,
-                time="year",
-                unit="???",
-                value=0.0,
-            ).pipe(broadcast, node_loc=nodes, year_act=years)
+            techs = [t.strip() for t in str(technology).split(",") if t.strip()]
+            for tec in techs:
+                df_initial = make_df(
+                    par_name,
+                    technology=tec,
+                    time="year",
+                    unit="???",
+                    value=0.0,
+                ).pipe(broadcast, node_loc=nodes, year_act=years)
 
-            updates.append(
-                _apply_depth_speed_arrival(
-                    df_initial, group.copy(), node_col="node_loc"
+                updates.append(
+                    _apply_depth_speed_arrival(
+                        df_initial, group.copy(), node_col="node_loc"
+                    )
                 )
-            )
 
         df_updates = pd.concat(updates, ignore_index=True)
         if df_updates.empty:
