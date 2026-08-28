@@ -31,6 +31,13 @@ METHANOL_ADDON_PARENTS = ["h2_elec_alk", "h2_elec_pem", "h2_elec_soe"]
 METH_H2_CO2_RELATIONS = ("CO2_Emission", "CO2_Emission_Global_Total")
 METH_H2_CO2_COEFFICIENT = 0.549
 
+# CPOL anchor policies to try first.
+CPOL_TEST_POLICY_IDS = [
+    "10e-CHN-ENE-MOD-25_02",
+    "10f-CHN-ENE-MOD-25_02",
+    "10f-CHN-ENE-MOD-30_02",
+]
+
 log = logging.getLogger(__name__)
 
 # EFC ixmp model name (single source of truth for cloned scenario targets).
@@ -270,10 +277,14 @@ def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.S
     return scenario
 
 
-def add_cpol(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+def add_cpol(
+    context: Context,
+    scenario: message_ix.Scenario,
+    policy_ids: list[str] | None = None,
+) -> message_ix.Scenario:
     """Add current-policy (CPOL) anchors to the scenario."""
-    context.anchor_data_file = "20260727efc_current_policy.csv"
-    add_anchor(context, scenario)
+    context.anchor_data_file = "20260828efc_current_policy.csv"
+    add_anchor(context, scenario, policy_ids=policy_ids)
     return scenario
 
 
@@ -505,6 +516,7 @@ def generate(context: Context) -> Workflow:
         "cpol added",
         "baseline reported",
         add_cpol,
+        policy_ids=CPOL_TEST_POLICY_IDS,
         target=f"{url}cpol",
         clone=c,
     )
