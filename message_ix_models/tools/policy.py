@@ -638,12 +638,11 @@ def add_anchor(
     """Add anchor data to the scenario."""
 
     df_anchor = load_anchor_data(context)
-    df_anchor = df_anchor.loc[df_anchor["policy_id"].isin(["gp_1"])].copy()
 
     anchor_emission_factor(df_anchor, scenario)
-    anchor_input(df_anchor, scenario)
+    anchor_input_output(df_anchor, scenario)
     anchor_growth_activity(df_anchor, scenario)
-    anchor_share_comm_lo(df_anchor, scenario)
+    anchor_share_comm(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
 
     return scenario
@@ -664,9 +663,8 @@ def anchor_emission_factor(  # noqa: C901
 
     key_cols = ["policy_id", "technology", "mode", "emission"]
     for keys, group in df_ef.groupby(key_cols, dropna=False):
-        policy_id, technology, mode, emission = keys
+        _policy_id, technology, mode, emission = keys
 
-        # Prepare original emission_factor rows
         df_initial = scenario.par(
             "emission_factor",
             filters={
@@ -674,17 +672,6 @@ def anchor_emission_factor(  # noqa: C901
                 "mode": [mode],
                 "emission": [emission],
             },
-        )
-        log.info(
-            "Initial emission_factor, tech:%s; mode:%s, emission:%s, "
-            "region number: %d, slice number: %d",
-            technology,
-            mode,
-            emission,
-            df_initial["node_loc"].nunique() if "node_loc" in df_initial else 0,
-            pd.to_numeric(df_initial["year_act"], errors="coerce").dropna().nunique()
-            if "year_act" in df_initial
-            else 0,
         )
 
         df_ef_loop = group.copy()
@@ -695,7 +682,6 @@ def anchor_emission_factor(  # noqa: C901
 
     df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
     if df_updates.empty:
-        log.info("anchor_emission_factor: no emission_factor updates to apply")
         return
 
     # For debugging
@@ -706,70 +692,63 @@ def anchor_emission_factor(  # noqa: C901
         scenario.add_par("emission_factor", df_updates)
 
     log.info(
-        "anchor_emission_factor: applied %d updated emission_factor rows",
+        "anchor_emission_factor: added %d emission_factor rows",
         len(df_updates),
     )
 
     return
 
 
-def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None:  # noqa: C901
-    """Apply anchor settings to parameter ``input``."""
+_INPUT_OUTPUT_PARS = ("input", "output")
 
-    # Filter for emission_factor parameter rows
-    df_input = df_anchor.loc[df_anchor["parameter"] == "input"].copy()
-    if df_input.empty:
-        log.info("anchor_input: no policies tuning 'input'")
+
+def anchor_input_output(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to ``input`` and ``output``."""
+
+    df_io = df_anchor.loc[df_anchor["parameter"].isin(_INPUT_OUTPUT_PARS)].copy()
+    if df_io.empty:
+        log.info("anchor_input_output: not applicable")
         return
 
-    updates: list[pd.DataFrame] = []
+    for par_name, df_par in df_io.groupby("parameter", dropna=False):
+        updates: list[pd.DataFrame] = []
+        for (_policy_id, technology, mode, commodity, level), group in df_par.groupby(
+            ["policy_id", "technology", "mode", "commodity", "level"], dropna=False
+        ):
+            df_initial = scenario.par(
+                par_name,
+                filters={
+                    "technology": [technology],
+                    "mode": [mode],
+                    "commodity": [commodity],
+                    "level": [level],
+                },
+            )
+            updates.append(
+                _apply_depth_speed_arrival(
+                    df_initial, group.copy(), node_col="node_loc"
+                )
+            )
 
-    key_cols = ["policy_id", "technology", "mode", "commodity", "level"]
-    for keys, group in df_input.groupby(key_cols, dropna=False):
-        policy_id, technology, mode, commodity, level = keys
-
-        # Prepare original emission_factor rows
-        df_initial = scenario.par(
-            "input",
-            filters={
-                "technology": [technology],
-                "mode": [mode],
-                "commodity": [commodity],
-                "level": [level],
-            },
+        df_updates = (
+            pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
         )
+        if df_updates.empty:
+            continue
+
+        debug_updates_path = local_data_path("anchor", f"_debug_anchor_{par_name}.csv")
+        df_updates.to_csv(debug_updates_path, index=False)
+
+        with scenario.transact(f"apply anchor {par_name}"):
+            scenario.add_par(par_name, df_updates)
+
         log.info(
-            "Initial input, tech:%s; mode:%s, commodity:%s, level:%s, "
-            "region number: %d, slice number: %d",
-            technology,
-            mode,
-            commodity,
-            level,
-            df_initial["node_loc"].nunique() if "node_loc" in df_initial else 0,
-            pd.to_numeric(df_initial["year_act"], errors="coerce").dropna().nunique()
-            if "year_act" in df_initial
-            else 0,
+            "anchor_input_output: added %d %s rows",
+            len(df_updates),
+            par_name,
         )
-
-        df_input_loop = group.copy()
-        df_update = _apply_depth_speed_arrival(
-            df_initial, df_input_loop, node_col="node_loc"
-        )
-        updates.append(df_update)
-
-    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
-    if df_updates.empty:
-        log.info("anchor_input: no input updates to apply")
-        return
-
-    # For debugging
-    debug_updates_path = local_data_path("anchor", "_debug_anchor_input.csv")
-    df_updates.to_csv(debug_updates_path, index=False)
-
-    with scenario.transact("apply anchor input"):
-        scenario.add_par("input", df_updates)
-
-    log.info("anchor_input: applied %d updated input rows", len(df_updates))
 
     return
 
@@ -806,13 +785,6 @@ def anchor_growth_activity(  # noqa: C901
                 unit="???",
                 value=0.0,
             ).pipe(broadcast, node_loc=nodes, year_act=years)
-            log.info(
-                "Scaffold %s, tech:%s, region number: %d, slice number: %d",
-                par_name,
-                technology,
-                len(nodes),
-                len(years),
-            )
 
             updates.append(
                 _apply_depth_speed_arrival(
@@ -821,6 +793,9 @@ def anchor_growth_activity(  # noqa: C901
             )
 
         df_updates = pd.concat(updates, ignore_index=True)
+        if df_updates.empty:
+            continue
+
         debug_updates_path = local_data_path("anchor", f"_debug_anchor_{par_name}.csv")
         df_updates.to_csv(debug_updates_path, index=False)
 
@@ -828,7 +803,7 @@ def anchor_growth_activity(  # noqa: C901
             scenario.add_par(par_name, df_updates)
 
         log.info(
-            "anchor_growth_activity: applied %d updated %s rows",
+            "anchor_growth_activity: added %d %s rows",
             len(df_updates),
             par_name,
         )
@@ -836,30 +811,35 @@ def anchor_growth_activity(  # noqa: C901
     return
 
 
-def anchor_share_comm_lo(  # noqa: C901
+_SHARE_COMM_PARS = ("share_commodity_lo", "share_commodity_up")
+
+
+def anchor_share_comm(  # noqa: C901
     df_anchor: pd.DataFrame, scenario: message_ix.Scenario
 ) -> None:
-    """Apply anchor settings to parameter ``share_comm``."""
+    """Apply anchor settings to ``share_commodity_lo`` and ``share_commodity_up``.
 
-    # Filter for share_comm parameter rows
-    df_share_comm = df_anchor.loc[df_anchor["parameter"] == "share_commodity_lo"].copy()
-    if df_share_comm.empty:
-        log.info("anchor_share_comm: no policies tuning 'share_comm'")
+    For each policy group the function registers share sets (``shares``,
+    ``type_tec``, ``cat_tec``, ``map_shares_commodity_share``,
+    ``map_shares_commodity_total``) once, then adds whichever bound parameters
+    are present in the anchor data.
+    """
+
+    df_share = df_anchor.loc[df_anchor["parameter"].isin(_SHARE_COMM_PARS)].copy()
+    if df_share.empty:
+        log.info("anchor_share_comm: not applicable")
         return
 
-    # Prepare df for share commodity sets and parameters
     map_shares_commodity_share_rows: list[pd.DataFrame] = []
     map_shares_commodity_total_rows: list[pd.DataFrame] = []
     cat_tec_rows: list[pd.DataFrame] = []
-    share_commodity_lo_rows: list[pd.DataFrame] = []
+    bound_rows: dict[str, list[pd.DataFrame]] = {par: [] for par in _SHARE_COMM_PARS}
     share_names: list[str] = []
 
     key_cols = ["policy_id", "technology", "mode", "commodity", "level"]
-    available = [c for c in key_cols if c in df_share_comm.columns]
-    for _, group in df_share_comm.groupby(available, dropna=False):
-        df_share_comm_loop = group.copy()
-        row0 = df_share_comm_loop.iloc[0]
-
+    available = [c for c in key_cols if c in df_share.columns]
+    for _, group in df_share.groupby(available, dropna=False):
+        row0 = group.iloc[0]
         share_name = f"policy_{row0['policy_id']}"
         share_names.append(share_name)
 
@@ -867,8 +847,8 @@ def anchor_share_comm_lo(  # noqa: C901
             make_df(
                 "map_shares_commodity_share",
                 shares=share_name,
-                node_share=df_share_comm_loop["node"],
-                node=df_share_comm_loop["node"],
+                node_share=group["node"],
+                node=group["node"],
                 type_tec=f"{share_name}_share",
                 mode="M1",
                 commodity=row0["commodity"],
@@ -879,28 +859,32 @@ def anchor_share_comm_lo(  # noqa: C901
             make_df(
                 "map_shares_commodity_total",
                 shares=share_name,
-                node_share=df_share_comm_loop["node"],
-                node=df_share_comm_loop["node"],
+                node_share=group["node"],
+                node=group["node"],
                 type_tec=f"{share_name}_total",
                 mode="M1",
                 commodity=row0["commodity"],
                 level=row0["level"],
             )
         )
-        share_commodity_lo_rows.append(
-            make_df(
-                "share_commodity_lo",
-                shares=share_name,
-                node_share=df_share_comm_loop["node"],
-                year_act=df_share_comm_loop["year_act"],
-                time="year",
-                unit="-",
-                value=df_share_comm_loop["depth"],
+
+        for par_name in _SHARE_COMM_PARS:
+            df_bound = group.loc[group["parameter"] == par_name]
+            if df_bound.empty:
+                continue
+            bound_rows[par_name].append(
+                make_df(
+                    par_name,
+                    shares=share_name,
+                    node_share=df_bound["node"],
+                    year_act=df_bound["year_act"],
+                    time="year",
+                    unit="-",
+                    value=df_bound["depth"],
+                )
             )
-        )
 
         # TODO: apply better ways to group technologies
-        # Assign technologies for {share_name}_share
         if re.search(r"[\^\$\|\(\)]", str(row0["technology"])):
             tech_share = [
                 t
@@ -916,7 +900,6 @@ def anchor_share_comm_lo(  # noqa: C901
                 )
             )
 
-        # Assign technologies for {share_name}_total
         df_output = scenario.par(
             "output",
             filters={"commodity": [row0["commodity"]], "level": [row0["level"]]},
@@ -940,11 +923,8 @@ def anchor_share_comm_lo(  # noqa: C901
         map_shares_commodity_total_rows, ignore_index=True
     ).drop_duplicates()
     df_cat_tec = pd.concat(cat_tec_rows, ignore_index=True).drop_duplicates()
-    df_share_lo = pd.concat(
-        share_commodity_lo_rows, ignore_index=True
-    ).drop_duplicates()
+    bound_frames = {par: _concat_or_empty(rows) for par, rows in bound_rows.items()}
 
-    # For debugging
     debug_dir = local_data_path("anchor")
     pd.DataFrame({"shares": sorted(set(share_names))}).to_csv(
         debug_dir / "_debug_anchor_shares.csv", index=False
@@ -956,9 +936,14 @@ def anchor_share_comm_lo(  # noqa: C901
         debug_dir / "_debug_anchor_map_shares_commodity_total.csv", index=False
     )
     df_cat_tec.to_csv(debug_dir / "_debug_anchor_cat_tec.csv", index=False)
-    df_share_lo.to_csv(debug_dir / "_debug_anchor_share_commodity_lo.csv", index=False)
+    for par_name, df_bound in bound_frames.items():
+        if not df_bound.empty:
+            df_bound.to_csv(debug_dir / f"_debug_anchor_{par_name}.csv", index=False)
 
-    with scenario.transact("apply anchor share_commodity_lo"):
+    if not share_names or all(df.empty for df in bound_frames.values()):
+        return
+
+    with scenario.transact("apply anchor share_commodity_lo / share_commodity_up"):
         scenario.add_set("shares", sorted(set(share_names)))
         scenario.add_set(
             "type_tec",
@@ -967,15 +952,15 @@ def anchor_share_comm_lo(  # noqa: C901
         scenario.add_set("cat_tec", df_cat_tec)
         scenario.add_set("map_shares_commodity_share", df_map_share)
         scenario.add_set("map_shares_commodity_total", df_map_total)
-        scenario.add_par("share_commodity_lo", df_share_lo)
+        for par_name, df_bound in bound_frames.items():
+            if not df_bound.empty:
+                scenario.add_par(par_name, df_bound)
 
     log.info(
-        "anchor_share_comm_lo: added %d shares, %d share-map rows, "
-        "%d total-map rows, %d share_commodity_lo rows",
-        len(set(share_names)),
-        len(df_map_share),
-        len(df_map_total),
-        len(df_share_lo),
+        "anchor_share_comm: added %d share_commodity_lo rows, "
+        "%d share_commodity_up rows",
+        len(bound_frames["share_commodity_lo"]),
+        len(bound_frames["share_commodity_up"]),
     )
 
     return
@@ -1075,12 +1060,6 @@ def _prepare_relation_bounds(
 
         df_loop = group.copy()
         df_initial = scenario.par(par_name, filters={"relation": [relation_name]})
-        log.info(
-            "Initial %s, relation:%s, existing rows: %d",
-            par_name,
-            relation_name,
-            len(df_initial),
-        )
 
         if df_initial.empty:
             nodes = _nodes(df_loop)
@@ -1247,7 +1226,6 @@ def anchor_relation_activity(  # noqa: C901
     new_relations = sorted(set(relation_names) - existing_relations)
 
     if not new_relations and df_ra.empty and df_rl.empty and df_ru.empty:
-        log.info("anchor_relation_activity: nothing to commit")
         return
 
     with scenario.transact(
@@ -1263,11 +1241,8 @@ def anchor_relation_activity(  # noqa: C901
             scenario.add_par("relation_upper", df_ru)
 
     log.info(
-        "anchor_relation_activity: added %d new relations "
-        "(%d already in set), %d relation_activity rows, "
+        "anchor_relation_activity: added %d relation_activity rows, "
         "%d relation_lower rows, %d relation_upper rows",
-        len(new_relations),
-        len(set(relation_names) & existing_relations),
         len(df_ra),
         len(df_rl),
         len(df_ru),
