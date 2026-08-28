@@ -14,7 +14,12 @@ import yaml
 from message_ix import make_df
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import local_data_path, private_data_path
+from message_ix_models.util import (
+    broadcast,
+    local_data_path,
+    nodes_ex_world,
+    private_data_path,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -637,6 +642,7 @@ def add_anchor(
 
     anchor_emission_factor(df_anchor, scenario)
     anchor_input(df_anchor, scenario)
+    anchor_growth_activity(df_anchor, scenario)
     anchor_share_comm_lo(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
 
@@ -764,6 +770,68 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
         scenario.add_par("input", df_updates)
 
     log.info("anchor_input: applied %d updated input rows", len(df_updates))
+
+    return
+
+
+_GROWTH_ACTIVITY_PARS = ("growth_activity_up", "growth_activity_lo")
+
+
+def anchor_growth_activity(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to ``growth_activity_up`` and ``growth_activity_lo``."""
+
+    df_growth = df_anchor.loc[df_anchor["parameter"].isin(_GROWTH_ACTIVITY_PARS)].copy()
+    if df_growth.empty:
+        log.info(
+            "anchor_growth_activity: no policies tuning "
+            "'growth_activity_up'/'growth_activity_lo'"
+        )
+        return
+
+    info = ScenarioInfo(scenario)
+
+    for par_name, df_par in df_growth.groupby("parameter", dropna=False):
+        updates: list[pd.DataFrame] = []
+        for (_policy_id, technology), group in df_par.groupby(
+            ["policy_id", "technology"], dropna=False
+        ):
+            nodes = _nodes(group) or nodes_ex_world(info.N)
+            years = [int(y) for y in info.Y]
+            df_initial = make_df(
+                par_name,
+                technology=technology,
+                time="year",
+                unit="???",
+                value=0.0,
+            ).pipe(broadcast, node_loc=nodes, year_act=years)
+            log.info(
+                "Scaffold %s, tech:%s, region number: %d, slice number: %d",
+                par_name,
+                technology,
+                len(nodes),
+                len(years),
+            )
+
+            updates.append(
+                _apply_depth_speed_arrival(
+                    df_initial, group.copy(), node_col="node_loc"
+                )
+            )
+
+        df_updates = pd.concat(updates, ignore_index=True)
+        debug_updates_path = local_data_path("anchor", f"_debug_anchor_{par_name}.csv")
+        df_updates.to_csv(debug_updates_path, index=False)
+
+        with scenario.transact(f"apply anchor {par_name}"):
+            scenario.add_par(par_name, df_updates)
+
+        log.info(
+            "anchor_growth_activity: applied %d updated %s rows",
+            len(df_updates),
+            par_name,
+        )
 
     return
 
