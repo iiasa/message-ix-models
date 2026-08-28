@@ -32,12 +32,34 @@ METH_H2_CO2_RELATIONS = ("CO2_Emission", "CO2_Emission_Global_Total")
 METH_H2_CO2_COEFFICIENT = 0.549
 
 # CPOL anchor policies to try first.
-CPOL_TEST_POLICY_IDS = [
+SF_POLICY_IDS = [
+    # ammonia
     "10e-CHN-ENE-MOD-25_02",
+    "10e-CHN-ENE-MOD-30_01",
+    "10e-CHN-ENE-MOD-30_04",
+    "10e-CHN-ENE-MOD-30_05",
+    # methanol
     "10f-CHN-ENE-MOD-25_02",
-    "10f-CHN-ENE-MOD-30_02",
+    "10f-CHN-ENE-MOD-30_01",
+    "10f-CHN-ENE-MOD-30_03",
+    "10f-CHN-ENE-MOD-30_04",
+    "10f-CHN-ENE-MOD-30_05",
+    "10f-CHN-ENE-MOD-30_06",
 ]
-
+SF_ACC_POLICY_IDS = [
+    # ammonia
+    "10e-CHN-ENE-MOD-25_02",
+    "10e-CHN-ENE-MOD-30_03",  # accelerated
+    "10e-CHN-ENE-MOD-30_04",
+    "10e-CHN-ENE-MOD-30_05",
+    # methanol
+    "10f-CHN-ENE-MOD-25_02",
+    "10f-CHN-ENE-MOD-30_02",  # accelerated
+    "10f-CHN-ENE-MOD-30_03",
+    "10f-CHN-ENE-MOD-30_04",
+    "10f-CHN-ENE-MOD-30_05",
+    "10f-CHN-ENE-MOD-30_06",
+]
 log = logging.getLogger(__name__)
 
 # EFC ixmp model name (single source of truth for cloned scenario targets).
@@ -277,7 +299,7 @@ def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.S
     return scenario
 
 
-def add_cpol(
+def add_anchors(
     context: Context,
     scenario: message_ix.Scenario,
     policy_ids: list[str] | None = None,
@@ -442,10 +464,11 @@ def solve(
 
 # EFC scenarios:
 _scen_all = [
-    "cpol",
-    "chn_refpol_2060_1p5c",
-    # "chn_fullpol_2060_2c",
-    # "chn_partpol_2060_2c",
+    "chn_base",
+    "chn_base_sf_policy",
+    "chn_nz2060",
+    "chn_nz2060_sf_policy",
+    "chn_acc_nz2060_sf_policy",
 ]
 
 
@@ -501,23 +524,24 @@ def generate(context: Context) -> Workflow:
         "hydrogen added",
         name,
         build_hydrogen,
-        target=f"{url}baseline",
+        # target=f"{url}baseline_20260827",
+        target=f"{url}chn_base",
         clone=c,
     )
     name = wf.add_step("baseline solved", name, solve)
     name = wf.add_step("baseline reported", name, report)
-    name = wf.add_step(
-        "baseline generic reported",
-        "baseline solved",
-        generic_flow,
-    )
+    # name = wf.add_step(
+    #     "baseline generic reported",
+    #     "baseline solved",
+    #     generic_flow,
+    # )
 
     name = wf.add_step(
         "cpol added",
         "baseline reported",
-        add_cpol,
-        policy_ids=CPOL_TEST_POLICY_IDS,
-        target=f"{url}cpol",
+        add_anchors,
+        policy_ids=SF_POLICY_IDS,
+        target=f"{url}chn_base_sf_policy",
         clone=c,
     )
     name = wf.add_step("cpol solved", name, solve)
@@ -525,17 +549,39 @@ def generate(context: Context) -> Workflow:
 
     name = wf.add_step(
         "1p5c added",
-        "baseline reported",
+        "cpol reported",
         add_1p5c,
-        target=f"{url}chn_refpol_2060_1p5c",
+        target=f"{url}chn_nz2060",
         clone=dict(keep_solution=False, shift_first_model_year=2030),
     )
     name = wf.add_step("1p5c solved", name, solve)
-    name = wf.add_step("1p5c reported", name, report)
+    name = wf.add_step("1p5c reported", "1p5c solved", report)
+    # name = wf.add_step(
+    #     "1p5c generic reported",
+    #     "1p5c solved",
+    #     generic_flow,
+    # )
+
     name = wf.add_step(
-        "1p5c generic reported",
+        "1p5c_sf added",
         "1p5c solved",
-        generic_flow,
+        add_anchors,
+        target=f"{url}chn_nz2060_sf_policy",
+        policy_ids=SF_POLICY_IDS,
+        clone=dict(keep_solution=False),
     )
+    name = wf.add_step("1p5c_sf solved", name, solve)
+    name = wf.add_step("1p5c_sf reported", name, report)
+
+    name = wf.add_step(
+        "1p5c_sf_acc added",
+        "1p5c solved",
+        add_anchors,
+        target=f"{url}chn_acc_nz2060_sf_policy",
+        policy_ids=SF_ACC_POLICY_IDS,
+        clone=dict(keep_solution=False),
+    )
+    name = wf.add_step("1p5c_sf_acc solved", name, solve)
+    name = wf.add_step("1p5c_sf_acc reported", name, report)
 
     return wf
