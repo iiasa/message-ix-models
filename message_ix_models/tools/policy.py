@@ -459,7 +459,11 @@ def load_anchor_data(context: Context) -> pd.DataFrame:
     return df
 
 
-def _anchor_growth(base_value: float, speed: float, step: int) -> float:
+# Anchor helpers: ``anchor_*`` apply policies per parameter; ``_prepare_*`` build
+# parameter tables; unprefixed ``_*`` are small shared utilities.
+
+
+def _growth(base_value: float, speed: float, step: int) -> float:
     return base_value * ((1 + speed / 100.0) ** (5 * step) - 1.0)
 
 
@@ -469,7 +473,7 @@ def _year_act_num(df: pd.DataFrame) -> pd.Series:
     return pd.to_numeric(df[col], errors="coerce")
 
 
-def _anchor_row_node(row: pd.Series) -> str | None:
+def _row_node(row: pd.Series) -> str | None:
     """Return the anchor row node, or :obj:`None` to apply to every region."""
     if "node" not in row.index or pd.isna(row["node"]):
         return None
@@ -477,7 +481,7 @@ def _anchor_row_node(row: pd.Series) -> str | None:
     return node or None
 
 
-def _anchor_years_from(g: pd.DataFrame, start_year: int, end_year: int | None = None):
+def _years_from(g: pd.DataFrame, start_year: int, end_year: int | None = None):
     """Sorted integer years in *g* from *start_year*, optionally up to *end_year*."""
     years = []
     for y in _year_act_num(g).dropna().unique():
@@ -490,13 +494,13 @@ def _anchor_years_from(g: pd.DataFrame, start_year: int, end_year: int | None = 
     return sorted(years)
 
 
-def _anchor_mask(df: pd.DataFrame, node_col: str, region, year: int) -> pd.Series:
+def _node_year_mask(df: pd.DataFrame, node_col: str, region, year: int) -> pd.Series:
     return (df[node_col].astype(str) == str(region)) & (_year_act_num(df) == year)
 
 
 # YJ: so far 3 arguments for emission_factor, input, share_comm*,
 # YJ: relation_activity; not good enough, later think about smarter refactoring
-def _apply_anchor_speed_depth(
+def _apply_speed_depth(
     df_update: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
@@ -519,7 +523,7 @@ def _apply_anchor_speed_depth(
         start_year = int(r["year_act"])
         speed = float(r["speed"])
         depth_cap = float(r["depth_converted"])
-        target_node = _anchor_row_node(r)
+        target_node = _row_node(r)
         for region, g in df_update.groupby(node_col):
             if target_node is not None and str(region).strip() != target_node:
                 continue
@@ -529,17 +533,17 @@ def _apply_anchor_speed_depth(
             base_value = float(base.iat[0])
             # Compound growth from 0 stays 0; use depth as the scale instead.
             growth_ref = base_value if base_value != 0.0 else depth_cap
-            years = _anchor_years_from(g, start_year)
+            years = _years_from(g, start_year)
             for step, year in enumerate(years):
-                idx = _anchor_mask(df_update, node_col, region, year)
-                candidate = base_value + _anchor_growth(growth_ref, speed, step)
+                idx = _node_year_mask(df_update, node_col, region, year)
+                candidate = base_value + _growth(growth_ref, speed, step)
                 if speed >= 0:
                     df_update.loc[idx, "value"] = min(depth_cap, candidate)
                 else:
                     df_update.loc[idx, "value"] = max(depth_cap, candidate)
 
 
-def _apply_anchor_speed_arrival(
+def _apply_speed_arrival(
     df_update: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
@@ -559,7 +563,7 @@ def _apply_anchor_speed_arrival(
         speed = float(r["speed"])
         if end_year < start_year:
             continue
-        target_node = _anchor_row_node(r)
+        target_node = _row_node(r)
         for region, g in df_update.groupby(node_col):
             if target_node is not None and str(region).strip() != target_node:
                 continue
@@ -568,15 +572,15 @@ def _apply_anchor_speed_arrival(
                 continue
             base_value = float(base.iat[0])
             growth_ref = base_value if base_value != 0.0 else 1.0
-            years = _anchor_years_from(g, start_year, end_year)
+            years = _years_from(g, start_year, end_year)
             for step, year in enumerate(years):
-                idx = _anchor_mask(df_update, node_col, region, year)
-                df_update.loc[idx, "value"] = base_value + _anchor_growth(
+                idx = _node_year_mask(df_update, node_col, region, year)
+                df_update.loc[idx, "value"] = base_value + _growth(
                     growth_ref, speed, step
                 )
 
 
-def _apply_anchor_arrival_depth(
+def _apply_arrival_depth(
     df_update: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
@@ -588,14 +592,14 @@ def _apply_anchor_arrival_depth(
     for _, r in df_loop.loc[df_loop["arrival"].notna(), cols].iterrows():
         if pd.isna(r["year_act"]) or pd.isna(r["depth_converted"]):
             continue
-        target_node = _anchor_row_node(r)
+        target_node = _row_node(r)
         idx = _year_act_num(df_update) >= int(r["year_act"])
         if target_node is not None:
             idx = idx & (df_update[node_col].astype(str) == target_node)
         df_update.loc[idx, "value"] = float(r["depth_converted"])
 
 
-def _apply_depth_speed_arrival(
+def _prepare_depth_speed_arrival(
     df_initial: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
@@ -606,14 +610,14 @@ def _apply_depth_speed_arrival(
     df_update = df_initial.copy()
 
     if has_speed and not has_arrival:
-        _apply_anchor_speed_depth(df_update, df_loop, node_col)
+        _apply_speed_depth(df_update, df_loop, node_col)
     elif has_speed and has_arrival:
-        _apply_anchor_speed_arrival(df_update, df_loop, node_col)
+        _apply_speed_arrival(df_update, df_loop, node_col)
     elif has_arrival and not has_speed:
-        _apply_anchor_arrival_depth(df_update, df_loop, node_col)
+        _apply_arrival_depth(df_update, df_loop, node_col)
     else:
         log.warning(
-            "_apply_depth_speed_arrival: no speed or arrival; "
+            "_prepare_depth_speed_arrival: no speed or arrival; "
             "parameter values are left unchanged"
         )
 
@@ -676,7 +680,7 @@ def anchor_emission_factor(  # noqa: C901
         )
 
         df_ef_loop = group.copy()
-        df_update = _apply_depth_speed_arrival(
+        df_update = _prepare_depth_speed_arrival(
             df_initial, df_ef_loop, node_col="node_loc"
         )
         updates.append(df_update)
@@ -740,7 +744,7 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
         )
 
         df_input_loop = group.copy()
-        df_update = _apply_depth_speed_arrival(
+        df_update = _prepare_depth_speed_arrival(
             df_initial, df_input_loop, node_col="node_loc"
         )
         updates.append(df_update)
@@ -907,14 +911,14 @@ def anchor_share_comm_lo(  # noqa: C901
     return
 
 
-def _anchor_nodes(df: pd.DataFrame) -> list[str]:
+def _prepare_nodes(df: pd.DataFrame) -> list[str]:
     """Unique non-empty node names from an exploded anchor frame."""
     return (
         df["node"].astype(str).str.strip().replace("", pd.NA).dropna().unique().tolist()
     )
 
 
-def _expand_anchor_tech_mode(df: pd.DataFrame) -> pd.DataFrame:
+def _prepare_tech_mode(df: pd.DataFrame) -> pd.DataFrame:
     """Expand comma-separated ``technology`` and ``mode`` into cross-product rows."""
     rows: list[pd.Series] = []
     for _, row in df.iterrows():
@@ -945,64 +949,51 @@ def _relation_years(scenario: message_ix.Scenario, relation_name: str) -> list[i
     return [int(y) for y in ScenarioInfo(scenario).Y]
 
 
-def _scaffold_relation_activity(
+def _prepare_relation_activity_coefficient(
     scenario: message_ix.Scenario,
-    relation_name: str,
     technology: str,
     mode: str,
-    nodes: list[str],
-) -> pd.DataFrame:
-    """Build a zero-valued ``relation_activity`` grid over nodes and years."""
-    years = _relation_years(scenario, relation_name)
-    frames = [
-        make_df(
-            "relation_activity",
-            relation=relation_name,
-            node_rel=node,
-            year_rel=year,
-            node_loc=node,
-            technology=technology,
-            year_act=year,
-            mode=mode,
-            value=0.0,
-            unit="-",
+    commodity: str,
+    level: str,
+    node: str,
+    year_act: int,
+    unit_convertion: float,
+    cache: dict[tuple[str, str, str, str], pd.DataFrame],
+) -> float | None:
+    """Return ``output`` coefficient × ``unit_convertion`` for one anchor row."""
+    key = (technology, mode, commodity, level)
+    if key not in cache:
+        cache[key] = scenario.par(
+            "output",
+            filters={
+                "technology": [technology],
+                "mode": [mode],
+                "commodity": [commodity],
+                "level": [level],
+            },
         )
-        for node in nodes
-        for year in years
+
+    df_output = cache[key]
+    if df_output.empty:
+        return None
+
+    match = df_output.loc[
+        (df_output["node_loc"].astype(str) == node)
+        & (_year_act_num(df_output) == year_act)
     ]
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    if match.empty:
+        return None
+
+    return float(match.iloc[0]["value"]) * float(unit_convertion)
 
 
-def _scaffold_relation_bound(
-    scenario: message_ix.Scenario,
-    par_name: str,
-    relation_name: str,
-    nodes: list[str],
-) -> pd.DataFrame:
-    """Build a zero-valued ``relation_lower``/``relation_upper`` year grid."""
-    years = _relation_years(scenario, relation_name)
-    frames = [
-        make_df(
-            par_name,
-            relation=relation_name,
-            node_rel=node,
-            year_rel=year,
-            value=0.0,
-            unit="-",
-        )
-        for node in nodes
-        for year in years
-    ]
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
-
-
-def _build_relation_bound_rows(
+def _prepare_relation_bounds(
     df_bound: pd.DataFrame,
     scenario: message_ix.Scenario,
     par_name: str,
     relation_names: list[str],
 ) -> list[pd.DataFrame]:
-    """Build ``relation_lower`` or ``relation_upper`` rows from *df_bound*."""
+    """Prepare ``relation_lower`` or ``relation_upper`` rows from anchor *df_bound*."""
     rows: list[pd.DataFrame] = []
     if df_bound.empty:
         return rows
@@ -1022,13 +1013,27 @@ def _build_relation_bound_rows(
         )
 
         if df_initial.empty:
-            df_initial = _scaffold_relation_bound(
-                scenario, par_name, relation_name, _anchor_nodes(df_loop)
+            nodes = _prepare_nodes(df_loop)
+            years = _relation_years(scenario, relation_name)
+            frames = [
+                make_df(
+                    par_name,
+                    relation=relation_name,
+                    node_rel=node,
+                    year_rel=year,
+                    value=0.0,
+                    unit="-",
+                )
+                for node in nodes
+                for year in years
+            ]
+            df_initial = (
+                pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
             )
 
         if not df_initial.empty:
             rows.append(
-                _apply_depth_speed_arrival(df_initial, df_loop, node_col="node_rel")
+                _prepare_depth_speed_arrival(df_initial, df_loop, node_col="node_rel")
             )
 
     return rows
@@ -1051,13 +1056,13 @@ def anchor_relation_activity(  # noqa: C901
     * registers the relation name in the ``relation`` set if it is not already
       present,
     * builds ``relation_activity`` rows (expanding comma-separated ``technology``
-      and ``mode`` fields into all cross-product pairs) and applies the
-      depth/speed/arrival trajectory on the existing year grid, or on a
-      scaffolded grid of model years when the technology/mode is new, and
+      and ``mode`` fields into all cross-product pairs) with coefficients taken
+      from the scenario ``output`` (matching technology, mode, commodity, and
+      level) multiplied by ``unit_convertion``, and
     * if paired ``relation_lower`` and/or ``relation_upper`` rows are present,
-      builds those bound rows using the depth/speed/arrival logic shared with
-      the other anchor functions. Missing bounds are skipped; activity rows are
-      still added.
+      builds those bound rows using ``depth_converted`` and the depth/speed/
+      arrival logic shared with the other anchor functions. Missing bounds are
+      skipped; activity rows are still added.
 
     Two anchor rows that share the same ``relation`` are merged into a single
     ``relation_activity`` add (i.e. they contribute different technology/mode
@@ -1077,56 +1082,74 @@ def anchor_relation_activity(  # noqa: C901
 
     relation_activity_rows: list[pd.DataFrame] = []
     relation_names: list[str] = []
+    output_cache: dict[tuple[str, str, str, str], pd.DataFrame] = {}
 
     df_rel_act = df_rel.loc[df_rel["parameter"] == "relation_activity"].copy()
 
     # Process relation_activity rows
     if not df_rel_act.empty:
-        df_rel_act = _expand_anchor_tech_mode(df_rel_act)
-        key_cols = ["relation", "technology", "mode"]
-        for keys, group in df_rel_act.groupby(key_cols, dropna=False):
-            relation_name, technology, mode = (str(k) for k in keys)
+        df_rel_act = _prepare_tech_mode(df_rel_act)
+        for relation_name, group in df_rel_act.groupby("relation", dropna=False):
+            relation_name = str(relation_name)
             if relation_name not in relation_names:
                 relation_names.append(relation_name)
 
-            df_loop = group.copy()
-            df_initial = scenario.par(
-                "relation_activity",
-                filters={
-                    "relation": [relation_name],
-                    "technology": [technology],
-                    "mode": [mode],
-                },
-            )
-            log.info(
-                "Initial relation_activity, relation:%s, tech:%s, mode:%s, "
-                "existing rows: %d",
-                relation_name,
-                technology,
-                mode,
-                len(df_initial),
-            )
-
-            if df_initial.empty:
-                df_initial = _scaffold_relation_activity(
+            act_rows: list[pd.DataFrame] = []
+            for _, row in group.iterrows():
+                commodity = str(row["commodity"]).strip()
+                level = str(row["level"]).strip()
+                node = str(row["node"]).strip()
+                year_act = int(row["year_act"])
+                technology = str(row["technology"])
+                mode = str(row["mode"])
+                coeff = _prepare_relation_activity_coefficient(
                     scenario,
-                    relation_name,
                     technology,
                     mode,
-                    _anchor_nodes(df_loop),
+                    commodity,
+                    level,
+                    node,
+                    year_act,
+                    float(row["unit_convertion"]),
+                    output_cache,
+                )
+                if coeff is None:
+                    log.warning(
+                        "anchor_relation_activity: no output match for "
+                        "relation=%s, tech=%s, mode=%s, commodity=%s, "
+                        "level=%s, node=%s, year_act=%d; skipping",
+                        relation_name,
+                        technology,
+                        mode,
+                        commodity,
+                        level,
+                        node,
+                        year_act,
+                    )
+                    continue
+
+                act_rows.append(
+                    make_df(
+                        "relation_activity",
+                        relation=relation_name,
+                        node_rel=node,
+                        year_rel=year_act,
+                        node_loc=node,
+                        technology=technology,
+                        year_act=year_act,
+                        mode=mode,
+                        value=coeff,
+                        unit="-",
+                    )
                 )
 
-            if df_initial.empty:
-                continue
-
-            relation_activity_rows.append(
-                _apply_depth_speed_arrival(df_initial, df_loop, node_col="node_rel")
-            )
+            if act_rows:
+                relation_activity_rows.append(_concat_or_empty(act_rows))
 
     bound_frames: dict[str, pd.DataFrame] = {}
     for par_name in bound_pars:
         bound_frames[par_name] = _concat_or_empty(
-            _build_relation_bound_rows(
+            _prepare_relation_bounds(
                 df_rel.loc[df_rel["parameter"] == par_name].copy(),
                 scenario,
                 par_name,
