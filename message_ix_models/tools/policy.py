@@ -601,7 +601,7 @@ def _apply_arrival_depth(
         df_update.loc[idx, "value"] = float(r["depth_converted"])
 
 
-def _prepare_depth_speed_arrival(
+def _apply_depth_speed_arrival(
     df_initial: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
@@ -619,7 +619,7 @@ def _prepare_depth_speed_arrival(
         _apply_arrival_depth(df_update, df_loop, node_col)
     else:
         log.warning(
-            "_prepare_depth_speed_arrival: no speed or arrival; "
+            "_apply_depth_speed_arrival: no speed or arrival; "
             "parameter values are left unchanged"
         )
 
@@ -682,7 +682,7 @@ def anchor_emission_factor(  # noqa: C901
         )
 
         df_ef_loop = group.copy()
-        df_update = _prepare_depth_speed_arrival(
+        df_update = _apply_depth_speed_arrival(
             df_initial, df_ef_loop, node_col="node_loc"
         )
         updates.append(df_update)
@@ -746,7 +746,7 @@ def anchor_input(df_anchor: pd.DataFrame, scenario: message_ix.Scenario) -> None
         )
 
         df_input_loop = group.copy()
-        df_update = _prepare_depth_speed_arrival(
+        df_update = _apply_depth_speed_arrival(
             df_initial, df_input_loop, node_col="node_loc"
         )
         updates.append(df_update)
@@ -913,14 +913,14 @@ def anchor_share_comm_lo(  # noqa: C901
     return
 
 
-def _prepare_nodes(df: pd.DataFrame) -> list[str]:
+def _nodes(df: pd.DataFrame) -> list[str]:
     """Unique non-empty node names from an exploded anchor frame."""
     return (
         df["node"].astype(str).str.strip().replace("", pd.NA).dropna().unique().tolist()
     )
 
 
-def _prepare_tech_mode(df: pd.DataFrame) -> pd.DataFrame:
+def _tech_mode(df: pd.DataFrame) -> pd.DataFrame:
     """Expand comma-separated ``technology`` and ``mode`` into cross-product rows."""
     rows: list[pd.Series] = []
     for _, row in df.iterrows():
@@ -1015,7 +1015,7 @@ def _prepare_relation_bounds(
         )
 
         if df_initial.empty:
-            nodes = _prepare_nodes(df_loop)
+            nodes = _nodes(df_loop)
             years = _relation_years(scenario, relation_name)
             frames = [
                 make_df(
@@ -1035,7 +1035,7 @@ def _prepare_relation_bounds(
 
         if not df_initial.empty:
             rows.append(
-                _prepare_depth_speed_arrival(df_initial, df_loop, node_col="node_rel")
+                _apply_depth_speed_arrival(df_initial, df_loop, node_col="node_rel")
             )
 
     return rows
@@ -1090,7 +1090,7 @@ def anchor_relation_activity(  # noqa: C901
 
     # Process relation_activity rows
     if not df_rel_act.empty:
-        df_rel_act = _prepare_tech_mode(df_rel_act)
+        df_rel_act = _tech_mode(df_rel_act)
         for relation_name, group in df_rel_act.groupby("relation", dropna=False):
             relation_name = str(relation_name)
             if relation_name not in relation_names:
