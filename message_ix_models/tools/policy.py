@@ -580,12 +580,13 @@ def _apply_speed_arrival(
                 )
 
 
+# YJ: hmm maybe not only the target year but by default all years onward?
 def _apply_arrival_depth(
     df_update: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
 ) -> None:
-    """Set value to depth_converted from year_act onward for matching node."""
+    """Set value to depth_converted at ``year_act`` for matching node."""
     cols = ["year_act", "depth_converted"]
     if "node" in df_loop.columns:
         cols = [*cols, "node"]
@@ -593,7 +594,8 @@ def _apply_arrival_depth(
         if pd.isna(r["year_act"]) or pd.isna(r["depth_converted"]):
             continue
         target_node = _row_node(r)
-        idx = _year_act_num(df_update) >= int(r["year_act"])
+        target_year = int(r["year_act"])
+        idx = _year_act_num(df_update) == target_year
         if target_node is not None:
             idx = idx & (df_update[node_col].astype(str) == target_node)
         df_update.loc[idx, "value"] = float(r["depth_converted"])
