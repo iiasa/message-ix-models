@@ -473,9 +473,11 @@ def _growth(base_value: float, speed: float, step: int) -> float:
 
 
 def _year_act_num(df: pd.DataFrame) -> pd.Series:
-    """Numeric year for comparisons (``year_act`` or ``year_rel``)."""
-    col = "year_act" if "year_act" in df.columns else "year_rel"
-    return pd.to_numeric(df[col], errors="coerce")
+    """Numeric year for comparisons (``year_act``, ``year_rel``, or ``year_vtg``)."""
+    for col in ("year_act", "year_rel", "year_vtg"):
+        if col in df.columns:
+            return pd.to_numeric(df[col], errors="coerce")
+    raise KeyError(f"no year column in DataFrame; columns: {list(df.columns)}")
 
 
 def _row_node(row: pd.Series) -> str | None:
@@ -666,6 +668,7 @@ def add_anchor(
     anchor_emission_factor(df_anchor, scenario)
     anchor_input_output(df_anchor, scenario)
     anchor_growth_activity(df_anchor, scenario)
+    anchor_inv_cost(df_anchor, scenario)
     anchor_share_comm(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
 
@@ -833,6 +836,62 @@ def anchor_growth_activity(  # noqa: C901
             len(df_updates),
             par_name,
         )
+
+    return
+
+
+def anchor_inv_cost(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``inv_cost``."""
+
+    df_ic = df_anchor.loc[df_anchor["parameter"] == "inv_cost"].copy()
+    if df_ic.empty:
+        log.info("anchor_inv_cost: no policies tuning 'inv_cost'")
+        return
+
+    info = ScenarioInfo(scenario)
+    updates: list[pd.DataFrame] = []
+
+    for (_policy_id, technology), group in df_ic.groupby(
+        ["policy_id", "technology"], dropna=False
+    ):
+        nodes = _nodes(group) or nodes_ex_world(info.N)
+        years = [int(y) for y in info.Y]
+        techs = [t.strip() for t in str(technology).split(",") if t.strip()]
+        for tec in techs:
+            df_initial = scenario.par(
+                "inv_cost",
+                filters={"technology": [tec]},
+            )
+            if df_initial.empty:
+                df_initial = make_df(
+                    "inv_cost",
+                    technology=tec,
+                    unit="???",
+                    value=0.0,
+                ).pipe(broadcast, node_loc=nodes, year_vtg=years)
+
+            updates.append(
+                _apply_depth_speed_arrival(
+                    df_initial, group.copy(), node_col="node_loc"
+                )
+            )
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        return
+
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_inv_cost.csv")
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    with scenario.transact("apply anchor inv_cost"):
+        scenario.add_par("inv_cost", df_updates)
+
+    log.info(
+        "anchor_inv_cost: added %d inv_cost rows",
+        len(df_updates),
+    )
 
     return
 
