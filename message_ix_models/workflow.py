@@ -320,14 +320,11 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     @click.argument("target_step", metavar="TARGET", required=False)
     @click.pass_obj
     def _func(context, go, truncate_step, target_step: str | None, **kwargs):
-        from importlib import import_module
-
         from message_ix_models.util import show_versions
+        from message_ix_models.util.importlib import import_from_fqn
 
         # Import the module and retrieve the callback function
-        module_name, callback_name = wf_callback.rsplit(".", maxsplit=1)
-        module = import_module(module_name)
-        callback = getattr(module, callback_name)
+        callback = import_from_fqn(wf_callback)
 
         # Generate the workflow
         wf = callback(context, **kwargs)

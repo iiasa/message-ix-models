@@ -27,6 +27,7 @@ from message_ix_models.util._logging import flush, mark_time
 from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
+from message_ix_models.util.importlib import import_from_fqn
 
 log = logging.getLogger(__name__)
 
@@ -203,14 +204,12 @@ else:  # pragma: no cover  (needs message_data)
     )
 
 for name in submodules:
-    # Import the module and retrieve the click.Command object
     try:
-        __import__(name)
-    except ImportError as e:
+        # Import the module and retrieve the click.Command object
+        cmd = import_from_fqn(f"{name}.cli")
+    except (AttributeError, ImportError) as e:
         print(f"{name} not available: {e}")
         continue
-
-    cmd = getattr(sys.modules[name], "cli")
 
     # Avoid replacing message-ix-models CLI with message_data CLI
     if cmd.name in main.commands:  # pragma: no cover  (needs message_data)
