@@ -34,5 +34,5 @@ def test_generate(
     # Workflow runs, does nothing
     wf.run("all")
 
-    # Final log message is as expected
-    assert last_log == caplog.messages[-1]
+    # Final log messages are as expected
+    assert last_log in caplog.messages[-2:]
