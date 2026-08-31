@@ -25,6 +25,9 @@ from packaging.version import Version
 
 from message_ix_models import util
 from message_ix_models.model import snapshot
+from message_ix_models.model.buildings.testing import (
+    mock_buildings_context,  # noqa: F401
+)
 from message_ix_models.model.transport import testing as transport
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
