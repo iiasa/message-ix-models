@@ -5,6 +5,7 @@ import logging
 import re
 import subprocess
 from collections.abc import Mapping, MutableMapping
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,6 +19,33 @@ if TYPE_CHECKING:
     from message_ix_models.model.buildings.config import Config
 
 log = logging.getLogger(__name__)
+
+
+class METHOD(Enum):
+    """Method for invoking STURM and other message-ix-buildings code."""
+
+    #: Invoke STURM using :mod:`rpy2`.
+    RPY2 = auto()
+
+    #: Invoke :file:`run_STURM.R` using :program:`Rscript`. This is an older method
+    #: used prior to 2026. It may not may still be supported by the version of
+    #: :file:`run_STURM.R` on the ``main`` branch of message-ix-buildings.
+    RSCRIPT_A = auto()
+
+    #: Invoke STURM and other scripts from :data:`RSCRIPT_B_FILES`, using
+    #: :program:`Rscript`. This method was developed in 2026 for use in the NGFS and
+    #: CircEUlar projects, and corresponds to changes on the message-ix-buildings
+    #: ``{NAME}`` branch.
+    RSCRIPT_B = auto()
+
+
+#: R files used for :data:`METHOD.RSCRIPT_B`.
+RSCRIPT_B_FILES = [
+    "run_STURM_Circular_resid_glo.R",
+    "run_STURM_Circular_comm_glo.R",
+    "run_GLANCE_placeholder.R",
+    "run_MIXB_aligner.R",
+]
 
 
 def run(
