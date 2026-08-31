@@ -312,10 +312,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     techs = [
         "urban_t_d",
-        "urban_unconnected",
         "industry_unconnected",
         "rural_t_d",
-        "rural_unconnected",
     ]
 
     df_non_elec = df[df["incmd"] != "electr"].reset_index()
@@ -803,7 +801,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     df_desal = pd.read_csv(path)
     df_hist = pd.read_csv(path2)
     df_proj = pd.read_csv(path3)
-    df_proj = df_proj[df_proj["rcp"] == f"{cfg.RCP}"]
+    df_proj = df_proj[df_proj["ssp"] == f"{context.ssp}"]
     df_proj = df_proj[~(df_proj["year"] == 2065) & ~(df_proj["year"] == 2075)]
     df_proj.reset_index(inplace=True, drop=True)
     df_proj = df_proj[df_proj["year"].isin(info.Y)]
@@ -888,6 +886,18 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     bound_up["value"] = bound_up["value"].clip(lower=0)
     # Bound should start from 2025
     bound_up = bound_up[bound_up["year_act"] >= firstyear]
+
+    # Backfill missing projected desal rows so missing basin-year capacity
+    # means zero, not an unconstrained extraction cap.
+    model_years = [y for y in info.Y if y >= firstyear]
+    full_grid = pd.DataFrame(
+        [(f"B{b}", y) for b in df_node["BCU_name"] for y in model_years],
+        columns=["node_loc", "year_act"],
+    )
+    bound_up = full_grid.merge(bound_up, on=["node_loc", "year_act"], how="left")
+    bound_up["technology"] = "extract_salinewater_basin"
+    bound_up["value"] = bound_up["value"].fillna(0.0)
+    bound_up["unit"] = "MCM/year"
 
     results["bound_total_capacity_up"] = bound_up
     # Investment costs
@@ -1123,8 +1133,8 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
 
         results["output"] = out_df
 
-    # putting a lower bound on desalination tecs based on hist capacities
-    df_bound = df_hist[df_hist["year"] == 2025]  # firstyear dataabsent
+    # Candidate lower bound on desal activity from 2025 historical capacity.
+    df_bound = df_hist[df_hist["year"] == 2025]  # 2025 is the carry-forward proxy
     bound_lo = make_df(
         "bound_activity_lo",
         node_loc="B" + df_bound["BCU_name"],
@@ -1137,25 +1147,43 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
         year_act=year_wat,
         time=pd.Series(sub_time),
     )
+    # Pre-firstmodelyear activity is governed by historical_new_capacity.
+    bound_lo = bound_lo[
+        (bound_lo["year_act"] >= firstyear) & (bound_lo["year_act"] <= firstyear + 15)
+    ]
+    bound_lo["value"] = bound_lo["value"] / ANNUAL_CAPACITY_FACTOR
 
-    bound_lo = bound_lo[bound_lo["year_act"] <= firstyear + 15]
-    # Divide the histroical capacity by 5 since the existing data is summed over
-    # 5 years and model needs per year
-    bound_lo["value"] = bound_lo["value"] / 5
-
-    # Clip activity bounds to not exceed capacity bounds
+    # Scale membrane + distillation floors so their shared salinewater demand
+    # respects the basin-year extraction cap.
     bound_lo = bound_lo.merge(
-        bound_up[["node_loc", "year_act", "value"]],
+        bound_up[["node_loc", "year_act", "value"]].rename(columns={"value": "cap"}),
         on=["node_loc", "year_act"],
         how="left",
-        suffixes=("", "_cap"),
     )
-    bound_lo["value"] = np.minimum(
-        bound_lo["value"], bound_lo["value_cap"].fillna(np.inf)
-    )
-    bound_lo = bound_lo.drop("value_cap", axis=1)
+    bound_lo["cap"] = bound_lo["cap"].fillna(np.inf)
+    total = bound_lo.groupby(["node_loc", "year_act"])["value"].transform("sum")
+    scale = np.minimum(1.0, bound_lo["cap"] / total.where(total > 0, 1.0))
+    bound_lo["value"] = bound_lo["value"] * scale
+    bound_lo = bound_lo.drop(columns="cap")
 
     results["bound_activity_lo"] = bound_lo
+
+    # Smooth the vintage-replacement sawtooth on desal CAP_NEW.
+    desal_growth_rate = 0.10
+    growth_year_index = pd.Series([y for y in info.Y if y >= firstyear])
+    growth_tecs = pd.Series(["membrane", "distillation"])
+
+    growth_new_capacity_up = make_df(
+        "growth_new_capacity_up",
+        value=desal_growth_rate,
+        unit="-",
+    ).pipe(
+        broadcast,
+        technology=growth_tecs,
+        year_vtg=growth_year_index,
+        node_loc=df_node["node"],
+    )
+    results["growth_new_capacity_up"] = growth_new_capacity_up
 
     # # Add soft constraints for desalination bound_activity_lo
     # # Parameters for soft constraints

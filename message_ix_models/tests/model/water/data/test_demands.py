@@ -12,10 +12,12 @@ from message_ix_models.tests.model.water.conftest import water_params
 @pytest.mark.parametrize(
     "water_context",
     [
-        water_params("R11", SDG="baseline", time="year"),
-        water_params("R12", SDG="baseline", time="year"),
-        water_params("ZMB", SDG="baseline", time="year"),
-        water_params("R12", reduced_basin=True, SDG="baseline", time="year"),
+        water_params("R11", SDG="baseline", time="year", ssp="SSP2"),
+        water_params("R12", SDG="baseline", time="year", ssp="SSP2"),
+        water_params("ZMB", SDG="baseline", time="year", ssp="SSP2"),
+        water_params(
+            "R12", reduced_basin=True, SDG="baseline", time="year", ssp="SSP2"
+        ),
     ],
     indirect=True,
 )

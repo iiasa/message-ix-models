@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
+from pathlib import Path
 from typing import TYPE_CHECKING
 from warnings import warn
 
@@ -29,6 +30,15 @@ METADATA = [
     ("water", "technology"),
 ]
 
+# Basins that are 100% NaN across all 5 CWaTM GCMs in the refreshed hydro
+# source. The generator emits zero rows for them; the water build excludes
+# them at filter time.
+_PROBLEM_BASINS = ("30|FSU", "51|FSU", "154|FSU")
+
+# Treatment and recycling rates are not differentiated across SSPs; every SSP
+# reads them from the ssp2 files.
+SSP2_RATES = ("urban_treatment_rate", "rural_treatment_rate", "urban_recycling_rate")
+
 # Conversion factors used in the water module
 
 MONTHLY_CONVERSION = (
@@ -41,11 +51,27 @@ GWa_KM3_TO_GWa_MCM = registry("GWa/km^3").to("GWa/m^3").magnitude * 1e6
 ANNUAL_CAPACITY_FACTOR = 5  # Convert 5-year capacity to annual
 # Convert km³ to MCM: 1 km³ = 1e9 m³, 1 MCM = 1e6 m³, so factor = 1000
 KM3_TO_MCM = registry("1 km^3").to("meter^3").magnitude / 1e6  # km³ to MCM conversion
+# Convert m³/day to km³/year using 365-day calendar year
+M3DAY_TO_KM3YR = registry("1 m^3").to("km^3").magnitude * 365
 kWh_m3_TO_GWa_MCM = registry("kWh/m^3").to("GWa/m^3").magnitude * 1e6
 
 # Convert m3/GJ to MCM/GWa
 m3_GJ_TO_MCM_GWa = registry("m^3/GJ").to("m^3/GWa").magnitude / 1e6
 # MCM not standard so have to remember to divide by 1e6 each time.
+
+# Electricity wiring for the basin extraction technologies, shared by
+# add_water_supply (in-horizon) and add_water_hist_dispatch (historical seed).
+# Surface-water extraction electricity intensity (GWa/km3, mid literature estimate).
+SW_ELEC_INTENSITY_GWA_KM3 = 0.018835616
+# Groundwater pumping electricity depth adder (GWa/km3).
+GW_ELEC_DEPTH_ADDER_GWA_KM3 = 0.043464579
+# Fossil-groundwater cost premium over renewable groundwater: fossil is priced
+# 20% above renewable on every dimension (electricity here, inv_cost and
+# lifetime in add_water_supply), instead of an arbitrary discouragement penalty.
+GW_FOSSIL_ELEC_MULTIPLIER = 1.2
+# Reference electricity price for the historical merit-order dispatch:
+# 50 USD/MWh x 8766 MWh/GWa.
+HIST_DISPATCH_ELEC_PRICE_USD_GWA = 50.0 * 8766.0
 
 
 def read_config(context: Context | None = None):
@@ -78,6 +104,16 @@ def read_config(context: Context | None = None):
         context[key] = load_package_data(*_parts)
 
     return context
+
+
+def ssp2_rate_files(path: Path) -> list[Path]:
+    """Paths to the ssp2 treatment- and recycling-rate CSVs under *path*."""
+    return [path / f"ssp2_regional_{rate}_baseline.csv" for rate in SSP2_RATES]
+
+
+def variable_from_stem(stem: str) -> str:
+    """Variable name from a ``<ssp>_regional_<variable>`` filename stem."""
+    return stem.split("_regional_", 1)[1]
 
 
 def filter_basins_by_region(
@@ -120,6 +156,12 @@ def filter_basins_by_region(
         context = Context.get_instance(-1)
 
     cfg = Config.from_context(context)
+
+    # 30|FSU, 51|FSU, 154|FSU are 100% NaN across all 5 CWaTM GCMs in the
+    # refreshed hydro source; the generator emits zero rows for them. Exclude
+    # them from the build basin set unconditionally so the water module never
+    # sees zero-availability rows for those basins.
+    df_basins = df_basins[~df_basins["BCU_name"].isin(_PROBLEM_BASINS)]
 
     if not cfg.reduced_basin:
         # No filtering, return original dataframe
@@ -212,23 +254,21 @@ def compute_basin_demand_ratio(
         )
     )
 
-    # Supply: surface + groundwater, mean across year columns, km3 -> MCM
+    # Supply: surface + groundwater, mean across year columns, km3 -> MCM.
+    # Basin ranking uses 2p6 low-reliability as a stable cross-RCP baseline so
+    # the filtered basin set does not shift with the run's RCP choice.
     qtot = pd.read_csv(
-        package_data_path(
-            "water", "availability", f"qtot_5y_no_climate_low_{regions}.csv"
-        )
+        package_data_path("water", "availability", f"qtot_5y_2p6_low_{regions}.csv")
     ).drop(columns=["Unnamed: 0"], errors="ignore")
     qr = pd.read_csv(
-        package_data_path(
-            "water", "availability", f"qr_5y_no_climate_low_{regions}.csv"
-        )
+        package_data_path("water", "availability", f"qr_5y_2p6_low_{regions}.csv")
     ).drop(columns=["Unnamed: 0"], errors="ignore")
     supply_mcm = (qtot.mean(axis=1) + qr.mean(axis=1)) * KM3_TO_MCM
 
     # Demand: urban + rural + manufacturing withdrawals at demand_year
     demand_path = package_data_path("water", "demands", "harmonized", regions)
     demand_files = [
-        f"{ssp_label}_regional_urban_withdrawal2_baseline.csv",
+        f"{ssp_label}_regional_urban_withdrawal_domestic_baseline.csv",
         f"{ssp_label}_regional_rural_withdrawal_baseline.csv",
         f"{ssp_label}_regional_manufacturing_withdrawal_baseline.csv",
     ]
