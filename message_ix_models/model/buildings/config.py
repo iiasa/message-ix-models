@@ -11,6 +11,8 @@ import ixmp
 from message_ix_models.model.workflow import Config as SolveConfig
 from message_ix_models.util.config import ConfigHelper
 
+from .sturm import METHOD as STURM_METHOD
+
 if TYPE_CHECKING:
     from typing import TypedDict
 
@@ -140,7 +142,7 @@ class Config(ConfigHelper):
     ssp: str = "SSP2"
 
     #: Method for running STURM. See :func:`.sturm.run`.
-    sturm_method: str = "Rscript"
+    sturm_method: STURM_METHOD = STURM_METHOD.RSCRIPT_A
 
     def __post_init__(self) -> None:
         if not self.code_dir.exists():

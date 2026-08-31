@@ -13,6 +13,7 @@ from message_ix import Scenario, make_df
 
 from message_ix_models import Context
 from message_ix_models.model import buildings
+from message_ix_models.model.buildings import sturm
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.transport.build import main as build_transport
 from message_ix_models.model.workflow import Config as WfConfig
@@ -169,7 +170,7 @@ def adjust_materials(
 BUILDINGS_CONFIG = buildings.Config(
     max_iterations=1,
     run_access=False,
-    sturm_method="Rscript",
+    sturm_method=sturm.METHOD.RSCRIPT_A,
     sturm_scenario="",
 )
 
