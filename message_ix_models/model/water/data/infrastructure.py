@@ -312,10 +312,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     techs = [
         "urban_t_d",
-        "urban_unconnected",
         "industry_unconnected",
         "rural_t_d",
-        "rural_unconnected",
     ]
 
     df_non_elec = df[df["incmd"] != "electr"].reset_index()
@@ -803,7 +801,7 @@ def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     df_desal = pd.read_csv(path)
     df_hist = pd.read_csv(path2)
     df_proj = pd.read_csv(path3)
-    df_proj = df_proj[df_proj["rcp"] == f"{cfg.RCP}"]
+    df_proj = df_proj[df_proj["ssp"] == f"{context.ssp}"]
     df_proj = df_proj[~(df_proj["year"] == 2065) & ~(df_proj["year"] == 2075)]
     df_proj.reset_index(inplace=True, drop=True)
     df_proj = df_proj[df_proj["year"].isin(info.Y)]
