@@ -42,9 +42,11 @@ SF_POLICY_IDS = [
     "10f-CHN-ENE-MOD-25_02",
     "10f-CHN-ENE-MOD-30_01",
     "10f-CHN-ENE-MOD-30_03",
-    "10f-CHN-ENE-MOD-30_04",
+    # "10f-CHN-ENE-MOD-30_04",
     "10f-CHN-ENE-MOD-30_05",
     "10f-CHN-ENE-MOD-30_06",
+    # hydrogen
+    "10d-CHN-ENE-MOD-30_01",
 ]
 SF_ACC_POLICY_IDS = [
     # ammonia
@@ -56,9 +58,12 @@ SF_ACC_POLICY_IDS = [
     "10f-CHN-ENE-MOD-25_02",
     "10f-CHN-ENE-MOD-30_02",  # accelerated
     "10f-CHN-ENE-MOD-30_03",
-    "10f-CHN-ENE-MOD-30_04",
+    # "10f-CHN-ENE-MOD-30_04",
     "10f-CHN-ENE-MOD-30_05",
     "10f-CHN-ENE-MOD-30_06",
+    # hydrogen
+    # "10d-CHN-ENE-MOD-30_02",  # accelerated
+    "10d-CHN-ENE-MOD-30_01",
 ]
 log = logging.getLogger(__name__)
 
@@ -524,8 +529,8 @@ def generate(context: Context) -> Workflow:
         "hydrogen added",
         name,
         build_hydrogen,
-        # target=f"{url}baseline_20260827",
-        target=f"{url}chn_base",
+        target=f"{url}baseline_20260827",
+        # target=f"{url}chn_base",
         clone=c,
     )
     name = wf.add_step("baseline solved", name, solve)
