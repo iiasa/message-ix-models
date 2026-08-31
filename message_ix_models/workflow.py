@@ -29,26 +29,37 @@ class WorkflowStep:
 
     Parameters
     ----------
-    name : str
-        ``"model name/scenario name"`` for the :class:`.Scenario` produced by the step.
-    action : CallbackType, optional
-        Function to be executed to modify the base into the target Scenario.
-    clone : bool, optional
-        :obj:`True` to clone the base scenario the target.
+    action :
+        See :attr:`action`.
     target : str, optional
         URL for the scenario produced by the workflow step. Parsed to
         :attr:`scenario_info` and :attr:`platform_info`.
-    kwargs
-        Keyword arguments for `action`.
+    clone :
+        See :attr:`clone`.
+    set_as_default :
+        See :attr:`set_as_default`.
+    kwargs :
+        Other keyword arguments to the :attr:`action`. These are stored as
+        a :class:`dict` at :attr:`kwargs`. Because of the signature of WorkflowStep,
+        these may not include 'action', 'target', 'clone', or 'set_as_default'.
     """
 
-    #: Function to be executed on the subject scenario. If :obj:`None`, the target
-    #: scenario is loaded via :meth:`Context.get_scenario`.
+    #: Function or other callable to be executed on a scenario. This must take at least
+    #: 2 arguments: (1) an :class:`.Context` and (2) the |Scenario|, plus any
+    #: :attr:`kwargs`.
+    #:
+    #: If `action` is :obj:`None`, the target scenario is loaded using
+    #: :meth:`Context.get_scenario` and returned without changing.
     action: CallbackType | None = None
 
-    #: :obj:`True` or a :class:`dict` with keyword arguments to clone before
-    #: :attr:`action` is executed. Default: :obj:`False`, do not clone.
+    #: :class:`dict` with keyword arguments to call :meth:`.Scenario.clone` *before*
+    #: :attr:`action`. :obj:`True` is replaced with :py:`dict(keep_solution=False)`.
+    #: Default: :obj:`False`, do not clone.
     clone: bool | dict = False
+
+    #: :obj:`True` to call :meth:`.Scenario.set_as_default` on the scenario resulting
+    #: from or returned by :attr:`action`.
+    set_as_default: bool = False
 
     #: Keyword arguments passed to :attr:`action`.
     kwargs: dict
@@ -59,10 +70,17 @@ class WorkflowStep:
     #: Target model name, scenario name, and optional version.
     scenario_info: "dict | TimeSeriesIdentifiers"
 
-    def __init__(self, action: CallbackType | None, target=None, clone=False, **kwargs):
+    def __init__(
+        self,
+        action: CallbackType | None,
+        target: str | None = None,
+        clone: bool | dict = False,
+        set_as_default: bool = False,
+        **kwargs,
+    ):
         try:
             # Store platform and scenario info by parsing the `target` URL
-            self.platform_info, self.scenario_info = parse_url(target)
+            self.platform_info, self.scenario_info = parse_url(target or "")
         except (AttributeError, ValueError):
             if clone is not False:
                 raise TypeError("target= must be supplied for clone=True")
@@ -72,6 +90,7 @@ class WorkflowStep:
         # Store the callback and options
         self.action = action
         self.clone = clone
+        self.set_as_default = set_as_default
         self.kwargs = kwargs
 
     def __call__(
@@ -111,26 +130,33 @@ class WorkflowStep:
             )
             s = s.clone(**clone_kw)
 
-        if not self.action:
-            return s
+        # Run the action/callback/function, if any
+        if self.action:
+            log.info(f"Execute {self.action!r}")
 
-        log.info(f"Execute {self.action!r}")
+            # Modify context to identify the target scenario
+            context.set_scenario(s)
 
-        # Modify context to identify the target scenario
-        context.set_scenario(s)
+            try:
+                # Invoke the callback
+                result = self.action(context, s, **self.kwargs)
+            except Exception:  # pragma: no cover
+                s.platform.close_db()  # Avoid locking the scenario
+                raise
 
-        try:
-            # Invoke the callback
-            result = self.action(context, s, **self.kwargs)
-        except Exception:  # pragma: no cover
-            s.platform.close_db()  # Avoid locking the scenario
-            raise
+            if result:
+                # action() returned a scenario, possibly the same one. Use this for
+                # set_as_default() and the return value
+                s = result
+            else:
+                log.info("…nothing returned")
 
-        if result is None:
-            log.info(f"…nothing returned, workflow will continue with {s.url}")
-            result = s
+            log.info(f"Workflow continues with {s.url}")
 
-        return result
+        if self.set_as_default:
+            s.set_as_default()
+
+        return s
 
     def __repr__(self):
         action = f"{self.action.__name__}()" if self.action else "load"
