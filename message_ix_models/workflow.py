@@ -159,11 +159,11 @@ class WorkflowStep:
         return s
 
     def __repr__(self):
-        action = f"{self.action.__name__}()" if self.action else "load"
+        action = f"Step {self.action.__name__}()" if self.action else "Load"
         dest = ""
         if self.scenario_info:
             dest = " -> {model}/{scenario}".format(**self.scenario_info)
-        return f"<Step {action}{dest}>"
+        return f"<{action}{dest}>"
 
 
 class Workflow(Computer):
