@@ -34,6 +34,7 @@ Commonly used:
    ~_re.Substitutions
    .adapt_R11_R12
    .adapt_R11_R14
+   .adapt_R12_R11
    .as_codes
    broadcast
    cached
