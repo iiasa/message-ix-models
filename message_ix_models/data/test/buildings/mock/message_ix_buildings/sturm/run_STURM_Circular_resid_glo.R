@@ -1,0 +1,1 @@
+print("Executed run_STURM_Circular_resid_glo.R")
