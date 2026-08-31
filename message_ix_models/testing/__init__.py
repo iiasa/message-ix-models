@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 
 try:
@@ -25,6 +26,9 @@ from packaging.version import Version
 
 from message_ix_models import util
 from message_ix_models.model import snapshot
+from message_ix_models.model.buildings.testing import (
+    mock_buildings_context,  # noqa: F401
+)
 from message_ix_models.model.transport import testing as transport
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
@@ -73,6 +77,10 @@ MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
     "ci_linux_only": pytest.mark.skipif(
         condition=GHA and platform.system() != "Linux",
         reason="Skip on non-Linux GitHub Actions runners, for performance",
+    ),
+    "ci_not_macos_intel": pytest.mark.skipif(
+        condition=GHA and not re.match("macOS-.*-amd64", platform.platform(), re.I),
+        reason="R not installed on macos-15-intel GitHub Actions runners",
     ),
     # Used in .material.test_{build,data_steel}; .transport.test_report
     "ci_timeout": pytest.mark.skipif(

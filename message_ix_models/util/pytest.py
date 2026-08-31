@@ -1,3 +1,5 @@
+"""Utilities for :mod:`pytest`."""
+
 from collections.abc import Callable, Mapping
 
 import pytest

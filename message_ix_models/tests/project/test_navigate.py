@@ -58,7 +58,7 @@ BLOCKS = [
     \1- {_context}""",
     rf"""
 (\s+)- 'M T3.5 built':
-  \1- <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
+  \1- <Load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
   \1- {_context}
   \1- None""",
 ]

@@ -34,6 +34,7 @@ Commonly used:
    ~_re.Substitutions
    .adapt_R11_R12
    .adapt_R11_R14
+   .adapt_R12_R11
    .as_codes
    broadcast
    cached
@@ -217,6 +218,7 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.pytest
 
 .. automodule:: message_ix_models.util.pytest
+   :members:
 
 :mod:`.util._re`
 ================
