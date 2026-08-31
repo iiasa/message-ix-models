@@ -30,7 +30,13 @@ from .common import (
     private_data_path,
 )
 from .importlib import minimum_version
-from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
+from .node import (
+    adapt_R11_R12,
+    adapt_R11_R14,
+    adapt_R12_R11,
+    identify_nodes,
+    nodes_ex_world,
+)
 from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
@@ -53,6 +59,7 @@ __all__ = [
     "WildcardAdapter",
     "adapt_R11_R12",
     "adapt_R11_R14",
+    "adapt_R12_R11",
     "add_par_data",
     "aggregate_codes",
     "as_codes",

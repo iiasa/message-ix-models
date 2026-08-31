@@ -40,6 +40,22 @@ R11_R12 = (
     ("R11_WEU", "R12_WEU"),
 )
 
+#: Mapping from R12 to R11 node IDs.
+R12_R11 = (
+    ("R12_AFR", "R11_AFR"),
+    ("R12_CPA", "R11_CHN"),
+    ("R12_EEU", "R11_EEU"),
+    ("R12_FSU", "R11_FSU"),
+    ("R12_LAM", "R11_LAM"),
+    ("R12_MEA", "R11_MEA"),
+    ("R12_NAM", "R11_NAM"),
+    ("R12_PAO", "R11_PAO"),
+    ("R12_PAS", "R11_PAS"),
+    ("R12_RCPA", "R11_CPA"),
+    ("R12_SAS", "R11_SAS"),
+    ("R12_WEU", "R11_WEU"),
+)
+
 #: Mapping from R11 to R14 node IDs.
 R11_R14 = (
     ("R11_AFR", "R14_AFR"),
@@ -69,6 +85,13 @@ adapt_R11_R12 = MappingAdapter({d: R11_R12 for d in NODE_DIMS})
 #: The data is adapted using the mappings in :data:`R11_R14` for each of the dimensions
 #: in :data:`NODE_DIMS`.
 adapt_R11_R14 = MappingAdapter({d: R11_R14 for d in NODE_DIMS})
+
+
+#: Adapt data from the R12 to the R11 node list.
+#:
+#: The data is adapted using the mappings in :data:`R12_R11` for each of the dimensions
+#: in :data:`NODE_DIMS`.
+adapt_R12_R11 = MappingAdapter({d: R12_R11 for d in NODE_DIMS})
 
 
 def identify_nodes(scenario: Scenario) -> str:
