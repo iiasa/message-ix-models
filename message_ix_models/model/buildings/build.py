@@ -196,6 +196,78 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
     return result[~result["node"].str.endswith("_GLB")]
 
 
+def get_prices_B(s: message_ix.Scenario, base_path: Path) -> pd.DataFrame:
+    """Retrieve PRICE_COMMODITY for certain quantities and merge with reference data.
+
+    This function uses two sources of data:
+
+    1. Reference data is located at :file:`{base_path}/input_prices_R12_default.csv`.
+    2. Scenario data for PRICE_COMMODITY is retrieved using :func:`get_prices`.
+
+    The data are then merged, as follows:
+
+    - For :py:`commodity="electr"`, (2) is always used.
+    - For other commodities, the (2) is used only if it is equal to or greater than
+      (1). In other words, (1) are treated as price ‘floor’ for these commodities.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from message_ix_models.util import adapt_R12_R11
+
+    price_default = base_path.joinpath("input_prices_R12_default.csv")
+
+    try:
+        # Read 'reference', 'default', or 'original' prices
+        df_prices_ori = pd.read_csv(price_default)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"STURM reference prices not found: {price_default}")
+
+    # - Retrieve new energy commodity prices from the scenario.
+    # - Adapt R12 to R11 on the `node` dimension.
+    df_prices = get_prices(s).pipe(adapt_R12_R11)
+
+    # Identify key columns for merging
+    cols = ["node", "commodity", "level", "year", "time"]
+    # Filter to only columns that exist in both dataframes
+    common = set(df_prices.columns) & set(df_prices_ori.columns)
+    cols = list(
+        filter(common.__contains__, ["node", "commodity", "level", "year", "time"])
+    )
+
+    # Merge the original dataframe with price data
+    df_updated = pd.merge(
+        df_prices_ori,
+        df_prices[cols + ["lvl"]],
+        on=cols,
+        how="left",
+        suffixes=("", "_new"),
+    )
+
+    rows_updated = (
+        df_updated["lvl_new"].notna().sum() if "lvl_new" in df_updated.columns else 0
+    )
+
+    lvl_original = df_updated["lvl"].copy()
+    lvl_scenario = df_updated["lvl_new"].fillna(df_updated["lvl"])
+
+    # TODO Simplify. This doesn't need the calculation of `factor`.
+    # Calculate the factor (ratio) between scenario and original values for analysis
+    # Factor = scenario / original; factor < 1 means scenario is below STURM reference.
+    factor = np.where(lvl_original != 0, lvl_scenario / lvl_original, np.nan)
+
+    has_scenario = df_updated["lvl_new"].notna()
+    below_reference = (factor < 1) & has_scenario
+    # Floor non-electricity prices at the STURM reference; allow lower electr prices.
+    use_reference_floor = below_reference & (df_updated["commodity"] != "electr")
+    df_updated["lvl"] = np.where(use_reference_floor, lvl_original, lvl_scenario)
+    df_updated = df_updated.drop(columns=["lvl_new"])
+
+    log.info("Rows with updated prices: %d", rows_updated)
+
+    return df_updated
+
+
 def get_techs(spec: Spec, commodity=None) -> list[str]:
     """Return a list of buildings technologies."""
     codes: Iterable[Code] = spec.add.set["technology"]
