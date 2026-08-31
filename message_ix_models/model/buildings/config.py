@@ -149,6 +149,28 @@ class Config(ConfigHelper):
             raise FileNotFoundError(f"MESSAGEix-Buildings not found at {self.code_dir}")
 
     def set_output_path(self, context: "Context") -> None:
+        """Set :attr:`_output_path` based on `context`."""
         # Base path for output during iterations
         self._output_path = context.get_local_path("buildings")
         self._output_path.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def sturm_code_dir(self) -> Path:
+        """The expected path to a directory of STURM R code, within :attr:`code_dir`."""
+        parts = (
+            ["message_ix_buildings", "sturm"]
+            if self.sturm_method is STURM_METHOD.RSCRIPT_B
+            else ["STURM_model"]
+        )
+        return self.code_dir.joinpath(*parts)
+
+    @property
+    def sturm_input_dir(self) -> Path:
+        """The expected path to a directory with STURM input files."""
+        match self.sturm_method:
+            case STURM_METHOD.RPY2:
+                return self.code_dir.joinpath("STURM_data")
+            case STURM_METHOD.RSCRIPT_B:
+                return self.sturm_code_dir.joinpath("data")
+            case _:  # pragma: no cover
+                raise ValueError(f"Not defined for {self.sturm_method=}")
