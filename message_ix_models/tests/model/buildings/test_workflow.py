@@ -27,6 +27,7 @@ class MockScenario:
         ).assign(level="final", year=2020, time="year")
 
 
+@pytest.mark.ci_not_macos_intel
 def test_ngfs(capfd: pytest.CaptureFixture, mock_buildings_context: Context) -> None:
     """call_sturm merges scenario prices and invokes STURM R scripts."""
     ctx = mock_buildings_context
