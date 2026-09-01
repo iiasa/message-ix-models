@@ -13,6 +13,7 @@ from message_ix_models.model.water.report import (
     ScenarioMetadata,
     aggregate_totals,
     get_population_values,
+    get_rates_data,
     process_rates,
     report_full,
 )
@@ -174,6 +175,21 @@ def test_get_population_values() -> None:
     urban_val, rural_val = get_population_values(pop_data, "R12_IND", 2040)
     assert np.isnan(urban_val)
     assert np.isnan(rural_val)
+
+
+def test_get_rates_data() -> None:
+    """:func:`.get_rates_data` runs with mock region mapping."""
+    reg_map = pd.DataFrame(
+        [["R12_CHN", "", "", ""]],
+        columns=["region", "mapped_to", "parent", "hierarchy"],
+    )
+
+    # Function runs
+    result = get_rates_data(reg="R12", ssp="SSP2", _reg_map=reg_map)
+
+    # TODO Expand with assertions about the result
+
+    del result
 
 
 def test_aggregate_totals() -> None:

@@ -398,7 +398,9 @@ def get_population_data(sc: Scenario, reg: str) -> pd.DataFrame:
     return population_data
 
 
-def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
+def get_rates_data(
+    reg: str, ssp: str, sdgs: bool = False, *, _reg_map: pd.DataFrame | None = None
+) -> pd.DataFrame:
     """Load and clean water access rates data from CSV
 
     Parameters
@@ -409,6 +411,8 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
         SSP scenario (e.g., "SSP1", "SSP2", "SSP3")
     sdgs : bool
         Whether to use SDG scenario rates
+    _reg_map :
+        **Testing only.**
 
     Returns
     -------
@@ -433,7 +437,7 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
                 .dropna(subset=["value"])
             )
 
-        if not frames:
+        if not frames:  # pragma: no cover
             log.warning(f"No rate CSVs found for {ssp} in {load_path}")
             return pd.DataFrame()
 
@@ -446,7 +450,7 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
     scenario_type = "SDG" if sdgs_active else "baseline"
     df_rate = all_rates[all_rates.variable.str.contains(scenario_type)]
 
-    if df_rate.empty:
+    if df_rate.empty:  # pragma: no cover
         log.warning(f"No rates data found for {scenario_type}")
         return pd.DataFrame()
 
@@ -455,8 +459,11 @@ def get_rates_data(reg: str, ssp: str, sdgs: bool = False) -> pd.DataFrame:
     df_rate["region_short"] = [x.split("|")[1] for x in df_rate.node]
 
     # Get region mapping for basin codes
-    mp = Platform()
-    reg_map = mp.regions()
+    if _reg_map is None:
+        mp = Platform()
+        reg_map = mp.regions()
+    else:
+        reg_map = _reg_map
 
     # Create basin to region mapping based on reg parameter
     target_regions = reg_map[reg_map.region.str.startswith(f"{reg}_")]
