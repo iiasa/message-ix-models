@@ -35,7 +35,10 @@ from message_ix_models.util import package_data_path
 # %% Generate folders if missing
 def folders_for_trade(covered_tec: list[str]):
     """
-    Generate folders for each trade technology
+    Generate folders for each trade technology.
+
+    Args:
+        covered_tec: Trade technologies covered by the current project config
     """
     for tec in covered_tec:
         tecpath = os.path.join(Path(package_data_path("bilateralize")), tec)
@@ -60,10 +63,16 @@ def define_networks(
     data_path: Path,
 ):
     """
-    Define network dataframe
+    Define network dataframe.
 
     Args:
+        log: Logger
         message_regions: Regional resolution
+        covered_tec: Trade technologies covered by the current project config
+        config_dict: Config dictionary, keyed by config field then by technology
+        data_path: Path to the bilateralize data directory
+    Returns:
+        network_setup: Dictionary of network dataframes, keyed by technology
     """
     # Generate full combination of nodes to build technology-specific network
     node_path = package_data_path("node", message_regions + ".yaml")
@@ -160,7 +169,14 @@ def build_parameterdf(
         par_name: Parameter name (e.g., capacity_factor)
         network_df: Specified network dataframe
         col_values: Values for other columns to populate as default
+        common_years: Common year-related column values (year_vtg, year_act,
+            year_rel); if None, all set to "broadcast"
+        common_cols: Common column values (mode, time, time_origin, time_dest);
+            if None, defaults to M1/year
         export_only: If True, only produces dataframe for export technology
+    Returns:
+        df: Parameter dataframe for the export (and, unless `export_only`, import)
+            technology
     """
 
     if common_years is None:
@@ -204,7 +220,18 @@ def build_input(
     parameter_outputs: dict,
 ):
     """
-    Generate input parameter (trade technology)
+    Generate input parameter (trade technology).
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     # Trade Level (supply to piped/shipped)
     df_input_trade = message_ix.make_df(
@@ -251,7 +278,18 @@ def build_output(
     parameter_outputs: dict,
 ):
     """
-    Generate output parameter (trade technology)
+    Generate output parameter (trade technology).
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     # Trade Level
     df_output_trade = message_ix.make_df(
@@ -293,7 +331,15 @@ def build_technical_lifetime(
     tec: str, network_setup: dict, parameter_outputs: dict, **kwargs
 ):
     """
-    Generate technical lifetime parameter (trade technology)
+    Generate technical lifetime parameter (trade technology).
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_teclt = build_parameterdf(
         "technical_lifetime",
@@ -314,7 +360,16 @@ def build_historical_activity(
     tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
 ):
     """
-    Generate costs for trade technology
+    Generate historical activity parameter (trade technology).
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_hist = pd.DataFrame()
 
@@ -337,7 +392,16 @@ def build_costs(
     tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
 ):
     """
-    Generate costs for trade technology
+    Generate costs for trade technology.
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     # Create base files: inv_cost, fix_cost, var_cost
     for cost_par in ["inv_cost", "fix_cost", "var_cost"]:
@@ -356,7 +420,16 @@ def build_capacity_factor(
     tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
 ):
     """
-    Generate capacity factor parameter (trade technology)
+    Generate capacity factor parameter (trade technology).
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_cf = build_parameterdf(
         "capacity_factor",
@@ -374,7 +447,16 @@ def build_constraints(
     tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
 ):
     """
-    Generate constraints for trade technology
+    Generate constraints for trade technology.
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     for par_name in [
         "initial_activity",
@@ -418,7 +500,20 @@ def build_domestic_coalgas_relation(
     **kwargs,
 ):
     """
-    Generate domestic coal and gas relation parameter (trade technology)
+    Generate domestic coal and gas relation parameter (trade technology).
+
+    Only applies to the ``gas_piped`` technology.
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     if tec in ["gas_piped"]:
         for rel_act in ["domestic_coal", "domestic_gas"]:
@@ -446,7 +541,16 @@ def build_emission_factor(
     tec: str, network_setup: dict, config_dict: dict, parameter_outputs: dict, **kwargs
 ):
     """
-    Generate emission factor parameter (trade technology)
+    Generate emission factor parameter (trade technology).
+
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     if config_dict["tracked_emissions"][tec] is not None:
         df_ef = pd.DataFrame()
@@ -476,8 +580,18 @@ def build_accounting_relations(
     """
     Relations for accounting purposes:
     CO2 emissions, primary energy total, aggregate exports,
-    regional exports, regional imports
+    regional exports, regional imports.
 
+    Args:
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     # CO2 emissions
     df_rel = message_ix.make_df(
@@ -598,7 +712,20 @@ def build_flow_input(
     **kwargs,
 ):
     """
-    Generate flow technology input parameter
+    Generate flow technology input parameter.
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+        message_regions: MESSAGE regional resolution (e.g., "R12")
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_input = pd.DataFrame()
     # List of commodity/material inputs
@@ -684,7 +811,20 @@ def build_flow_output(
     **kwargs,
 ):
     """
-    Generate flow technology output parameter
+    Generate flow technology output parameter.
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+        message_regions: MESSAGE regional resolution (e.g., "R12")
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_output = pd.DataFrame()
     # If pipelines technologies and outputs are bilateral
@@ -766,7 +906,20 @@ def build_flow_capacity_constraints(
     **kwargs,
 ):
     """
-    Generate flow technology capacity constraints parameter
+    Generate flow technology capacity constraints parameter.
+
+    Args:
+        par: Constraint parameter name (e.g., "growth_new_capacity")
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     for t in ["lo", "up"]:
         if config_dict["flow_constraint"][tec] == "bilateral":
@@ -808,7 +961,19 @@ def build_flow_FIcosts(
     **kwargs,
 ):
     """
-    Generate flow technology costs parameter
+    Generate flow technology costs parameter (fix and investment costs).
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     for cost_par in ["fix_cost", "inv_cost"]:
         if config_dict["flow_constraint"][tec] == "bilateral":
@@ -857,7 +1022,20 @@ def build_flow_Vcosts(
     **kwargs,
 ):
     """
-    Generate flow technology variable costs parameter
+    Generate flow technology variable costs parameter.
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+        message_regions: MESSAGE regional resolution (e.g., "R12")
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     if config_dict["flow_constraint"][tec] == "bilateral":
         tec_use = (
@@ -907,7 +1085,19 @@ def build_flow_capacity_factor(
     **kwargs,
 ):
     """
-    Generate flow technology capacity factor parameter
+    Generate flow technology capacity factor parameter.
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_cf_base = build_parameterdf(
         "capacity_factor",
@@ -951,7 +1141,19 @@ def build_flow_technical_lifetime(
     **kwargs,
 ):
     """
-    Generate flow technology technical lifetime parameter
+    Generate flow technology technical lifetime parameter.
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     df_teclt_base = build_parameterdf(
         "technical_lifetime",
@@ -1004,7 +1206,28 @@ def flow_as_trade_input(
     commodity_specific_distances: list[str] = ["crudeoil", "lightoil", "LNG"],
 ):
     """
-    Generate flow technology as trade technology input parameter
+    Generate flow technology as trade technology input parameter.
+
+    For shipped commodities, the input value is scaled by distance and energy
+    content, using distance data specific to the technology's commodity (for
+    those in `commodity_specific_distances`) or a base distance file otherwise.
+
+    Args:
+        flow_tec: Flow technology name (e.g., "gas_pipe")
+        tec: Technology name
+        network_setup: Dictionary of network dataframes, as produced by
+            `define_networks`
+        config_dict: Config dictionary, keyed by config field then by technology
+        common_years: Common year-related column values
+        common_cols: Common column values
+        parameter_outputs: Dictionary of parameter dataframes being built up
+        message_regions: MESSAGE regional resolution (e.g., "R12")
+        data_path: Path to the bilateralize data directory
+        commodity_specific_distances: Trade commodities for which a
+            commodity-specific distance file exists; other commodities fall
+            back to the base distance file
+    Returns:
+        parameter_outputs: Updated dictionary of parameter dataframes
     """
     if config_dict["flow_constraint"][tec] == "bilateral":
         df_input_flow = message_ix.make_df(
@@ -1089,7 +1312,15 @@ def export_edit_files(
     parameter_outputs: dict,
 ):
     """
-    Export edit files
+    Write edit files to CSV, and copy required parameters to bare files that
+    do not already exist.
+
+    Args:
+        covered_tec: Trade technologies covered by the current project config
+        log: Logger
+        data_path: Path to the bilateralize data directory
+        parameter_outputs: Dictionary of parameter dataframes, keyed by
+            technology
     """
     for tec in covered_tec:
         log.info(f"Exporting trade parameters for {tec}")
@@ -1155,14 +1386,14 @@ def generate_edit_files(
     message_regions: str = "R12",
 ):
     """
-    Generate bare sheets to collect required parameters
+    Generate bare sheets to collect required parameters.
 
     Args:
-        log (log, required): Log file to track progress
-        project_name (str, optional): Project name (message_ix_models/project/[THIS])
-        config_name (str, optional): Name of the config file.
+        log: Logger
+        project_name: Name of the project (message_ix_models/project/[THIS])
+        config_name: Name of the config file.
             If None, uses default config from data/bilateralize/config_default.yaml
-        message_regions (str, optional): Default is R12 regionality
+        message_regions: MESSAGE regional resolution (e.g., "R12")
     """
     data_path = package_data_path("bilateralize")
     data_path = Path(os.path.join(os.path.dirname(data_path), "bilateralize"))
