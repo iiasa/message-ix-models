@@ -257,7 +257,7 @@ jobs:
         mix-models config show
         # Symlink message-static-data into local data path
         mkdir -p ${{ github.workspace }}/local-data
-        cp -rsv $(realpath message-static-data)/* local-data/
+        cp -frsv $(realpath message-static-data)/* local-data/ || true
 
     - name: Run test suite using pytest
       run: |
