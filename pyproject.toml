@@ -191,6 +191,7 @@ exclude = [
 select = ["C9", "E", "F", "I", "W"]
 # Exceptions:
 # 27  .model.buildings.build.prepare_data_B()
+# 16  .model.water.report.report()
 # 13  .project.navigate.workflow.generate()
 # 30  .project.ssp.script.util.shares.main()
 # 12  .tools.wb.assign_income_groups()

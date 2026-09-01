@@ -971,6 +971,7 @@ def compute_cooling_technologies(
     return report_iam, cooling_rows
 
 
+# FIXME Reduce complexity from 16 to ≤11
 def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:  # noqa: C901
     # NB: This legacy reporting function will move to genno rather than be split
     # piecemeal.
