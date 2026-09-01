@@ -48,17 +48,26 @@ The tools may stop if the user specifies in their config that they want to speci
 (i.e., specify which regions can trade with regions). In this case, a file called ``specify_trade_network.csv`` 
 will appear in ``message-ix-models/data/bilateralize/[your_trade_commodity]/speciy_network_[your_trade_commodity].csv``.
 
-Additional functions used here include:
+Step 1a | Calculate distances (``tools/bilateralize/calculate_distance.py``)
+======================================================
 
-- ``message_ix_models.tools.bilateralize.calculate_distance()``: 
-  Calculates the great-circle distance between regions (TODO: update this to use explicit maritime routes)
-- ``message_ix_models.tools.bilateralize.historical_calibration.build_historical_price()``: 
-  Builds historical price dataframes
-- ``message_ix_models.tools.bilateralize.mariteam_calibration.calibrate_mariteam()``: 
-  Calibrates maritime shipping (flow technologies) using MariTEAM output.
-- ``message_ix_models.tools.bilateralize.pull_gem.import_gem()``: 
-  Imports pre-downloaded raw data from the Global Energy Monitor which is used to calibrate 
-  the flow technology piped oil and gas
+This step calculates distances between regions for a given commodity.
+These distances can be differentiated between maritime and pipeline routes, as well as by commodity.
+
+The user can call :func:`~.tools.bilateralize.calculate_distance.calculate_distance` to calculate distances.
+
+Functions in this step (:mod:`~.tools.bilateralize.calculate_distance`):
+
+.. currentmodule:: message_ix_models.tools.bilateralize.calculate_distance
+
+.. autosummary::
+
+   haversine_distance
+   calculate_port_distances
+   calculate_distance
+   calculate_pipeline_distances
+
+.. currentmodule:: message_ix_models.tools.bilateralize
 
   **This step is not necessary for the following commodities 
   (they are already defined in ``scenario_parameters.pkl`` in 

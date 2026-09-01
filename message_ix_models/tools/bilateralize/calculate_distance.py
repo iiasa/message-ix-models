@@ -114,6 +114,8 @@ def calculate_distance(
 
     Args:
         regional_specification: MESSAGE regional specification (e.g., "R12")
+        commodity_list: Commodities to calculate distances for; one output CSV
+            file is written per commodity
     Outputs:
         CSV file in data/bilateralize/distances/ that includes
         distances for regional specification
@@ -158,10 +160,16 @@ def calculate_distance(
 # Calculate pipeline distances
 def calculate_pipeline_distances(regional_specification: str = "R12") -> pd.DataFrame:
     """
-    Calculate distances between pairs of pipeline ports
+    Calculate distances between pairs of pipeline ports.
+
     Pipeline ports and coordinates are provided in the distances.xlsx file
-    in data/bilateralize/distances/
-    Use Haversine distance formula to calculate distances between pipeline ports
+    in data/bilateralize/distances/. Uses the Haversine distance formula to
+    calculate distances between pipeline ports.
+
+    Args:
+        regional_specification: MESSAGE regional specification (e.g., "R12")
+    Outputs:
+        DataFrame with columns 'Node1', 'Node2', 'Distance_km'
     """
 
     # Specify the path to CSV file
