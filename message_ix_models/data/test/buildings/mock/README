@@ -1,0 +1,4 @@
+This directory contains a minimal/mock version of the contents of
+https://github.com/iiasa/message-ix-buildings. It is used by the fixture
+message_ix_models.model.buildings.testing.mock_buildings_context; see
+there for more information.

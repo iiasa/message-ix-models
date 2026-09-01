@@ -22,8 +22,7 @@ import ixmp
 import sdmx.model
 import xarray as xr
 from genno import Computer
-
-from message_ix_models.types import AnyQuantity
+from genno.core.quantity import AnyQuantity
 
 from ._dataclasses import asdict
 from .context import Context
@@ -38,13 +37,16 @@ COMPUTER = Computer()
 # Show genno how to hash function arguments seen in message_ix_models
 
 
-def _quantity(o: "AnyQuantity"):
+def _quantity(o: "AnyQuantity") -> tuple:
+    """Encode :class:`genno.Quantity` `o` for cache key construction."""
     return tuple(o.to_series().to_dict())
 
 
 try:
     genno.caching.Encoder.register(AnyQuantity)(_quantity)
-except TypeError:  # Python 3.10 or earlier
+except TypeError:
+    # In Python <= 3.10, functools.singledispatch() does not support typing.Union
+    # Register each of the Quantity classes separately
     from genno.core.attrseries import AttrSeries
     from genno.core.sparsedataarray import SparseDataArray
 

@@ -1,8 +1,8 @@
 import pytest
 
 from message_ix_models.model.transport.workflow import SOLVE_CONFIG, generate
-from message_ix_models.project.digsy.structure import SCENARIO as DIGSY
-from message_ix_models.project.edits.structure import SCENARIO as EDITS
+from message_ix_models.project.digsy.structure import CL_SCENARIO_DIGSY
+from message_ix_models.project.edits.structure import CL_SCENARIO_EDITS_MCE
 
 
 @generate.minimum_version
@@ -39,8 +39,12 @@ def test_generate(test_context, base_scenario) -> None:
 
     # WorkflowStep objects store expected configuration for certain projects
     step = wf.graph["DIGSY-BEST-C T built"][0]
-    assert DIGSY["BEST-C"] is step.kwargs["config"].project["DIGSY"]
+    assert (
+        CL_SCENARIO_DIGSY.get()["BEST-C"] == step.kwargs["config"].project_scenario_code
+    )
     step = wf.graph["EDITS-HA T built"][0]
-    assert EDITS["HA"] is step.kwargs["config"].project["EDITS"]
+    assert (
+        CL_SCENARIO_EDITS_MCE.get()["HA"] == step.kwargs["config"].project_scenario_code
+    )
 
     # wf.run("LED-SSP1 reported")  # NB Only works with base_scenario="bare"

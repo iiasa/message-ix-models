@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
     from .context import Context
 
+
 log = logging.getLogger(__name__)
 
 #: :any:`True` if :mod:`message_data` is installed.
@@ -61,27 +62,35 @@ class Adapter:
     """
 
     def __call__(self, data):
-        if isinstance(data, Quantity):
-            return self.adapt(data)
-        elif isinstance(data, pd.DataFrame):
-            # Convert to Quantity
-            idx_cols = list(filter(lambda c: c not in ("value", "unit"), data.columns))
-            qty = Quantity.from_series(data.set_index(idx_cols)["value"])
+        match data:
+            case pd.DataFrame():
+                if not len(data):
+                    return data
 
-            # Store units
-            if "unit" in data.columns:
-                units = data["unit"].unique()
-                assert 1 == len(units), f"Non-unique units {units}"
-                unit = units[0]
-            else:
-                unit = ""  # dimensionless
+                # Identify message_ix parameter or variable data
+                value_cols = (
+                    ["value", "unit"] if "value" in data.columns else ["lvl", "mrg"]
+                )
+                # Convert to Quantity
+                idx_cols = list(filter(lambda c: c not in value_cols, data.columns))
+                qty = Quantity.from_series(data.set_index(idx_cols)[value_cols[0]])
 
-            # Adapt, convert back to pd.DataFrame, return
-            return self.adapt(qty).to_dataframe().assign(unit=unit).reset_index()
-        elif isinstance(data, Mapping):
-            return {par: self(value) for par, value in data.items()}
-        else:
-            raise TypeError(type(data))
+                # Store units
+                if "unit" in data.columns:
+                    units = data["unit"].unique()
+                    assert 1 == len(units), f"Non-unique units {units}"
+                    unit = units[0]
+                else:
+                    unit = ""  # dimensionless
+
+                # Adapt, convert back to pd.DataFrame, return
+                return self.adapt(qty).to_dataframe().assign(unit=unit).reset_index()
+            case Mapping():
+                return {par: self(value) for par, value in data.items()}
+            case Quantity():
+                return self.adapt(data)
+            case _:
+                raise TypeError(type(data))
 
     @abstractmethod
     def adapt(self, qty: "TQuantity") -> "TQuantity":

@@ -14,6 +14,7 @@ import pint
 
 from ._convert_units import convert_units
 from ._logging import mark_time, once, preserve_log_level, silence_log
+from ._re import Substitutions
 from .cache import cached
 from .common import (
     HAS_MESSAGE_DATA,
@@ -29,7 +30,13 @@ from .common import (
     private_data_path,
 )
 from .importlib import minimum_version
-from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
+from .node import (
+    adapt_R11_R12,
+    adapt_R11_R14,
+    adapt_R12_R11,
+    identify_nodes,
+    nodes_ex_world,
+)
 from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
@@ -48,9 +55,11 @@ __all__ = [
     "MESSAGE_MODELS_PATH",
     "Adapter",
     "MappingAdapter",
+    "Substitutions",
     "WildcardAdapter",
     "adapt_R11_R12",
     "adapt_R11_R14",
+    "adapt_R12_R11",
     "add_par_data",
     "aggregate_codes",
     "as_codes",

@@ -8,6 +8,7 @@ import ixmp
 import message_ix
 import pandas as pd
 import pandas.testing as pdt
+import pyam
 import pytest
 import xarray as xr
 from genno import Computer, Quantity
@@ -20,12 +21,14 @@ from message_ix_models.report.operator import (
     compound_growth,
     filter_ts,
     from_url,
+    full,
     get_ts,
     gwp_factors,
     latest_reporting,
     make_output_path,
     model_periods,
     remove_ts,
+    remove_zeros,
     share_curtailment,
     summarize,
 )
@@ -96,6 +99,32 @@ def test_from_url(scenario):
     result = from_url(full_url, message_ix.Scenario)
     assert result.__class__ is message_ix.Scenario
     assert scenario.url == result.url
+
+
+@pytest.mark.parametrize(
+    "coords, dims, exp_len",
+    (
+        ([], (), 1),  # No dimensions
+        ([["x1", "x2"]], ("x",), 2),  # 1-D
+        ([["x1", "x2"], ["y1", "y2", "y3"]], ("x", "y"), 6),  # 2-D
+        pytest.param(  # Too few coords
+            [["x1", "x2"]],
+            ("x", "y"),
+            0,
+            marks=pytest.mark.xfail(raises=ValueError),
+        ),
+        pytest.param(  # Too few IDs
+            [["x1", "x2"], ["y1", "y2", "y3"]],
+            ("x",),
+            0,
+            marks=pytest.mark.xfail(raises=ValueError),
+        ),
+    ),
+)
+def test_full(coords: list, dims: tuple, exp_len: int) -> None:
+    result = full(*coords, dims=dims)
+
+    assert exp_len == len(result)
 
 
 def test_get_remove_ts(caplog, scenario):
@@ -238,6 +267,39 @@ def test_model_periods():
     assert isinstance(result, list)
     assert all(isinstance(y, int) for y in result)
     assert 2020 == min(result)
+
+
+def test_remove_zeros() -> None:
+    import numpy as np
+
+    # Test data:
+    # - Mix of 0.0, NaN, and non-zero for year 2019.
+    # - 0.0 for years 2020 amd 2021.
+    idx = pd.MultiIndex.from_product(
+        [["v1", "v2", "v3"], [2019, 2020, 2021]], names=("variable", "year")
+    )
+    data = (
+        pd.Series([0.0, 0.0, 0.0, np.nan, 0, 0, 1.0, 0.0, 0.0], index=idx, name="value")
+        .reset_index()
+        .assign(model="m", scenario="s", region="r", unit="")
+    )
+
+    # Function runs with pd.DataFrame input
+    result = remove_zeros(data, 2020)
+
+    # Number of data points removed
+    assert 1 == len(data) - len(result)
+    # Data points removed are for years < `year` argument
+    assert 0 == len(result.query("variable == 'v1' and year == 2019"))
+
+    # Function runs with pyam.IamDataFrame input
+    data1 = pyam.IamDataFrame(data)
+    result1 = remove_zeros(data1, 2020)
+
+    # Number of data points removed
+    assert 1 == len(data1) - len(result1)
+    # Data points removed are for years < `year` argument
+    assert 0 == len(result1.as_pandas().query("variable == 'v1' and year == 2019"))  # type: ignore [arg-type]
 
 
 @pytest.mark.xfail(reason="Incomplete")
