@@ -36,7 +36,28 @@ nclytu = ["node", "commodity", "level", "year", "time", "unit"]
 
 
 def build_and_solve(context: Context) -> Scenario:
-    """Build MESSAGEix-Buildings and solve."""
+    """Build MESSAGEix-Buildings and solve.
+
+    The function responds to a :class:`.buildings.Config` instance at
+    :py:`context.buildings`.
+
+    1. Either clone the base scenario (:meth:`Context.clone_to_dest`, if
+       :attr:`.buildings.Config.clone` is :any:`True`) or load an existing scenario.
+    2. Retrieve prices (using :func:`get_prices`) and ``historical_activity`` from the
+       scenario.
+    3. Call :func:`pre_solve` to run (optionally) ACCESS, (always) STURM, add
+       appropriate structure to the scenario, and update the ``demand`` parameter using
+       STURM/ACCESS outputs
+    4. For 1 or more iterations:
+
+       1. Solve the MESSAGE scenario.
+       2. Run :func:`post_solve` to check convergence.
+       3. Possibly run :func:`pre_solve` to start the next iteration.
+
+    The number of iterations at (4) is controlled by
+    :attr:`.buildings.Config.max_iterations`; setting to :py:`1` or less means the
+    process is ‘once-through’, and the MESSAGEix-Buildings models are only run once.
+    """
     config = context.buildings
 
     config.set_output_path(context)
@@ -172,7 +193,7 @@ def pre_solve(scenario: Scenario, context, data):
     """Pre-solve portion of the ACCESS-STURM-MESSAGE loop.
 
     - (optionally) Run ACCESS.
-    - Run STURM.
+    - Run STURM using :func:`.sturm.run`.
     - Call :func:`.buildings.build.main`.
     - Update the ``demand`` parameter of `scenario`.
     """
@@ -417,7 +438,7 @@ def log_data(config, data, demand, price, i: int):
     data["price_log"].to_csv(config._output_path.joinpath("price-track.csv"))
 
 
-def post_solve(scenario: Scenario, context, data):
+def post_solve(scenario: Scenario, context, data) -> bool:
     """Post-solve portion of the ACCESS-STURM-MESSAGE loop."""
     # Unpack data
     config = context.buildings

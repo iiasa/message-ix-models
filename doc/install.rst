@@ -1,16 +1,17 @@
 Installation
 ************
 
-.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run.
-   Please ensure your system has :ref:`their required dependencies <message-ix:system-dependencies>` installed.
-
-:mod:`message_ix_models` is structured as a Python package and is published to the PyPI public code repository.
+:mod:`message_ix_models` is structured as a Python package,
+is published to the Python Package Index (PyPI) public repository,
+and is Free Software.
 Hence, there are two options for the installation:
 
-From PyPI
----------
+From the Python Package Index (PyPI)
+------------------------------------
 
 This option is only recommended for users who do not wish to make any changes to the source code.
+This page uses `pip <https://pip.pypa.io>`_;
+another alternative is `uv pip <https://docs.astral.sh/uv/reference/cli/#uv-pip>`_.
 
 1. Run::
 
@@ -40,20 +41,47 @@ Please consider :doc:`contributing <message-ix:contributing>` your changes.
 
     $ pip install --editable .[<extra_dependencies>]
 
+.. _install-dependencies:
 
 Dependencies
 ------------
 
-See :file:`pyproject.toml`.
-The following sets of extra dependencies are available; per the user guide linked above, they can be installed along with the mandatory dependencies by adding (for instance) ``extra_name`` to the package spec :program:`pip install message_data[extra_name]`.
+The mandatory dependencies of :mod:`message_ix_models` include:
 
+- :mod:`message_ix` and thus :ref:`its upstream dependencies <message-ix:system-dependencies>`.
+
+The following ‘extras’, or sets of optional dependencies, are available.
+Without the associated dependencies,
+the respective modules or features will not work:
+for example, it is optional to use :doc:`material/index`,
+but in order to use it the ``material`` extra dependencies **must** be installed.
+
+Per the :program:`pip` documentation (linked above),
+they can be installed along with the mandatory dependencies by adding to the package spec.
+For example, :program:`pip install message_data[material,transport]`
+will install the dependencies in those two sets.
+
+``bilateralize``
+   For :mod:`.tools.bilateralize`.
+``buildings``
+   For :doc:`buildings/index`.
 ``docs``
-   Minimum requirements for building the docs.
+   Build these documentation pages.
+``iea-web``
+   For :mod:`.tools.iea.web`.
+``material``
+   For :doc:`material/index`.
+``migrate``
+   For :doc:`howto/migrate`.
 ``report``
-   For running the :doc:`api/report/index` functionality.
+   For :doc:`api/report/index`;
+   includes :mod:`plotnine` and :mod:`xlsxwriter`.
 ``tests``
-   Minimal requirements for the test suite.
+   Run the test suite.
+``transport``
+   For :doc:`transport/index`.
 
+See :file:`pyproject.toml` in the source for the exact contents of each set.
 
 Check that installation was successful
 --------------------------------------

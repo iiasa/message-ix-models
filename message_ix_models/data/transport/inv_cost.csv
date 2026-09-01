@@ -1,0 +1,11 @@
+# Investment cost
+#
+# Unit: USD_2010 / vehicle
+#
+technology, node_loc, year_vtg, value
+2W,         *,        2020,     0.0
+2W,         *,        2030,     0.0
+F ROAD,     *,        2020,     0.0
+F ROAD,     *,        2030,     0.0
+F RAIL,     *,        2020,     0.0
+F RAIL,     *,        2030,     0.0

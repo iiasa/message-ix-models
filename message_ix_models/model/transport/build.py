@@ -29,11 +29,12 @@ from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, plot
 from . import key as K
-from .operator import indexer_scenario
 from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
     from typing import TypedDict
+
+    from genno.types import KeyLike
 
     from message_ix_models.tools.exo_data import ExoDataSource
 
@@ -170,11 +171,17 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     for kw in source_kw:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
 
-    # Miscellaneous data
-    kw = dict(nodes=context.model.regions, config=config)
+    # Miscellaneous input data flows
+    kw = dict(nodes=context.model.regions)
     data.ActivityVehicle.add_tasks(c, **kw, **c_s)
+    data.CapShareT.add_tasks(c, **kw, **c_s)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
+    data.InputVehicle.add_tasks(c, **kw, **c_s)
+    data.InvestmentCost.add_tasks(c, **kw, **c_s)
     data.Lifetime.add_tasks(c, **kw, **c_s)
-    data.LoadFactorLDV.add_tasks(c, **kw, **c_s)
+    data.LoadFactorF.add_tasks(c, **kw, **c_s)
+    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **c_s)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
@@ -186,10 +193,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
     IEA_EWEB.add_tasks(c, **kw, **c_s)
-
-    # Add IEA Future of Trucks data
-    for kw in dict(measure=1), dict(measure=2):
-        data.IEA_Future_of_Trucks.add_tasks(c, **kw, **c_s)
 
     # Add ADVANCE data
     adv_common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
@@ -230,6 +233,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
+    # TODO Transfer this to a MultiFlow subclass in .transport.data; select path based
+    #      on .project.transport_futures values in Config.project_scenario_code.
     Dataflow(
         module=__name__,
         key="mode share:n-t:exo",
@@ -273,7 +278,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("add transport data", []),
     (K.report.all, "summarize"),
-    ("info", lambda c: c.transport.base_model_info, "context"),
     (
         "transport info",
         lambda c: c.transport.base_model_info | c.transport.spec.add,
@@ -291,14 +295,22 @@ STRUCTURE_STATIC: tuple[tuple, ...] = (
     ("groups::iea to transport", itemgetter(0), "groups::iea eweb"),
     ("groups::transport to iea", itemgetter(1), "groups::iea eweb"),
     ("indexers::iea to transport", itemgetter(2), "groups::iea eweb"),
-    ("indexers:scenario", partial(indexer_scenario, with_LED=False), "config"),
-    ("indexers:scenario:LED", partial(indexer_scenario, with_LED=True), "config"),
+    (K.coord.scenario, "indexer_scenario", "config"),
     ("indexers::usage", "indexers_usage", K.t),
     (K.n, "nodes_ex_world", "n"),
     ("n:n:ex world", lambda n: genno.Quantity([1.0] * len(n), coords={"n": n}), K.n),
     ("n::ex world+code", "nodes_ex_world", "nodes"),
     ("nl::world agg", "nodes_world_agg", "config"),
-    ("scenario::all", "scenario_codes"),
+    ("scenario::all", "scenario_codes", "config"),
+    (K.coord.y_0, lambda y0: dict(y=[y0]), "y0"),
+    (K.coord.y_0_drop, lambda y0: dict(y=y0), "y0"),
+    (K.coord.y_to_y0, lambda Y, y0: dict(y=[y for y in Y if y <= y0]), "y", "y0"),
+    (K.coord.yv_1plus, lambda Y, y0: dict(yv=[y for y in Y if y > y0]), "y", "y0"),
+    (K.coord.yv_hist, lambda Y, y0: dict(yv=[y for y in Y if y < y0]), "y", "y0"),
+    # Duration_period up to and including y0
+    ("duration_period:y:to y0", "select", "duration_period:y", K.coord.y_to_y0),
+    # Groups for aggregating annual to period data
+    (K.agg.y_annual, "groups_y_annual", "duration_period:y"),
 )
 
 
@@ -307,18 +319,8 @@ def add_structure(c: Computer) -> None:
 
     These include:
 
-    - The following keys *only* if not already present in `c`. If, for example, `c` is
-      a :class:`.Reporter` prepared from an already-solved :class:`.Scenario`, the
-      existing tasks referring to the Scenario contents are not changed.
-
-      - ``n``: |n| as :class:`list` of :class:`str`.
-      - ``y``: |y| in the base model.
-      - ``cat_year``: simulated data structure for "cat_year" with at least 1 row
-        :py:`("firstmodelyear", y0)`.
-      - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`.
-      - ``y0``: The first model period, :class:`int`.
-      - ``y::y0``: ``y0`` as an indexer.
-
+    - ``info``: :class:`.transport.Config.base_model_info`.
+    - Tasks added by :func:`structure_from_scenarioinfo`.
     - All tasks from :data:`STRUCTURE_STATIC`.
     - ``c::transport``: the |c| set of the :attr:`~.Spec.add` member of
       :attr:`Config.spec <.transport.config.Config.spec>`, transport commodities to be
@@ -327,9 +329,6 @@ def add_structure(c: Computer) -> None:
     - ``cg``: "consumer group" set elements.
     - ``indexers:cg``: ``cg`` as indexers.
     - ``nodes``: |n| in the base model.
-    - ``indexers:scenario``: :class:`dict` mapping "scenario" to the short form of
-      :attr:`Config.ssp <.transport.config.Config.ssp>` (for instance, "SSP1"), for
-      indexing.
     - ``t::transport``: all transport |t| to be added, :class:`list`.
     - ``t::transport agg``: :class:`dict` mapping "t" to the output of
       :func:`.get_technology_groups`. For use with operators like 'aggregate', 'select',
@@ -351,6 +350,7 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
+    from .data import LABEL_SUBS
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -374,24 +374,11 @@ def add_structure(c: Computer) -> None:
         }
     )
 
-    # Tasks only to be added if not already present in `c`. These must be done
-    # separately because add_queue does not support the strict/pass combination.
-    for task in (
-        ("n", quote(list(map(str, info.set["node"])))),
-        ("y", quote(info.set["year"])),
-        (
-            "cat_year",
-            pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
-        ),
-        (K.y, "model_periods", "y", "cat_year"),
-        ("y0", itemgetter(0), "y::model"),
-        ("y::y0", lambda v: dict(y=v[0]), "y::model"),
-    ):
-        try:
-            c.add(*task, strict=True)
-        except KeyExistsError:  # Already present
-            # log.debug(f"Use existing {c.describe(task[0])}")
-            pass
+    # Retrieve the base model's ScenarioInfo from transport Config instance
+    c.add("info", lambda c: c.transport.base_model_info, "context")
+
+    # Structure from the base model's ScenarioInfo
+    structure_from_scenarioinfo(c, "info")
 
     # Assemble a queue of tasks; first, `static` tasks
     tasks: list[tuple] = list(STRUCTURE_STATIC)
@@ -448,6 +435,15 @@ def add_structure(c: Computer) -> None:
     ]
 
     # Multiple static and dynamic tasks generated in loops etc.
+    # Coordinates for "select" based on .Config.label
+    tasks.extend(
+        (
+            getattr(K.coord, f"scenario_label_{x}"),
+            quote(dict(scenario=subs(config.label))),
+        )
+        for x, subs in LABEL_SUBS.items()
+    )
+
     # Quantities for broadcasting (t,) to (t, c, l) dimensions
     tasks.extend(
         (
@@ -479,28 +475,6 @@ def add_structure(c: Computer) -> None:
         dims=("t",),
         on_missing="raise",
     )
-
-    # Identify the subset of periods up to and including y0
-    c.add(
-        K.y_.historical,
-        lambda periods, y0: list(filter(lambda y: y < y0, periods)),
-        "y",
-        "y0",
-    )
-    c.add(
-        K.y_.to_y0,
-        lambda periods, y0: dict(y=list(filter(lambda y: y <= y0, periods))),
-        "y",
-        "y0",
-    )
-    # Convert duration_period to Quantity
-    c.add("duration_period:y", "duration_period", "info")
-    # Duration_period up to and including y0
-    c.add("duration_period:y:to y0", "select", "duration_period:y", K.y_.to_y0)
-    # Groups for aggregating annual to period data
-    c.add(K.y_.annual_agg, "groups_y_annual", "duration_period:y")
-    # Indexers
-    c.add(K.coord.yv_hist, lambda periods: dict(yv=periods), K.y_.historical)
 
 
 @minimum_version("genno 1.28")
@@ -689,3 +663,43 @@ def main(
     log.info(f"Built {scenario.url} and set as default version")
 
     return scenario
+
+
+def structure_from_scenarioinfo(c: Computer, info_key: "KeyLike") -> None:
+    """Add tasks to `c` for structures based on :class:`.ScenarioInfo`.
+
+    The following keys/tasks are added *only* if not already present in `c`. If, for
+    instance, `c` is a :class:`.Reporter` prepared from an already-solved
+    :class:`.Scenario`, the existing tasks referring to the Scenario contents are not
+    changed. Otherwise, they are derived from a :class:`.ScenarioInfo` instance found
+    at `info_key`:
+
+    - ``n``: |n| as :class:`list` of :class:`str`.
+    - ``y``: all |y| in the model, including historical periods.
+    - ``cat_year``: simulated data structure for "cat_year" with at least 1 row
+        :py:`("firstmodelyear", y0)`.
+    - ``y::model``: |y| within the model horizon as :class:`list` of :class:`int`;
+      the output of :func:`.report.operator.model_periods`.
+    - ``y0``: the first model period, :class:`int`.
+    - ``duration_period:y``: the output of :func:`.transport.operator.duration_period`.
+    """
+    for task in (
+        ("n", lambda info: list(map(str, info.set["node"])), info_key),
+        ("y", lambda info: info.set["year"], info_key),
+        (
+            "cat_year",
+            lambda info: pd.DataFrame(
+                [["firstmodelyear", info.y0]], columns=["type_year", "year"]
+            ),
+            info_key,
+        ),
+        (K.y, "model_periods", "y", "cat_year"),
+        ("y0", itemgetter(0), K.y),
+        # Convert duration_period to Quantity
+        ("duration_period:y", "duration_period", info_key),
+    ):
+        try:
+            c.add(*task, strict=True)
+        except KeyExistsError:  # Already present
+            # log.debug(f"Use existing {c.describe(task[0])}")
+            pass
