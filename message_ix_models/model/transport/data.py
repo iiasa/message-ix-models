@@ -4,7 +4,6 @@ See :ref:`transport-data-files` for documentation of the input data flows.
 """
 
 import logging
-import re
 from collections import defaultdict
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
@@ -16,7 +15,6 @@ from typing import TYPE_CHECKING, cast
 import genno
 import pandas as pd
 from genno import Computer, Key
-from genno.core.key import single_key
 from genno.operator import load_file
 from ixmp.report.common import RENAME_DIMS
 from message_ix import make_df
@@ -24,6 +22,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import BaseOptions, ExoDataSource
 from message_ix_models.util import (
+    Substitutions,
     adapt_R11_R12,
     adapt_R11_R14,
     broadcast,
@@ -40,6 +39,8 @@ from . import key as K
 from .util import EXTRAPOLATE, region_path_fallback
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import sdmx.message
     import sdmx.model.common
     from genno.types import AnyQuantity
@@ -62,15 +63,72 @@ IEA_EWEB_FLOW = [
     "WORLDMAR",
 ]
 
+#: Transform an :attr:`.transport.Config.label` by a sequence of string substitutions.
+#:
+#: Set "A"
+#:    This set is used in :class:`LoadFactorLDV`, :class:`PDT_CAP`, and
+#:    :func:`.freight.demand`.
+#:
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2"—that is, do
+#:       not use distinct values for transport-materials or policy scenarios.
+#:    2. Use "SSP_2024_2" for all EDITS, and for all CircEUlar scenarios, except
+#:       "DIGSY-BEST-C" for CircEUlar "Narrow" and "All-in" scenarios.
+#:    3. Use common 'LED' regardless of which SSP.
+#:    4. Convert to a filename-like with underscores, e.g. "SSP_2024.1" → "SSP_2024_1".
+#:
+#: Set "B"
+#:    This set is used in :class:`Lifetime`.
+#:
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2".
+#:    2. "CircEUlar-E" becomes "CircEUlar-A".
+#:    3. All besides "CircEUlar-[NSA]" become "*".
+#:
+#: Set "C"
+#:    This set is used in :class:`ActivityVehicle`. It is the same as set "B", except
+#:    "CircEUlar-S" becomes "*".
+#:
+#: Set "D"
+#:    This set is used in :mod:`.transport.material` for :any:`input_cap_new`.
+#:
+#:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2".
+#:    2. "CircEUlar-[AE]" becomes "CircEUlar-N".
+#:    2. All *except* "CircEUlar-[CN]" become "*".
+LABEL_SUBS = dict(
+    A=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^(CircEUlar-[RCS]|EDITS-.*)$", "SSP_2024_2"),
+        ("^CircEUlar-[NAE]$", "DIGSY-BEST-C"),
+        ("^LED-SSP.$", "LED"),
+        (r"\.", "_"),
+    ),
+    B=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-E$", "CircEUlar-A"),
+        (r"^(?!CircEUlar-[NSA]).*$", "*"),
+    ),
+    C=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-E$", "CircEUlar-A"),
+        (r"^(?!CircEUlar-[NA]).*$", "*"),
+    ),
+    D=Substitutions(
+        (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
+        ("^CircEUlar-[AE]$", "CircEUlar-N"),
+        (r"^(?!CircEUlar-[CN]).*$", "*"),
+    ),
+)
+
 
 class ActivityVehicle(ExoDataSource):
-    """Activity (distance) per vehicle per year."""
+    """Activity (distance) per vehicle per year.
+
+    Values from :attr:`filename` are processed, including:
+
+    - Extrapolate along the |y| dimension to all periods, including historical periods.
+    """
 
     @dataclass
     class Options(BaseOptions):
-        #: Transport configuration.
-        config: "Config | None" = None
-
         #: ID of the node code list.
         nodes: str = ""
 
@@ -78,6 +136,8 @@ class ActivityVehicle(ExoDataSource):
 
     filename = "activity-vehicle.csv"
     key = Key("activity:n-t-y:vehicle")
+
+    path: "Path"
 
     def __init__(self, *args, **kwargs) -> None:
         self.options = self.Options.from_args(self, *args, **kwargs)
@@ -93,17 +153,50 @@ class ActivityVehicle(ExoDataSource):
         c.add(k[0], "convert_units", base_key, units="Mm/year")
 
         # Broadcast to all scenarios and nodes
-        coords = ["scenario::all", "n::ex world"]
-        dim = ("scenario", "n")
-        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=dim)
+        coords = ["scenario::all", K.n]
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "n"))
 
         # Select values for the current scenario; drop the 'scenario' dimension
-        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+        c.add(k[2], "select", k[1], K.coord.scenario_label_C)
 
         # Interpolate on "y" dimension
         c.add(self.key, "interpolate", k[2], "y::coords", **EXTRAPOLATE)
 
         # TODO Broadcast technology groups → individual technology IDs
+        return self.key
+
+
+class CapShareT(ExoDataSource):
+    """Share of first period stock by technology.
+
+    - Values must sum to 1 across the 't' dimension for each unique combination of other
+      dimensions.
+    - Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be
+      omitted or have zero values. If not, incompatible/infeasible constraint values are
+      created.
+    """
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    filename = "cap-share-t.csv"
+    key = Key("tech share:n-t:T+exo")
+
+    path: "Path"
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Transform input data.
+
+        "*" values in the |n| dimension are broadcast over all nodes.
+        """
+        c.add(self.key, "broadcast_wildcard2", base_key, K.n, dim=("n",))
         return self.key
 
 
@@ -113,41 +206,38 @@ class IEA_Future_of_Trucks(ExoDataSource):
     Parameters
     ----------
     measure : int
-        One of the keys of ;attr:`name_unit`.
+        One of the keys of :attr:`name_unit`.
     """
 
     @dataclass
     class Options(BaseOptions):
+        dims: tuple[str, ...] = ("n", "t")
         measure: str = "0"
-        convert_units: str | None = None
+        units: str = ""
+
+        def __post_init__(self) -> None:
+            # Mapp from measure to name and unit.
+            self.name, self.units = {
+                1: ("energy intensity of VDT", "GWa / (Gv km)"),
+                2: ("load factor", "tonne / vehicle"),
+                3: ("energy intensity of FV", ""),
+            }[int(self.measure)]
 
     options: Options
 
-    #: Mapping from :attr:`Options.measure` to name and unit.
-    name_unit = {
-        1: ("energy intensity of VDT", "GWa / (Gv km)"),
-        2: ("load factor", None),
-        3: ("energy intensity of FV", None),
-    }
-
     def __init__(self, *args, **kwargs) -> None:
-        self.options = self.Options.from_args(self, *args, **kwargs)
-
-        self.options.name, self._unit = self.name_unit[int(self.options.measure)]
-        self.path = package_data_path(
-            "transport", f"iea-2017-t4-{self.options.measure}.csv"
-        )
-        super().__init__()
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = package_data_path("transport", f"iea-2017-t4-{opt.measure}.csv")
+        super().__init__()  # Construct self.key
 
     def get(self) -> "AnyQuantity":
         return load_file(self.path, dims=RENAME_DIMS)
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
-        import xarray as xr
-
         # Broadcast to regions. map_as_qty() expects columns in from/to order.
         map_node = pd.DataFrame(
             [
+                # Exact or partial match
                 ("R12_CHN", "CHN"),
                 ("R12_EEU", "EU28"),
                 ("R12_NAM", "USA"),
@@ -166,24 +256,99 @@ class IEA_Future_of_Trucks(ExoDataSource):
         )[["n", "n2"]]
 
         # Share of freight activity; transcribed from figure 18, page 38
-        share = genno.Quantity(
-            xr.DataArray([0.1, 0.3, 0.6], coords=[("t", ["LCV", "MFT", "HFT"])])
-        )
+        share = genno.Quantity([0.1, 0.3, 0.6], coords={"t": ["LCV", "MFT", "HFT"]})
 
         # Add tasks
         k = base_key
+
         # Map from IEA source nodes to target nodes
         c.add(k[1], "map_as_qty", map_node, [])
         c.add(k[2], "broadcast_map", base_key, k[1], rename={"n2": "n"})
-        # Weight by share of freight activity
-        result = c.add(k[3], "sum", k[2], weights=share, dimensions=["t"])
 
-        if self.options.convert_units:
-            result = c.add(
-                k[4], "convert_units", k[3], units=self.options.convert_units
-            )
+        # Weight by share of freight activity; this discards the "t" dimension with
+        # "LCV", "MFT", "HFT" coords
+        c.add(k[3], "sum", k[2], weights=share, dimensions=["t"])
 
-        return single_key(result)
+        # Recreate the "t" dimension with all F ROAD technologies
+        c.add(k[4], "expand_dims", k[3], K.coord.t["F ROAD"])
+
+        # Convert to target units
+        c.add(k[5], "convert_units", k[4], units=self.options.units)
+
+        return k[5]
+
+
+class InvestmentCost(ExoDataSource):
+    """Input energy intensity of vehicle activity.
+
+    The following transformations are applied:
+
+    1. |t| dimension → broadcast labels like "F ROAD" to full lists of technologies.
+    2. |n| dimension → :func:`broadcast_wildcard2` across all nodes.
+    3. |y| dimension → piecewise linear inter- and extrapolate.
+    """
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    #: Name of the file. :func:`.region_path_fallback` is used to locate a file for a
+    #: specific |n| code list, if any.
+    filename = "inv_cost.csv"
+    key = Key("inv_cost:nl-t-yv:T+exo")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS)
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+
+        # 't'echnology dimension: broadcast labels like "F ROAD" to full lists of techs
+        c.add(k[0], "call", "t::transport map", k)
+
+        # 'n' dimension: broadcast to all nodes
+        c.add(k[1], "broadcast_wildcard2", k[0], K.n, dim=("nl",))
+
+        # 'y' dimension: interpolate
+        c.add(k[2], "interpolate", k[1], "yv::coords", **EXTRAPOLATE)
+
+        return k[2]
+
+
+class InputVehicle(ExoDataSource):
+    """Input energy intensity of vehicle activity.
+
+    The following transformations are applied:
+
+    - ``node`` dimension → :func:`broadcast_wildcard2`.
+
+    Currently this is used only for technologies in the ``F RAIL`` mode.
+    """
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    filename = "input-vehicle.csv"
+    key = Key("input:n-t:vehicle+exo")
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS)
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = base_key
+        # Broadcast to all nodes
+        c.add(k[0], "broadcast_wildcard2", base_key, K.n, dim=("n",))
+        # Convert units
+        c.add(k[1], "convert_units", k[0], units="GWa / (Gv km)")
+
+        return k[1]
 
 
 class Lifetime(ExoDataSource):
@@ -194,18 +359,13 @@ class Lifetime(ExoDataSource):
     years for driver_type='average', 15 y for 'moderate', and 10 y for 'frequent'.
     """
 
-    @dataclass
-    class Options(BaseOptions):
-        #: Transport configuration.
-        config: "Config | None" = None
-
-        #: ID of the node code list.
-        nodes: str = ""
-
-    options: Options
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
 
     filename = "lifetime.csv"
-    key = Key("lifetime:nl-t-yv:exo")
+    key = Key("lifetime:n-t-y:exo")
+
+    path: "Path"
 
     def __init__(self, *args, **kwargs) -> None:
         self.options = self.Options.from_args(self, *args, **kwargs)
@@ -218,14 +378,14 @@ class Lifetime(ExoDataSource):
         k = base_key
 
         # Interpolate on "y" dimension
-        c.add(k[0], "interpolate", base_key, "yv::coords", **EXTRAPOLATE)
+        c.add(k[0], "interpolate", base_key, "y::coords", **EXTRAPOLATE)
 
         # Broadcast to all scenarios and nodes
-        coords = ["scenario::all", "n::ex world"]
-        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "nl"))
+        coords = ["scenario::all", K.n]
+        c.add(k[1], "broadcast_wildcard2", k[0], *coords, dim=("scenario", "n"))
 
         # Select values for the current scenario; drop the 'scenario' dimension
-        c.add(k[2], "select", k[1], "indexers:scenario:LED")
+        c.add(k[2], "select", k[1], K.coord.scenario_label_B)
 
         # Expand from "t" modes to all actual technologies
         c.add(k[3], "call", "t::transport map", k[2])
@@ -381,6 +541,48 @@ class MultiFile(ExoDataSource):
         return self.key
 
 
+class LoadFactorF(ExoDataSource):
+    """Load factor of freight vehicles."""
+
+    Options = ActivityVehicle.Options
+    options: ActivityVehicle.Options
+
+    #: Input data file name. :func:`.region_path_fallback` is used.
+    filename = "load-factor-f.csv"
+    key = Key("load factor:n-t-y:F+exo")
+    units: str = "tonne / vehicle"
+
+    path: "Path"
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.options = self.Options.from_args(self, *args, **kwargs)
+        self.path = region_path_fallback(self.options.nodes, self.filename)
+
+    def get(self) -> "AnyQuantity":
+        return load_file(self.path, dims=RENAME_DIMS | dict(scenario="scenario"))
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Transform data from the file.
+
+        1. Broadcast to "scenario::all" along the "scenario" dimension.
+        2. Select using :data:`.transport.key.coord.scenario_label_A`.
+        3. Extrapolate along the |y| dimension to all periods, including historical
+           periods.
+        """
+        k = base_key
+
+        # Broadcast to all scenarios
+        c.add(k[0], "broadcast_wildcard2", k, "scenario::all", dim=("scenario",))
+
+        # Select values for the current scenario; drop the 'scenario' dimension
+        c.add(k[1], "select", k[0], K.coord.scenario_label_A)
+
+        # Interpolate on "y" dimension
+        c.add(self.key, "interpolate", k[1], "y::coords", **EXTRAPOLATE)
+
+        return self.key
+
+
 class LoadFactorLDV(MultiFile):
     """Load factor (occupancy) of LDVs.
 
@@ -396,22 +598,14 @@ class LoadFactorLDV(MultiFile):
     @property
     def filename(self) -> str:
         assert self.options.config
-        label = self.options.config.label
 
+        # For DIGSY-WORST-C, use the respective SSP
+        subs = LABEL_SUBS["A"] + (
+            "^DIGSY-WORST-C",
+            f"SSP_2024_{self.options.config.ssp.name}",
+        )
         # Apply sequential replacements
-        for pattern, repl in (
-            ("^M ", ""),  # No distinction for materials scenarios
-            ("^DIGSY-WORST-C", str(self.options.config.ssp)),  # Use the respective SSP
-            ("^(LED)-SSP.$", r"\1"),  # For LED-SSP labels, use common 'LED
-            (  # "ICONICS:SSP(2024).1" or "SSP_2024.1" → "SSP_2024_1"
-                r"^(?:ICONICS:SSP\(|SSP_)(\d+)\)?\.(\d)",
-                r"SSP_\1_\2",
-            ),
-            (r"^((SSP|DIGSY)[\w-]+)( \w*)*$", r"\1"),  # Remove trailing suffix (" foo")
-        ):
-            label = re.sub(pattern, repl, label)
-
-        return label + ".csv"
+        return f"{subs(self.options.config.label)}.csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         from . import factor
@@ -438,7 +632,7 @@ class PDT_CAP(MultiFile):
     @property
     def filename(self) -> str:
         assert self.options.config
-        return re.sub("^(LED)-SSP.$", r"\1", self.options.config.label) + ".csv"
+        return f"{LABEL_SUBS['A'](self.options.config.label)}.csv"
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         # This is the key used by subsequent steps in demand.py
@@ -745,10 +939,10 @@ age_ldv = _input_dataflow(
     units="years",
 )
 
-cap_new_ldv = _input_dataflow(
-    path="ldv-new-capacity",
-    key="cap_new:nl-t-yv:ldv+exo",
-    name="New capacity values for LDVs",
+cap_new = _input_dataflow(
+    path="new-capacity",
+    key="cap_new:nl-t-yv:T+exo",
+    name="Fixed new capacity of transport technologies",
     description="""Applied as historical_new_capacity and bound_new_capacity_{lo,up}
 values for LDVs.
 
@@ -757,8 +951,8 @@ In particular, values up to 2015 (the final period before |y0|) are used for
 :py:`bound_new_capacity_lo` and :py:`bound_new_capacity_up`.
 """,
     units="Mvehicle",
-    required=False,
 )
+
 
 class_ldv = _input_dataflow(
     path="ldv-class",
@@ -913,14 +1107,6 @@ input_share = _input_dataflow(
     units="dimensionless",
 )
 
-
-load_factor_f = _input_dataflow(
-    key="load factor:t:F+exo",
-    name="Load factor of freight vehicles",
-    path="load-factor-f.csv",
-    units="tonne / vehicle",
-)
-
 load_factor_p = _input_dataflow(
     key="load factor:t:P+exo",
     name="Load factor (occupancy) of passenger vehicles ex LDV",
@@ -999,17 +1185,6 @@ stock_cap = _input_dataflow(
     units="vehicle / passenger",
 )
 
-t_share_ldv = _input_dataflow(
-    path="ldv-t-share",
-    key="tech share:n-t:ldv+exo",
-    name="Share of total stock for LDV technologies",
-    description="""
-- Values must sum to 1 across the 't' dimension.
-- Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be omitted
-  or have zero values. If not, incompatible/infeasible constraint values are created.
-""",
-    units="dimensionless",
-)
 
 # Output data flows (for reporting / model integration)
 

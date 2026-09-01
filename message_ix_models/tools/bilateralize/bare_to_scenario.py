@@ -311,7 +311,8 @@ def calibrate_historical_shipping(
         "loil_shipped": hist_oil,
     }
     for tec in nc_dict.keys():
-        trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
+        if tec in covered_tec:
+            trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
 
     # Historical activity should only be added for technologies in input
     for tec in covered_tec:
@@ -394,7 +395,7 @@ def bare_to_scenario(
             for c in covered_tec
             if c not in ["crudeoil_piped", "foil_piped", "loil_piped"]
         ]:
-            add_tec = tec_config[tec][tec + "_trade"]["trade_technology"] + "_exp"
+            add_tec = tec_config[tec][tec + "_trade"]["trade_technology"]
             hist_tec[tec] = add_tec
 
         for tec in hist_tec.keys():

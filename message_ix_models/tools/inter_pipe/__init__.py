@@ -102,9 +102,11 @@ class Config:
           function strips the suffixes so both can be stored as instances of
           :class:`TechConfig`.
         """
-        full_path = package_data_path("inter_pipe", path or "config").with_suffix(
-            ".yaml"
-        )
+        candidate = Path(path) if path is not None else Path("config")
+        if candidate.is_absolute():
+            full_path = candidate.with_suffix(".yaml")
+        else:
+            full_path = package_data_path("inter_pipe", candidate).with_suffix(".yaml")
         log.info(f"Load config from {full_path}")
         with open(full_path) as f:
             data = yaml.safe_load(f)
@@ -151,7 +153,7 @@ def copy_template_columns(df, template, exclude_cols=["node_loc", "technology"])
 
 def generate_bare_sheets(
     base_scen: "message_ix.Scenario",
-    config_name: str | None = None,
+    config_name: str | Path | None = None,
     target_dir: Path | None = None,
 ):
     """Generate 18 bare sheets to collect minimum data for pipe/supply techs.
@@ -505,7 +507,7 @@ def generate_bare_sheets(
 
 def build(
     scen: "message_ix.Scenario",
-    config_name: str | None = None,
+    config_name: str | Path | None = None,
     data_dir: Path | None = None,
 ) -> "message_ix.Scenario":
     """Read the input csv files and build the pipe tech sets and parameters.

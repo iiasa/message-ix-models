@@ -1,0 +1,24 @@
+# Share of first-period stock by technology
+#
+# Source: (add link to Github issue for full description)
+#
+# - Values must sum to 1 across the 't' dimension for each unique combination of other
+#   dimensions.
+# - Technology codes annotated "historical-only: True" (e.g. ICE_L_ptrp) must be omitted
+#   or have zero values. If not, incompatible/infeasible constraint values are created.
+#
+# Units: dimensionless
+#
+node, technology, value
+# LDVs
+*,    ELC_100,    0.05
+*,    HFC_ptrp,   0.05
+*,    IAHe_ptrp,  0.05
+*,    IAHm_ptrp,  0.05
+*,    ICAe_ffv,   0.05
+*,    ICAm_ptrp,  0.05
+*,    ICE_conv,   0.50
+*,    ICE_nga,    0.05
+*,    ICH_chyb,   0.05
+*,    IGH_ghyb,   0.05
+*,    PHEV_ptrp,  0.05

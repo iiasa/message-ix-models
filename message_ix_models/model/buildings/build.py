@@ -6,6 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from copy import deepcopy
 from itertools import product
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import message_ix
@@ -159,6 +160,12 @@ def get_spec(context: Context, filter_relations: list[str] = []) -> Spec:
 
     if context.buildings.with_materials:
         s.require.set["commodity"].extend(MATERIALS)
+        s.add.set["balance_equality"].extend(
+            [
+                ["resid_floor_demolition", "demand"],
+                ["comm_floor_demolition", "demand"],
+            ]
+        )
 
     # commented: See docstring of bio_backstop and comments in prepare_data, below
     # s.add.set["technology"].append(Code(id="bio_backstop"))
@@ -187,6 +194,78 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
         },
     )
     return result[~result["node"].str.endswith("_GLB")]
+
+
+def get_prices_B(s: message_ix.Scenario, base_path: Path) -> pd.DataFrame:
+    """Retrieve PRICE_COMMODITY for certain quantities and merge with reference data.
+
+    This function uses two sources of data:
+
+    1. Reference data is located at :file:`{base_path}/input_prices_R12_default.csv`.
+    2. Scenario data for PRICE_COMMODITY is retrieved using :func:`get_prices`.
+
+    The data are then merged, as follows:
+
+    - For :py:`commodity="electr"`, (2) is always used.
+    - For other commodities, the (2) is used only if it is equal to or greater than
+      (1). In other words, (1) are treated as price ‘floor’ for these commodities.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from message_ix_models.util import adapt_R12_R11
+
+    price_default = base_path.joinpath("input_prices_R12_default.csv")
+
+    try:
+        # Read 'reference', 'default', or 'original' prices
+        df_prices_ori = pd.read_csv(price_default)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"STURM reference prices not found: {price_default}")
+
+    # - Retrieve new energy commodity prices from the scenario.
+    # - Adapt R12 to R11 on the `node` dimension.
+    df_prices = get_prices(s).pipe(adapt_R12_R11)
+
+    # Identify key columns for merging
+    cols = ["node", "commodity", "level", "year", "time"]
+    # Filter to only columns that exist in both dataframes
+    common = set(df_prices.columns) & set(df_prices_ori.columns)
+    cols = list(
+        filter(common.__contains__, ["node", "commodity", "level", "year", "time"])
+    )
+
+    # Merge the original dataframe with price data
+    df_updated = pd.merge(
+        df_prices_ori,
+        df_prices[cols + ["lvl"]],
+        on=cols,
+        how="left",
+        suffixes=("", "_new"),
+    )
+
+    rows_updated = (
+        df_updated["lvl_new"].notna().sum() if "lvl_new" in df_updated.columns else 0
+    )
+
+    lvl_original = df_updated["lvl"].copy()
+    lvl_scenario = df_updated["lvl_new"].fillna(df_updated["lvl"])
+
+    # TODO Simplify. This doesn't need the calculation of `factor`.
+    # Calculate the factor (ratio) between scenario and original values for analysis
+    # Factor = scenario / original; factor < 1 means scenario is below STURM reference.
+    factor = np.where(lvl_original != 0, lvl_scenario / lvl_original, np.nan)
+
+    has_scenario = df_updated["lvl_new"].notna()
+    below_reference = (factor < 1) & has_scenario
+    # Floor non-electricity prices at the STURM reference; allow lower electr prices.
+    use_reference_floor = below_reference & (df_updated["commodity"] != "electr")
+    df_updated["lvl"] = np.where(use_reference_floor, lvl_original, lvl_scenario)
+    df_updated = df_updated.drop(columns=["lvl_new"])
+
+    log.info("Rows with updated prices: %d", rows_updated)
+
+    return df_updated
 
 
 def get_techs(spec: Spec, commodity=None) -> list[str]:
@@ -638,6 +717,7 @@ def prepare_data_A(
     return result
 
 
+# FIXME Reduce complexity from 27 to ≤11
 def prepare_data_B(  # noqa: C901
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
@@ -940,10 +1020,10 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
 
     # Ensure context.buildings is set (e.g. by BMT from config.yaml); else defaults
     if "buildings" not in context:
-        from message_ix_models.model.bmt.config import load_buildings_config
+        from message_ix_models.model.bmt.config import apply_bmt_config
 
         # Same as in .model.bmt.workflow.generate()
-        context.buildings = load_buildings_config()
+        apply_bmt_config(context)
 
     # Info about the `scenario` to be modified. If build.main() has already been run on
     # the scenario, this will reflect that, e.g. will include the structures from
@@ -983,21 +1063,25 @@ def main(context: Context, scenario: message_ix.Scenario, *args: pd.DataFrame) -
             afofi_demand=None,  # Use calculated AFOFI demand
         )
     elif context.buildings.method is METHOD.B:
-        from pathlib import Path
+        # MESSAGE demand tables; extra columns (e.g. saved row index) are dropped.
+        demand_columns = ["node", "commodity", "year", "level", "time", "unit", "value"]
 
-        def _load_csv(attr: str, index_col=None):
-            """Resolve path from context.buildings or defaults and load CSV."""
-            val = context.buildings.data_paths[attr]
-            path = Path(val)
-            # TODO Move this path logic into .buildings.Config
-            path = path if path.is_absolute() else private_data_path("buildings", val)
-            return pd.read_csv(path, index_col=index_col)
+        def _load_csv(attr: str, columns: list[str] | None = None) -> pd.DataFrame:
+            path = Path(context.buildings.data_paths[attr])
+            path = path if path.is_absolute() else private_data_path("buildings", attr)
+            df = pd.read_csv(path)
+            columns = columns or df.columns.tolist()
+            try:
+                return df.loc[:, columns]
+            except KeyError:
+                missing = sorted(set(columns) - set(df.columns))
+                raise ValueError(f"{path}: missing demand columns {sorted(missing)}")
 
         # Inputs for prepare_data_B from context.buildings or defaults
         prices = _load_csv("prices")
-        sturm_r = _load_csv("sturm_r", index_col=0)
-        sturm_c = _load_csv("sturm_c", index_col=0)
-        demand_static = _load_csv("demand_static", index_col=0)
+        sturm_r = _load_csv("sturm_r", demand_columns)
+        sturm_c = _load_csv("sturm_c", demand_columns)
+        demand_static = _load_csv("demand_static", demand_columns)
         demand_static.loc[
             demand_static["commodity"].str.contains("afofio", na=False), "value"
         ] = 0  # Temporary fix to remove AFOFIO demand from demand_static

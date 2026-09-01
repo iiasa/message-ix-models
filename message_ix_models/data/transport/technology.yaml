@@ -365,12 +365,12 @@ f road methanol:
 f rail electr:
   name: Freight rail powered by electricity
   input: {commodity: electr}
-  report: Rail|Freight|Electric
+  report: Freight|Rail|Electric
 
 f rail lightoil:
   name: Freight rail powered by light oil
   input: {commodity: lightoil}
-  report: Rail|Freight|Combustion
+  report: Freight|Rail|Combustion
 
 F RAIL:
   name: Freight rail
@@ -379,7 +379,7 @@ F RAIL:
   - f rail lightoil
   units: Gv km
   output: {commodity: transport F RAIL vehicle, level: useful}
-  report: Rail|Freight
+  report: "Freight|Rail"
   iea-eweb-flow: [RAIL]
 
 crail_pub:
@@ -486,7 +486,7 @@ transport disutility:
 
 LDV:
   name: Light-duty vehicles
-  report: LDV
+  report: "Light-Duty Vehicle"
   description: >-
     Passenger cars and trucks.
 
@@ -519,6 +519,7 @@ LDV:
     In MESSAGE-V, the output of these technologies was labelled: h-u
   child: [ICE_H_moto, ELE_moto]
   units: Gv km
+  output: {commodity: transport vehicle 2w, level: useful}
   iea-eweb-flow: [ROAD]
 
 F ROAD:
@@ -545,6 +546,7 @@ F:  # Freight modes
   child:
   - F RAIL
   - F ROAD
+  report: Freight
 
 AIR:
   name: Aviation
@@ -582,6 +584,7 @@ BUS:
 
 RAIL:
   name: Passenger rail
+  report: "Passenger|Rail"
   description: >-
     Rail; passenger trains only, both urban public transit and long-distance
     intercity.
@@ -604,6 +607,7 @@ P: # Passenger modes
   - BUS
   - LDV
   - RAIL
+  report: Passenger
 
 P ex LDV:
   name: non-LDV passenger

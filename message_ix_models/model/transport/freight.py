@@ -1,22 +1,18 @@
 """Freight transport data."""
 
-from functools import partial
-from operator import itemgetter
 from typing import TYPE_CHECKING
 
 import genno
 import numpy as np
 from genno import Key, literal, quote
-from iam_units import registry
 
 from message_ix_models.report.key import GDP
-from message_ix_models.util import convert_units, make_matched_dfs, same_node, same_time
 from message_ix_models.util.genno import Collector
 
 from . import key as K
 from . import util
 from .demand import _DEMAND_KW
-from .util import COMMON, EXTRAPOLATE, wildcard
+from .util import COMMON, EXTRAPOLATE
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -60,13 +56,14 @@ def demand(c: "Computer") -> None:
     k_e = Key(K.exo.elasticity_f.name, "ny", "F")
 
     # Broadcast elasticity to all (node, technology, scenario)
+    # TODO Move scenario broadcasting/selection into a .data.ExoDataSource subclass
     freight_modes = ["F RAIL", "F ROAD"]
     coords = ["scenario::all", K.n, quote(freight_modes)]
     dim = ("scenario", "n", "t")
     c.add(k_e[0], "broadcast_wildcard", K.exo.elasticity_f, *coords, dim=dim)
 
     # Select values for the current scenario
-    c.add(k_e[1], "select", k_e[0], "indexers:scenario:LED")
+    c.add(k_e[1], "select", k_e[0], K.coord.scenario_label_A)
 
     # Interpolate on "y" dimension
     c.add(k_e[2], "interpolate", k_e[1], "y::coords", **EXTRAPOLATE)
@@ -112,89 +109,40 @@ def prepare_computer(c: "Computer") -> None:
     c.add("transport_data", __name__, key=TARGET)
 
     # Call further functions to set up tasks for categories of freight data
-    tech_econ(c)
     usage(c)
     demand(c)
 
 
-def tech_econ(c: "Computer") -> None:
-    """Prepare calculation of technoeconomic parameters for freight technologies."""
-
-    ### `input`
-    k = Key("input", NTY, "F")
-
-    # Add a technology dimension with certain labels to the energy intensity of VDT
-    # NB "energy intensity of VDT" actually has dimension (n,) only
-    c.add(k[0], "expand_dims", "energy intensity of VDT:n-y", K.coord.t["F ROAD"])
-    # Broadcast over dimensions (c, l, y, yv, ya)
-    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.model)
-    # Convert MESSAGE data structure
-    c.add(k[2], "as_message_df", prev, name="input", dims=DIMS, common=COMMON)
-    # Convert units; add to `TARGET`
-    collect(k.name, convert_units, k[2], "transport info")
-
-    ### `output`
-    k = Key("output", NTY, "F")
-
-    # Create base quantity
-    c.add(k[0], wildcard(1.0, "dimensionless", NTY))
-    c.add(k[1], "broadcast_wildcard", k[0], K.n, K.t["F"], K.y, dim=NTY)
-    # Broadcast over dimensions (c, l, y, yv, ya)
-    prev = c.add(k[2], "mul", k[1], K.bcast_tcl.output, K.bcast_y.all)
-    # Convert to MESSAGE data structure
-    prev = c.add(k[3], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
-    # Convert units; add to `TARGET`
-    k_output = collect(k.name, convert_units, prev, "transport info")
-
-    ### `capacity_factor` and `technical_lifetime`
-    k = Key("other::F")
-
-    # Extract the 'output' data frame
-    c.add(k[0], itemgetter("output"), k_output)
-
-    # Produce corresponding capacity_factor and technical_lifetime
-    c.add(
-        k[1],
-        partial(
-            make_matched_dfs,
-            capacity_factor=registry.Quantity("1"),
-            technical_lifetime=registry("10 year"),
-        ),
-        k[0],
-    )
-    # Convert units
-    collect(k.name, convert_units, k[1], "transport info")
-
-
 def usage(c: "Computer") -> None:
     """Prepare calculation of 'usage' pseudo-technologies for freight activity."""
-    ### `output`
-    k = Key("F usage output:t")
+    u = "usage "  # Shorthand for collect()
 
-    # Base values
-    c.add(k[0], "freight_usage_output", "context")
-    # Broadcast from (t,) → (t, c, l) dimensions
-    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.output)
+    # Output intensity
+    k = Key("output", NTY, "F usage")
 
-    # Broadcast over the (n, yv, ya) dimensions
-    d = K.bcast_tcl.output.dims + tuple("ny")
-    prev = c.add(k[2] * d, "expand_dims", prev, dim=dict(n=["*"], y=["*"]))
-    prev = c.add(k[3] * d, "broadcast_wildcard", prev, K.n, K.y, dim=tuple("ny"))
-    prev = c.add(k[4], "mul", prev, K.bcast_y.no_vintage)
+    # Relabel values from load-factor-f.csv
+    # TODO Retrieve freight mode names/construct labels from K.t["F usage"]
+    labels = {"t": {mode: f"transport {mode} usage" for mode in ("F RAIL", "F ROAD")}}
+    c.add(k[0], "relabel", K.exo.load_factor_f, labels=labels)
+
+    # Overwrite original units (tonne / vehicle) with output units (Gt km)
+    c.add(k[1], "assign_units", k[0], units="Gt km")
+
+    # - Broadcast from (t,) over the (c, l) (output commodity and level) dimensions.
+    # - Broadcast from (y,) over the (yV, yA) (vintage and active year) dimensions.
+    # Key `prev` includes the dimensions added by this operation.
+    prev = c.add(k[2], "mul", k[1], K.bcast_tcl.output, K.bcast_y.no_vintage)
+
     # Convert to MESSAGE data structure
-    c.add(k[5], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
-    # Fill node_dest, time_dest key values
-    collect("usage output", lambda v: same_time(same_node(v)), k[5])
+    collect(u + k.name, "as_message_df", prev, name=k.name, dims=DIMS, common=COMMON)
 
-    ### `input`
-    k = Key("F usage input", NTY)
+    # Input intensity
+    k = Key("input", NTY, "F usage")
 
-    c.add(k[0], wildcard(1.0, "gigavehicle km", NTY))
-    coords = ["n::ex world", "t::F usage", "y::model"]
-    c.add(k[1], "broadcast_wildcard", k[0], *coords, dim=NTY)
-    # Broadcast (t,) → (t, c, l) and (y,) → (yv, ya) dimensions
-    prev = c.add(k[2], "mul", k[1], K.bcast_tcl.input, K.bcast_y.no_vintage)
-    # Convert to MESSAGE data structure
-    collect(
-        "usage input", "as_message_df", prev, name="input", dims=DIMS, common=COMMON
-    )
+    # - Construct a quantity with value 1.0 and all nodes, usage technologies, and model
+    #   periods.
+    # - Broadcast over the (c, l, yV, yA) dimensions, same as above.
+    # - Convert to MESSAGE data structure.
+    c.add(k[0], "full", K.n, K.t["F usage"], K.y, dims=NTY, units="Gv km")
+    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.no_vintage)
+    collect(u + k.name, "as_message_df", prev, name=k.name, dims=DIMS, common=COMMON)

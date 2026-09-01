@@ -1,8 +1,14 @@
 """Tests for the BMT workflow (Buildings, Materials, Transport).
 
-Covers workflow steps and build functions in :mod:`message_ix_models.model.bmt`:
-- BM built / build_B (buildings), in :mod:`.model.buildings.build`
-- BMTX built / build_PM (power sector materials), in :mod:`.model.bmt.utils`
+Covers :mod:`message_ix_models.model.bmt.workflow` and linked sector builds:
+
+- After ``M reported``, :func:`message_ix_models.model.transport.workflow.add_steps`
+  uses the transport scenario code from BMT config (``context.transport.code``) to add
+  MESSAGEix-Transport steps, including ``<transport code> T built`` with
+  :func:`message_ix_models.model.transport.build.main`; ``MT built`` then clones that
+  branch and calls :func:`message_ix_models.model.bmt.workflow._set_as_default``.
+- ``BMT built``: :func:`message_ix_models.model.buildings.build.main`.
+- ``BMTX built``: :func:`message_ix_models.model.bmt.utils.build_PM`.
 
 Coverage notes:
 - prepare_data_B and build_B: tested with and without materials
@@ -10,17 +16,25 @@ Coverage notes:
   test_build_B_runs_with_minimal_data, test_build_B_runs_with_materials).
 - utils: build_PM (test_build_PM_*), _generate_vetting_csv (test_generate_vetting_csv*).
 - CLI: bmt group and run subcommand (test_bmt_cli_help, test_bmt_run_dry_run).
+- Common workflow step functions: _set_as_default, prep_for_macro, add_macro.
 """
 
 import logging
+from pathlib import Path
 
 import pandas as pd
 import pytest
+from ixmp import ModelError
 from message_ix import make_df
 
 from message_ix_models import Context
-from message_ix_models.model.bmt.utils import _generate_vetting_csv, build_PM
-from message_ix_models.model.bmt.workflow import generate
+from message_ix_models.model.bmt.utils import build_PM, generate_vetting_csv
+from message_ix_models.model.bmt.workflow import (
+    _set_as_default,
+    add_macro,
+    generate,
+    prep_for_macro,
+)
 from message_ix_models.testing import bare_res
 
 log = logging.getLogger(__name__)
@@ -171,35 +185,127 @@ def _add_buildings_tech_set(scenario):
 
 
 def _add_materials_commodities(scenario):
-    """Add steel, cement, aluminum so get_spec(with_materials=True) succeeds."""
+    """Add index sets required before buildings ``with_materials=True``."""
+    from message_ix_models.model.buildings.build import BUILD_COMM_CONVERT, MATERIALS
+
     scenario.check_out()
-    for c in ("steel", "cement", "aluminum"):
+    commodities = [
+        *MATERIALS,
+        "resid_floor_construction",
+        "comm_floor_construction",
+        "resid_floor_demolition",
+        "comm_floor_demolition",
+        *BUILD_COMM_CONVERT,
+    ]
+    for c in dict.fromkeys(commodities):
         try:
             scenario.add_set("commodity", c)
         except ValueError:
             pass  # already present
-    scenario.commit("Add materials commodities for with_materials=True test")
+    for level in ("demand", "product", "end_of_life"):
+        try:
+            scenario.add_set("level", level)
+        except ValueError:
+            pass  # already present
+    scenario.commit("Add materials index sets for with_materials=True test")
 
 
-# --- Tests for workflow (BM built step) ---
+# --- Tests for workflow (MT built and BMT built steps) ---
 
 
-def test_bmt_workflow_has_bm_built_step(test_context: Context) -> None:
-    """The BMT workflow includes the 'BM built' step that calls build_B."""
+@generate.minimum_version
+def test_bmt_workflow_has_mt_and_bmt_built_steps(test_context: Context) -> None:
+    """The BMT workflow includes MT built and BMT built steps."""
     from message_ix_models.model.buildings import build
 
-    ctx = test_context
-    wf = generate(ctx)
-    assert "BM built" in wf.graph
-    # Graph: (step, "context", base_name); step.action = build_B
-    task = wf.graph["BM built"]
-    step = task[0] if isinstance(task, tuple) else task
-    assert step.action is build.main
+    wf = generate(test_context)
+
+    mt_task = wf.graph["MT built"]
+    mt_step = mt_task[0] if isinstance(mt_task, tuple) else mt_task
+    assert mt_step.action is _set_as_default
+
+    bmt_task = wf.graph["BMT built"]
+    bmt_step = bmt_task[0] if isinstance(bmt_task, tuple) else bmt_task
+    assert bmt_step.action is build.main
+
+
+# --- Tests for common workflow step functions ---
+
+
+def test_set_as_default(test_context, request):
+    """_set_as_default sets the scenario as default and returns it."""
+    scenario = bare_res(request, test_context)
+
+    result = _set_as_default(test_context, scenario)
+
+    assert result is scenario
+
+
+MACRO_SECTORS = ("i_spec", "i_therm")
+
+
+def test_prep_for_macro(test_context, request, monkeypatch):
+    """prep_for_macro removes macro sectors and calls solve."""
+    scenario = bare_res(request, test_context)
+    if "sector" not in scenario.set_list():
+        pytest.skip("Scenario has no sector set")
+        # TODO: later prepare a minimum MACRO excel example file
+        # and add it to the test data
+
+    scenario.check_out()
+    existing = set(scenario.set("sector").tolist())
+    for sector in MACRO_SECTORS:
+        if sector not in existing:
+            scenario.add_set("sector", sector)
+    scenario.commit("Add macro sectors for prep_for_macro test")
+
+    solve_calls = []
+    monkeypatch.setattr(
+        "message_ix_models.model.bmt.workflow.solve",
+        lambda ctx, scen, model="MESSAGE": solve_calls.append(model) or scen,
+    )
+
+    result = prep_for_macro(test_context, scenario)
+
+    assert result is scenario
+    assert set(MACRO_SECTORS) <= set(scenario.set("sector").tolist())
+    assert solve_calls == ["MESSAGE"]
+
+
+def test_add_macro(
+    capfd: pytest.CaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+    test_context: Context,
+) -> None:
+    """:func:`add_macro` uses the configured file and solves with MESSAGE-MACRO."""
+    scenario = bare_res(request, test_context)
+    test_context.ssp = "SSP2"
+    test_context.bmt = {"macro": "custom_macro.xlsx"}
+
+    # Do not actually call add_macro_materials(); only check an argument value
+    def _check(scen, macro_file):
+        assert "custom_macro.xlsx" == macro_file
+        return scen
+
+    mm = "message_ix_models.model"
+    monkeypatch.setattr(f"{mm}.bmt.workflow.add_macro_materials", _check)
+
+    # Force solve() to skip the res_marg() step
+    monkeypatch.setattr(f"{mm}.workflow._TESTING", True)
+
+    # The function call raises an exception because `scenario` is empty
+    with pytest.raises(ModelError):
+        add_macro(test_context, scenario)
+
+    # The solve() call attempted to run MESSAGE-MACRO
+    assert "Job MESSAGE-MACRO_run.gms" in capfd.readouterr().out
 
 
 # --- Tests for build_PM (BMTX built step) ---
 
 
+@generate.minimum_version
 def test_bmt_workflow_has_bmtx_built_step(test_context: Context) -> None:
     """The BMT workflow includes the 'BMTX built' step that calls build_PM."""
 
@@ -211,57 +317,24 @@ def test_bmt_workflow_has_bmtx_built_step(test_context: Context) -> None:
     assert step.action is build_PM
 
 
-def test_build_PM_returns_scenario(test_context, request):
-    """build_PM returns the scenario and skips when input_cap_new already has cement."""
+def test_build_PM_returns_scenario(test_context, request, monkeypatch):
+    """build_PM returns the scenario when power-sector material data already exists.
+
+    Bare RES scenarios may not define ``input_cap_new`` in the linked MESSAGE/MACRO
+    model, so this test exercises the early-return branch via the scenario API.
+    """
     scenario = bare_res(request, test_context)
-    # Add minimal input_cap_new with cement so build_PM takes the early-return path.
-    # Bare RES may not have 'cement' or 'product'; add set elements and unit as needed.
-    scenario.check_out()
-    for elem, set_name in [("cement", "commodity"), ("product", "level")]:
-        try:
-            scenario.add_set(set_name, elem)
-        except Exception:
-            pass  # already present
-    unit = "t/kW"
-    try:
-        scenario.platform.add_unit(unit, "")
-    except Exception:
-        pass  # already exists
-    if "input_cap_new" not in scenario.par_list():
-        scenario.init_par(
-            "input_cap_new",
-            idx_sets=[
-                "node",
-                "technology",
-                "year",
-                "node",
-                "commodity",
-                "level",
-                "time",
-            ],
-            idx_names=[
-                "node_loc",
-                "technology",
-                "year_vtg",
-                "node_origin",
-                "commodity",
-                "level",
-                "time_origin",
-            ],
-        )
     nodes = scenario.set("node")
     years = scenario.set("year")
-    techs = scenario.set("technology")
-    if not (len(nodes) and len(years) and len(techs)):
-        pytest.skip("Scenario has no nodes/years/techs, cannot add input_cap_new row")
+    if not (len(nodes) and len(years)):
+        pytest.skip("Scenario has no nodes/years, cannot add input_cap_new row")
     node = nodes[0]
     y = int(years[0])
-    tech = techs[0]
-    df = pd.DataFrame(
+    existing = pd.DataFrame(
         [
             {
                 "node_loc": node,
-                "technology": tech,
+                "technology": "coal_adv",
                 "year_vtg": y,
                 "node_origin": node,
                 "commodity": "cement",
@@ -269,12 +342,26 @@ def test_build_PM_returns_scenario(test_context, request):
                 "time": "year",
                 "time_origin": "year",
                 "value": 0.1,
-                "unit": unit,
+                "unit": "t/kW",
             }
         ]
     )
-    scenario.add_par("input_cap_new", df)
-    scenario.commit("Add minimal input_cap_new for build_PM test")
+    original_par = scenario.par
+    original_par_list = scenario.par_list
+
+    def par_list():
+        parameters = list(original_par_list())
+        if "input_cap_new" not in parameters:
+            return [*parameters, "input_cap_new"]
+        return parameters
+
+    def par(name, filters=None, **kwargs):
+        if name == "input_cap_new":
+            return existing
+        return original_par(name, filters=filters, **kwargs)
+
+    monkeypatch.setattr(scenario, "par_list", par_list)
+    monkeypatch.setattr(scenario, "par", par)
 
     result = build_PM(test_context, scenario)
 
@@ -295,59 +382,50 @@ def test_build_PM_callable(test_context, request):
 # --- Tests for _generate_vetting_csv (utils.py) ---
 
 
-def test_generate_vetting_csv(tmp_path):
-    """_generate_vetting_csv writes CSV of original/modified demand and subtraction."""
-    original_demand = pd.DataFrame(
+def test_generate_vetting_csv(tmp_path: Path) -> None:
+    """generate_vetting_csv writes CSV of original/modified demand and subtraction."""
+    base = pd.DataFrame(
         {
             "node": ["R12_AFR", "R12_AFR"],
             "year": [2020, 2030],
             "commodity": ["cement", "cement"],
-            "value": [10.0, 20.0],
         }
     )
-    modified_demand = pd.DataFrame(
-        {
-            "node": ["R12_AFR", "R12_AFR"],
-            "year": [2020, 2030],
-            "commodity": ["cement", "cement"],
-            "value": [7.0, 15.0],
-        }
-    )
+    original_demand = base.assign(value=[10.0, 20.0])
+    modified_demand = base.assign(value=[7.0, 15.0])
+
     out = tmp_path / "vetting.csv"
 
-    _generate_vetting_csv(original_demand, modified_demand, str(out))
+    generate_vetting_csv(original_demand, modified_demand, out)
 
     assert out.exists()
     df = pd.read_csv(out)
     assert list(df.columns) == [
+        "commodity",
         "node",
         "year",
-        "commodity",
         "original_demand",
         "modified_demand",
-        "subtracted_amount",
-        "subtraction_percentage",
+        "gap",
+        "gap_share",
     ]
     assert len(df) == 2
-    assert df["subtracted_amount"].tolist() == [3.0, 5.0]
-    assert df["subtraction_percentage"].tolist() == [30.0, 25.0]
+    assert df["gap"].tolist() == [3.0, 5.0]
+    assert df["gap_share"].tolist() == [30.0, 25.0]
 
 
-def test_generate_vetting_csv_zero_original(tmp_path):
-    """_generate_vetting_csv handles zero original demand (no div-by-zero)."""
-    original_demand = pd.DataFrame(
-        {"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"], "value": [0.0]}
-    )
-    modified_demand = pd.DataFrame(
-        {"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"], "value": [0.0]}
-    )
+def test_generate_vetting_csv_zero_original(tmp_path: Path) -> None:
+    """generate_vetting_csv handles zeros in original_demand."""
+    base = pd.DataFrame({"node": ["R12_AFR"], "year": [2020], "commodity": ["steel"]})
+    original_demand = base.assign(value=[0.0])
+    modified_demand = base.assign(value=[0.0])
     out = tmp_path / "vetting_zero.csv"
 
-    _generate_vetting_csv(original_demand, modified_demand, str(out))
+    generate_vetting_csv(original_demand, modified_demand, out)
 
     assert out.exists()
     df = pd.read_csv(out)
-    assert df["subtraction_percentage"].iloc[0] == 0.0
+    assert df["gap_share"].iloc[0] == 0.0
 
 
 # --- Tests for BMT CLI (cli.py) ---
@@ -359,6 +437,7 @@ def test_bmt_cli_help(mix_models_cli):
     mix_models_cli.assert_exit_0(["bmt", "run", "--help"])
 
 
+@generate.minimum_version
 def test_bmt_run_dry_run(mix_models_cli):
     """bmt run --dry-run TARGET runs workflow in dry-run (writes SVG, no execution)."""
-    mix_models_cli.assert_exit_0(["bmt", "run", "--dry-run", "BM built"])
+    mix_models_cli.assert_exit_0(["bmt", "run", "--dry-run", "BMT built"])

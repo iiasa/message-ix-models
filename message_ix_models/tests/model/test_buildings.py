@@ -235,9 +235,12 @@ def test_report3() -> None:
 
 
 @pytest.mark.skip(reason="Slow")
-@pytest.mark.parametrize("sturm_method", ["rpy2", "Rscript"])
+@pytest.mark.parametrize("sturm_method", [sturm.METHOD.RPY2, sturm.METHOD.RSCRIPT_A])
 def test_sturm_run(
-    tmp_path: "Path", test_context: "Context", test_data_path: "Path", sturm_method: str
+    tmp_path: "Path",
+    test_context: "Context",
+    test_data_path: "Path",
+    sturm_method: sturm.METHOD,
 ) -> None:
     """Test that STURM can be run by either method."""
     test_context.model.regions = "R12"

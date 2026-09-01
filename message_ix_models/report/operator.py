@@ -11,14 +11,15 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from functools import cache, reduce
-from itertools import filterfalse, product
+from functools import cache, reduce, singledispatch
+from itertools import filterfalse, product, zip_longest
 from typing import TYPE_CHECKING, Any, Literal
 
 import genno
 import ixmp
 import numpy as np
 import pandas as pd
+import pyam
 from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
@@ -58,6 +59,7 @@ __all__ = [
     "compound_growth",
     "filter_ts",
     "from_url",
+    "full",
     "get_commodity_groups",
     "get_ts",
     "gwp_factors",
@@ -72,6 +74,7 @@ __all__ = [
     "nodes_world_agg",
     "quantity_from_iamc",
     "remove_ts",
+    "remove_zeros",
     "select_allow_empty",
     "select_expand",
     "share_curtailment",
@@ -505,6 +508,30 @@ def remove_ts(
         scenario.commit(f"Remove time series data ({__name__}.remove_all_ts)")
 
 
+@singledispatch
+def remove_zeros(data: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Remove zeros in IAMC-like data in years before `year`.
+
+    Parameters
+    ----------
+    data :
+        Either :class:`pyam.IamDataFrame` or :class:`pandas.DataFrame`. In the latter
+        case, **must** have at least columns "year" (dtype :class:`int`) and "value".
+
+    Returns
+    -------
+    same type as `data`
+        Any values with year < `year` and value == 0 are removed.
+    """
+    return data.query("year >= @year or value != 0")
+
+
+@remove_zeros.register
+def _(idf: pyam.IamDataFrame, year: int) -> pyam.IamDataFrame:
+    # Convert to pandas → pipe through pd.DataFrame implementation → restore.
+    return type(idf)(idf.as_pandas().pipe(remove_zeros, year=year))
+
+
 # Non-weak references to objects to keep them alive
 _FROM_URL_REF: set[Any] = set()
 
@@ -524,6 +551,41 @@ def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
     _FROM_URL_REF.add(ts)
     _FROM_URL_REF.add(mp)
     return ts
+
+
+def full(
+    *coords, dims: Sequence[Hashable], fill_value: float = 1.0, units=""
+) -> "AnyQuantity":
+    """Return a new Quantity with given `dims` and `coords`, filled with `fill_value`.
+
+    Parameters
+    ----------
+    coords :
+        1 or more sequences of coordinates.
+    dims:
+        Dimension labels. Must be of the same length as `coords`.
+    """
+    # Match `dims` and `coords` in the same order
+    _coords = {dim: labels for dim, labels in zip_longest(dims, coords)}
+    if None in set(_coords.keys()):
+        raise ValueError(
+            f"Too few ID(s) {tuple(filter(None, _coords.keys()))} for {len(_coords)} "
+            "dimension(s)/coords"
+        )
+    try:
+        # Construct a complete np.array in the correct shape
+        data = np.full(tuple(len(c) for c in _coords.values()), fill_value)
+    except TypeError:
+        missing = sum(int(c is None) for c in _coords.values())
+        raise ValueError(
+            f"Too few ({len(_coords) - missing}) coords for "
+            f"{len(_coords)} dimension(s) {tuple(_coords.keys())}"
+        )
+
+    try:
+        return genno.Quantity(data, coords=_coords, units=units)
+    except TypeError:  # genno < 1.25
+        return genno.Quantity(fill_value, units).expand_dims(_coords)
 
 
 def quantity_from_iamc(qty: "AnyQuantity", variable: str) -> "AnyQuantity":

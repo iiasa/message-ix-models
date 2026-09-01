@@ -20,7 +20,8 @@ from genno.core.key import single_key
 from message_ix_models.util import minimum_version
 from message_ix_models.util.genno import Collector
 
-from . import key, util
+from . import key as K
+from . import util
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -39,7 +40,7 @@ collect = Collector(TARGET, "{}::MT+ixmp".format)
 #   .model.materials
 COMMODITY_INFO = {
     "automotive steel": "steel",
-    "cast Al": "aluminum",
+    "al_cast": "aluminum",
     "cast iron": "pig_iron",  # NB Several other commodities exist
     # "co": "",  # Missing
     # "copper electric grade": "copper",  # Commented in material/set.yaml
@@ -50,7 +51,8 @@ COMMODITY_INFO = {
     # "p": "",  # Missing
     # "plastics": "",  # Missing
     "stainless steel": "steel",
-    "wrought Al": "aluminum",
+    "al_wrought": "aluminum",
+    "al_extrus": "aluminum",
     # "zinc": "",  # Missing
 }
 
@@ -62,6 +64,7 @@ DIMS = dict(
     year_vtg="y",
     technology="t",
 )
+
 
 #: Portion of the ``input_cap_new`` that is available as ``output_cap_ret`` at the end
 #: of lifetime of a technology. Dimensionless.
@@ -115,25 +118,22 @@ def get_groups(config: "Config") -> dict[str, dict[str, list[str]]]:
 def prepare_computer(c: "Computer") -> None:
     """Prepare `c` to calculate and add data for materiality of transport."""
     # Retrieve transport configuration
-    config = c.graph["context"].transport
+    config: "Config" = c.graph["context"].transport
 
     # Collect data in `TARGET` and connect to the "add transport data" key
     collect.computer = c
     c.add("transport_data", __name__, key=TARGET)
 
     k = Keys(
-        exo=(key.exo.input_cap_new - "exo") / "scenario",
+        exo=(K.exo.input_cap_new - "exo") / "scenario",
         # Same key as used in .transport.ldv.stock
         # TODO Move to .key
         sales="sales:n-t-y:LDV",
-        demand=Key("demand", key.demand_base.dims, "MT"),
+        demand=Key("demand", K.demand_base.dims, "MT"),
     )
 
-    # From input_cap_new.csv, select:
-    # - Only a single scenario
-    #   TODO Retrieve the CircEUlar scenario ID from config
-    indexers = dict(scenario="_CT_C_D_D")
-    c.add(k.exo[0], "select", key.exo.input_cap_new, indexers=indexers)
+    # From input_cap_new.csv, select only a single scenario, using the Config.label
+    c.add(k.exo[0], "select", K.exo.input_cap_new, K.coord.scenario_label_D)
 
     # Transform VMI data labels to MESSAGE -MT- labels
     c.add(k.exo[1], "aggregate", k.exo[0], groups=get_groups(config), keep=False)
@@ -161,7 +161,7 @@ def prepare_computer(c: "Computer") -> None:
 
     # Force units for existing model data
     # FIXME Adjust to trust the base model's units
-    c.add(k.demand[2], "apply_units", key.demand_base, units="Mt / year")
+    c.add(k.demand[2], "apply_units", K.demand_base, units="Mt / year")
 
     # Share of this transport total in existing material demand as of y₀
     c.add(k.demand[3], "div", k.demand[1], k.demand[2])

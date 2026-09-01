@@ -11,7 +11,7 @@ from importlib.metadata import version
 from itertools import chain
 from logging import INFO, getLogger
 from platform import python_version
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from packaging.version import parse
 
@@ -225,3 +225,42 @@ class MinimumVersionDecorator:
 
 #: Alias for :class:`.MinimumVersionDecorator`.
 minimum_version = MinimumVersionDecorator
+
+
+def import_from_fqn(name: str) -> Any:
+    """Import and return an object given its fully-qualified name.
+
+    `name` may be:
+
+    - "message_ix_models.foo.Bar": referring to the class (or other object)
+      :py:`Bar` in the module :py:`message_ix_models.foo`.
+    - "message_ix_models.foo.Bar.baz": referring to, for instance, the class or
+      static method :py:`Bar.baz()` or attribute :py:`Bar.baz` of a class :py:`Bar` in
+      the same module.
+    - "message_ix_models.foo.Bar.baz.qux": further attribute access of an object in
+      the same module.
+
+    Raises
+    ------
+    ImportError
+        if no component of `name` is an importable module
+    AttributeError
+        if some component of `name` is an importable module, but it does not have the
+        attributes indicated by the rest of `name`.
+    """
+    from importlib import import_module
+
+    parts = name.split(".")
+
+    for i in range(len(parts) - 1, 0, -1):
+        try:
+            obj = import_module(".".join(parts[:i]))
+        except ImportError:
+            continue
+
+        for part in parts[i:]:
+            obj = getattr(obj, part)
+
+        return obj
+
+    raise ImportError(name)

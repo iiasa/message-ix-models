@@ -138,15 +138,182 @@ LED,      LDV,        R12_WEU,  2020, 11700
 LED,      LDV,        R12_WEU,  2050, 14087
 LED,      LDV,        R12_WEU,  2110, 14087
 
-*,        AIR,        *,        2020, 10000
-*,        AIR,        *,        2110, 10000
-*,        2W,         *,        2020, 10000
-*,        2W,         *,        2110, 10000
-*,        BUS,        *,        2020, 10000
-*,        BUS,        *,        2110, 10000
-*,        P RAIL,     *,        2020, 10000
-*,        P RAIL,     *,        2110, 10000
-*,        F RAIL,     *,        2020, 10000
-*,        F RAIL,     *,        2110, 10000
-*,        F ROAD,     *,        2020, 10000
-*,        F ROAD,     *,        2110, 10000
+*,        AIR,        *,        2020, 800000
+*,        AIR,        *,        2110, 800000
+*,        2W,         *,        2020, 8000
+*,        2W,         *,        2110, 8000
+*,        2W,         R12_NAM,  2020, 4000
+*,        2W,         R12_NAM,  2110, 4000
+*,        2W,         R12_WEU,  2020, 5000
+*,        2W,         R12_WEU,  2110, 5000
+
+*,        P RAIL,   R12_AFR,    2020, 150000
+*,        P RAIL,   R12_AFR,    2110, 150000
+*,        P RAIL,   R12_CHN,    2020, 150000
+*,        P RAIL,   R12_CHN,    2110, 150000
+*,        P RAIL,   R12_EEU,    2020, 150000
+*,        P RAIL,   R12_EEU,    2110, 150000
+*,        P RAIL,   R12_FSU,    2020, 150000
+*,        P RAIL,   R12_FSU,    2110, 150000
+*,        P RAIL,   R12_LAM,    2020, 150000
+*,        P RAIL,   R12_LAM,    2110, 150000
+*,        P RAIL,   R12_MEA,    2020, 150000
+*,        P RAIL,   R12_MEA,    2110, 150000
+*,        P RAIL,   R12_NAM,    2020, 150000
+*,        P RAIL,   R12_NAM,    2110, 150000
+*,        P RAIL,   R12_PAO,    2020, 150000
+*,        P RAIL,   R12_PAO,    2110, 150000
+*,        P RAIL,   R12_PAS,    2020, 150000
+*,        P RAIL,   R12_PAS,    2110, 150000
+*,        P RAIL,   R12_RCPA,   2020, 150000
+*,        P RAIL,   R12_RCPA,   2110, 150000
+*,        P RAIL,   R12_SAS,    2020, 150000
+*,        P RAIL,   R12_SAS,    2110, 150000
+*,        P RAIL,   R12_WEU,    2020, 150000
+*,        P RAIL,   R12_WEU,    2110, 150000
+*,        BUS,      R12_AFR,    2020, 70000
+*,        BUS,      R12_AFR,    2110, 70000
+*,        BUS,      R12_CHN,    2020, 70000
+*,        BUS,      R12_CHN,    2110, 70000
+*,        BUS,      R12_EEU,    2020, 70000
+*,        BUS,      R12_EEU,    2110, 70000
+*,        BUS,      R12_FSU,    2020, 70000
+*,        BUS,      R12_FSU,    2110, 70000
+*,        BUS,      R12_LAM,    2020, 70000
+*,        BUS,      R12_LAM,    2110, 70000
+*,        BUS,      R12_MEA,    2020, 70000
+*,        BUS,      R12_MEA,    2110, 70000
+*,        BUS,      R12_NAM,    2020, 70000
+*,        BUS,      R12_NAM,    2110, 70000
+*,        BUS,      R12_PAO,    2020, 70000
+*,        BUS,      R12_PAO,    2110, 70000
+*,        BUS,      R12_PAS,    2020, 70000
+*,        BUS,      R12_PAS,    2110, 70000
+*,        BUS,      R12_RCPA,   2020, 70000
+*,        BUS,      R12_RCPA,   2110, 70000
+*,        BUS,      R12_SAS,    2020, 70000
+*,        BUS,      R12_SAS,    2110, 70000
+*,        BUS,      R12_WEU,    2020, 70000
+*,        BUS,      R12_WEU,    2110, 70000
+*,        F ROAD,   R12_AFR,    2020, 100000
+*,        F ROAD,   R12_AFR,    2110, 100000
+*,        F ROAD,   R12_CHN,    2020, 100000
+*,        F ROAD,   R12_CHN,    2110, 100000
+*,        F ROAD,   R12_EEU,    2020, 100000
+*,        F ROAD,   R12_EEU,    2110, 100000
+*,        F ROAD,   R12_FSU,    2020, 100000
+*,        F ROAD,   R12_FSU,    2110, 100000
+*,        F ROAD,   R12_LAM,    2020, 100000
+*,        F ROAD,   R12_LAM,    2110, 100000
+*,        F ROAD,   R12_MEA,    2020, 100000
+*,        F ROAD,   R12_MEA,    2110, 100000
+*,        F ROAD,   R12_NAM,    2020, 100000
+*,        F ROAD,   R12_NAM,    2110, 100000
+*,        F ROAD,   R12_PAO,    2020, 100000
+*,        F ROAD,   R12_PAO,    2110, 100000
+*,        F ROAD,   R12_PAS,    2020, 100000
+*,        F ROAD,   R12_PAS,    2110, 100000
+*,        F ROAD,   R12_RCPA,   2020, 100000
+*,        F ROAD,   R12_RCPA,   2110, 100000
+*,        F ROAD,   R12_SAS,    2020, 100000
+*,        F ROAD,   R12_SAS,    2110, 100000
+*,        F ROAD,   R12_WEU,    2020, 100000
+*,        F ROAD,   R12_WEU,    2110, 100000
+*,        F RAIL,   R12_AFR,    2020, 90000
+*,        F RAIL,   R12_AFR,    2110, 100000
+*,        F RAIL,   R12_CHN,    2020, 140000
+*,        F RAIL,   R12_CHN,    2110, 140000
+*,        F RAIL,   R12_EEU,    2020, 85000
+*,        F RAIL,   R12_EEU,    2110, 85000
+*,        F RAIL,   R12_FSU,    2020, 200000
+*,        F RAIL,   R12_FSU,    2110, 200000
+*,        F RAIL,   R12_LAM,    2020, 110000
+*,        F RAIL,   R12_LAM,    2110, 110000
+*,        F RAIL,   R12_MEA,    2020, 36000
+*,        F RAIL,   R12_MEA,    2110, 50000
+*,        F RAIL,   R12_NAM,    2020, 96000
+*,        F RAIL,   R12_NAM,    2110, 100000
+*,        F RAIL,   R12_PAO,    2020, 160000
+*,        F RAIL,   R12_PAO,    2110, 160000
+*,        F RAIL,   R12_PAS,    2020, 120000
+*,        F RAIL,   R12_PAS,    2110, 120000
+*,        F RAIL,   R12_RCPA,   2020, 45000
+*,        F RAIL,   R12_RCPA,   2110, 50000
+*,        F RAIL,   R12_SAS,    2020, 150000
+*,        F RAIL,   R12_SAS,    2110, 150000
+*,        F RAIL,   R12_WEU,    2020, 105000
+*,        F RAIL,   R12_WEU,    2110, 105000
+
+CircEUlar-N,        LDV,        R12_AFR,  2020, 15500
+CircEUlar-N,        LDV,        R12_AFR,  2050, 25000
+CircEUlar-N,        LDV,        R12_AFR,  2110, 30000
+CircEUlar-N,        LDV,        R12_CHN,  2020, 15000
+CircEUlar-N,        LDV,        R12_CHN,  2050, 25000
+CircEUlar-N,        LDV,        R12_CHN,  2110, 30000
+CircEUlar-N,        LDV,        R12_EEU,  2020,  9000
+CircEUlar-N,        LDV,        R12_EEU,  2050, 20000
+CircEUlar-N,        LDV,        R12_EEU,  2110, 30000
+CircEUlar-N,        LDV,        R12_FSU,  2020, 13000
+CircEUlar-N,        LDV,        R12_FSU,  2050, 22000
+CircEUlar-N,        LDV,        R12_FSU,  2110, 30000
+CircEUlar-N,        LDV,        R12_LAM,  2020, 13500
+CircEUlar-N,        LDV,        R12_LAM,  2050, 22000
+CircEUlar-N,        LDV,        R12_LAM,  2110, 30000
+CircEUlar-N,        LDV,        R12_MEA,  2020, 14500
+CircEUlar-N,        LDV,        R12_MEA,  2050, 22000
+CircEUlar-N,        LDV,        R12_MEA,  2110, 30000
+CircEUlar-N,        LDV,        R12_NAM,  2020, 18400
+CircEUlar-N,        LDV,        R12_NAM,  2050, 25000
+CircEUlar-N,        LDV,        R12_NAM,  2110, 30000
+CircEUlar-N,        LDV,        R12_PAO,  2020,  9000
+CircEUlar-N,        LDV,        R12_PAO,  2050, 20000
+CircEUlar-N,        LDV,        R12_PAO,  2110, 30000
+CircEUlar-N,        LDV,        R12_PAS,  2020, 13000
+CircEUlar-N,        LDV,        R12_PAS,  2050, 22000
+CircEUlar-N,        LDV,        R12_PAS,  2110, 30000
+CircEUlar-N,        LDV,        R12_RCPA, 2020, 12000
+CircEUlar-N,        LDV,        R12_RCPA, 2050, 22000
+CircEUlar-N,        LDV,        R12_RCPA, 2110, 30000
+CircEUlar-N,        LDV,        R12_SAS,  2020, 12000
+CircEUlar-N,        LDV,        R12_SAS,  2050, 22000
+CircEUlar-N,        LDV,        R12_SAS,  2110, 30000
+CircEUlar-N,        LDV,        R12_WEU,  2020, 11700
+CircEUlar-N,        LDV,        R12_WEU,  2050, 22000
+CircEUlar-N,        LDV,        R12_WEU,  2110, 30000
+
+CircEUlar-A,        LDV,        R12_AFR,  2020, 15500
+CircEUlar-A,        LDV,        R12_AFR,  2050, 25000
+CircEUlar-A,        LDV,        R12_AFR,  2110, 30000
+CircEUlar-A,        LDV,        R12_CHN,  2020, 15000
+CircEUlar-A,        LDV,        R12_CHN,  2050, 25000
+CircEUlar-A,        LDV,        R12_CHN,  2110, 30000
+CircEUlar-A,        LDV,        R12_EEU,  2020,  9000
+CircEUlar-A,        LDV,        R12_EEU,  2050, 20000
+CircEUlar-A,        LDV,        R12_EEU,  2110, 30000
+CircEUlar-A,        LDV,        R12_FSU,  2020, 13000
+CircEUlar-A,        LDV,        R12_FSU,  2050, 22000
+CircEUlar-A,        LDV,        R12_FSU,  2110, 30000
+CircEUlar-A,        LDV,        R12_LAM,  2020, 13500
+CircEUlar-A,        LDV,        R12_LAM,  2050, 22000
+CircEUlar-A,        LDV,        R12_LAM,  2110, 30000
+CircEUlar-A,        LDV,        R12_MEA,  2020, 14500
+CircEUlar-A,        LDV,        R12_MEA,  2050, 22000
+CircEUlar-A,        LDV,        R12_MEA,  2110, 30000
+CircEUlar-A,        LDV,        R12_NAM,  2020, 18400
+CircEUlar-A,        LDV,        R12_NAM,  2050, 25000
+CircEUlar-A,        LDV,        R12_NAM,  2110, 30000
+CircEUlar-A,        LDV,        R12_PAO,  2020,  9000
+CircEUlar-A,        LDV,        R12_PAO,  2050, 20000
+CircEUlar-A,        LDV,        R12_PAO,  2110, 30000
+CircEUlar-A,        LDV,        R12_PAS,  2020, 13000
+CircEUlar-A,        LDV,        R12_PAS,  2050, 22000
+CircEUlar-A,        LDV,        R12_PAS,  2110, 30000
+CircEUlar-A,        LDV,        R12_RCPA, 2020, 12000
+CircEUlar-A,        LDV,        R12_RCPA, 2050, 22000
+CircEUlar-A,        LDV,        R12_RCPA, 2110, 30000
+CircEUlar-A,        LDV,        R12_SAS,  2020, 12000
+CircEUlar-A,        LDV,        R12_SAS,  2050, 22000
+CircEUlar-A,        LDV,        R12_SAS,  2110, 30000
+CircEUlar-A,        LDV,        R12_WEU,  2020, 11700
+CircEUlar-A,        LDV,        R12_WEU,  2050, 22000
+CircEUlar-A,        LDV,        R12_WEU,  2110, 30000

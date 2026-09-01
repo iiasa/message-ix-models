@@ -11,6 +11,8 @@ import ixmp
 from message_ix_models.model.workflow import Config as SolveConfig
 from message_ix_models.util.config import ConfigHelper
 
+from .sturm import METHOD as STURM_METHOD
+
 if TYPE_CHECKING:
     from typing import TypedDict
 
@@ -89,6 +91,11 @@ class Config(ConfigHelper):
     #: Name or ID of STURM scenario to run.
     sturm_scenario: str
 
+    #: STURM / MESSAGEix-Buildings scenario key written to :file:`scenario_config.yaml`.
+    #: This is the :class:`str` ID of a code in
+    #: :class:`.circeular.structure.CL_SCENARIO`, for instance :py:`"R"`.
+    code: str = "R"
+
     #: Climate scenario. Either `BL` or `2C`.
     climate_scenario: str = "BL"
 
@@ -135,13 +142,35 @@ class Config(ConfigHelper):
     ssp: str = "SSP2"
 
     #: Method for running STURM. See :func:`.sturm.run`.
-    sturm_method: str = "Rscript"
+    sturm_method: STURM_METHOD = STURM_METHOD.RSCRIPT_A
 
     def __post_init__(self) -> None:
         if not self.code_dir.exists():
             raise FileNotFoundError(f"MESSAGEix-Buildings not found at {self.code_dir}")
 
     def set_output_path(self, context: "Context") -> None:
+        """Set :attr:`_output_path` based on `context`."""
         # Base path for output during iterations
         self._output_path = context.get_local_path("buildings")
         self._output_path.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def sturm_code_dir(self) -> Path:
+        """The expected path to a directory of STURM R code, within :attr:`code_dir`."""
+        parts = (
+            ["message_ix_buildings", "sturm"]
+            if self.sturm_method is STURM_METHOD.RSCRIPT_B
+            else ["STURM_model"]
+        )
+        return self.code_dir.joinpath(*parts)
+
+    @property
+    def sturm_input_dir(self) -> Path:
+        """The expected path to a directory with STURM input files."""
+        match self.sturm_method:
+            case STURM_METHOD.RPY2:
+                return self.code_dir.joinpath("STURM_data")
+            case STURM_METHOD.RSCRIPT_B:
+                return self.sturm_code_dir.joinpath("data")
+            case _:  # pragma: no cover
+                raise ValueError(f"Not defined for {self.sturm_method=}")

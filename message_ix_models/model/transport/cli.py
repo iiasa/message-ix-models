@@ -43,9 +43,6 @@ cli.add_command(
                 help="Base scenario (if no --url)",
             ),
             click.Option(
-                ["--future", "futures_scenario"], help="Transport futures scenario."
-            ),
-            click.Option(
                 ["--fast"],
                 is_flag=True,
                 help="Skip removing data for removed set elements.",

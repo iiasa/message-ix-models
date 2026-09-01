@@ -23,6 +23,7 @@ env:
   gams-version: 48.7.0
   label: "safe to test"
   python-version: "3.14"
+  r-version: "4.6"
 
 jobs:
   check:
@@ -55,17 +56,17 @@ jobs:
         os: [ macos-15-intel, macos-latest, ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: francisbilham11/action-cached-lfs-checkout@v3
+    - uses: francisbilham11/action-cached-lfs-checkout@v4
       with:
         ref: ${{ needs.check.outputs.ref }}
 
     - name: Cache static data
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: message-static-data
         key: static-data-${{ matrix.os }}
 
-    - uses: webfactory/ssh-agent@v0.9.0
+    - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: |
           ${{ secrets.MESSAGE_STATIC_DATA_PRIVATE_KEY }}
@@ -123,7 +124,7 @@ jobs:
 
     steps:
     - name: Cache test data
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: |
           local-data
@@ -131,12 +132,12 @@ jobs:
         key: local-data-${{ matrix.os }}-upstream-${{ matrix.version.upstream }}
 
     - name: Check out message-ix-models
-      uses: francisbilham11/action-cached-lfs-checkout@v3
+      uses: francisbilham11/action-cached-lfs-checkout@v4
       with:
         ref: ${{ needs.check.outputs.ref }}
 
     - name: Restore message-static-data from cache
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: message-static-data
         key: static-data-${{ matrix.os }}
@@ -156,10 +157,15 @@ jobs:
 
     - name: Set Java version on Windows
       if: startsWith(matrix.os, 'windows-')
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         distribution: temurin
         java-version: '21'
+
+    - uses: r-lib/actions/setup-r@v2
+      if: matrix.os != 'macos-15-intel'
+      with:
+        r-version: ${{ env.r-version }}
 
     - name: Install packaging
       run: uv pip install packaging

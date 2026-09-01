@@ -72,6 +72,7 @@ __all__ = [
     "transport_check",
     "transport_data",
     "votm",
+    "yv_ya_banded",
 ]
 
 
@@ -586,22 +587,6 @@ def factor_ssp(
     return info.quantify(**kw)
 
 
-def freight_usage_output(context: "Context") -> "AnyQuantity":
-    """Output efficiency for ``transport F {MODE} usage`` pseudo-technologies.
-
-    Returns
-    -------
-    Quantity
-        with dimension |t|
-    """
-    modes = "F RAIL", "F ROAD"  # TODO Retrieve this from configuration
-    return genno.Quantity(
-        [context.transport.load_factor[m] for m in modes],
-        coords=dict(t=[f"transport {m} usage" for m in modes]),
-        units="Gt km",
-    )
-
-
 Groups = dict[str, dict[str, list[str]]]
 
 
@@ -769,28 +754,21 @@ def iea_eei_fv(name: str, config: dict) -> "AnyQuantity":
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
-def indexer_scenario(config: dict, *, with_LED: bool) -> dict[Literal["scenario"], str]:
+def indexer_scenario(config: dict) -> dict[Literal["scenario"], str]:
     """Indexer for the ``scenario`` dimension.
 
-    If `with_LED` **and** :py:`config.project["LDV"] = True`, then the single label is
-    "LED". Otherwise it is the final part of the :attr:`.transport.config.Config.ssp`
-    URN, e.g. "SSP(2024).1". In other words, this treats "LDV" as mutually exclusive
-    with an SSP scenario identifier (instead of orthogonal).
+    The final part of the :attr:`.transport.config.Config.ssp` URN, e.g. "SSP(2024).1".
 
     Parameters
     ----------
     config :
-        The genno.Computer "config" dictionary, with a key "transport" mapped to an
-        instance of :class:`.transport.Config`.
+        The :class:`genno.Computer` config dictionary, with a key "transport" mapped to
+        an instance of :class:`.transport.Config`.
     """
     # Retrieve the .transport.Config object from the genno.Computer "config" dict
     c: "Config" = config["transport"]
 
-    return dict(
-        scenario="LED"
-        if (with_LED and c.project.get("LED", False))
-        else c.ssp.urn.rpartition(":")[2]
-    )
+    return dict(scenario=c.ssp.urn.rpartition(":")[2])
 
 
 def indexers_n_cd(config: dict) -> dict[str, xr.DataArray]:
@@ -930,28 +908,40 @@ def uniform_in_dim(value: "TQuantity", dim: str = "y") -> "TQuantity":
 
 
 def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
-    """Return fractions of current vehicle stock that should be added in prior years.
+    """Fractions of current vehicle stock that should be added in prior years.
+
+    The returned quantity has the same dimensionality as `age`. For each unique
+    combination on the dimensions other than |y| (or |yV|), values are 1.0 / `age`;
+    that is, a uniform distribution across 1 or more years up to and including the
+    single |y| (or |yV|) coordinate in the input. Every integer year is included; that
+    is, the result is **not** aggregated to multi-year periods (called ``year`` in
+    MESSAGE).
 
     Parameters
     ---
     age : genno.Quantity
-        Mean age of vehicle stock. Must have dimension "y" and at least 1 other
-        dimension. For every unique combination of those other dimensions, there must be
-        only one value/|y|-coordinate. This is taken as the *rightmost* end of a uniform
-        distribution with mean age given by the respective value.
+        Mean age of vehicle stock. Must have either dimension "y" or "yv", and at least
+        1 other dimension. For every unique combination of those other dimensions, there
+        must be only one value/|y|-coordinate. This is taken as the *rightmost* end of a
+        uniform distribution with mean age given by the respective value.
 
     Returns
     -------
     genno.Quantity
-        Same dimensionality as `age`, with sufficient |y| coordinates to cover all years
-        in which. Every integer year is included, i.e. the result is **not** aggregated
-        to multi-year periods (called ``year`` in MESSAGE).
-    """
-    # - Group by all dims other than `y`.
-    # - Apply the function to each scalar value.
-    dims = list(filter(lambda d: d != "y", age.dims))
 
-    result = cast("TQuantity", age.groupby(dims).apply(uniform_in_dim))
+    See also
+    --------
+    .uniform_in_dim
+    """
+    # Dimension on which to apply uniform_in_dim()
+    d = ({"y", "yv"} & set(age.dims)).pop()
+
+    # All other dimensions, for grouping
+    d_groupby = list(age.dims)
+    d_groupby.remove(d)
+
+    # Apply uniform_in_dim() within each group
+    result = cast("TQuantity", age.groupby(d_groupby).apply(uniform_in_dim, dim=d))
     # NB Necessary for pandas 3.0 but not 2.3.x: attrs of the return values of
     #    uniform_in_dim() are not propagated when the groups are reassembled to a full
     #    AttrSeries.
@@ -960,19 +950,30 @@ def sales_fraction_annual(age: "TQuantity") -> "TQuantity":
     return result
 
 
-def scenario_codes() -> list[str]:
+def scenario_codes(config: dict) -> list[str]:
     """Return valid codes for a `scenario` dimension of some quantities.
 
     The list includes:
 
     - Values like "SSP(2024).1" for every member of the :data:`SSP_2024` enumeration.
     - The value "LED".
+    - :attr:`.transport.Config.label`
+    - :attr:`.transport.Config.label` as processed by every one of :data`.LABEL_SUBS`.
 
     For use with, for instance :func:`.broadcast_wildcard`.
     """
     from message_ix_models.project.ssp import SSP_2024
 
-    return [c.urn.rpartition(":")[2] for c in SSP_2024] + ["LED"]
+    from .data import LABEL_SUBS
+
+    cfg: Config = config["transport"]
+
+    return (
+        [c.urn.rpartition(":")[2] for c in SSP_2024]
+        + ["LED"]
+        + [cfg.label]
+        + [ls(cfg.label) for ls in LABEL_SUBS.values()]
+    )
 
 
 def share_weight(
@@ -1284,3 +1285,34 @@ def write_sdmx_structures(structure_message, path: "Path", *args) -> "Path":
     )
 
     return path
+
+
+def yv_ya_banded(
+    data: dict[str, "pd.DataFrame"], ya_min: int = 0, diff: int = -1
+) -> dict[str, "pd.DataFrame"]:
+    r"""Convert `data` into an upper-banded matrix on the (|yV|, |yA|) dimension.
+
+    Rows in `data` are retained which satisfy:
+
+    1. :math:`y^A - y^V \leq \text{diff}`.
+    2. If `ya_min` is given, :math:`y^A \geq \text{ya_min}`.
+
+    For each unique combination of other dimensions, the result is an upper-banded
+    matrix, in which the only non-empty entries are on the diagonal or above.
+
+    Parameters
+    ----------
+    data :
+        :mod:`ixmp` parameter data with columns "year_vtg", "year_act", and any others.
+    ya_min :
+        Minimum value for |yA|, for instance the first model period.
+    diff :
+        Maximum difference between |yA| and |yV|, for instance the technical lifetime of
+        a technology (or maximum technical lifetime of a group of technologies).
+
+    .. todo:: Convert to a single-dispatch method.
+    """
+    return {
+        k: df[((df.year_act - df.year_vtg) <= diff) & (df.year_act >= ya_min)]
+        for k, df in data.items()
+    }
