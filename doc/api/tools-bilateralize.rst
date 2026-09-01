@@ -114,13 +114,28 @@ can be built (even if that scenario doesn't make a ton of sense).
    - ``relation_activity_flow`` (this links the flow technology to the trade technology)
    - ``technical_lifetime``
 
-The user can call ``message_ix_models.tools.bilateralize.bilateralize.build_parameter_sheets(log)`` to 
-pull parameters from ``message-ix-models/data/bilateralize/[your_trade_commodity]/bare_files/`` 
-into a dictionary of parameter dataframes that will be used to build a scenario. 
-Note that this function pulls from ``bare_files`` and not ``edit_files``, so the user should ensure that 
+The user can call :func:`~.tools.bilateralize.bare_to_scenario.build_parameter_sheets` to
+pull parameters from ``message-ix-models/data/bilateralize/[your_trade_commodity]/bare_files/``
+into a dictionary of parameter dataframes that will be used to build a scenario.
+Note that this function pulls from ``bare_files`` and not ``edit_files``, so the user should ensure that
 the right files are transferred in the previous step.
 
-Additional functions here include:
+Functions in this step (:mod:`~.tools.bilateralize.bare_to_scenario`):
+
+.. currentmodule:: message_ix_models.tools.bilateralize.bare_to_scenario
+
+.. autosummary::
+
+   broadcast_years
+   broadcast_yv_ya
+   full_broadcast
+   build_parameter_sheets
+   calibrate_historical_shipping
+   bare_to_scenario
+
+.. currentmodule:: message_ix_models.tools.bilateralize
+
+Additional functions called in this step include:
 
 ``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_flow(message_regions)``: 
 Builds new capacity dataframes for historical activity of flow technologies (e.g., pipelines)
