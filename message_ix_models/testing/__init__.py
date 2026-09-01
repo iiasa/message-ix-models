@@ -23,6 +23,7 @@ import pytest
 import sdmx.exceptions
 from ixmp import config as ixmp_config
 from packaging.version import Version
+from requests import ReadTimeout
 
 from message_ix_models import util
 from message_ix_models.model import snapshot
@@ -131,6 +132,9 @@ MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
         condition=GHA,
         reason="https://github.com/khaeru/sdmx/issues/230",
         raises=sdmx.exceptions.XMLParseError,
+    ),
+    "zenodo_timeout": pytest.mark.xfail(
+        condition=GHA, reason="Connection to Zenodo times out", raises=ReadTimeout
     ),
 }
 MARK.update(transport.MARK)

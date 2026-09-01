@@ -37,7 +37,7 @@ jobs:
           || contains(github.event.pull_request.labels.*.name, env.label)
         )
       run: |
-        echo "Pytest workflow will not run for branch in fork without label \`${{ env.label }}\`." >>$GITHUB_STEP_SUMMARY
+        echo "Workflow will not run for branch in fork without label \`${{ env.label }}\`." >>$GITHUB_STEP_SUMMARY
         exit 1
 
     - name: Identify ref to check out
@@ -45,6 +45,7 @@ jobs:
       run: echo "ref=${{ github.event_name != 'pull_request_target' && github.ref || github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
 
     outputs:
+      # This is available in the following jobs as needs.check.outputs.ref
       ref: ${{ steps.ref.outputs.ref }}
 
   warm-lfs-cache:
@@ -54,17 +55,37 @@ jobs:
     strategy:
       matrix:
         os: [ macos-15-intel, macos-latest, ubuntu-latest, windows-latest ]
+
     runs-on: ${{ matrix.os }}
+
     steps:
-    - uses: francisbilham11/action-cached-lfs-checkout@v4
+    - uses: actions/checkout@v7
       with:
         ref: ${{ needs.check.outputs.ref }}
+        # This step only runs if the 'check' job above succeeds
+        allow-unsafe-pr-checkout: true
+
+    - name: Create Git LFS file list
+      run: git lfs ls-files -l | cut -d' ' -f1 | sort >.git/lfs-hashes.txt
+
+    - name: Cache Git LFS objects
+      uses: actions/cache@v6
+      with:
+        path: .git/lfs
+        key: ${{ runner.os }}-lfsdata-v1-${{ hashFiles('.git/lfs-hashes.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-lfsdata-v1-
+          ${{ runner.os }}-lfsdata
+
+    - name: Fetch any needed Git LFS objects and prune extraneous ones
+      run: git lfs fetch --prune
+      # The objects are not checked out or used in this job
 
     - name: Cache static data
       uses: actions/cache@v6
       with:
         path: message-static-data
-        key: static-data-${{ matrix.os }}
+        key: static-data-${{ runner.os }}
 
     - uses: webfactory/ssh-agent@v0.10.0
       with:
@@ -82,6 +103,7 @@ jobs:
         sparse-checkout: |
           iea/eei
           ssp
+        allow-unsafe-pr-checkout: true
 
   pytest:
     needs: [ check, warm-lfs-cache ]
@@ -123,24 +145,35 @@ jobs:
     name: ${{ matrix.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.version.upstream }}
 
     steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: ${{ needs.check.outputs.ref }}
+        allow-unsafe-pr-checkout: true
+
+    - name: Restore Git LFS objects from cache
+      uses: actions/cache/restore@v6
+      with:
+        key: ${{ runner.os }}-lfsdata-v1-FOO
+        restore-keys: |
+          ${{ runner.os }}-lfsdata-v1-
+        path: .git/lfs
+
+    - name: Check out Git LFS files
+      run: git lfs checkout
+
+    - name: Restore message-static-data from cache
+      uses: actions/cache/restore@v6
+      with:
+        key: static-data-${{ runner.os }}
+        path: message-static-data
+
     - name: Cache test data
       uses: actions/cache@v6
       with:
         path: |
           local-data
           .pytest_cache/d
-        key: local-data-${{ matrix.os }}-upstream-${{ matrix.version.upstream }}
-
-    - name: Check out message-ix-models
-      uses: francisbilham11/action-cached-lfs-checkout@v4
-      with:
-        ref: ${{ needs.check.outputs.ref }}
-
-    - name: Restore message-static-data from cache
-      uses: actions/cache/restore@v6
-      with:
-        path: message-static-data
-        key: static-data-${{ matrix.os }}
+        key: local-data-${{ runner.os }}-upstream-${{ matrix.version.upstream }}
 
     - name: Set up uv, Python
       uses: astral-sh/setup-uv@v7
@@ -224,7 +257,7 @@ jobs:
         mix-models config show
         # Symlink message-static-data into local data path
         mkdir -p ${{ github.workspace }}/local-data
-        cp -rsv $(realpath message-static-data)/* local-data/
+        cp -frsv $(realpath message-static-data)/* local-data/ || true
 
     - name: Run test suite using pytest
       run: |
@@ -246,7 +279,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-      with: { ref: "${{ needs.check.outputs.ref }}" }
+      with:
+        ref: ${{ needs.check.outputs.ref }}
+        allow-unsafe-pr-checkout: true
     - uses: astral-sh/setup-uv@v7
       with: { python-version: "${{ env.python-version }}" }
     - name: Clear and re-create the pre-commit environments
