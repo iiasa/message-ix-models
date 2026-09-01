@@ -1,13 +1,11 @@
 import os.path
-from typing import Any
 
 import numpy as np
 import pandas as pd
 import pytest
-from message_ix import Scenario
+from message_ix import Scenario, make_df
 
-from message_ix_models import ScenarioInfo
-from message_ix_models.model.structure import get_codes
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.water.config import Config
 from message_ix_models.model.water.report import (
     ScenarioMetadata,
@@ -15,48 +13,95 @@ from message_ix_models.model.water.report import (
     get_population_values,
     get_rates_data,
     process_rates,
+    report,
     report_full,
 )
+from message_ix_models.testing import SOLVE_OPTIONS, bare_res
 from message_ix_models.util import package_data_path
 
 
-# NB: this tests all functions in model/water/reporting
-@pytest.mark.xfail(reason="Temporary, for #106")
-def test_report_full(test_context: Any, request: pytest.FixtureRequest) -> None:
-    # FIXME You probably want this to be part of a common setup rather than writing
-    # something like this for every test
+@pytest.fixture
+def solved_water_scenario(
+    request: pytest.FixtureRequest, test_context: Context
+) -> Scenario:
+    """A fixture with a solved scenario.
+
+    .. todo:: Expand this to a mock or complete solved water scenario, such that
+       :func:`test_report` runs through completely.
+    """
+
+    test_context.regions = "R12"
+
+    # Prepare water configuration
     cfg = Config.from_context(test_context)
     cfg.time = ["year"]
     cfg.type_reg = "global"
-    test_context.regions = "R12"
-    codes = get_codes(f"node/{test_context.regions}")
-    world_code = [n for n in codes if str(n) == "World"][0]
-    nodes = [str(n) for n in world_code.child]
-    # test_context.map_ISO_c = {test_context.regions: nodes[0]}
 
-    mp = test_context.get_platform()
-    scenario_info = {
-        "mp": mp,
-        "model": f"{request.node.name}/test water model",
-        "scenario": f"{request.node.name}/test water scenario",
-        "version": "new",
-    }
-    s = Scenario(**scenario_info)
-    s.add_horizon(year=[2020, 2030, 2040])
-    s.add_set("technology", ["tech1", "tech2"])
-    s.add_set("year", [2020, 2030, 2040])
-    s.add_set("node", nodes)
+    # Generate a bare_res
+    s = bare_res(request, test_context)
 
-    s.commit(comment="basic water report_full test model")
-    s.set_as_default()
-    # Remove quiet=True to debug using the output
-    s.solve(quiet=True)
+    common = dict(
+        commodity="electr",
+        emission="CO2",
+        level="final",
+        mode="all",
+        node_dest="R12_AFR",
+        node_loc="R12_AFR",
+        technology="coal_ppl",
+        time="year",
+        time_dest="year",
+        year_act=2020,
+        year_vtg=2020,
+        value=1.0,
+        unit="kg",
+    )
 
-    test_context.set_scenario(s)
+    with s.transact("Add minimal data for testing .water.report"):
+        ef = "emission_factor"
+        s.add_par(ef, make_df(ef, **common))
 
-    # FIXME same as above
+        # Force at least one technology to be active
+        bal = "bound_activity_lo"
+        s.add_par(bal, make_df(bal, **common))
+        tl = "technical_lifetime"
+        s.add_par(tl, make_df(tl, **common))
+
+        # Force values for one tech so that "CAP_NEW|new capacity|extract_gw_fossil" is
+        # in the output
+        t = "extract_gw_fossil"
+        s.add_set("technology", t)
+        bncu = "bound_new_capacity_lo"
+        s.add_par(bncu, make_df(bncu, **(common | dict(technology=t))))
+
+        o = "output"
+        s.add_par(o, make_df(o, **common))
+
+    s.solve(**SOLVE_OPTIONS)
+
     test_context["water build info"] = ScenarioInfo(s)
 
+    return s
+
+
+@pytest.mark.xfail(
+    # Currently fails in report() around `Add water prices`; different exceptions by
+    # upstream version
+    raises=(KeyError, ValueError),
+    reason="Incomplete test or fixture",
+)
+def test_report(test_context: Context, solved_water_scenario: Scenario) -> None:
+    report(solved_water_scenario, reg=test_context.model.regions, ssp="SSP2")
+
+
+@pytest.mark.xfail(
+    # Currently fails in/around run_old_reporting(); different exceptions by upstream
+    # version
+    raises=(SystemExit, TypeError),
+    reason="Incomplete test or fixture",
+)
+def test_report_full(test_context: Context, solved_water_scenario: Scenario) -> None:
+    """Test all functions in :mod:`.model.water.report`."""
+    s = solved_water_scenario
     # Run the function to be tested
     report_full(sc=s, reg=test_context.regions, ssp="SSP2")
 
