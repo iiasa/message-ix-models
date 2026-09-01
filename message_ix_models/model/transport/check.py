@@ -109,11 +109,13 @@ class Passenger(Check):
             assert_units(df_input[mask1], registry("GWa"))
         assert_units(df_input[~(mask0 | mask1)], registry("1.0 GWa / (Gv km)"))
 
-        # Output data exist for all non-LDV modes
+        # Output data exist for:
+        # - "transport pax …" (PDT) for all non-LDV modes.
+        # - "transport vehicle …" (VDT) for all modes *except* 2W.
         df_output = obj["output"]
         modes = list(filter(lambda m: m != "LDV", Config().demand_modes))
         obs = set(df_output["commodity"].unique())
-        assert len(modes) * 2 == len(obs)
+        assert len(modes) * 2 - 1 == len(obs)
 
         # Output data have expected units
         mask = df_output["technology"].str.endswith(" usage")
@@ -155,25 +157,11 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     #
     # From .freight
     # The following replicates a deleted .transport.test_data.test_get_freight_data()
-    freight.TARGET: (
-        ContainsDataForParameters(
-            {
-                "demand",
-                "capacity_factor",
-                "input",
-                "output",
-                "technical_lifetime",
-            }
-        ),
-        # HasCoords({"technology": ["f rail electr"]}),
+    freight.TARGET: (ContainsDataForParameters({"demand", "input", "output"}),),
+    # input values are generated for usage technologies
+    "usage input::F+ixmp": (
+        HasCoords({"technology": ["transport F RAIL usage", "transport F ROAD usage"]}),
     ),
-    "output::F+ixmp": (
-        HasCoords(
-            {"commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"]}
-        ),
-    ),
-    # .freight.other()
-    "other::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     #
     # The following are intermediate checks formerly in .test_demand.test_exo
     "mode share:n-t-y:base": (HasUnits(""),),
@@ -240,7 +228,6 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
             {
                 "bound_activity_lo",  # From .passenger.other(). For R11 this is empty.
                 "bound_activity_up",  # act-non_ldv.csv via .passenger.bound_activity()
-                "capacity_factor",
                 # "emission_factor",
                 "fix_cost",
                 "input",
@@ -263,15 +250,37 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
             {
                 "bound_new_capacity_lo",
                 "bound_new_capacity_up",
-                "historical_new_capacity",
                 "capacity_factor",
+                "historical_new_capacity",
+                "input",
+                "inv_cost",
+                "output",
                 "technical_lifetime",
             }
         ),
     ),
+    # Contains data for individual BUS technologies
     "capacity_factor::P ex LDV+ixmp": (HasCoords({"technology": ["ICE_H_bus"]}),),
+    # Contains data for individual F RAIL technologies
     "capacity_factor::F+ixmp": (HasCoords({"technology": ["f rail electr"]}),),
     "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
+    "input::vehicle+ixmp": (
+        # Includes data for historical vintages operating within the model time horizon
+        HasCoords({"year_vtg": [2010]}),
+        # No data are generated for R12_GLB
+        HasCoords({"node_loc": ["R12_GLB"]}, inverse=True),
+    ),
+    "inv_cost::vehicle+ixmp": (
+        HasCoords({"technology": ["ELE_moto", "f road electr", "f rail electr"]}),
+    ),
+    "output::vehicle+ixmp": (
+        HasCoords(
+            {
+                "commodity": ["transport F RAIL vehicle", "transport F ROAD vehicle"],
+                "year_vtg": [2010],
+            }
+        ),
+    ),
     "technical_lifetime::vehicle+ixmp": (
         HasCoords({"technology": ["ICE_H_bus", "f rail electr"]}),
     ),
@@ -301,7 +310,15 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
 
 
 def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
-    """Insert :data:`CHECKS` into `c`."""
+    """Insert :data:`CHECKS` into `c`.
+
+    Parameters
+    ----------
+    verbosity :
+        Passed to :func:`.verbose_check`.
+    path :
+        Passed to :func:`.verbose_check`.
+    """
     context: "Context" = c.graph["context"]  # noqa: F841
     info: "ScenarioInfo" = c.get("info")
 

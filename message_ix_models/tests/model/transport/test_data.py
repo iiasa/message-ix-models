@@ -1,17 +1,42 @@
+import logging
+
 import numpy as np
 import pytest
+from pytest import mark
+from sdmx.model.common import Code
 
+from message_ix_models import Context
 from message_ix_models.model.transport import CL_SCENARIO, Config, build, testing
 from message_ix_models.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_ix_models.model.transport.data import (
+    LABEL_SUBS,
     LoadFactorLDV,
     MultiFile,
     collect_structures,
     read_structures,
 )
 from message_ix_models.model.transport.roadmap import get_roadmap_data
-from message_ix_models.model.transport.testing import MARK, make_mark
+from message_ix_models.project.circeular.structure import (
+    CL_SCENARIO as CL_SCENARIO_CIRCEULAR,
+)
 from message_ix_models.project.navigate import T35_POLICY
+
+
+@pytest.fixture(scope="module")
+def codes() -> list[tuple[Code, Code]]:
+    """All possible tuples of (:attr:`.Config.code`, :attr:`.project_scenario_code`).
+
+    These include:
+
+    1. Each of :class:`.transport.config.CL_SCENARIO` with no project-specific code.
+    2. "M SSP2" with each code from :class:`.circeular.structure.CL_SCENARIO`.
+    """
+    cl = CL_SCENARIO.get()
+    result = [(code, None) for code in cl] + [
+        (cl["M SSP2"], code) for code in CL_SCENARIO_CIRCEULAR.get()
+    ]
+    assert 392 == len(result)
+    return result
 
 
 class TestMultiFile:
@@ -21,16 +46,23 @@ class TestMultiFile:
 
 
 class TestLoadFactorLDV:
-    @pytest.mark.parametrize("code", CL_SCENARIO.get())
-    def test_filename(self, code) -> None:
+    def test_filename(
+        self, caplog: pytest.LogCaptureFixture, codes: list[tuple[Code, Code]]
+    ) -> None:
         """:attr:`LoadFactorLDV.filename` works for all defined scenario codes."""
-        obj = LoadFactorLDV(config=Config(_code=code), nodes="R12")
-        result = obj.filename
+        cfg: Config = Config()
 
-        assert result.endswith(".csv")
+        caplog.set_level(logging.INFO + 1, "message_ix_models.model.transport.data")
+        for cfg.code, cfg.project_scenario_code in codes:
+            try:
+                obj = LoadFactorLDV(config=cfg, nodes="R12")
+            except Exception:  # pragma: no cover
+                print(cfg.code, cfg.project_scenario_code)
+                raise
+            assert obj.filename.endswith(".csv")
 
 
-@MARK["sdmx#230"]
+@mark.sdmx_230
 def test_collect_structures():
     sm1 = collect_structures()
 
@@ -42,14 +74,14 @@ def test_collect_structures():
     assert 30 <= len(sm1.dataflow) == len(sm2.dataflow)
 
 
-@make_mark[5]("RoadmapResults_2017.xlsx")
-@pytest.mark.parametrize(
+@mark.non_public_data("RoadmapResults_2017.xlsx")
+@mark.parametrize(
     "region, length",
     [
         (("Africa", "R11_AFR"), 224),
     ],
 )
-def test_get_afr_data(test_context, region, length):
+def test_get_afr_data(test_context: Context, region: str, length: int) -> None:
     ctx = test_context
 
     df = get_roadmap_data(ctx, region)
@@ -79,7 +111,7 @@ def test_get_afr_data(test_context, region, length):
     ]
 
 
-@pytest.mark.skip("Pending https://github.com/transportenergy/database/issues/75")
+@mark.skip("Pending https://github.com/transportenergy/database/issues/75")
 def test_get_chn_ind_data():
     df = get_chn_ind_data()
 
@@ -149,19 +181,78 @@ def test_get_chn_ind_pop():
     ]
 
 
-@build.get_computer.minimum_version
-@MARK[10]
-@pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
+    "subs, exp_all, exp",
+    (
+        (
+            "A",
+            # Existing files in R12/load-factor-ldv/*.csv
+            set(
+                """DIGSY-BEST-C DIGSY-BEST-S DIGSY-WORST-S DIGSY-WORST-C EDITS-CA
+                EDITS-HA LED SSP_2024_1 SSP_2024_2 SSP_2024_3 SSP_2024_4
+                SSP_2024_5""".split()
+            ),
+            {"CircEUlar-C": "SSP_2024_2", "CircEUlar-N": "DIGSY-BEST-C"},
+        ),
+        (
+            "B",
+            # Appearing in lifetime.csv
+            {"*", "CircEUlar-A", "CircEUlar-N", "CircEUlar-S"},
+            {"CircEUlar-C": "*", "CircEUlar-E": "CircEUlar-A", "SSP_2024.1": "*"},
+        ),
+        (
+            "C",
+            # Appearing in activity-vehicle.csv
+            {"*", "CircEUlar-A", "CircEUlar-N"},
+            {"CircEUlar-S": "*", "CircEUlar-E": "CircEUlar-A", "SSP_2024.2": "*"},
+        ),
+        (
+            "D",
+            # Appearing in input_cap_new.csv
+            {"*", "CircEUlar-C", "CircEUlar-N"},
+            {
+                "SSP_2024.2": "*",
+                "CircEUlar-R": "*",
+                "CircEUlar-C": "CircEUlar-C",
+                "CircEUlar-N": "CircEUlar-N",
+                "CircEUlar-S": "*",
+                "CircEUlar-A": "CircEUlar-N",
+                "CircEUlar-E": "CircEUlar-N",
+            },
+        ),
+    ),
+)
+def test_label_subs(
+    codes: tuple[Code, Code],
+    subs: str,
+    exp_all: set[str],  # Resulting values must appear in this set
+    exp: dict[str, str],  # Specific mappings from Config.label to result
+) -> None:
+    """:any:`LABEL_SUBS` set `subs` maps to one of the expected values."""
+    cfg = Config()
+
+    for c in codes:
+        cfg.code, cfg.project_scenario_code = c
+        result = LABEL_SUBS[subs](cfg.label)
+        # Result is mapped to one of the expected set, and any specific result matches
+        assert result in exp_all and exp.pop(cfg.label, result) == result, c
+
+    assert not exp  # All expected values were seen
+
+
+@build.get_computer.minimum_version
+@mark.transport_build_data
+@mark.parametrize("years", ["A", "B"])
+@mark.parametrize(
     "regions",
     [
-        pytest.param("ISR", marks=MARK[3]),
+        pytest.param("ISR", marks=mark.ISR_no_data),
         "R11",
         "R12",
         "R14",
     ],
 )
-@pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
+@mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context

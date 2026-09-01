@@ -142,7 +142,17 @@ def get_technology_groups(
 
 
 def make_spec(regions: str) -> Spec:
-    """Return the structural :class:`Spec` for MESSAGEix-Transport."""
+    """Return the structural :class:`Spec` for MESSAGEix-Transport.
+
+    Configuration is loaded from :file:`…/transport/set.yaml` and
+    :file:`…/transport/technology.yaml` using :func:`.region_path_fallback` and
+    `regions`.
+
+    Among other processing:
+
+    - The annotation with :py:`id="output"` is copied from the transport mode/parent
+      codes "2W", "F RAIL", and "F ROAD" to all technologies belonging to each mode.
+    """
     sets: dict[str, Any] = dict()
 
     # Overrides specific to regional versions
@@ -193,7 +203,7 @@ def make_spec(regions: str) -> Spec:
         t.annotations.append(Annotation(id="output", text=repr(output)))
 
     # Associate other techs with their output commodities
-    for mode in "F RAIL", "F ROAD":
+    for mode in "2W", "F RAIL", "F ROAD":
         parent = techs[techs.index(mode)]
         for t in parent.child:
             t.annotations.append(deepcopy(parent.get_annotation(id="output")))

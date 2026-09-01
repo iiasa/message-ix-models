@@ -7,13 +7,11 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 from genno import Computer, Key, Quantity, quote
-from message_ix import make_df
 from sdmx.model.v21 import Code
 
 from message_ix_models.util import (
     broadcast,
     make_io,
-    make_matched_dfs,
     merge_data,
     package_data_path,
     same_node,
@@ -25,7 +23,6 @@ from . import key as K
 
 if TYPE_CHECKING:
     from message_ix_models import Context
-    from message_ix_models.types import ParameterData
 
     from .config import Config
 
@@ -79,9 +76,6 @@ def prepare_computer(c: Computer):
     else:
         raise ValueError(f"Unknown source for non-LDV data: {source!r}")
 
-    # Dummy/placeholder data for 2-wheelers (not present in IKARUS)
-    collect("2W", get_2w_dummies, "context")
-
     # TODO add these steps within the above, using a utility function
     # # Compute CO₂ emissions factors
     # for k in map(Key, list(keys[:-1])):
@@ -121,50 +115,6 @@ def prepare_computer(c: Computer):
 
     # Add other constraints on activity of non-LDV technologies
     bound_activity(c)
-
-
-def get_2w_dummies(context) -> "ParameterData":
-    """Generate dummy, equal-cost output for 2-wheeler technologies.
-
-    **NB** this is analogous to :func:`.ldv.get_dummy`.
-    """
-    # Information about the target structure
-    config: "Config" = context.transport
-    info = config.base_model_info
-
-    # List of years to include
-    years = list(filter(lambda y: y >= 2010, info.set["year"]))
-
-    # List of 2-wheeler technologies
-    all_techs = config.spec.add.set["technology"]
-    techs = list(map(str, all_techs[all_techs.index("2W")].child))
-
-    # 'output' parameter values: all 1.0 (ACT units == output units)
-    # - Broadcast across nodes.
-    # - Broadcast across LDV technologies.
-    # - Add commodity ID based on technology ID.
-    output = (
-        make_df(
-            "output",
-            value=1.0,
-            commodity="transport vehicle 2w",
-            year_act=years,
-            year_vtg=years,
-            unit="Gv * km",
-            level="useful",
-            mode="all",
-            time="year",
-            time_dest="year",
-        )
-        .pipe(broadcast, node_loc=info.N[1:], technology=techs)
-        .pipe(same_node)
-    )
-
-    # Add matching data for 'capacity_factor' and 'var_cost'
-    data = make_matched_dfs(output, capacity_factor=1.0, var_cost=1.0)
-    data["output"] = output
-
-    return data
 
 
 def bound_activity(c: "Computer") -> None:

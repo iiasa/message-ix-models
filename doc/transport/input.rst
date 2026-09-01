@@ -115,7 +115,8 @@ Quick links to each of the data flows:
 :data:`~.data.activity_freight`
 :class:`~.data.ActivityVehicle`
 :data:`~.data.age_ldv`
-:data:`~.data.cap_new_ldv`
+:data:`~.data.cap_new`
+:class:`~.data.CapShareT`
 :data:`~.data.class_ldv`
 :data:`~.data.constraint_dynamic`
 :data:`~.data.disutility`
@@ -136,8 +137,10 @@ Quick links to each of the data flows:
 :data:`~.data.input_cap_new`
 :data:`~.data.input_ref_ldv`
 :data:`~.data.input_share`
+:class:`~.data.InputVehicle`
+:class:`~.data.InvestmentCost`
 :class:`~.data.Lifetime`
-:data:`~.data.load_factor_f`
+:class:`~.data.LoadFactorF`
 :data:`~.data.load_factor_p`
 :class:`~.data.LoadFactorLDV`
 :data:`~.data.mer_to_ppp`
@@ -150,7 +153,6 @@ Quick links to each of the data flows:
 :data:`~.data.population_suburb_share`
 :data:`~.data.speed`
 :data:`~.data.stock_cap`
-:data:`~.data.t_share_ldv`
 
 .. autodata:: message_ix_models.model.transport.data.act_non_ldv
 .. autodata:: message_ix_models.model.transport.data.activity_freight
@@ -178,7 +180,13 @@ Quick links to each of the data flows:
    .. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1944227441>`__.
 
 .. autodata:: message_ix_models.model.transport.data.age_ldv
-.. autodata:: message_ix_models.model.transport.data.cap_new_ldv
+.. autodata:: message_ix_models.model.transport.data.cap_new
+.. autoclass:: message_ix_models.model.transport.data.CapShareT
+
+   Values for R12 and F ROAD were derived from (and replaced) values formerly in :py:`act_non_ldv`.
+   Those values specified the (absolute) *activity* of *some* technologies of this mode,
+   while the current form specifies the *share of initial period capacity* for *every* technology.
+
 .. autodata:: message_ix_models.model.transport.data.class_ldv
 .. autodata:: message_ix_models.model.transport.data.constraint_dynamic
 
@@ -233,8 +241,18 @@ Quick links to each of the data flows:
 .. autodata:: message_ix_models.model.transport.data.input_cap_new
 .. autodata:: message_ix_models.model.transport.data.input_ref_ldv
 .. autodata:: message_ix_models.model.transport.data.input_share
+.. autoclass:: message_ix_models.model.transport.data.InputVehicle
+
+   References:
+
+   - `message_data#608 <https://github.com/iiasa/message_data/issues/608>`_.
+   - https://www.bts.gov/content/energy-intensity-class-i-railroad-freight-service-1
+   - https://www.bts.gov/content/class-i-rail-freight-fuel-consumption-and-travel-0
+   - Aredah et al. (2024). `doi: 10.1016/j.apenergy.2023.122411
+     <https://doi.org/10.1016/j.apenergy.2023.122411>`_
+
 .. autoclass:: message_ix_models.model.transport.data.Lifetime
-.. autodata:: message_ix_models.model.transport.data.load_factor_f
+.. autoclass:: message_ix_models.model.transport.data.LoadFactorF
 .. autodata:: message_ix_models.model.transport.data.load_factor_p
 .. autoclass:: message_ix_models.model.transport.data.LoadFactorLDV
 
@@ -281,7 +299,6 @@ Quick links to each of the data flows:
    In MESSAGE(V)-Transport, values from Schäefer et al. (2010) were used.
 
 .. autodata:: message_ix_models.model.transport.data.stock_cap
-.. autodata:: message_ix_models.model.transport.data.t_share_ldv
 
 Other data sources
 ==================

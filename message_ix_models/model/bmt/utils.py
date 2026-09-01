@@ -9,6 +9,8 @@ from message_ix_models.model.material.data_power_sector import gen_data_power_se
 from message_ix_models.util import add_par_data
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from message_ix import Scenario
 
     from message_ix_models import ScenarioInfo
@@ -16,95 +18,56 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def _generate_vetting_csv(
-    original_demand: pd.DataFrame,
-    modified_demand: pd.DataFrame,
-    output_path: str,
+def generate_vetting_csv(
+    original_demand: pd.DataFrame, modified_demand: pd.DataFrame, output_path: "Path"
 ) -> None:
     """Generate a CSV file showing material demand subtraction details.
 
     Parameters
     ----------
     original_demand : pd.DataFrame
-        Original demand data before subtraction
+        Original demand data before subtraction.
     modified_demand : pd.DataFrame
-        Modified demand data after subtraction
+        Modified demand data after subtraction.
     output_path : str
-        Path where to save the vetting CSV file
+        Path for the generated file.
     """
     # Reset index to work with columns
     orig = original_demand.reset_index()
     mod = modified_demand.reset_index()
 
-    # Merge original and modified data
-    vetting_data = orig.merge(
-        mod,
-        on=["node", "year", "commodity"],
-        suffixes=("_original", "_modified"),
-        how="outer",
-    ).fillna(0)
+    # Dimensions for merging and sorting
+    dims = ["commodity", "node", "year"]
 
-    # Calculate subtraction amounts and percentages
-    vetting_data["subtracted_amount"] = (
-        vetting_data["value_original"] - vetting_data["value_modified"]
+    # 1. Merge original (_o) and modified (_m) data on (c, n, y).
+    # 2. Fill NaN with zeros.
+    # 3. Calculate:
+    #    - "gap" (absolute) between original and modified values.
+    #    - "gap_share" [%]; avoid division by zero and round to 2 places.
+    # 4. Select some columns; rename "value_o" → "original_demand" etc.
+    # 5. Sort by (c, n, y).
+    vetting_data = (
+        orig.merge(mod, on=dims, suffixes=("_o", "_m"), how="outer")
+        .fillna(0)
+        .assign(
+            gap=lambda df: df.value_o - df.value_m,
+            gap_share=lambda df: (df.gap / df.value_o.replace(0, 1) * 100).round(2),
+        )[dims + ["value_o", "value_m", "gap", "gap_share"]]
+        .rename(columns={"value_o": "original_demand", "value_m": "modified_demand"})
+        # commented: Filter out rows where no subtraction occurred
+        # .query("gap > 0")
+        .sort_values(dims)
     )
-
-    # Calculate percentage subtracted (avoid division by zero)
-    vetting_data["subtraction_percentage"] = (
-        vetting_data["subtracted_amount"]
-        / vetting_data["value_original"].replace(0, 1)
-        * 100
-    )
-
-    # Replace infinite values with 0 (when original was 0)
-    vetting_data["subtraction_percentage"] = vetting_data[
-        "subtraction_percentage"
-    ].replace([float("inf"), -float("inf")], 0)
-
-    # Round to reasonable precision
-    vetting_data["subtraction_percentage"] = vetting_data[
-        "subtraction_percentage"
-    ].round(2)
-
-    # Select and rename columns for clarity
-    output_columns = [
-        "node",
-        "year",
-        "commodity",
-        "value_original",
-        "value_modified",
-        "subtracted_amount",
-        "subtraction_percentage",
-    ]
-
-    vetting_data = vetting_data[output_columns].copy()
-    vetting_data.columns = [
-        "node",
-        "year",
-        "commodity",
-        "original_demand",
-        "modified_demand",
-        "subtracted_amount",
-        "subtraction_percentage",
-    ]
-
-    # # Filter out rows where no subtraction occurred
-    # vetting_data = vetting_data[vetting_data["subtracted_amount"] > 0]
-
-    # Sort by commodity, node, year for better readability
-    vetting_data = vetting_data.sort_values(["commodity", "node", "year"])
 
     # Save to CSV
     vetting_data.to_csv(output_path, index=False)
-
-    log.info(f"Vetting CSV saved to: {output_path}")
+    log.info(f"Vetting data saved to: {output_path}")
 
     # Log summary statistics
     if len(vetting_data) > 0:
-        avg_pct = vetting_data["subtraction_percentage"].mean()
-        max_pct = vetting_data["subtraction_percentage"].max()
-        log.info(f"Average subtraction percentage: {avg_pct:.2f}%")
-        log.info(f"Max subtraction percentage: {max_pct:.2f}%")
+        desc = vetting_data.describe()
+        log.info(f"Average gap share: {desc.loc['mean', 'gap_share']:.2f}%")
+        log.info(f"Max gap share: {desc.loc['max', 'gap_share']:.2f}%")
 
 
 # Maybe it is better to have one function for each method?
@@ -115,7 +78,7 @@ def subtract_material_demand(
     sturm_c: pd.DataFrame,
     method: str = "bm_subtraction",
     generate_vetting_csv: bool = True,
-    vetting_output_path: str = "material_demand_subtraction_vetting.csv",
+    vetting_output_path: str = "material_haircut_buildings.csv",
 ) -> pd.DataFrame:
     """Subtract inter-sector material demand from existing demands in scenario.
 
@@ -145,7 +108,7 @@ def subtract_material_demand(
         Whether to generate a CSV file showing subtraction details (default: True)
     vetting_output_path : str, optional
         Path for the vetting CSV file (default:
-        "material_demand_subtraction_vetting.csv")
+        "material_haircut_buildings.csv")
 
     Returns
     -------
@@ -213,7 +176,9 @@ def subtract_material_demand(
 
             # Generate vetting CSV if requested
             if generate_vetting_csv and original_demand is not None:
-                _generate_vetting_csv(original_demand, mat_demand, vetting_output_path)
+                # Fetch the fucntion, since its name overlaps with the argument name
+                func = globals()["generate_vetting_csv"]
+                func(original_demand, mat_demand, vetting_output_path)
 
     elif method == "im_subtraction":
         # TODO: to be implemented
@@ -258,21 +223,26 @@ def build_PM(context, scenario: "Scenario", **kwargs) -> "Scenario":
     **kwargs
         Additional keyword arguments (ignored, for workflow compatibility).
     """
-    # Check if power sector material data already exists
-    if scenario.has_par("input_cap_new"):
-        try:
-            existing_data = scenario.par("input_cap_new")
-            if (
-                not existing_data.empty
-                and "cement" in existing_data.get("commodity", pd.Series()).values
-            ):
-                log.info(
-                    "Power sector material intensity data already exists "
-                    "(found cement in input_cap_new). Skipping build_pm."
-                )
-                return scenario
-        except Exception as e:
-            log.warning(f"Could not check existing input_cap_new data: {e}")
+
+    # Check if the power sector material data already exists
+    marker_commodity = "cement"
+    marker_technology = "coal_adv"
+    if "input_cap_new" in scenario.par_list():
+        existing = scenario.par(
+            "input_cap_new",
+            filters={
+                "commodity": marker_commodity,
+                "technology": marker_technology,
+            },
+        )
+        if existing is not None and len(existing) > 0:
+            log.info(
+                "Power sector material data already exists for %s / %s; "
+                "skipping build_PM.",
+                marker_technology,
+                marker_commodity,
+            )
+            return scenario
 
     log.info("Adding material intensity for power capacities...")
     scenario.check_out()

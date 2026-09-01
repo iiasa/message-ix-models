@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from genno import Computer
 from message_ix import Scenario
+from pytest import mark
 
 from message_ix_models import Context
 from message_ix_models.model.transport.testing import MARK as MARK_TRANSPORT
@@ -22,7 +23,6 @@ from message_ix_models.project.ssp.transport import (
     v_to_emi_coords,
     v_to_fe_coords,
 )
-from message_ix_models.testing import MARK
 from message_ix_models.tools.iea import web
 from message_ix_models.util import package_data_path
 
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 METHOD_PARAM = (
     METHOD.A,
     METHOD.B,
-    pytest.param(METHOD.C, marks=MARK[0]),
+    pytest.param(METHOD.C, marks=mark.ci_db_access),
 )
 
 # Test data file paths
@@ -208,7 +208,7 @@ def insert_nans(
     )
 
 
-@MARK_TRANSPORT[10]
+@MARK_TRANSPORT["transport_build_data"]
 @get_computer.minimum_version
 def test_cli(
     tmp_path: Path, mix_models_cli, test_context: Context, input_xlsx_path: Path
@@ -271,8 +271,8 @@ def test_get_scenario_code(expected_id, model_name, scenario_name) -> None:
     assert expected_id == result.id
 
 
-@MARK["#375"]
-@MARK_TRANSPORT[10]
+@pytest.mark.gh_375
+@pytest.mark.transport_build_data
 @get_computer.minimum_version
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
@@ -310,7 +310,7 @@ def test_process_df(pytestconfig, test_context, input_csv_path, method) -> None:
 
 
 @get_computer.minimum_version
-@MARK_TRANSPORT[10]
+@pytest.mark.transport_build_data
 @pytest.mark.parametrize("method", METHOD_PARAM)
 def test_process_file(tmp_path, test_context, input_csv_path, method) -> None:
     """Code can be called from Python."""

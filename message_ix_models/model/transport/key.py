@@ -7,7 +7,8 @@ from genno import Key
 from message_ix_models.report.key import GDP, PRICE_COMMODITY
 from message_ix_models.util.genno import Keys
 
-from .data import ActivityVehicle, Lifetime, LoadFactorLDV, iter_files
+from . import data
+from .data import iter_files
 
 __all__ = [
     "agg",
@@ -53,6 +54,7 @@ mer_to_ppp = Key("MERtoPPP", "ny")
 agg = Keys(
     c="agg:c:T",
     t="agg:t:T",
+    y_annual="agg:y:T+annual",
 )
 
 #: Quantities for broadcasting (t) to (t, c, l). See :func:`.broadcast_t_c_l`.
@@ -85,13 +87,23 @@ c = Key("c::T")
 #: Shares of population with consumer group (`cg`) dimension.
 cg = Key("cg share:n-y-cg")
 
-#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, list[str]`.
-#: Keys are dimension IDs. Values are lists of coordinates along the respective
-#: dimension to index or select.
+#: Coordinates for indexing and selecting. Each refers to a :py:`dict[str, ...]` in
+#: which the keys are dimension IDs, and values are lists of (1 or more) coordinates
+#: along the respective dimension to index or select; or a single coord to select and
+#: also drop the respective dimension.
 coord = Keys(
     c="coords:c:T",
     t="coords:t:T",
+    scenario_label_A="coords:scenario:label+A",
+    scenario_label_B="coords:scenario:label+B",
+    scenario_label_C="coords:scenario:label+C",
+    scenario_label_D="coords:scenario:label+D",
+    scenario="coords:scenario:T",
+    y_0="coords:y:y0",
+    y_0_drop="coords:y:y0+drop",
+    y_to_y0="coords:y:to y0",
     yv_hist="coords:yv:T+historical",
+    yv_1plus="coords:yv:y1+",
 )
 
 cost = Key("cost", "nyct")
@@ -148,7 +160,7 @@ report = SimpleNamespace(
 
 sw = Key("share weight", "nty")
 
-# Keys for (partial or full) sets or indexers
+# Keys for (partial or full) sets
 
 #: List of nodes, excepting "World" or "*_GLB".
 n = "n::ex world"
@@ -159,17 +171,15 @@ t = Key("t::T")
 #: List of transport modes.
 t_modes = "t::transport modes"
 
-#: Model periods.
+#: List of model periods.
 y = "y::model"
 
 y_ = Keys(
-    annual_agg="y::annual agg",
     historical="y::historical",
-    to_y0="y::to y0",
 )
 
-#: Keys referring to loaded input data flows (exogenous data loaded from files).
-#: Attributes correspond to the members of :mod:`.transport.data`; see
+#: Keys referring to input data flows (exogenous data loaded from files and possibly
+#: transformed). Attributes correspond to the members of :mod:`.transport.data`; see
 #: :doc:`/transport/input` for a complete list.
 #:
 #: .. code-block:: python
@@ -178,9 +188,12 @@ y_ = Keys(
 #:    >>> exo.act_non_ldv
 #:    <activity:n-t-y:non-ldv+exo>
 exo = Keys(
-    activity_vehicle=ActivityVehicle.key,
-    lifetime=Lifetime.key,
-    load_factor_ldv=LoadFactorLDV.key,
+    activity_vehicle=data.ActivityVehicle.key,
+    cap_share_t=data.CapShareT.key,
+    inv_cost=data.InvestmentCost.key,
+    lifetime=data.Lifetime.key,
+    load_factor_f=data.LoadFactorF.key,
+    load_factor_ldv=data.LoadFactorLDV.key,
 )
 
 for name, df in iter_files():

@@ -2,6 +2,6 @@
 #
 # Units: year
 #
-scenario, technology, node_loc, year_vtg, value
-*,        *,          *,        1960,     15
-*,        *,          *,        2110,     15
+scenario, technology, node, year, value
+*,        *,          *,    1960, 15
+*,        *,          *,    2110, 15

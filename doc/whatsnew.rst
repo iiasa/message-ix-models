@@ -4,21 +4,118 @@ What's new
 Next release
 ============
 
+- Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
 - Add :class:`.model.water.Config` to collect water module settings (:pull:`509`).
-- Add :doc:`/api/model-bmt` (:pull:`433`).
-
-  - Add
-    :data:`.buildings.config.DEFAULT_DATA_PATHS`,
-    :class:`~.buildings.config.METHOD`,
-    :attr:`.buildings.Config.data_paths`, and
-    :attr:`~.buildings.Config.method`.
-  - Add :func:`.buildings.build.prepare_data_B`;
-    rename :py:`prepare_data()` to :func:`~.buildings.build.prepare_data_A`.
-
+- Add :doc:`/api/model-bmt` (:pull:`433`, :pull:`486`).
+- :doc:`/project/circeular`:
+  Distinguish :class:`~.circeular.structure.CL_SCENARIO`
+  (project-wide scenario code list) (:pull:`497`).
+  from :class:`~.circeular.structure.CL_SCENARIO_TRANSPORT`
+  (transport-specific scenario variants;
+  formerly :py:`CL_TRANSPORT_SCENARIO` and renamed for consistency).
+- :doc:`/project/digsy`:
+  Replace :py:`get_cl_scenario()` with :class:`.StructureFactory`
+  subclass :class:`~.digsy.structure.CL_SCENARIO_DIGSY` (:pull:`497`).
+- :doc:`/project/edits`:
+  Replace :py:`get_cl_scenario()` with :class:`.StructureFactory`
+  subclass :class:`~.edits.structure.CL_SCENARIO_EDITS_MCE` (:pull:`497`).
 - Adjust :mod:`.project.ssp.transport` (:pull:`485`):
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
+- Improve :func:`~.report.report` output when :attr:`.Config.verbose` is :py:`True`
+  (:pull:`497`).
+- Improve :doc:`/buildings/index` (:pull:`433`, :pull:`486`):
+
+  - Expand docstring of :func:`.buildings.build_and_solve`.
+  - New submodules :mod:`.buildings.workflow` and
+    :mod:`.buildings.testing`.
+  - New functions
+    :func:`.build.get_prices_B`,
+    :func:`.build.prepare_data_B`
+    (rename :py:`prepare_data()` to :func:`~.build.prepare_data_A`.)
+  - New configuration settings and data
+    :data:`.buildings.config.DEFAULT_DATA_PATHS`,
+    :class:`~.buildings.config.METHOD`,
+    :attr:`.buildings.Config.code`,
+    :attr:`.buildings.Config.data_paths`,
+    :attr:`~.buildings.Config.method`,
+    :attr:`~.buildings.Config.sturm_code_dir`,
+    :attr:`~.buildings.Config.sturm_input_dir`.
+  - Add :class:`sturm.METHOD <.buildings.sturm.METHOD>` enumeration.
+  - New :func:`_sturm_rscript_B` to call updated versions of MESSAGEix-Buildings.
+
+- Improve :doc:`/transport/index` (:pull:`497`, except where noted):
+
+  - Consolidate handling of vehicle stock, input, and output intensities in
+    :mod:`.transport.vehicle`, from :mod:`.transport.freight`
+    and :mod:`.transport.passenger`;
+    new :func:`.vehicle.input_output`.
+  - Update data flows:
+
+    - Adjust ‘scenario’ dimension labels in many files to be consistent
+      with one or more of the sets of substitutions in :data:`.LABEL_SUBS`.
+    - :class:`.CapShareT` to replace :py:`t_share_ldv`
+      and expand scope to all transport modes (instead of only LDVs).
+      Transfer some values from :data:`.act_non_ldv`.
+    - :data:`.cap_new`: rename from :py:`cap_new_ldv`
+      and expand scope to all transport modes (instead of only LDVs).
+    - :class:`.InputVehicle`, :class:`.InvestmentCost`:
+      new :class:`.ExoDataSource` classes.
+    - :class:`.Lifetime`: add :doc:`/project/circeular` values for LDV technologies.
+      Rename dimensions :math:`(n^L, y^V)` to :math:`(n, y)`.
+    - :class:`.LoadFactorF`, replacing :py:`load_factor_f`,
+      and applying broadcasting and other transformations to the input data.
+    - Update values for
+      :class:`.ActivityVehicle` (to expand scope to all transport modes)
+      and :data:`.constraint_dynamic`.
+
+  - Improve reporting:
+
+    - Use IAMC preferred “Freight|Rail”
+      and “Light-Duty Vehicle” fragments in ‘variable’ dimension labels.
+    - Add common :data:`.IAMC_VAR_REPLACE` for replacements.
+    - Remove zero values prior to the first model period (:pull:`486`).
+
+  - Simplify :class:`~.transport.config.Config`:
+
+    - Add :attr:`.Config.project_scenario_code`
+      and corresponding :attr:`.ScenarioCodeAnnotations.project_scenario_URN`;
+      handle references to project-specific code lists such as
+      :class:`.circeular.structure.CL_SCENARIO_TRANSPORT`.
+    - Remove :py:`Config.load_factor`, superseded by :class:`.LoadFactorF`.
+    - Remove unused :py:`Config.ldv_stock_method` and :py:`Config.futures_scenario`.
+
+  - Update :class:`~.transport.config.CL_SCENARIO`:
+
+    - Add exogenous price variants for LED scenarios.
+    - Remove repeated text " with exogenous price" in descriptions.
+
+  - Expand contents of :mod:`.transport.key` and use consistently across submodules.
+  - New :mod:`genno` operator :func:`~.operator.yv_ya_banded`.
+  - Handle |yV| dimension in :func:`.sales_fraction_annual`.
+
+- New reporting operators
+  :func:`~.operator.full` (:pull:`497`) and
+  :func:`~.operator.remove_zeros` (:pull:`486`).
+- Add :obj:`.adapt_R12_R11`
+  to adapt data from the :ref:`R12` to the :ref:`R11` node list (:pull:`486`).
+  (Note this is the reverse of :obj:`.adapt_R11_R12`.)
+- New utility class :class:`.Substitutions` for manipulating labels
+  and scenario names
+  (:pull:`497`).
+- Add :meth:`.StructureFactory.create` abstract
+  and :meth:`~.StructureFactory.maintainable` utility methods
+  (:pull:`497`).
+- :class:`Adapter` now handles coversion of :class:`pandas.DataFrame`
+  containing :mod:`message_ix` variable data,
+  instead of only parameter data (:pull:`486`).
+- Simplify definition and usage of :data:`testing.MARK <message_ix_models.testing.MARK>`
+  using Pytest hooks
+  (:pull:`497`),
+  add :class:`.MarkFactory` utility class,
+  and adjust existing tests.
+- New utility :func:`.import_from_fqn` (:pull:`486`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
 
 v2026.4.17

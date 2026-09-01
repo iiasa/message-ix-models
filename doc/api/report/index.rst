@@ -138,8 +138,11 @@ API reference
 
 .. currentmodule:: message_ix_models.report
 
+
 .. automodule:: message_ix_models.report
    :members:
+
+   :mod:`.report` requires the ``report`` :ref:`optional dependencies <install-dependencies>`.
 
    General-purpose code:
 
@@ -211,6 +214,7 @@ Operators
       node_glb
       nodes_world_agg
       remove_ts
+      remove_zeros
       select_allow_empty
       select_expand
       share_curtailment
