@@ -1,6 +1,8 @@
 import pytest
+from pytest import mark, param
 
 from message_ix_models.testing import KEY as STASH_KEY
+from message_ix_models.testing import NIE
 from message_ix_models.tools.newclimate import SECTOR, fetch, get, read
 from message_ix_models.tools.newclimate.structure import STRINGENCY
 
@@ -11,10 +13,8 @@ class TestSTRINGENCY:
         assert STRINGENCY["1"] == STRINGENCY._1
 
 
-@pytest.mark.parametrize(
-    "version",
-    ("2024", "2023", "2022", "2021", "2020", "2019"),
-)
+@mark.zenodo_timeout
+@mark.parametrize("version", ("2024", "2023", "2022", "2021", "2020", "2019"))
 def test_fetch(version: str) -> None:
     # File can be fetched
     p = fetch(version)
@@ -22,15 +22,15 @@ def test_fetch(version: str) -> None:
     assert p.exists()
 
 
-@pytest.mark.parametrize(
+@mark.parametrize(
     "version, N_total, N_transport",
     (
-        ("2024", 6507, 1298),
-        ("2023", 6273, 1246),
-        ("2022", 5883, 1203),
-        pytest.param("2021", 1, 1, marks=pytest.mark.xfail(raises=NotImplementedError)),
-        pytest.param("2020", 1, 1, marks=pytest.mark.xfail(raises=NotImplementedError)),
-        pytest.param("2019", 1, 1, marks=pytest.mark.xfail(raises=NotImplementedError)),
+        param("2024", 6507, 1298, marks=mark.zenodo_timeout),
+        param("2023", 6273, 1246, marks=mark.zenodo_timeout),
+        param("2022", 5883, 1203, marks=mark.zenodo_timeout),
+        param("2021", 1, 1, marks=[NIE, mark.zenodo_timeout]),
+        param("2020", 1, 1, marks=[NIE, mark.zenodo_timeout]),
+        param("2019", 1, 1, marks=[NIE, mark.zenodo_timeout]),
     ),
 )
 def test_get(version: str, N_total: int, N_transport: int) -> None:
@@ -48,6 +48,7 @@ def test_get(version: str, N_total: int, N_transport: int) -> None:
     assert N_transport == N
 
 
+@mark.zenodo_timeout
 def test_read0() -> None:
     result = get("2024")
 
@@ -64,7 +65,7 @@ def test_read0() -> None:
     assert "Italy" == p.country.name
 
 
-@pytest.mark.parametrize(
+@mark.parametrize(
     "filename, N_total",
     (
         ("Canada_edits_additions0.csv", 18),
