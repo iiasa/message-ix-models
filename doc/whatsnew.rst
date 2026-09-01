@@ -3,7 +3,10 @@ What's new
 
 Next release
 ============
-
+- Fix :func:`.tools.bilateralize.bare_to_scenario.calibrate_historical_shipping` to skip
+  shipping technologies that are not covered, and use the bare ``trade_technology``
+  name (dropping an erroneous ``"_exp"`` suffix) in
+  :func:`~.tools.bilateralize.bare_to_scenario.bare_to_scenario` (:pull:`533`).
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
