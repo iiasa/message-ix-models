@@ -9,6 +9,7 @@ on:
     types: [ labeled, opened, reopened, synchronize ]
   schedule:
   - cron: "0 5 * * *"  # = 06:00 CET = 07:00 CEST
+  workflow_dispatch: {}
 
 # Cancel previous runs that have not completed
 concurrency:
@@ -33,6 +34,7 @@ jobs:
     - if: >
         !(
           github.event_name == 'schedule'
+          || github.event_name == 'workflow_dispatch'
           || github.repository == github.event.pull_request.head.repo.full_name
           || contains(github.event.pull_request.labels.*.name, env.label)
         )
