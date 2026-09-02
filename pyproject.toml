@@ -89,7 +89,7 @@ tests = [
 ]
 transport = [
   "genno[graphviz]",
-  "message-ix-models[iea-web,report]",
+  "message-ix-models[gains,iea-web,report]",
   "requests-cache",
   "transport-energy",
   "xarray",
