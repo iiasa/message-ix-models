@@ -11,6 +11,22 @@ Tools for specific data sources
 .. automodule:: message_ix_models.tools.cepii
    :members:
 
+.. _tools-eurostat:
+
+Eurostat (:mod:`.tools.eurostat`)
+=================================
+
+Eurostat publishes complete energy balances for EU member states, candidate countries, and some others in the data flow ``NRG_BAL_C``, through an SDMX web service that requires no registration.
+Countries not covered are generally covered by :mod:`.tools.unsd`.
+
+:class:`.ESTAT_ENERGY_BALANCE` returns data with the dimensions and units of :class:`.IEA_EWEB`, with Eurostat's own ``siec`` codes for products and ``nrg_bal`` codes for flows.
+This is an :class:`.SDMXSource` subclass; see that class for use with :mod:`genno` or :mod:`pandas`.
+
+.. currentmodule:: message_ix_models.tools.eurostat
+
+.. automodule:: message_ix_models.tools.eurostat
+   :members:
+
 .. _tools-gfei:
 
 Global Fuel Economy Initiative (GFEI) (:mod:`.tools.gfei`)
