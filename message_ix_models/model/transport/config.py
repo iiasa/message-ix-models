@@ -173,7 +173,7 @@ class Config(ConfigHelper):
     modules: list[str] = field(
         default_factory=lambda: (
             "data groups demand constraint freight ikarus ldv other passenger vehicle "
-            "disutility policy"
+            "emission disutility policy"
         ).split()
     )
 
