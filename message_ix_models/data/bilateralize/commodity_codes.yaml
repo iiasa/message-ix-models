@@ -147,5 +147,5 @@ Primary Lithium:
   HS:
     - '253090' # Lithium ores and concentrates (e.g. spodumene, though some countries use 2620.90 for processed slag/ash forms)
     - '280519' # Lithium metal (unwrought), under "alkali or alkaline-earth metals, other"
-  MESSAGE Commodity: li
+  MESSAGE Commodity: li_primary
   IEA-WEB: 

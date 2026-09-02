@@ -329,7 +329,7 @@ def convert_trade(
             df["conversion (TJ/t)"],
         )
 
-    # Convert to energy units
+    # Convert to energy units or keep material units
     df["conversion (TJ/t)"] = df["conversion (TJ/t)"].astype(float)
 
     df = df.rename(
@@ -347,6 +347,7 @@ def convert_trade(
     df = df[~df["WEIGHT (t)"].str.contains("NA")]
     df["WEIGHT (t)"] = df["WEIGHT (t)"].astype(float)
     df["ENERGY (TJ)"] = df["WEIGHT (t)"] * df["conversion (TJ/t)"]
+    df["MATERIAL (Mt)"] = df["WEIGHT (t)"] / 1e6
 
     df = df[
         [
@@ -356,6 +357,7 @@ def convert_trade(
             "HS",
             "MESSAGE COMMODITY",
             "ENERGY (TJ)",
+            "MATERIAL (Mt)",
             "VALUE (1000USD)",
         ]
     ]
@@ -428,16 +430,13 @@ def import_iea_balances(
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
 
     ieadf1 = pd.read_csv(
-        os.path.join(data_paths["iea_web"], "WORLDBIG_by_COUNTRY_from_GIBRALTAR_to_RWANDA.txt"), sep=r"\s+", header=None
+        os.path.join(data_paths["iea_web"], "EARLYBIG1.txt"), sep=r"\s+", header=None
     )
     ieadf2 = pd.read_csv(
-        os.path.join(data_paths["iea_web"], "WORLDBIG_by_COUNTRY_from_SAUDIARABIA_to_MAURITANIA.txt"), sep=r"\s+", header=None
-    )
-    ieadf3 = pd.read_csv(
-        os.path.join(data_paths["iea_web"], "WORLDBIG_by_COUNTRY_from_WORLD_to_GHANA.txt"), sep=r"\s+", header=None
+        os.path.join(data_paths["iea_web"], "EARLYBIG2.txt"), sep=r"\s+", header=None
     )
 
-    ieadf = pd.concat([ieadf1, ieadf2, ieadf3])
+    ieadf = pd.concat([ieadf1, ieadf2])
     ieadf.columns = [
         "region",
         "fuel",
@@ -483,17 +482,17 @@ def check_iea_balances(
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
 
     iea = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
-    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_iso3.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
     iea = iea.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
     iea["IEA-WEB VALUE"] = np.where(
         iea["FLOW"] == "EXPORTS", iea["IEA-WEB VALUE"] * -1, iea["IEA-WEB VALUE"]
     )
-    iea = iea.groupby(["YEAR", "ISO3", "IEA-WEB COMMODITY", "IEA-WEB UNIT", "FLOW"])["IEA-WEB VALUE"].sum().reset_index()
 
-    # LNG and pipe gas are directly from IEA, so skip calibration for them
-    # but keep the rows to add back at the end
-    gas_direct = indf[indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
+    # LNG and pipe gas are directly from IEA
     indf = indf[~indf["MESSAGE COMMODITY"].isin(["gas_piped", "LNG_shipped"])].copy()
+    
+    # Material units should not be checked against IEA
+    indf = indf[~indf["MESSAGE COMMODITY"].str.contains('steel')].copy()
 
     dict_dir = package_data_path("bilateralize", "commodity_codes.yaml")
     with open(dict_dir, "r", encoding="utf8") as f:
@@ -508,16 +507,11 @@ def check_iea_balances(
             iea["COMMODITY"],
         )
         indf["COMMODITY"] = np.where(
-            indf["MESSAGE COMMODITY"].str.contains(commodity_codes[c]["MESSAGE Commodity"]),
+            indf["MESSAGE COMMODITY"] == commodity_codes[c]["MESSAGE Commodity"],
             c,
             indf["COMMODITY"],
         )
-    iea = iea.groupby(["YEAR", "ISO3", "COMMODITY", "IEA-WEB UNIT", "FLOW"])["IEA-WEB VALUE"].sum().reset_index()
-    iea = iea[iea['COMMODITY'] != ""]
-    indf = indf[indf['COMMODITY'] != ""]
-    basedf = indf.copy()
 
-    # Calibrate by exports/imports
     exports = (
         indf.groupby(["YEAR", "EXPORTER", "COMMODITY"])["ENERGY (TJ)"]
         .sum()
@@ -531,36 +525,31 @@ def check_iea_balances(
 
     exports = exports.merge(
         iea[iea["FLOW"] == "EXPORTS"][
-            ["ISO3", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
+            ["ISO", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
         ],
         left_on=["YEAR", "EXPORTER", "COMMODITY"],
-        right_on=["YEAR", "ISO3", "COMMODITY"],
+        right_on=["YEAR", "ISO", "COMMODITY"],
         how="left",
     )
     imports = imports.merge(
         iea[iea["FLOW"] == "IMPORTS"][
-            ["ISO3", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
+            ["ISO", "COMMODITY", "YEAR", "IEA-WEB UNIT", "IEA-WEB VALUE"]
         ],
         left_on=["YEAR", "IMPORTER", "COMMODITY"],
-        right_on=["YEAR", "ISO3", "COMMODITY"],
+        right_on=["YEAR", "ISO", "COMMODITY"],
         how="left",
     )
 
-    exports["MULTIPLIER"] = exports["IEA-WEB VALUE"]/ exports["ENERGY (TJ)"]
-    imports["MULTIPLIER"] = imports["IEA-WEB VALUE"]/ imports["ENERGY (TJ)"]
+    exports["DIFFERENCE"] = (
+        exports["ENERGY (TJ)"] - exports["IEA-WEB VALUE"]
+    ) / exports["IEA-WEB VALUE"]
+    imports["DIFFERENCE"] = (
+        imports["ENERGY (TJ)"] - imports["IEA-WEB VALUE"]
+    ) / imports["IEA-WEB VALUE"]
 
     exports.to_csv(os.path.join(data_paths["iea_diag"], "iea_calibration_exports.csv"))
     imports.to_csv(os.path.join(data_paths["iea_diag"], "iea_calibration_imports.csv"))
 
-    # Calibrate based on export multiplier
-    exports = exports[exports['MULTIPLIER'].isnull() == False][['YEAR', 'EXPORTER', 'COMMODITY', 'MULTIPLIER']]
-    basedf = basedf.merge(exports, left_on = ['YEAR', 'EXPORTER', 'COMMODITY'], right_on = ['YEAR', 'EXPORTER', 'COMMODITY'], how = 'left')
-    basedf['MULTIPLIER'] = np.where(basedf['MULTIPLIER'].isnull(), 1, basedf['MULTIPLIER'])
-    basedf['ENERGY (TJ)'] = basedf['ENERGY (TJ)'] * basedf['MULTIPLIER']
-
-    # Add back gas_piped/LNG_shipped rows, uncalibrated (already sourced from IEA)
-    basedf = pd.concat([basedf, gas_direct])
-    return basedf
 
 # Aggregate UN Comtrade data to MESSAGE regions
 def reformat_to_parameter(
@@ -601,22 +590,22 @@ def reformat_to_parameter(
         indf = (
             indf.groupby(
                 ["YEAR", "EXPORTER REGION", "IMPORTER REGION", "MESSAGE COMMODITY"]
-            )[["ENERGY (GWa)"]]
+            )[["PHYSICAL VALUE"]]
             .sum()
             .reset_index()
         )
-        metric_name = "ENERGY (GWa)"
+        metric_name = "PHYSICAL VALUE"
     elif parameter_name in ["var_cost", "inv_cost", "fix_cost"]:
         indf = (
             indf.groupby(["EXPORTER REGION", "IMPORTER REGION", "MESSAGE COMMODITY"])[
-                ["ENERGY (GWa)", "VALUE (MUSD)"]
+                ["PHYSICAL VALUE", "VALUE (MUSD)"]
             ]
             .sum()
             .reset_index()
         )
-        indf["PRICE (MUSD/GWa)"] = indf["VALUE (MUSD)"] / indf["ENERGY (GWa)"]
+        indf["PRICE (MUSD/unit)"] = indf["VALUE (MUSD)"] / indf["PHYSICAL VALUE"]
         indf["YEAR"] = "broadcast"
-        metric_name = "PRICE (MUSD/GWa)"
+        metric_name = "PRICE (MUSD/unit)"
 
     indf = indf[(indf["EXPORTER REGION"] != "") & (indf["IMPORTER REGION"] != "")]
     indf = indf[indf["EXPORTER REGION"] != indf["IMPORTER REGION"]]
@@ -661,7 +650,6 @@ def build_historical_activity(
     config_name: str | None = None,
     reimport_IEA=False,
     reimport_BACI=False,
-    diagnosis_only=False,
 ):
     """
     Build historical activity parameter dataframe.
@@ -696,16 +684,16 @@ def build_historical_activity(
     # Calibrate gas to IEA WEB data
     data_paths = setup_datapath(project_name=project_name, config_name=config_name)
     web = pd.read_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
-    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_iso3.csv"))
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_crosswalk.csv"))
     web = web.merge(ieacw, left_on="REGION", right_on="REGION", how="left")
     web["IEA-WEB VALUE"] = np.where(
         web["FLOW"] == "EXPORTS", web["IEA-WEB VALUE"] * -1, web["IEA-WEB VALUE"]
     )
     web = web[web["IEA-WEB COMMODITY"] == "NATURAL_GAS"]
 
-    web_tot = web[web["FLOW"] == "EXPORTS"][["YEAR", "ISO3", "IEA-WEB VALUE"]]
-    web_tot = web_tot.groupby(["YEAR", "ISO3"])["IEA-WEB VALUE"].sum().reset_index()
-    web_tot = web_tot.rename(columns={"ISO3": "EXPORTER", "IEA-WEB VALUE": "WEB TOTAL"})
+    web_tot = web[web["FLOW"] == "EXPORTS"][["YEAR", "ISO", "IEA-WEB VALUE"]]
+    web_tot = web_tot.groupby(["YEAR", "ISO"])["IEA-WEB VALUE"].sum().reset_index()
+    web_tot = web_tot.rename(columns={"ISO": "EXPORTER", "IEA-WEB VALUE": "WEB TOTAL"})
     ngdf_tot = ngdf.groupby(["YEAR", "EXPORTER"])["ENERGY (TJ)"].sum().reset_index()
     ngdf_tot = ngdf_tot.rename(
         columns={"EXPORTER": "EXPORTER", "ENERGY (TJ)": "NGDF TOTAL"}
@@ -749,30 +737,29 @@ def build_historical_activity(
     )
     tradedf["ENERGY (TJ)"] = tradedf["ENERGY (TJ)"].astype(float)
     tradedf = tradedf[
-        ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)"]
+        ["YEAR", "EXPORTER", "IMPORTER", "HS", "MESSAGE COMMODITY", "ENERGY (TJ)", "MATERIAL (Mt)"]
     ].reset_index()
 
-    # Calibrate to IEA balances separately for exports and imports
-    tradedf = check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
+    #check_iea_balances(indf=tradedf, project_name=project_name, config_name=config_name)
 
     tradedf["ENERGY (GWa)"] = tradedf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
-    
-    if diagnosis_only:
-        return tradedf
-    else:
-        outdf = reformat_to_parameter(
-            indf=tradedf,
-            message_regions=message_regions,
-            parameter_name="historical_activity",
-            project_name=project_name,
-            config_name=config_name,
-        )
-        outdf = outdf.groupby(['node_loc', 'technology', 'year_act',
-                            'mode', 'time'])['value'].sum().reset_index()
-                            
-        outdf["unit"] = "GWa"
 
-        return outdf.drop_duplicates()
+    tradedf['PHYSICAL VALUE'] = tradedf['ENERGY (GWa)']
+    tradedf['PHYSICAL VALUE'] = np.where(tradedf['MESSAGE COMMODITY'].str.contains('steel'),
+                                tradedf['MATERIAL (Mt)'], tradedf['PHYSICAL VALUE'])
+    
+    outdf = reformat_to_parameter(
+        indf=tradedf,
+        message_regions=message_regions,
+        parameter_name="historical_activity",
+        project_name=project_name,
+        config_name=config_name,
+    )
+    
+    outdf["unit"] = "GWa"
+    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "Mt", "GWa")
+
+    return outdf.drop_duplicates()
 
 
 # Calculate historical new capacity based on activity
@@ -834,6 +821,7 @@ def build_historical_price(
     message_regions="R12",
     project_name: str | None = None,
     config_name: str | None = None,
+    reimport_BACI=False,
 ):
     """
     Build historical price parameter dataframe.
@@ -860,25 +848,23 @@ def build_historical_price(
     bacidf["ENERGY (GWa)"] = bacidf["ENERGY (TJ)"] * (3.1712 * 1e-5)  # TJ to GWa
     bacidf["VALUE (MUSD)"] = bacidf["VALUE (1000USD)"] * 1e-3
     bacidf["PRICE (MUSD/GWa)"] = bacidf["VALUE (MUSD)"] / bacidf["ENERGY (GWa)"]
+    bacidf["PRICE (MUSD/Mt)"] = bacidf["VALUE (MUSD)"] / bacidf["MATERIAL (Mt)"]
 
-    bacidf = bacidf[bacidf["ENERGY (TJ)"] > 0.5]  # Keep linkages >0.5TJ
+    bacidf = bacidf[(bacidf["ENERGY (TJ)"] > 0.5) | (bacidf["MATERIAL (Mt)"] > 0.5)]  # Keep linkages >0.5TJ or >0.5t
 
     bacidf = (
         bacidf.groupby(["EXPORTER", "IMPORTER", "MESSAGE COMMODITY"])[
-            ["ENERGY (GWa)", "VALUE (MUSD)"]
+            ["ENERGY (GWa)", "VALUE (MUSD)", "MATERIAL (Mt)"]
         ]
         .sum()
         .reset_index()
     )
     bacidf["YEAR"] = "broadcast"
 
-    # Add costs for piped gas based on LNG prices
-    bacidf_pg = bacidf[bacidf['MESSAGE COMMODITY'] == 'LNG_shipped'].copy()
-    bacidf_pg['MESSAGE COMMODITY'] = 'gas_piped'
-    print(bacidf_pg)
-    
-    bacidf = pd.concat([bacidf, bacidf_pg])
-    
+    bacidf['PHYSICAL VALUE'] = bacidf['ENERGY (GWa)']
+    bacidf['PHYSICAL VALUE'] = np.where(bacidf['MESSAGE COMMODITY'].str.contains('steel'),
+                                bacidf['MATERIAL (Mt)'], bacidf['PHYSICAL VALUE'])
+
     outdf = reformat_to_parameter(
         indf=bacidf,
         message_regions=message_regions,
@@ -887,12 +873,11 @@ def build_historical_price(
         config_name=config_name,
         exports_only=True,
     )
-    outdf["unit"] = "USD/GWa"
+    outdf["unit"] = np.where(outdf["technology"].str.contains('steel'), "USD/Mt", "USD/GWa")
 
     outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
-    print(outdf)
-    
+
     return outdf
 
 
