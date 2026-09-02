@@ -42,6 +42,8 @@ coal_shipped_trade: # Name of covered trade technology (e.g., oil)
   specify_network:
     False
   tracked_emissions: # List of tracked emission types
+  emission_factor:
+    CO2: 0.814
   bunker_technology:
     energy_bulk_carrier_loil:
       loil_tobunker
