@@ -3,6 +3,7 @@ What's new
 
 Next release
 ============
+- Add option for a balance_equality check in bilateralization module (:pull:`536`)
 
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
