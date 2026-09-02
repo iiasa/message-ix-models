@@ -29,6 +29,7 @@ from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, plot
 from . import key as K
+from .data import LABEL_SUBS
 from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
@@ -134,6 +135,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.project.advance.data import ADVANCE
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+    from message_ix_models.tools.gains import EmissionFactor
     from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
@@ -186,6 +188,11 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
     data.MERtoPPP.add_tasks(c, **kw, **cs)
+
+    # Add GAINS emission factor data
+    s = LABEL_SUBS["E"](config.label)
+    kw = dict(nodes=context.model.regions, scenario=s, variant="L")
+    setattr(K.exo, "emission_factor", EmissionFactor.add_tasks(c, **kw, **cs)[0])
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
@@ -350,7 +357,6 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
-    from .data import LABEL_SUBS
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
