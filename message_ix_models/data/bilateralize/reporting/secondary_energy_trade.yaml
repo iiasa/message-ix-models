@@ -1,0 +1,65 @@
+var:
+  out
+
+iamc_prefix:
+  Trade|Secondary Energy|
+
+unit: EJ/yr
+
+vars:
+
+# Shipped biomass imports
+  Trade|Secondary Energy|Ethanol Volume|Shipped:
+    filter:
+      { technology: [eth_shipped_exp], mode: M1, commodity: ethanol, level: [shipped] }
+    short:
+      ethanol_shipped_exp
+
+# Piped fuel oil imports
+  Trade|Secondary Energy|Fuel Oil Volume|Piped:
+    filter:
+      { technology: [foil_piped_exp], mode: M1, commodity: fueloil, level: [piped] }
+    short:
+      fueloil_piped_exp
+
+# Shipped fuel oil imports
+  Trade|Secondary Energy|Fuel Oil Volume|Shipped:
+    filter:
+      { technology: [foil_shipped_exp], mode: M1, commodity: fueloil, level: [shipped] }
+    short:
+      fueloil_shipped_exp
+
+# Shipped hydrogen imports
+  Trade|Secondary Energy|Hydrogen Volume|Shipped:
+    filter:
+      { technology: [lh2_shipped_exp], mode: M1, commodity: hydrogen, level: [shipped] }
+    short:
+      lh2_shipped_exp
+
+# Piped light oil imports
+  Trade|Secondary Energy|Light Oil Volume|Piped:
+    filter:
+      { technology: [loil_piped_exp], mode: M1, commodity: lightoil, level: [piped] }
+    short:
+      lightoil_piped_exp
+
+# Shipped light oil imports
+  Trade|Secondary Energy|Light Oil Volume|Shipped:
+    filter:
+      { technology: [loil_shipped_exp], mode: M1, commodity: lightoil, level: [shipped] }
+    short:
+      lightoil_shipped_exp
+
+# Piped methanol imports
+  Trade|Secondary Energy|Methanol Volume|Piped:
+    filter:
+      { technology: [meth_piped_exp], mode: M1, commodity: methanol, level: [piped] }
+    short:
+      methanol_piped_exp
+
+# Shipped methanol imports
+  Trade|Secondary Energy|Methanol Volume|Shipped:
+    filter:
+      { technology: [meth_shipped_exp], mode: M1, commodity: methanol, level: [shipped] }
+    short:
+      methanol_shipped_exp
