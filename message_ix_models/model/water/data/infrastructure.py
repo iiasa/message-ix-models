@@ -312,10 +312,8 @@ def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
 
     techs = [
         "urban_t_d",
-        "urban_unconnected",
         "industry_unconnected",
         "rural_t_d",
-        "rural_unconnected",
     ]
 
     df_non_elec = df[df["incmd"] != "electr"].reset_index()

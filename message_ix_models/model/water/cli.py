@@ -242,7 +242,7 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
             case=caseName,
         )
     else:
-        scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
+        scen.solve(solve_options={"lpmethod": "4", "scaind": "-1"}, case=caseName)
 
     # if options["report"]:
     #     # Also output diagnostic reports
@@ -348,7 +348,7 @@ def cooling(
 
     if solve:
         # Solve
-        scen.solve(solve_options={"lpmethod": "4", "scaind": "1"}, case=caseName)
+        scen.solve(solve_options={"lpmethod": "4", "scaind": "-1"}, case=caseName)
 
 
 @cli.command("report")

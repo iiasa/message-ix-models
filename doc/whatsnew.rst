@@ -95,6 +95,11 @@ Next release
   - New :mod:`genno` operator :func:`~.operator.yv_ya_banded`.
   - Handle |yV| dimension in :func:`.sales_fraction_annual`.
 
+- Improve :doc:`/water/index` (:pull:`510`).
+
+  - Retire urban/rural unconnected water technologies.
+  - Disable CPLEX scaling in water-ix solves.
+
 - New reporting operators
   :func:`~.operator.full` (:pull:`497`) and
   :func:`~.operator.remove_zeros` (:pull:`486`).

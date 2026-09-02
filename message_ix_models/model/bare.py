@@ -136,6 +136,9 @@ def get_spec(context) -> Spec:
         )
     )
 
+    # Add emission species
+    add.set["emission"] = get_codes("emission")
+
     # Add units, associated with commodities
     units = set(
         commodity.eval_annotation(id="unit") for commodity in add.set["commodity"]
