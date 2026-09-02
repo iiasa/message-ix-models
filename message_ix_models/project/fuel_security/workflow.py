@@ -9,8 +9,8 @@ from ixmp import Platform
 from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
-from message_ix_models.project.weu_security.liquefaction_calibration import *
-from message_ix_models.project.weu_security.adjust_reexports import *
+from message_ix_models.project.fuel_security.liquefaction_calibration import *
+from message_ix_models.project.fuel_security.adjust_reexports import *
 
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
@@ -27,7 +27,7 @@ config, config_path = load_config(project_name = 'fuel_security', config_name = 
 data_path = package_data_path("bilateralize")
 
 # Generate workflow
-def generate_workflow(context: Context) -> Workflow:
+def generate(context: Context) -> Workflow:
     """
     Generate workflow for fuel security project
     """
