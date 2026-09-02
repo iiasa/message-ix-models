@@ -146,7 +146,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     config: "Config" = c.graph["config"]["transport"]
 
     # Common arguments for ExoDataSource.add_tasks(…)
-    c_s: "AddTasksKw" = dict(context=context, strict=False)
+    cs: "AddTasksKw" = dict(context=context, strict=False)
 
     # Identify appropriate source keyword arguments for loading GDP and population data
     if config.ssp in SSP_2017:
@@ -169,30 +169,30 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         )
 
     for kw in source_kw:
-        keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
+        keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **cs)
 
     # Miscellaneous input data flows
     kw = dict(nodes=context.model.regions)
-    data.ActivityVehicle.add_tasks(c, **kw, **c_s)
-    data.CapShareT.add_tasks(c, **kw, **c_s)
-    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
-    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
-    data.InputVehicle.add_tasks(c, **kw, **c_s)
-    data.InvestmentCost.add_tasks(c, **kw, **c_s)
-    data.Lifetime.add_tasks(c, **kw, **c_s)
-    data.LoadFactorF.add_tasks(c, **kw, **c_s)
-    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **c_s)
+    data.ActivityVehicle.add_tasks(c, **kw, **cs)
+    data.CapShareT.add_tasks(c, **kw, **cs)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **cs)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **cs)
+    data.InputVehicle.add_tasks(c, **kw, **cs)
+    data.InvestmentCost.add_tasks(c, **kw, **cs)
+    data.Lifetime.add_tasks(c, **kw, **cs)
+    data.LoadFactorF.add_tasks(c, **kw, **cs)
+    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **cs)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
-    data.MERtoPPP.add_tasks(c, **kw, **c_s)
+    data.MERtoPPP.add_tasks(c, **kw, **cs)
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
     kw = dict(provider="IEA", edition="2024", regions=context.model.regions)
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
-    IEA_EWEB.add_tasks(c, **kw, **c_s)
+    IEA_EWEB.add_tasks(c, **kw, **cs)
 
     # Add ADVANCE data
     adv_common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
@@ -202,7 +202,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     ):
         # Add the base data
         kw = adv_common | dict(measure=m, name=f"advance {n}")
-        keys_advance = ADVANCE.add_tasks(c, **kw, **c_s)
+        keys_advance = ADVANCE.add_tasks(c, **kw, **cs)
         # Broadcast to R12
         c.add(f"{n}:n:advance", "broadcast_advance", keys_advance[0], "y0", "config")
 
