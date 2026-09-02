@@ -14,7 +14,7 @@ class TestSTRINGENCY:
 
 
 @mark.zenodo_timeout
-@mark.parametrize("version", ("2024", "2023", "2022", "2021", "2020", "2019"))
+@mark.parametrize("version", ("2025", "2024", "2023", "2022", "2021", "2020", "2019"))
 def test_fetch(version: str) -> None:
     # File can be fetched
     p = fetch(version)
@@ -25,6 +25,7 @@ def test_fetch(version: str) -> None:
 @mark.parametrize(
     "version, N_total, N_transport",
     (
+        param("2025", 6727, 1342, marks=mark.zenodo_timeout),
         param("2024", 6507, 1298, marks=mark.zenodo_timeout),
         param("2023", 6273, 1246, marks=mark.zenodo_timeout),
         param("2022", 5883, 1203, marks=mark.zenodo_timeout),
