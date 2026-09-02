@@ -29,6 +29,7 @@ from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, plot
 from . import key as K
+from .data import LABEL_SUBS
 from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
@@ -134,6 +135,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.project.advance.data import ADVANCE
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+    from message_ix_models.tools.gains import EmissionFactor
     from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
@@ -144,6 +146,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     context = c.graph["context"]
     config: "Config" = c.graph["config"]["transport"]
+    nodes = context.model.regions
 
     # Common arguments for ExoDataSource.add_tasks(…)
     cs: "AddTasksKw" = dict(context=context, strict=False)
@@ -172,7 +175,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **cs)
 
     # Miscellaneous input data flows
-    kw = dict(nodes=context.model.regions)
+    kw = dict(nodes=nodes)
     data.ActivityVehicle.add_tasks(c, **kw, **cs)
     data.CapShareT.add_tasks(c, **kw, **cs)
     data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **cs)
@@ -184,12 +187,17 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     data.LoadFactorLDV.add_tasks(c, config=config, **kw, **cs)
 
     # Add data for MERtoPPP
-    kw = dict(measure="MERtoPPP", nodes=context.model.regions)
+    kw = dict(measure="MERtoPPP", nodes=nodes)
     data.MERtoPPP.add_tasks(c, **kw, **cs)
+
+    # Add GAINS emission factor data
+    s = LABEL_SUBS["E"](config.label)
+    kw = dict(nodes=nodes, scenario=s, variant="L" if s != "SSP3" else "M")
+    setattr(K.exo, "emission_factor", EmissionFactor.add_tasks(c, **kw, **cs)[0])
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
-    kw = dict(provider="IEA", edition="2024", regions=context.model.regions)
+    kw = dict(provider="IEA", edition="2024", regions=nodes)
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
     IEA_EWEB.add_tasks(c, **kw, **cs)
@@ -233,7 +241,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Data from files
 
     # Identify the mode-share file according to the config setting
-    # TODO Transfer this to a MultiFlow subclass in .transport.data; select path based
+    # TODO Transfer this to a MultiFile subclass in .transport.data; select path based
     #      on .project.transport_futures values in Config.project_scenario_code.
     Dataflow(
         module=__name__,
@@ -350,7 +358,6 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
-    from .data import LABEL_SUBS
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
