@@ -188,3 +188,24 @@ NewClimate Institute (:mod:`.tools.newclimate`)
 
 .. automodule:: message_ix_models.tools.newclimate
    :members:
+
+.. _tools-unsd:
+
+UN Statistics Division (UNSD) (:mod:`.tools.unsd`)
+==================================================
+
+UNSD publishes energy statistics for all countries, including those not covered by Eurostat or the IEA, through an SDMX web service (https://unstats.un.org/unsd/energystats/) that requires no registration.
+Two data flows are supported:
+
+- ``DF_UNData_EnergyBalance``, via :class:`.UNSD_ENERGY_BALANCE`: energy balances with 9 fuel groups on the ``product`` dimension.
+  These are too coarse for uses that distinguish individual products, as :class:`.IEA_EWEB` does with about 70.
+- ``DF_UNDATA_ENERGY``, via :class:`.UNSD_ENERGY`: individual commodities in physical units, converted to TJ using the conversion factor attached to each observation.
+  Natural gas is converted from gross to net calorific value.
+
+The data have the dimensions and units of :class:`.IEA_EWEB`, with UNSD's own codes for products and flows.
+Both are :class:`.SDMXSource` subclasses; see that class for use with :mod:`genno` or :mod:`pandas`.
+
+.. currentmodule:: message_ix_models.tools.unsd
+
+.. automodule:: message_ix_models.tools.unsd
+   :members:

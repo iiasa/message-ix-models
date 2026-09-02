@@ -77,3 +77,7 @@
 
 /message_ix_models/tools/newclimate                @khaeru
 /message_ix_models/tests/tools/test_newclimate.py  @khaeru
+
+/message_ix_models/tools/unsd.py                @Wegatriespython
+/message_ix_models/tests/tools/test_unsd.py     @Wegatriespython
+/message_ix_models/data/test/unsd               @Wegatriespython
