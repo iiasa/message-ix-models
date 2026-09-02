@@ -1,0 +1,124 @@
+format: 1
+
+title: Materials + transport representation in MESSAGEix
+description: |-
+  These are the data required to parametrize a representation of materials use
+  in the transport sector, i.e. the integration of MESSAGEix-Materials and
+  MESSAGEix-Transport.
+
+provider:
+  organisation: International Institute for Applied Systems Analysis (IIASA)
+  contact: xum@iiasa.ac.at; lorenzo.usai@ntnu.no; kishimot@iiasa.ac.at
+
+classifiers:
+- "Kind :: Model input"
+
+dimension:
+  time:
+    scope: 1990 to 2100
+    resolution: 5- or 10-year periods or annual
+    description: >-
+      Up until 2022, data reflect real-world measurements. From 2022 (or other
+      start year) onwards, data are projections.
+  space:
+    scope: global
+    resolution: country or vehicle market/manufacturing region.
+    description: It would be best if the Chinese data could be included.
+  vehicle_type:
+    scope: all classification of vehicles
+    resolution: : >-
+      3-point scale: Passenger LDV, bus, truck
+    description: >-
+      More detailed classification of the above 3 types is welcomed, e.g.
+      separating size classes of LDVs (cars, small or large; SUVs, etc.),
+      trucks, etc.
+  make_model:
+    scope: any available
+    resolution: any specific make and model
+    description: >-
+      Specific manufacturer and model of vehicle.
+  fuel_type:
+    scope: all classification of vehicles by the fuel & technology they use
+    resolution: : >-
+      10-point scale: gasoline, diesel, electricity, hydrogen,
+      compressed natural gas, liquefied natural gas, coal-derived methanol,
+      bio-diesel, coal-to-liquids, bio-ethanol
+    description: >-
+      Not all fuel types are necessarily included for each specific model.
+      Materials intensities of specific components may be the same across
+      different fuel_type if these components are essentially the same.
+  powertrain_type:
+    scope: all classification of vehicles by the powertrain
+    resolution: ICE, PHEV, BEV, etc.
+    description: Different fuel_type may eventually correspond to one powertrain_type
+  material_type:
+    scope: all common materials used in vehicles
+    resolution: : >-
+      14-point scale: steel, copper, aluminum, lithium, cobalt, nickel,
+      neodymium, dysprosium, platinum, plastics, composite material, coal, crude oil, natural gas.
+    description: >-
+      Other material can also be added depend on the available data.
+  component:
+    scope: all major components in vehicles
+    resolution: : >-
+      7-point scale: body structure, wheels and tires, chassis,
+      powertrain system, energy storage battery, hydrogen on-board storage,
+      fuel cell
+    description: >-
+      Vehicles of a particular type and fuel type do not have to contain all of
+      the above components, e.g. “hydrogen on-board storage” is not relevant for
+      “electric vehicle”.
+
+measure:
+  material_intensity_1:
+    description: >-
+      Mass of a given material required for one unit of component production defined by 
+      vehicle_type and powertrain_type.
+
+  material_intensity_2:
+    description: >-
+      Mass of a given material required for one unit of component production defined by 
+      make_model.
+
+  material_intensity_energy:
+    description: >-
+      Mass of upstream materials required to provide different
+      types of fuels used in vehicles.
+
+  sales:
+    description: >-
+      Vehicle sales for certain make_model.
+
+
+quantity:
+- measure: material_intensity_1
+  dimensions: [time, space, vehicle_type, powertrain_type, material_type, component]
+  units: tons per vehicle
+  description: >-
+    With these dimensions, this data captures the material intensity of major
+    components of certain vehicle type and powertrain type.
+    If a vehicle includes more than one of a certain component, then this is
+    the total across the components in a single vehicle.
+
+- measure: material_intensity_2
+  dimensions: [time, space, make_model, material_type, component]
+  units: tons per unit component
+  description: >-
+    With these dimensions, this data captures the material intensity of major
+    components of certain make_model.
+    If a vehicle includes more than one of a certain component, then this is
+    the total across the components in a single vehicle.
+
+- measure: material_intensity_energy
+  dimensions: [time, space, fuel_type, material_type]
+  units: tons per unit energy
+  description: >-
+    This captures the upstream requirements for materials to provide different
+    types of fuels used in vehicles.
+
+- measure: sales
+  dimensions: [time, space, make_model]
+  units: vehicles per year
+  description: >-
+    This would be used to calculate a sales-weighted average across materials
+    intensities that are specific to different make_model.
