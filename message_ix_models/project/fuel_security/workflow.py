@@ -22,10 +22,6 @@ from message_ix_models.tools.policy import (
 
 log = logging.getLogger(__name__)
 
-# Import scenario and models
-config, config_path = load_config(project_name = 'fuel_security', config_name = 'config.yaml')
-data_path = package_data_path("bilateralize")
-
 # Generate workflow
 def generate(context: Context) -> Workflow:
     """
