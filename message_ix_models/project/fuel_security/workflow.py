@@ -21,3 +21,49 @@ from message_ix_models.tools.policy import (
 )
 
 log = logging.getLogger(__name__)
+
+# Import scenario and models
+config, config_path = load_config(project_name = 'fuel_security', config_name = 'config.yaml')
+data_path = package_data_path("bilateralize")
+
+# Generate workflow
+def generate_workflow(context: Context) -> Workflow:
+    """
+    Generate workflow for fuel security project
+    """
+    wf = Workflow(context)
+
+    # Context attributes
+    context.ssp = "SSP2"
+    context.model.regions = "R12"
+    
+    context.run_reporting_only = False
+    context.policy_data_file = "fuel_security_policy_data.xlsx"
+    context.policy_config_path = ("projects", "fuel_security", "config.yaml")
+    context.region_id = "R12"
+
+    # Set up target scenario
+    model_name = "ixmp://ixmp-dev/fuel_security"
+
+    # Workflow steps
+    wf.add_step(
+        "Base",
+        None,
+        target = "ixmp://ixmp-dev/SSP_SSP2_v5.1/baseline" # TODO update this to 6.6   
+    )
+
+    wf.add_step(
+        "Base cloned",
+        "Base",
+        target = "fuel_security/baseline_DEFAULT", # This has to be named baseline_DEFAULT to match policy tool requirement
+        clone = dict(keep_solution = False)
+    )
+
+    wf.add_step(
+        "Add and solve NPi2030",
+        "Base cloned",
+        add_NPi2030,
+        target = "fuel_security/NPi2030"
+    )
+    
+    return wf
