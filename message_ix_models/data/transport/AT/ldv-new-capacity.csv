@@ -1,0 +1,24 @@
+# historical_new_capacity and bound_new_capacity_{lo,up} values for LDVs
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: Mvehicle
+#
+node_loc, technology, year_vtg, value
+Austria,  ELC_100,    2010,     0.0006884
+Austria,  ELC_100,    2015,     0.048377
+Austria,  ELC_100,    2020,     0.3203518
+Austria,  ELC_100,    2025,     0.572605
+Austria,  PHEV_bus,   2015,     1.4e-06
+Austria,  PHEV_bus,   2020,     0.000107
+Austria,  PHEV_bus,   2025,     1.88e-05
+Austria,  PHEV_ptrp,  2010,     5.8e-06
+Austria,  PHEV_ptrp,  2015,     0.0336334
+Austria,  PHEV_ptrp,  2020,     0.2521448
+Austria,  PHEV_ptrp,  2025,     0.4020514
+
+Austria,  ICE_conv,   2005,     12.910489
+Austria,  ICE_conv,   2010,     12.2301818
+Austria,  ICE_conv,   2015,     10.9489012
+Austria,  ICE_conv,   2020,     11.6740978

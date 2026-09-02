@@ -1,0 +1,26 @@
+# ‘Elasticity’ of freight activity with respect to GDP(PPP)
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+scenario,    node,     year, value
+LED,         Austria,  2020, 1.0
+LED,         Austria,  2030, 0.8
+LED,         Austria,  2110, 0.5
+
+SSP(2024).1, Austria,  2020, 1.0
+SSP(2024).1, Austria,  2110, 0.8
+
+SSP(2024).2, Austria,  2020, 1.0
+SSP(2024).2, Austria,  2110, 1.0
+
+SSP(2024).3, Austria,  2020, 1.0
+SSP(2024).3, Austria,  2110, 1.0
+
+SSP(2024).4, Austria,  2020, 1.0
+SSP(2024).4, Austria,  2110, 1.0
+
+SSP(2024).5, Austria,  2020, 1.0
+SSP(2024).5, Austria,  2110, 1.0

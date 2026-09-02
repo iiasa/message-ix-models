@@ -1,0 +1,13 @@
+# Mode shares in the model base year; Transport Futures "A---" scenario
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,    technology, value
+Austria, 2W,         0.2
+Austria, BUS,        0.2
+Austria, LDV,        0.2
+Austria, RAIL,       0.3
+Austria, AIR,        0.1
