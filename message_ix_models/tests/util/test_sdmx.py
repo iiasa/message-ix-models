@@ -1,9 +1,12 @@
 import logging
 import re
 import sys
+from types import SimpleNamespace
 
 import genno
+import pandas as pd
 import pytest
+import sdmx
 from genno import Computer, Key
 from sdmx.model.common import Code
 from sdmx.model.v21 import Annotation
@@ -15,6 +18,7 @@ from message_ix_models.util.sdmx import (
     ItemSchemeEnumType,
     URNLookupEnum,
     eval_anno,
+    fetch_data,
     read,
 )
 
@@ -120,6 +124,34 @@ class TestDataflow:
 
 
 _urn_prefix = "urn:sdmx:org.sdmx.infomodel"
+
+
+class TestFetchData:
+    def test_fetch_data(self, monkeypatch, test_context) -> None:
+        monkeypatch.setattr(test_context.core, "cache_skip", True)
+        calls: dict = {}
+
+        class Client:
+            def __init__(self, source: str) -> None:
+                calls.update(source=source)
+
+            def data(self, dataflow, key, params):
+                calls.update(dataflow=dataflow, key=key, params=params)
+                return SimpleNamespace(data=["data set 0", "data set 1"])
+
+        monkeypatch.setattr(sdmx, "Client", Client)
+        monkeypatch.setattr(sdmx, "to_pandas", lambda obj, **kw: pd.Series([1.0]))
+
+        key = dict(REF_AREA=["398"])
+        result = fetch_data("UNSD", "DF_FOO", key, startPeriod=2000, endPeriod=None)
+
+        assert ("UNSD", "DF_FOO", key) == tuple(
+            calls[k] for k in ("source", "dataflow", "key")
+        )
+        # None-valued parameters are omitted; others are converted to str
+        assert dict(startPeriod="2000") == calls["params"]
+        # All data sets in the response are combined
+        assert 2 == len(result)
 
 
 class TestItemSchemeEnum:
