@@ -85,6 +85,7 @@ rst_prolog = r"""
 .. |y0| replace:: :math:`y_0`
 .. |yV| replace:: :math:`y^V`
 
+.. |name| replace:: MESSAGEix-GLOBIOM-GAINS
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
 
 .. |gh-350| replace::
