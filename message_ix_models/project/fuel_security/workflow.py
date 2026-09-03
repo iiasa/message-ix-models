@@ -16,7 +16,7 @@ from message_ix_models import Context
 from message_ix_models.util import private_data_path
 from message_ix_models.workflow import Workflow
 
-from message_ix_models.tools.policy import (
+from message_ix_models.project.fuel_security.policy import (
     add_NPi2030,
 )
 
