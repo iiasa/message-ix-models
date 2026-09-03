@@ -277,6 +277,82 @@ def load_data(
     return result.assign(i=result["i"].map(mapping), j=result["j"].map(mapping))
 
 
+#: Regular expressions selecting the HS92 six-digit headings that make up each product
+#: of :class:`.UNSD_ENERGY_BALANCE`, following the SIEC–HS correspondence of the UN
+#: International Recommendations for Energy Statistics:
+#:
+#: - "B00_CL", primary coal: coal and briquettes (2701), lignite (2702), and peat
+#:   (2703), which UNSD counts with coal.
+#: - "B01_CP", coal products: coke (2704), manufactured gases (2705), coal tar (2706).
+#:   Coal-tar distillates and pitch (2707, 2708) are chemical products past the energy
+#:   balance boundary.
+#: - "B02_PO", crude oil: 2709.
+#: - "B03_OP", oil products: refined products (2710); LPG, ethane, and other liquefied
+#:   petroleum gases (271112, 271113, 271119); waxes (2712); petroleum coke and bitumen
+#:   (2713); bituminous mixtures (2715). Petrochemical olefins (271114), other
+#:   *gaseous* hydrocarbons (271129), and natural bitumen (2714, a primary mineral) are
+#:   excluded.
+#: - "B04_NG", natural gas: LNG (271111) and gaseous natural gas (271121).
+#: - "B07_EL", electricity: 271600.
+ENERGY_HS92: dict[str, str] = {
+    "B00_CL": "270(1|2|3)..",
+    "B01_CP": "270(4|5|6)..",
+    "B02_PO": "2709..",
+    "B03_OP": "2710..|2711(12|13|19)|271(2|3|5)..",
+    "B04_NG": "2711(11|21)",
+    "B07_EL": "271600",
+}
+
+
+def load_energy_import_value(country: str, *, release: str = "202501") -> "DataFrame":
+    """Return the value of energy imports of `country` by product and year.
+
+    Import values for the headings in :data:`ENERGY_HS92` are summed over exporters and
+    over the headings of each product. Divided by imported energy from an energy balance
+    in the same product vocabulary, they give an import price per product.
+
+    Parameters
+    ----------
+    country
+        ISO 3166-1 alpha-3 code of the importer.
+    release
+        Passed to :func:`load_data`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        with columns "n" (`country`), "y", "product" (a key of :data:`ENERGY_HS92`), and
+        "value" in thousand USD, free on board.
+    """
+    import re
+
+    from pycountry import countries
+
+    c = countries.get(alpha_3=country)
+    if c is None:
+        raise ValueError(
+            f"country={country!r} has no ISO 3166-1 numeric code, by which BACI "
+            "identifies importers"
+        )
+
+    df = load_data(
+        release=release,
+        measure="value",
+        filter_pattern=dict(j=str(int(c.numeric)), k="|".join(ENERGY_HS92.values())),
+    )
+    patterns = {p: re.compile(expr) for p, expr in ENERGY_HS92.items()}
+
+    def product(k) -> str:
+        return next(p for p, expr in patterns.items() if expr.fullmatch(str(k)))
+
+    return (
+        df.assign(product=df["k"].map(product))
+        .groupby(["j", "t", "product"], as_index=False)["v"]
+        .sum()
+        .rename(columns={"j": "n", "t": "y", "v": "value"})
+    )
+
+
 def get_mapping() -> MappingAdapter:
     """Return an adapter from codes appearing in BACI data.
 
