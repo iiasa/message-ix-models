@@ -20,11 +20,27 @@ Eurostat publishes complete energy balances for EU member states, candidate coun
 Countries not covered are generally covered by :mod:`.tools.unsd`.
 
 :class:`.ESTAT_ENERGY_BALANCE` returns data with the dimensions and units of :class:`.IEA_EWEB`, with Eurostat's own ``siec`` codes for products and ``nrg_bal`` codes for flows.
-This is an :class:`.SDMXSource` subclass; see that class for use with :mod:`genno` or :mod:`pandas`.
+:class:`.ESTAT_ENERGY_BALANCE_UNSD` returns the same data converted to the product and flow codes and the sign conventions of :class:`.UNSD_ENERGY_BALANCE`, per :data:`.UNSD_RULES`, so that a country can be handled in the same vocabulary whichever service its data come from; see :ref:`tools-energy-balance`.
+The conversion is checked against UNSD's own balance for Serbia: natural gas, electricity, and heat agree in every flow, while for coal and oil the two services publish different values from the same national return.
+Both are :class:`.SDMXSource` subclasses; see that class for use with :mod:`genno` or :mod:`pandas`.
 
 .. currentmodule:: message_ix_models.tools.eurostat
 
 .. automodule:: message_ix_models.tools.eurostat
+   :members:
+
+.. _tools-energy-balance:
+
+Energy balance of any country (:mod:`.tools.energy_balance`)
+============================================================
+
+UNSD publishes an energy balance for every country; for those filing the joint Eurostat/IEA/UNECE questionnaire, Eurostat publishes the same returns, usually one year sooner and often from an earlier year.
+:func:`.get_source` chooses Eurostat where its series covers at least the periods UNSD's does (:data:`.ESTAT_GEO`) and UNSD otherwise, and :func:`.energy_balance.load_data` returns the balance as a :class:`pandas.DataFrame` in the vocabulary of :class:`.UNSD_ENERGY_BALANCE`, whichever service it comes from.
+Code with a :class:`genno.Computer` can call :meth:`.ExoDataSource.add_tasks` on the class returned by :func:`.get_source`.
+
+.. currentmodule:: message_ix_models.tools.energy_balance
+
+.. automodule:: message_ix_models.tools.energy_balance
    :members:
 
 .. _tools-gfei:

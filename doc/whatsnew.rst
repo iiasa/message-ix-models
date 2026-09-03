@@ -5,6 +5,7 @@ Next release
 ============
 
 - :func:`.bare.create_res` accepts a caller-supplied spec and data (:pull:`559`).
+- New class :class:`.ESTAT_ENERGY_BALANCE_UNSD` and module :ref:`tools-energy-balance`: the energy balance of any country in one vocabulary, from Eurostat or UNSD (:pull:`XXX`).
 - Support the 2025 edition of the Climate Policy Database in :mod:`.tools.newclimate` (:pull:`560`).
 - New class :class:`.SDMXSource` for exogenous data from SDMX web services, using :func:`.util.sdmx.fetch_data`; new modules :ref:`tools-eurostat` and :ref:`tools-unsd` for openly-licensed energy balance data (:pull:`543`).
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
