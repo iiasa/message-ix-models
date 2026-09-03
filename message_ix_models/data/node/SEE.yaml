@@ -1,0 +1,15 @@
+# Codes for the "node" dimension of a South-Eastern Europe model
+#
+# Member countries are the South-Eastern Europe grouping of the Organization for
+# Security and Co-operation in Europe. The region is resolved as a single node.
+# Which member supplies input data is a property of the model that uses this
+# list; resolving the region into one node per member is a change to this file.
+
+World:
+  name: World
+  description: South-Eastern Europe model regions
+
+SEE:
+  name: South-Eastern Europe
+  parent: World
+  child: [ALB, BIH, MKD, MNE, SRB]

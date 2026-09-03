@@ -94,6 +94,38 @@ Israel (``ISR``)
 .. literalinclude:: ../../message_ix_models/data/node/ISR.yaml
    :language: yaml
 
+.. _CA:
+
+Central Asia (``CA``)
+---------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/CA.yaml
+   :language: yaml
+
+.. _EE:
+
+Eastern Europe (``EE``)
+-----------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/EE.yaml
+   :language: yaml
+
+.. _MED:
+
+Mediterranean (``MED``)
+-----------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/MED.yaml
+   :language: yaml
+
+.. _SEE:
+
+South-Eastern Europe (``SEE``)
+------------------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/SEE.yaml
+   :language: yaml
+
 .. _ZMB:
 
 Zambia (``ZMB``)

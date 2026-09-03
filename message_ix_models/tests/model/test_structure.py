@@ -12,6 +12,7 @@ from message_ix_models.model.structure import (
     codelists,
     generate_set_elements,
     get_codes,
+    get_parent_region,
     get_region_codes,
     process_commodity_codes,
     process_units_anno,
@@ -27,7 +28,10 @@ from message_ix_models.util import as_codes
             {
                 "ADVANCE",
                 "B210-R11",
+                "CA",
+                "EE",
                 "ISR",
+                "MED",
                 "R11",
                 "R12",
                 "R14",
@@ -35,6 +39,7 @@ from message_ix_models.util import as_codes
                 "R20",
                 "R32",
                 "RCP",
+                "SEE",
                 "ZMB",
             },
         ),
@@ -208,6 +213,22 @@ class TestGetCodes:
         elec_exp = data[data.index("elec_exp")]
         assert False is eval(str(elec_exp.get_annotation(id="vintaged").text))
 
+    @pytest.mark.parametrize(
+        "codelist, members",
+        [
+            ("CA", {"KAZ", "KGZ", "TJK", "TKM", "UZB"}),
+            ("EE", {"MDA", "UKR"}),
+            ("MED", {"DZA", "JOR"}),
+            ("SEE", {"ALB", "BIH", "MKD", "MNE", "SRB"}),
+        ],
+    )
+    def test_node_one_region(self, codelist, members):
+        """One-region node code lists have the expected region and members."""
+        (region,) = get_region_codes(codelist)
+
+        assert codelist == region.id
+        assert members == set(map(str, region.child))
+
     @pytest.mark.parametrize("codelist, length", [("A", 16), ("B", 28)])
     def test_year(self, codelist, length):
         """Year code lists can be loaded and contain the correct number of codes.
@@ -219,6 +240,14 @@ class TestGetCodes:
 
         # List contains the expected number of codes
         assert len(data) == length
+
+
+def test_get_parent_region():
+    assert "R12_FSU" == get_parent_region("R12", "KAZ").id
+    assert "R11_EEU" == get_parent_region("R11", "SRB").id
+
+    with pytest.raises(ValueError, match="child of no region"):
+        get_parent_region("R12", "XXX")
 
 
 def test_cli_techs(session_context, mix_models_cli):
