@@ -54,6 +54,7 @@ def make_scenario_runner(context: Context):
         )
         sr.scen["policy_baseline"] = base_scenario
         sr.scen["baseline_DEFAULT"] = base_scenario
+        sr.scen["baseline"] = base_scenario
 
     return sr
 
