@@ -10,6 +10,7 @@ from message_ix_models.tools.cepii import (
     COUNTRY_CODES,
     _code_map,
     load_data,
+    load_energy_import_value,
 )
 from message_ix_models.util.pooch import SOURCE, fetch
 
@@ -143,3 +144,44 @@ class TestLoadData:
 
         with pytest.raises(ValueError, match=r"reporter\(s\) \[99999\]$"):
             load_data(release="202601")
+
+
+class TestLoadEnergyImportValue:
+    def test_products(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Headings are summed to UNSD products; the importer is selected by number."""
+        import pandas as pd
+
+        from message_ix_models.tools import cepii
+
+        calls = []
+
+        def load_data(**kwargs):
+            calls.append(kwargs)
+            return pd.DataFrame(
+                {
+                    "t": 2020,
+                    "i": ["RUS", "CHN", "BLR", "RUS", "RUS", "KGZ"],
+                    "j": "KAZ",
+                    "k": [270112, 270119, 270300, 270400, 271111, 271600],
+                    "v": [1.0, 2.0, 32.0, 4.0, 8.0, 16.0],
+                }
+            )
+
+        monkeypatch.setattr(cepii, "load_data", load_data)
+
+        result = load_energy_import_value("KAZ", release="202601")
+
+        assert dict(release="202601", measure="value") == {
+            k: v for k, v in calls[0].items() if k != "filter_pattern"
+        }
+        assert "398" == calls[0]["filter_pattern"]["j"]
+        assert [
+            ("KAZ", 2020, "B00_CL", 35.0),
+            ("KAZ", 2020, "B01_CP", 4.0),
+            ("KAZ", 2020, "B04_NG", 8.0),
+            ("KAZ", 2020, "B07_EL", 16.0),
+        ] == list(result.itertuples(index=False, name=None))
+
+    def test_unknown_country(self) -> None:
+        with pytest.raises(ValueError, match="numeric code"):
+            load_energy_import_value("XXX")

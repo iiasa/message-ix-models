@@ -6,6 +6,8 @@ Tools for specific data sources
 “Centre d’études prospectives et d’informations internationales” (CEPII) (:mod:`.tools.cepii`)
 ==============================================================================================
 
+:func:`.load_energy_import_value` sums the BACI import values of one country over the HS92 headings in :data:`.ENERGY_HS92` to the products of :class:`.UNSD_ENERGY_BALANCE`, so that they can be divided by imported energy from :ref:`tools-energy-balance` to give an import price per product.
+
 .. currentmodule:: message_ix_models.tools.cepii
 
 .. automodule:: message_ix_models.tools.cepii
@@ -41,6 +43,20 @@ Code with a :class:`genno.Computer` can call :meth:`.ExoDataSource.add_tasks` on
 .. currentmodule:: message_ix_models.tools.energy_balance
 
 .. automodule:: message_ix_models.tools.energy_balance
+   :members:
+
+.. _tools-gem:
+
+Global Energy Monitor (GEM) (:mod:`.tools.gem`)
+===============================================
+
+The Global Integrated Power Tracker lists power-generating units worldwide with capacity, status, and start and retirement years.
+GEM provides it as a workbook on request, under CC BY 4.0, so :func:`.read_units` reads a local copy.
+:func:`.gem.technology` maps a unit to a MESSAGEix-GLOBIOM power technology.
+
+.. currentmodule:: message_ix_models.tools.gem
+
+.. automodule:: message_ix_models.tools.gem
    :members:
 
 .. _tools-gfei:
