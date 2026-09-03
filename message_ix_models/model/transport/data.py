@@ -93,6 +93,13 @@ IEA_EWEB_FLOW = [
 #:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2".
 #:    2. "CircEUlar-[AE]" becomes "CircEUlar-N".
 #:    2. All *except* "CircEUlar-[CN]" become "*".
+#:
+#: Set "E"
+#:    This set is used to map label to a value for
+#:    :attr:`.gains.EmissionFactor.Options.scenario`.
+#:
+#:    1. Full SSP codes such as "SSP_2024.1" become "SSP1".
+#:    2. All other values become "SSP2".
 LABEL_SUBS = dict(
     A=Substitutions(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
@@ -115,6 +122,10 @@ LABEL_SUBS = dict(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
         ("^CircEUlar-[AE]$", "CircEUlar-N"),
         (r"^(?!CircEUlar-[CN]).*$", "*"),
+    ),
+    E=Substitutions(
+        (r"^SSP_2024.([1235])", r"SSP\1"),
+        (r"^(?!SSP).*$", "SSP2"),
     ),
 )
 
