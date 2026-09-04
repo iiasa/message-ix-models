@@ -12,7 +12,7 @@ import genno
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Computer, Key, Operator, quote
+from genno import Computer, Key, quote
 from genno.operator import apply_units, as_quantity, rename_dims
 from scipy import integrate
 from sdmx.model.common import Code, Codelist
@@ -70,7 +70,6 @@ __all__ = [
     "share_weight",
     "smooth",
     "transport_check",
-    "transport_data",
     "votm",
     "yv_ya_banded",
 ]
@@ -1099,26 +1098,6 @@ def smooth(qty: "AnyQuantity") -> "AnyQuantity":
     # apply_units() is to work around khaeru/genno#64
     # TODO remove when fixed upstream
     return apply_units(concat(r0, result.sel(y=y[1:-1]), r_m1), qty.units)
-
-
-def _add_transport_data(func, c: "Computer", name: str, *, key) -> None:
-    """Add data from `key` to the target scenario.
-
-    Adds one task to `c` that uses :func:`.add_par_data` to store the data from `key` on
-    "scenario". Also updates the "add transport data" computation by appending the new
-    task.
-    """
-    c.add(f"add {name}", "add_par_data", "scenario", key, "dry_run", strict=True)
-    c.graph["add transport data"].append(f"add {name}")
-
-
-@Operator.define(helper=_add_transport_data)
-def transport_data(*args):
-    """No action.
-
-    This exists to connect :func:`._add_transport_data` to :meth:`genno.Computer.add`.
-    """
-    pass  # pragma: no cover
 
 
 def transport_check(scenario: "Scenario", ACT: "AnyQuantity") -> pd.Series:
