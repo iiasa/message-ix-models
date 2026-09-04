@@ -51,6 +51,14 @@ COUNTRY_CODES = [
     (891, "SCG"),  # Part of ISO 3166-3, not -1
 ]
 
+#: Archive file name for each supported release. These are the keys of the
+#: "CEPII_BACI" registry in :data:`.pooch.SOURCE`; the mapping is here so that
+#: :class:`BACI` can name a release rather than a file.
+ARCHIVE = {
+    "202501": "BACI_HS92_V202501.zip",
+    "202601": "BACI_HS92_V202601.zip",
+}
+
 #: Dimensions and data types for input data. In order to reduce memory and disk usage:
 #:
 #: - :py:`np.uint16` (0 to 65_535) is used for t (year), i (exporter), and j (importer)
@@ -71,13 +79,12 @@ class BACI(ExoDataSource):
 
     Currently the class supports:
 
-    - The 202501 release only.
+    - The releases in :data:`ARCHIVE`; see :attr:`Options.release`.
     - The 1992 Harmonized System (HS92) only.
 
     .. todo::
        - Aggregate to MESSAGE regions.
        - Test with additional HS categorizations.
-       - Test with additional releases.
     """
 
     @dataclass
@@ -86,6 +93,10 @@ class BACI(ExoDataSource):
         aggregate: bool = False
         #: By default, do not interpolate.
         interpolate: bool = False
+
+        #: BACI release to use. The default is the earliest supported, so that
+        #: adding a newer one does not change existing results.
+        release: str = "202501"
 
         #: Either "quantity" or "value".
         measure: str = "quantity"
@@ -119,6 +130,10 @@ class BACI(ExoDataSource):
                 raise ValueError(
                     f"measure={self.measure}; must be either 'quantity' or 'value'"
                 )
+            if self.release not in ARCHIVE:
+                raise ValueError(
+                    f"release={self.release!r}; expected one of {sorted(ARCHIVE)}"
+                )
             if extra := set(self.filter_pattern) - set(self.dims):
                 raise ValueError(
                     f"Filter patterns for non-existent dimension(s): {sorted(extra)}"
@@ -135,9 +150,10 @@ class BACI(ExoDataSource):
 
         This method performs the following steps:
 
-        1. If needed, retrieve the data archive from :data:`.pooch.SOURCE` using the
-           entry "CEPII_BACI". The file is stored in the :attr:`.Config.cache_path`, and
-           is about 2.2 GiB.
+        1. If needed, retrieve the archive for :attr:`Options.release` from
+           :data:`.pooch.SOURCE`, using the entry "CEPII_BACI". The file is stored in
+           the :attr:`.Config.cache_path`, and is about 2.2 GiB. Releases extract to a
+           shared directory, so only the selected release's data files are read.
         2. If needed, extract all the members of the archive to a :file:`…/cepii-baci/`
            subdirectory of the cache directory. The extracted size is about 7.9 GiB,
            containing about 2.6 × 10⁸ observations.
@@ -151,8 +167,10 @@ class BACI(ExoDataSource):
         if not self.options.test:  # pragma: no cover
             # - Fetch (if necessary) and unpack (if necessary) the BACI data archive.
             # - Select only the data files.
+            release = self.options.release
             paths: Iterable[Path] = filter(
-                lambda p: p.name.startswith("BACI"), fetch(**SOURCE["CEPII_BACI"])
+                lambda p: p.name.startswith("BACI") and f"V{release}" in p.name,
+                fetch(**SOURCE["CEPII_BACI"], filename=ARCHIVE[release]),
             )
         else:
             paths = path_fallback("cepii-baci", where="test").glob("*.csv")
@@ -208,6 +226,57 @@ def baci_data_from_files(
     return result
 
 
+def _code_map() -> dict[int, str]:
+    """Return BACI reporter code to ISO 3166-1 alpha-3.
+
+    ISO 3166-1 numeric codes, plus the idiosyncratic values in :data:`COUNTRY_CODES`,
+    which take precedence.
+    """
+    from pycountry import countries
+
+    return {int(c.numeric): c.alpha_3 for c in countries} | dict(COUNTRY_CODES)
+
+
+def load_data(
+    *,
+    release: str = "202501",
+    measure: str = "quantity",
+    filter_pattern: dict[str, "str | Pattern"] | None = None,
+) -> "DataFrame":
+    """Return BACI data as a :class:`pandas.DataFrame`.
+
+    This is the entry point for consumers that process the data with :mod:`pandas` and
+    have no :class:`genno.Computer` to which tasks could be added; those that do build
+    one should prefer :class:`BACI`.
+
+    Columns are the dimensions in :attr:`BACI.Options.dims` plus one for `measure`,
+    named as in the source files. The :math:`(i, j)` dimensions carry ISO 3166-1
+    alpha-3 codes rather than the numeric codes of the source.
+
+    Raises
+    ------
+    ValueError
+        if the data contain a reporter code with no known alpha-3 code, rather than
+        dropping those observations.
+    """
+    options = BACI.Options(
+        release=release, measure=measure, filter_pattern=filter_pattern or {}
+    )
+
+    paths = [
+        p
+        for p in fetch(**SOURCE["CEPII_BACI"], filename=ARCHIVE[options.release])
+        if p.name.startswith("BACI") and f"V{options.release}" in p.name
+    ]
+    result = baci_data_from_files(paths, options.measure, options.filter_pattern)
+
+    mapping = _code_map()
+    if unknown := sorted((set(result["i"]) | set(result["j"])) - set(mapping)):
+        raise ValueError(f"No ISO 3166-1 alpha-3 code for BACI reporter(s) {unknown}")
+
+    return result.assign(i=result["i"].map(mapping), j=result["j"].map(mapping))
+
+
 def get_mapping() -> MappingAdapter:
     """Return an adapter from codes appearing in BACI data.
 
@@ -220,10 +289,8 @@ def get_mapping() -> MappingAdapter:
     :mod:`message_ix_models` ``node`` code lists, which include those alpha-3 codes as
     children of each region code.
     """
-    from pycountry import countries
-
     # All values from ISO 3166-1, plus some idiosyncratic values from COUNTRY_CODES
-    num_to_a3 = COUNTRY_CODES + [(int(c.numeric), c.alpha_3) for c in countries]
+    num_to_a3 = list(_code_map().items())
 
     # Use the same mapping for both i and j dimensions
     return MappingAdapter({"i": num_to_a3, "j": num_to_a3}, on_missing="raise")

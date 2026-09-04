@@ -48,6 +48,9 @@ GH_MAIN = "https://github.com/iiasa/message-ix-models/raw/main/message_ix_models
 
 #: Supported remote sources of data.
 SOURCE: MutableMapping[str, Mapping[str, Any]] = {
+    # One entry per BACI release. :class:`.tools.cepii.BACI` selects among them with
+    # its :attr:`~.tools.cepii.BACI.Options.release`; pass `filename` to :func:`fetch`
+    # to choose directly.
     "CEPII_BACI": dict(
         pooch_args=dict(
             base_url="https://www.cepii.fr/DATA_DOWNLOAD/baci/data/",
@@ -55,6 +58,10 @@ SOURCE: MutableMapping[str, Mapping[str, Any]] = {
                 "BACI_HS92_V202501.zip": (
                     "sha256:9b36cd9529d6dae0df3fc42ac42af2daecd1f4cd6fb9c281ee66187974f"
                     "a025c"
+                ),
+                "BACI_HS92_V202601.zip": (
+                    "sha256:43259580059fa83e17fcdb6866e7b7f39aaf0dd50277cfe494a1ed05a48"
+                    "44faf"
                 ),
             },
         ),
@@ -115,6 +122,7 @@ def fetch(
     pooch_args: dict,
     *,
     extra_cache_path: str | None = None,
+    filename: str | None = None,
     verbose: bool = False,
     **fetch_kwargs,
 ) -> tuple[Path, ...]:
@@ -127,6 +135,10 @@ def fetch(
     ----------
     args
         Passed to :func:`pooch.create`.
+    filename
+        Name of the entry in the registry to fetch. Optional where the registry has
+        exactly one entry; required where it has more than one, since there is
+        otherwise no way to say which is wanted.
     kwargs
         Passed to :meth:`pooch.Pooch.fetch`.
 
@@ -145,10 +157,17 @@ def fetch(
 
     p = pooch.create(**pooch_args)
 
-    if len(p.registry) > 1:  # pragma: no cover
-        raise NotImplementedError("fetch() with registries with >1 files")
+    if filename is None:
+        if len(p.registry) > 1:
+            raise ValueError(
+                f"filename= must name one of {sorted(p.registry)} when the registry "
+                "has more than one entry"
+            )
+        filename = next(iter(p.registry.keys()))
+    elif filename not in p.registry:
+        raise ValueError(f"{filename!r} is not in the registry {sorted(p.registry)}")
 
-    filenames = p.fetch(next(iter(p.registry.keys())), **fetch_kwargs)
+    filenames = p.fetch(filename, **fetch_kwargs)
 
     if isinstance(filenames, (str, Path)):
         filenames = [filenames]
