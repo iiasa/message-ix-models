@@ -108,6 +108,24 @@ def get_region_codes(codelist: str) -> list[Code]:
     return nodes[nodes.index(Code(id="World"))].child
 
 
+def get_parent_region(codelist: str, country: str) -> Code:
+    """Return the region in `codelist` of which `country` is a child.
+
+    For instance, :py:`get_parent_region("R12", "KAZ")` returns the code for "R12_FSU".
+    This is the region whose values a single-country model of `country` inherits from a
+    model with the regions of `codelist`.
+
+    Raises
+    ------
+    ValueError
+        if `country` is a child of no region in `codelist`.
+    """
+    for code in get_region_codes(codelist):
+        if country in map(str, code.child):
+            return code
+    raise ValueError(f"{country!r} is a child of no region in node/{codelist}")
+
+
 def generate_product(
     data: Mapping, name: str, template: Code
 ) -> tuple[list[Code], dict[str, xr.DataArray]]:

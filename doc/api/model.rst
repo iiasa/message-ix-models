@@ -43,6 +43,7 @@ Submodules described on separate pages:
       generate_product
       generate_set_elements
       get_codes
+      get_parent_region
       get_region_codes
       process_units_anno
       process_commodity_codes

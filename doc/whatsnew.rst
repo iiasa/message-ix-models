@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- :func:`.bare.create_res` accepts a caller-supplied spec and data (:pull:`559`).
 - Support the 2025 edition of the Climate Policy Database in :mod:`.tools.newclimate` (:pull:`560`).
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).

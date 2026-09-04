@@ -30,7 +30,7 @@ SETTINGS = dict(
 )
 
 
-def create_res(context, quiet=True):
+def create_res(context, quiet=True, *, spec=None, data=None):
     """Create a 'bare' MESSAGEix-GLOBIOM reference energy system (RES).
 
     Parameters
@@ -43,17 +43,23 @@ def create_res(context, quiet=True):
         - Scenario name "baseline".
     quiet : bool, optional
         Passed to `quiet` argument of :func:`.build.apply_spec`.
+    spec : .Spec, optional
+        Structural specification. The default is :func:`get_spec`.
+    data : callable, optional
+        Parameter-data callback passed to :func:`.apply_spec`. The default is
+        :func:`.model.data.get_data`.
 
     Returns
     -------
     message_ix.Scenario
-        A scenario as described by :func:`.bare.get_spec`, prepared using
-        :func:`.apply_spec`.
+        A scenario as described by `spec`, prepared using :func:`.apply_spec`.
     """
     mp = context.get_platform()
 
-    # Retrieve the spec; this also sets defaults expected by name()
-    spec = get_spec(context)
+    # Both name() and get_spec() read context.model
+    context.setdefault("model", Config())
+    spec = spec or get_spec(context)
+    data = data or partial(get_data, context=context, spec=spec)
 
     # Model and scenario name for the RES
     args = dict(
@@ -79,7 +85,7 @@ def create_res(context, quiet=True):
     apply_spec(
         scenario,
         spec,
-        data=partial(get_data, context=context, spec=spec),
+        data=data,
         quiet=quiet,
         message=f"Create using message-ix-models {message_ix_models.__version__}",
     )

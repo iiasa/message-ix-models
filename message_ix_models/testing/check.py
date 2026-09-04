@@ -172,11 +172,26 @@ class Dump(Check):
 
 @dataclass
 class HasCoords(Check):
-    """Object has/omits certain coordinates."""
+    """Object has/omits certain coordinates.
 
-    coords: dict[str, Collection[Hashable]]
+    By default, the object must have every label in :attr:`coords` on each dimension.
+    With :attr:`inverse`, it must have none of them; with :attr:`subset`, it must have
+    no label outside them, for instance when parameter data must not introduce labels
+    beyond a declared set. The two are exclusive.
+    """
+
+    coords: Mapping[str, Collection[Hashable]]
     inverse: bool = False
+    subset: bool = False
+    #: Compare labels as :class:`str`, for instance when :attr:`coords` gives years as
+    #: strings and the object holds them as integers.
+    as_str: bool = False
     types = (dict, pd.DataFrame, genno.Quantity)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if self.inverse and self.subset:
+            raise ValueError("HasCoords(inverse=True, subset=True) is contradictory")
 
     def run(self, obj):
         if isinstance(obj, dict):
@@ -196,11 +211,22 @@ class HasCoords(Check):
             if dim not in coords:
                 continue
             d, exp, obs = f"Dimension {dim!r}", set(v), coords[dim]
+            if self.as_str:
+                exp, obs = set(map(str, exp)), set(map(str, obs))
 
-            if not self.inverse and not exp <= obs:
-                result = False
-                message.append(f"{d} is missing coords {exp - obs}")
-            elif self.inverse and not exp.isdisjoint(obs):
+            if self.subset:
+                if not obs <= exp:
+                    result = False
+                    message.append(f"{d} has unexpected coords {obs - exp}")
+                else:
+                    message.append(f"{d} has {len(obs)} allowed coords")
+            elif not self.inverse:
+                if not exp <= obs:
+                    result = False
+                    message.append(f"{d} is missing coords {exp - obs}")
+                else:
+                    message.append(f"{d} has {len(exp)}/{len(exp)} expected coords")
+            elif not exp.isdisjoint(obs):
                 result = False
                 message.append(f"{d} has unexpected coords {exp ^ obs}")
             else:
