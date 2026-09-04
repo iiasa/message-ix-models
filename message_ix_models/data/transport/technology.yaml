@@ -7,6 +7,7 @@
 #
 # Codes have the following annotations:
 #
+# - 'gains-technology': Corresponding values in gains/EMF30_DET.yaml.
 # - 'gfei-2017-technology': Originally added to message_data.tools.iea_eei;
 #   moved here in iiasa/message_data#549 / iiasa/message-ix-models#162. Comments
 #   from the original location by F. Lovat:
@@ -33,8 +34,8 @@ ELC_100:
   input: {commodity: electr}
   report: Light-Duty Vehicle|Battery-Electric
   message-v-id: LDV_ELE
-  ntnu-vmi-technology: BEV
   gfei-2017-technology: Electric
+  ntnu-vmi-technology: BEV
 
 HFC_ptrp:
   name: Hydrogen fuel cell LDV
@@ -42,8 +43,8 @@ HFC_ptrp:
   input: {commodity: hydrogen}
   report: Light-Duty Vehicle|Fuel-Cell-Electric
   message-v-id: LDV_HFC
-  ntnu-vmi-technology: ICE
   gfei-2017-technology: Hydrogen
+  ntnu-vmi-technology: ICE
 
 IAHe_ptrp:
   name: Biofuel hybrid LDV
@@ -52,6 +53,7 @@ IAHe_ptrp:
   input: {commodity: ethanol}
   report: Light-Duty Vehicle|Biofuel hybrid
   message-v-id: LDV_EHYB
+  gains-technology: [End_Use_Transport_LDT_LLF]
   ntnu-vmi-technology: ICE
 
 IAHm_ptrp:
@@ -62,6 +64,7 @@ IAHm_ptrp:
   input: {commodity: methanol}
   report: Light-Duty Vehicle|Methanol hybrid
   message-v-id: LDV_MHYB
+  gains-technology: [End_Use_Transport_LDT_LLF]
   ntnu-vmi-technology: ICE
 
 ICAe_ffv:
@@ -74,8 +77,9 @@ ICAe_ffv:
   input: {commodity: ethanol}
   report: Light-Duty Vehicle|Biofuel
   message-v-id: LDV_ffv
-  ntnu-vmi-technology: ICE
+  gains-technology: [End_Use_Transport_LDT_LLF]
   gfei-2017-technology: Diesel
+  ntnu-vmi-technology: ICE
 
 ICAm_ptrp:
   name: Synfuel ICE LDV
@@ -85,8 +89,9 @@ ICAm_ptrp:
   input: {commodity: methanol}
   report: Light-Duty Vehicle|Synfuel
   message-v-id: LDV_meth
-  ntnu-vmi-technology: ICE
+  gains-technology: [End_Use_Transport_LDT_LLF]
   gfei-2017-technology: Flexfuel
+  ntnu-vmi-technology: ICE
 
 ICE_conv:
   report: ICE LDV
@@ -96,8 +101,9 @@ ICE_conv:
   input: {commodity: lightoil}
   report: Light-Duty Vehicle|Light oil combustion
   message-v-id: LDV_conv
-  ntnu-vmi-technology: ICE
+  gains-technology: [End_Use_Transport_LDT_LLF]
   gfei-2017-technology: Petrol
+  ntnu-vmi-technology: ICE
 
 ICE_L_ptrp:
   name: ICE LDV (pre-2005)
@@ -108,6 +114,7 @@ ICE_L_ptrp:
   report: Light-Duty Vehicle|Light oil combustion (2005 and before)
   historical-only: True
   message-v-id: LDV_ICE_L
+  gains-technology: [End_Use_Transport_LDT_LLF]
   ntnu-vmi-technology: ICE
 
 ICE_nga:
@@ -117,6 +124,7 @@ ICE_nga:
   input: {commodity: gas}
   report: Light-Duty Vehicle|Gas combustion
   message-v-id: LDV_NGA
+  gains-technology: [End_Use_Transport_NatGas]
   gfei-2017-technology: [CNG, LPG]
   ntnu-vmi-technology: ICE
 
@@ -128,8 +136,9 @@ ICH_chyb:
   input: {commodity: lightoil}
   report: Light-Duty Vehicle|Light-oil hybrid
   message-v-id: LDV_CHYB
-  ntnu-vmi-technology: ICE
+  gains-technology: [End_Use_Transport_LDT_LLF]
   gfei-2017-technology: Hybrid
+  ntnu-vmi-technology: ICE
 
 IGH_ghyb:
   name: Gas hybrid LDV
@@ -138,6 +147,7 @@ IGH_ghyb:
   input: {commodity: gas}
   report: Light-Duty Vehicle|Gas hybrid
   message-v-id: LDV_GHYB
+  gains-technology: [End_Use_Transport_LDT_NatGas]
   ntnu-vmi-technology: ICE
 
 PHEV_ptrp:
@@ -148,8 +158,9 @@ PHEV_ptrp:
   input: {commodity: [electr, lightoil]}
   report: Light-Duty Vehicle|Plug-in Hybrid
   message-v-id: LDV_PHEV
-  ntnu-vmi-technology: PHEV
+  gains-technology: [End_Use_Transport_LDT_LLF]
   gfei-2017-technology: Plug-in
+  ntnu-vmi-technology: PHEV
 
 ICE_H_moto:
   name: ICE 2- and 3-wheeler
@@ -159,6 +170,7 @@ ICE_H_moto:
   input: {commodity: lightoil}
   report: 2W|Combustion
   message-v-id: 2W_ICE_H
+  gains-technology: [End_Use_Transport_MC_LLF]
 
 ELE_moto:
   name: Battery-electric 2- and 3-wheeler
@@ -175,6 +187,7 @@ ICE_H_bus:
   input: {commodity: lightoil}
   report: Bus|Combustion light oil high efficiency
   message-v-id: BUS_ICE_H
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 ICE_M_bus:
   name: Medium-efficiency internal combustion bus
@@ -183,6 +196,7 @@ ICE_M_bus:
   input: {commodity: lightoil}
   report: Bus|Combustion light oil
   message-v-id: BUS_ICE_M
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 ICG_bus:
   name: Natural gas bus
@@ -190,6 +204,7 @@ ICG_bus:
   input: {commodity: gas}
   report: Bus|Combustion gas
   message-v-id: BUS_ICG
+  gains-technology: [End_Use_Transport_NatGas]
 
 ICAe_bus:
   name: Biofuel bus
@@ -197,6 +212,7 @@ ICAe_bus:
   input: {commodity: ethanol}
   report: Bus|Combustion biofuel
   message-v-id: BUS_ICAe
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 ICH_bus:
   name: Hybridized internal combustion bus
@@ -205,6 +221,7 @@ ICH_bus:
   input: {commodity: lightoil}  # hybridized, but not plug-in, so only oil input
   report: Bus|Hybrid combustion
   message-v-id: BUS_ICH
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 FC_bus:
   name: Hybridized hydrogen fuel cell bus
@@ -244,6 +261,7 @@ PHEV_bus:
     commodity: [electr, lightoil]
   report: Bus|Plug-in Hybrid
   message-v-id: BUS_PHEV
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 # BEV_bus:
 #   description: Battery-electric bus using electricity only
@@ -290,6 +308,7 @@ FR_ICE_H:
   input: {commodity: lightoil, level: final}
   report: Truck|Combustion light oil high efficiency
   message-v-id: FRT_ICE_H
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 FR_ICE_M:
   name: Medium-efficiency light oil truck
@@ -299,6 +318,7 @@ FR_ICE_M:
   input: {commodity: lightoil}
   report: Truck|Combustion light oil medium efficiency
   message-v-id: FRT_ICE_M
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 FR_ICE_L:
   name: Low-efficiency light oil truck
@@ -308,6 +328,7 @@ FR_ICE_L:
   input: {commodity: lightoil}
   report: Truck|Combustion light oil low efficiency
   message-v-id: FRT_ICE_L
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 FR_ICAe:
   name: Biofuel truck
@@ -315,6 +336,7 @@ FR_ICAe:
   input: {commodity: ethanol}
   report: Truck|Biofuel
   message-v-id: FRT_ICAe
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 FR_ICH:
   name: Hybrid ICE truck
@@ -323,6 +345,7 @@ FR_ICH:
   input: {commodity: lightoil}
   report: Truck|Hybrid combustion
   message-v-id: FRT_ICH
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 FR_FCH:
   name: Fuel cell truck
@@ -352,6 +375,7 @@ f road gas ic:
   input: {commodity: gas}
   report: Truck|Gas combustion
   message-v-id: [FR_ICG, FRT_ICG]
+  gains-technology: [End_Use_Transport_NatGas]
 
 f road methanol:
   name: Synfuel truck
@@ -361,6 +385,7 @@ f road methanol:
   input: {commodity: methanol}
   report: Truck|Fuel cell synfuel
   message-v-id: [FR_FCm, FRT_MFC]
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 f rail electr:
   name: Freight rail powered by electricity
@@ -371,6 +396,7 @@ f rail lightoil:
   name: Freight rail powered by light oil
   input: {commodity: lightoil}
   report: Freight|Rail|Combustion
+  gains-technology: [End_Use_Transport_OFF_HLF]
 
 F RAIL:
   name: Freight rail
@@ -388,18 +414,21 @@ crail_pub:
     Coal-powered urban public rail transport: aggregate of metro/underground,
     streetcars/trams, commuter trains, and regional trains
   name: Passenger|Rail|Coal
+  gains-technology: [End_Use_Transport_Coal]
 
 dMspeed_rai:
   name: Diesel train
   description: Diesel-powered long-distance medium-speed rail transport
   input: {commodity: lightoil}
   report: Passenger|Rail|Diesel
+  gains-technology: [End_Use_Transport_OFF_HLF]
 
 drail_pub:
   name: Diesel urban train
   description: Diesel-powered urban public rail transport
   input: {commodity: lightoil}
   report: Passenger|Rail|Diesel urban
+  gains-technology: [End_Use_Transport_OFF_HLF]
 
 Hspeed_rai:
   name: Electric high-speed train
@@ -447,16 +476,18 @@ transport pax load factor:
 transport 2w usage:
   description: >-
     Conversion from vehicle-distance traveled to passenger transport activity
+
 transport air usage:
   description: >-
     Conversion from vehicle-distance traveled to passenger transport activity
+
 transport bus usage:
   description: >-
     Conversion from vehicle-distance traveled to passenger transport activity
+
 transport rail usage:
   description: >-
     Conversion from vehicle-distance traveled to passenger transport activity
-
 
 # TODO Parametrize
 DUMMY supply of coal:
