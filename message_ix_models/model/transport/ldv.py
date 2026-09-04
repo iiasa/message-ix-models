@@ -188,13 +188,18 @@ def prepare_tech_econ(
 
         # Broadcast from (y) to (yv, ya) dims to produce the full quantity for
         # input/output efficiency
-        prev = c.add(k[1], "mul", k[0], bcast, K.bcast_y.all)
+        prev = c.add(k, "mul", k[0], bcast, K.bcast_y.all)
+
+        # Check that the resulting key is the same as expected in .key.input
+        if par_name == "input":
+            assert prev == K.input.LDV * "y"
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
-        c.add(k[2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
+        k_ixmp = f"{par_name}{Li}+0"
+        c.add(k_ixmp, "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
         # Convert to target units and append to `TARGET`
-        collect(par_name, convert_units, k[2], "transport info")
+        collect(par_name, convert_units, k_ixmp, "transport info")
 
     ### Transform costs
     kw = dict(fill_value="extrapolate")
