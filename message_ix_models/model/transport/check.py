@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from message_ix_models.model.transport import (
     Config,
     constraint,
+    demand,
     disutility,
     emission,
     freight,
@@ -184,7 +185,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     key.fv_cny: (HasUnits("Gt km / a"),),
     #
     # Exogenous demand calculation succeeds
-    "transport demand::ixmp": (
+    demand.TARGET: (
         # Data is returned for the demand parameter only
         ContainsDataForParameters({"demand"}),
         HasCoords({"level": ["useful"]}),
