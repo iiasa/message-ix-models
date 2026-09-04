@@ -22,6 +22,20 @@ from message_ix_models.project.fuel_security.policy import (
 
 log = logging.getLogger(__name__)
 
+
+def _set_default(context, scenario):
+    """Mark `scenario` as the default version for its (model, scenario) name.
+
+    ixmp's Scenario.clone() does not do this automatically for a clone into a new
+    (model, scenario) name pair (see ixmp.core.scenario.Scenario.clone docstring).
+    Without it, downstream code that loads "baseline_DEFAULT" by name only (e.g.
+    message_data.model.scenario_runner.make_scenario_runner) silently resolves to
+    a stale default version instead of the scenario produced by this workflow run.
+    """
+    scenario.set_as_default()
+    return scenario
+
+
 # Generate workflow
 def generate(context: Context) -> Workflow:
     """
@@ -51,8 +65,9 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "Base cloned",
         "Base",
+        _set_default,
         target = "fuel_security/baseline_DEFAULT", # This has to be named baseline_DEFAULT to match policy tool requirement
-        clone = dict(keep_solution = False)
+        clone = dict(keep_solution = True)
     )
 
     wf.add_step(
