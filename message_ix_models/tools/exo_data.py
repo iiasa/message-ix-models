@@ -2,14 +2,14 @@
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Hashable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from operator import itemgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from warnings import warn
 
-from genno import Key, quote
+from genno import Key, Quantity, quote
 from genno.core.key import iter_keys, single_key
 
 from message_ix_models import Context, ScenarioInfo
@@ -18,8 +18,11 @@ from message_ix_models.model.structure import get_codes
 if TYPE_CHECKING:
     from pathlib import Path
 
+    import pandas as pd
     from genno import Computer
     from genno.types import AnyQuantity
+
+    from message_ix_models.util.common import MappingAdapter
 
 
 __all__ = [
@@ -28,6 +31,7 @@ __all__ = [
     "BaseOptions",
     "DemoSource",
     "ExoDataSource",
+    "SDMXSource",
     "add_structure",
     "prepare_computer",
     "register_source",
@@ -327,6 +331,144 @@ class ExoDataSource(ABC):
             k = single_key(c.add(k[2], "interpolate", k, "y::coords", kwargs=kw))
 
         return k
+
+
+class SDMXSource(ExoDataSource):
+    """Exogenous data retrieved from an SDMX web service.
+
+    A concrete subclass **must** set :attr:`source`, :attr:`dataflow`, :attr:`dims`,
+    :attr:`units`, and :attr:`key`; **may** set :attr:`select` and :attr:`attributes`;
+    and **may** override :meth:`get_mapping` and :meth:`transform`.
+
+    Data are retrieved with :func:`.fetch_data`, which is cached. The cache records
+    no vintage of the data, so code that must be reproducible **should** store the data
+    it retrieves.
+    """
+
+    #: ID of the data source, as known to :mod:`sdmx`.
+    source: str
+    #: ID of the data flow.
+    dataflow: str
+    #: Mapping from dimension IDs of :attr:`dataflow` to :mod:`message_ix_models`
+    #: dimension IDs, including "n" and "y". Dimensions that have a corresponding
+    #: attribute of :attr:`Options` can be selected on.
+    dims: Mapping[str, str]
+    #: Fixed selections on other dimensions of :attr:`dataflow`, for instance a unit.
+    #: A dimension with a single selected label is dropped from the data returned by
+    #: :meth:`get`.
+    select: Mapping[str, tuple[str, ...]] = {}
+    #: Observation attributes to retrieve; see :func:`.fetch_data` and
+    #: :meth:`attribute`.
+    attributes: str = ""
+    #: Units of the values.
+    units: str
+
+    @dataclass
+    class Options(BaseOptions):
+        #: By default, do not aggregate.
+        aggregate: bool = False
+        #: By default, do not interpolate.
+        interpolate: bool = False
+
+        #: Labels to select on the |n| dimension. Required.
+        n: tuple[str, ...] = ()
+        #: Labels to select on the "product" dimension, if any.
+        product: tuple[str, ...] = ()
+        #: Labels to select on the "flow" dimension, if any.
+        flow: tuple[str, ...] = ()
+        #: First and last period.
+        start: int | None = None
+        end: int | None = None
+
+    options: Options
+
+    def __init__(self, *args, **kwargs) -> None:
+        opt = self.options = self.Options.from_args(self, *args, **kwargs)
+        if not opt.n:
+            raise ValueError("Must give at least one label with n=…")
+
+        # Key for the data query: fixed selections, plus labels for each dimension in
+        # `dims` that has a corresponding option
+        self.query_key = dict(self.select)
+        for dim_id, dim in self.dims.items():
+            if labels := getattr(opt, dim, ()):
+                self.query_key[dim_id] = labels
+
+        # Indexers to drop dimensions with a single fixed selection
+        self.indexers = {d: v[0] for d, v in self.select.items() if len(v) == 1}
+
+        super().__init__()
+
+    def load_data(self) -> "pd.Series | pd.DataFrame":
+        """Retrieve the data using :func:`.fetch_data`.
+
+        The result has the dimension IDs of :attr:`dataflow` on its index. It is a
+        :class:`pandas.DataFrame` with a "value" column and one column per attribute if
+        :attr:`attributes` is set; otherwise a :class:`pandas.Series`.
+        """
+        from message_ix_models.util.sdmx import fetch_data
+
+        o = self.options
+        return fetch_data(
+            self.source,
+            self.dataflow,
+            self.query_key,
+            attributes=self.attributes,
+            startPeriod=o.start,
+            endPeriod=o.end,
+        )
+
+    def _quantity(self, series: "pd.Series", units: str) -> "AnyQuantity":
+        # - Convert the period labels to int.
+        # - Convert to Quantity; map dimension IDs.
+        # - Apply the prepared indexers.
+        y_id = next(k for k, v in self.dims.items() if v == "y")
+        idx = series.index
+        idx = idx.set_levels(idx.levels[idx.names.index(y_id)].astype(int), level=y_id)
+        result = (
+            Quantity(series.set_axis(idx), units=units)
+            .rename(cast("Mapping[Hashable, Hashable]", self.dims))
+            .sel(self.indexers, drop=True)
+        )
+        if set(result.dims) != set(self.key.dims):
+            raise ValueError(
+                f"Data have dimensions {sorted(result.dims)}; expected {self.key.dims}"
+            )
+        return result
+
+    def get(self) -> "AnyQuantity":
+        import pandas as pd
+
+        data = self.load_data()
+        values = data["value"] if isinstance(data, pd.DataFrame) else data
+        return self._quantity(values, self.units)
+
+    def attribute(self, name: str) -> "AnyQuantity":
+        """Return the observation attribute `name` as a dimensionless Quantity.
+
+        Values that cannot be converted to :class:`float` are NaN.
+        """
+        import pandas as pd
+
+        data = self.load_data()
+        assert isinstance(data, pd.DataFrame), "attributes not retrieved"
+        return self._quantity(pd.to_numeric(data[name], errors="coerce"), units="")
+
+    @classmethod
+    def get_mapping(cls) -> "MappingAdapter | None":
+        """Return an adapter from the service's |n| labels to ISO 3166-1 alpha-3 codes.
+
+        The default, :any:`None`, applies no mapping.
+        """
+        return None
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Apply :meth:`get_mapping`, if any, then :meth:`.ExoDataSource.transform`."""
+        k = base_key
+        if adapter := self.get_mapping():
+            k = base_key["a3"]
+            c.add(k, adapter, base_key)
+        return super().transform(c, k)
 
 
 def add_structure(c: "Computer", *, context: "Context", strict: bool = True) -> None:

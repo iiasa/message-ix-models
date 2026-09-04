@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 from warnings import warn
 
+import pandas as pd
 import sdmx
 import sdmx.message
 import sdmx.urn
@@ -25,6 +26,7 @@ from iam_units import registry
 from ixmp.report.common import RENAME_DIMS
 from sdmx.model import common, v21
 
+from .cache import cached
 from .common import package_data_path
 from .context import Context
 
@@ -738,6 +740,48 @@ def eval_anno(obj: common.AnnotableArtefact, id: str):
     except Exception as e:  # Something that can't be eval()'d, e.g. a plain string
         log.debug(f"Could not eval({value!r}): {e}")
         return value
+
+
+@cached
+def fetch_data(
+    source: str,
+    dataflow: str,
+    key: Mapping[str, Iterable[str]],
+    *,
+    attributes: str = "",
+    **params: "str | int | None",
+) -> "pd.DataFrame | pd.Series":
+    """Retrieve data from an SDMX web service.
+
+    Parameters
+    ----------
+    source
+        ID of a data source known to :mod:`sdmx`, for instance "ESTAT" or "UNSD".
+    dataflow
+        ID of a data flow provided by `source`.
+    key
+        Mapping from dimension IDs of `dataflow` to labels to select. Dimensions not
+        included are unconstrained.
+    attributes
+        Passed to :func:`sdmx.to_pandas`. If empty (the default), the result is a
+        :class:`pandas.Series`. Otherwise—for instance "o" for observation-level
+        attributes—the result is a :class:`pandas.DataFrame` with a "value" column and
+        one column per attribute.
+    params
+        Query parameters, for instance :py:`startPeriod=2000`. Those with value
+        :any:`None` are omitted.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        with one index level per dimension of `dataflow`, combining all data sets in
+        the response.
+    """
+    params_ = {k: str(v) for k, v in params.items() if v is not None}
+    log.info(f"Query {source} {dataflow} for {key!r} {params_!r}")
+    message = sdmx.Client(source).data(dataflow, key=dict(key), params=params_)
+
+    return pd.concat([sdmx.to_pandas(ds, attributes=attributes) for ds in message.data])
 
 
 def get(urn: str) -> "common.MaintainableArtefact | None":

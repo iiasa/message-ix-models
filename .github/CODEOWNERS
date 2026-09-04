@@ -75,5 +75,12 @@
 /doc/project/ssp.rst      @OFR-IIASA
 /doc/project/uptake.rst   @ywpratama
 
+/message_ix_models/tools/eurostat.py             @Wegatriespython
+/message_ix_models/tests/tools/test_eurostat.py  @Wegatriespython
+
 /message_ix_models/tools/newclimate                @khaeru
 /message_ix_models/tests/tools/test_newclimate.py  @khaeru
+
+/message_ix_models/tools/unsd.py                @Wegatriespython
+/message_ix_models/tests/tools/test_unsd.py     @Wegatriespython
+/message_ix_models/data/test/unsd               @Wegatriespython

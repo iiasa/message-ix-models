@@ -11,6 +11,22 @@ Tools for specific data sources
 .. automodule:: message_ix_models.tools.cepii
    :members:
 
+.. _tools-eurostat:
+
+Eurostat (:mod:`.tools.eurostat`)
+=================================
+
+Eurostat publishes complete energy balances for EU member states, candidate countries, and some others in the data flow ``NRG_BAL_C``, through an SDMX web service that requires no registration.
+Countries not covered are generally covered by :mod:`.tools.unsd`.
+
+:class:`.ESTAT_ENERGY_BALANCE` returns data with the dimensions and units of :class:`.IEA_EWEB`, with Eurostat's own ``siec`` codes for products and ``nrg_bal`` codes for flows.
+This is an :class:`.SDMXSource` subclass; see that class for use with :mod:`genno` or :mod:`pandas`.
+
+.. currentmodule:: message_ix_models.tools.eurostat
+
+.. automodule:: message_ix_models.tools.eurostat
+   :members:
+
 .. _tools-gfei:
 
 Global Fuel Economy Initiative (GFEI) (:mod:`.tools.gfei`)
@@ -187,4 +203,25 @@ NewClimate Institute (:mod:`.tools.newclimate`)
 ===============================================
 
 .. automodule:: message_ix_models.tools.newclimate
+   :members:
+
+.. _tools-unsd:
+
+UN Statistics Division (UNSD) (:mod:`.tools.unsd`)
+==================================================
+
+UNSD publishes energy statistics for all countries, including those not covered by Eurostat or the IEA, through an SDMX web service (https://unstats.un.org/unsd/energystats/) that requires no registration.
+Two data flows are supported:
+
+- ``DF_UNData_EnergyBalance``, via :class:`.UNSD_ENERGY_BALANCE`: energy balances with 9 fuel groups on the ``product`` dimension.
+  These are too coarse for uses that distinguish individual products, as :class:`.IEA_EWEB` does with about 70.
+- ``DF_UNDATA_ENERGY``, via :class:`.UNSD_ENERGY`: individual commodities in physical units, converted to TJ using the conversion factor attached to each observation.
+  Natural gas is converted from gross to net calorific value.
+
+The data have the dimensions and units of :class:`.IEA_EWEB`, with UNSD's own codes for products and flows.
+Both are :class:`.SDMXSource` subclasses; see that class for use with :mod:`genno` or :mod:`pandas`.
+
+.. currentmodule:: message_ix_models.tools.unsd
+
+.. automodule:: message_ix_models.tools.unsd
    :members:
