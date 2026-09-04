@@ -29,18 +29,18 @@ These enable programmatic use of the information in the database. For example:
    from message_ix_models.tools.newclimate import SECTOR, get
    from pycountry import countries
 
-   # Fetch and parse the 2024 edition of the database
-   policies = get("2024")
-   print(len(policies))  # 6507 objects
+   # Fetch and parse the 2025 edition of the database
+   policies = get("2025")
+   print(len(policies))  # 6727 objects
 
    # Filter the dict to a list of policy objects matching a certain sector
    p_transport = list(filter(lambda p: SECTOR.Transport in p.sector, policies.values()))
-   print(len(p_transport))  # 1298 objects
+   print(len(p_transport))  # 1342 objects
 
    # Filter for any policies concerning the country of Austria, or the EU
    match = {pycountry.lookup("Austria"), "European Union"}
    p_AUT = list(filter(lambda p: set(p.geo) & match, policies.values()))
-   print(len(p_AUT)))  # 259 objects
+   print(len(p_AUT)))  # 262 objects
 
 .. todo:: Extend the module:
 
@@ -91,6 +91,16 @@ log = logging.getLogger(__name__)
 
 #: Pooch information for fetching files from the static version of the database.
 SOURCE = {  # noqa: E501
+    "newclimate-2025": dict(
+        pooch_args=dict(
+            base_url="doi:10.5281/zenodo.19682932",
+            registry={
+                "ClimatePolicyDatabase_v2025.csv": (
+                    "sha256:77ceb6959afb7c150f3421945da9917d51ed667825a7fbf3be09d4dc1a2032a4"
+                ),
+            },
+        ),
+    ),
     "newclimate-2024": dict(
         pooch_args=dict(
             base_url="doi:10.5281/zenodo.15432946",
