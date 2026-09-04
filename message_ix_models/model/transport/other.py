@@ -9,6 +9,7 @@ from genno import Key, quote
 
 from . import key as K
 from . import util
+from .build import add_parameter_data
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -27,12 +28,15 @@ COMMON = util.COMMON | dict(level="final")
 DIMS = util.DIMS | dict(node_loc="n", node_origin="n", year_act="y", year_vtg="y")
 DIMS.pop("level", None)
 
-#: Target key that collects all data generated in this module.
+#: Key for a task that collects all data generated in this module.
 TARGET = "transport::O+ixmp"
 
 
 def prepare_computer(c: "Computer") -> None:
-    """Generate MESSAGE parameter data for ``transport other *`` technologies."""
+    """Generate MESSAGE parameter data for ``transport other *`` technologies.
+
+    Data are generated for ``bound_activity_{lo,up}`` and ``input``.
+    """
     # Keys
     base = K.exo.energy_other
     assert {"c", "n"} == set(base.dims)
@@ -43,9 +47,12 @@ def prepare_computer(c: "Computer") -> None:
     if base not in c:
         log.warning(f"No key {base!r} → no data for 'transport other *' techs")
 
+        # To satisfy tests/checks, create a dict with None/empty values for the expected
+        # parameters
         names = "bound_activity_lo bound_activity_up input".split()
         c.add(TARGET, quote(dict.fromkeys(names)))
-        c.add("transport_data", __name__, key=TARGET)
+
+        add_parameter_data(__name__, TARGET)  # Add to the build
 
         return
 
@@ -87,8 +94,5 @@ def prepare_computer(c: "Computer") -> None:
     k_input = Key(f"input{Oi}")
     c.add(k_input, "as_message_df", k_cnty.last, name=k_input.name, **kw)
 
-    # Merge data together
-    c.add(TARGET, "merge_data", k_bal, k_bau, k_input)
-
-    # Connect `TARGET` to the "add transport data" key
-    c.add("transport_data", __name__, key=TARGET)
+    c.add(TARGET, "merge_data", k_bal, k_bau, k_input)  # Merge all data together
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
