@@ -14,6 +14,7 @@ from message_ix_models.util import (
     broadcast,
     identify_nodes,
 )
+from message_ix_models.util.node import create_maps
 
 PAR = "technical_lifetime"
 VALUE = [0.1, 0.2]
@@ -88,6 +89,21 @@ def test_adapt_qty(input, func, expected, node_loc):
     assert (
         expected == qty_out.sel(node_loc=node_loc, technology="coal_ppl", year=2022)
     ).all()
+
+
+def test_create_maps(caplog: pytest.LogCaptureFixture) -> None:
+    # Function runs without error
+    a, b = create_maps("R12", "GAINS", debug=True)
+
+    # First mapping is from each element of R12 to an element of GAINS
+    assert 12 == len(a)
+    # Second mapping is the opposite
+    assert 25 == len(b)
+    # Not all R12 code IDs appear as values
+    assert 12 >= len(set(b.values()))
+
+    # A table was logged with counts
+    assert "AFRI_EAST      15" in caplog.messages[-1]
 
 
 @pytest.mark.parametrize("regions", ["R11", "R12", "R14"])

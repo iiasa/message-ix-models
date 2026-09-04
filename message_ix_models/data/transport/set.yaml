@@ -186,6 +186,15 @@ emission:
 
   add:
   - CO2
+  # Emissions species for transport-specific emission accounting
+  # See .model.transport.emission.
+  - CO transport
+  - NH3 transport
+  - NOX transport
+  - PM_BC transport
+  - PM_OC transport
+  - SO2 transport
+  - VOC transport
 
 level:
   require:

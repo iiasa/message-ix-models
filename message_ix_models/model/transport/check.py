@@ -6,6 +6,7 @@ from message_ix_models.model.transport import (
     Config,
     constraint,
     disutility,
+    emission,
     freight,
     key,
     ldv,
@@ -199,6 +200,11 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # .disutility.prepare_computer()
     "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
     disutility.TARGET: (ContainsDataForParameters({"input"}),),
+    emission.TARGET: (
+        ContainsDataForParameters({"emission_factor"}),
+        # Emissions species are transformed
+        HasCoords({"emission": ["VOC transport"]}),
+    ),
     # The following partly replicates .test_ldv.test_get_ldv_data()
     # NB Cannot use NoDuplicates here yet due to:
     # - inv_cost: 50076 duplicated keys

@@ -23,6 +23,7 @@ from message_ix_models.util.genno import Collector
 
 from . import key as K
 from . import util
+from .build import add_parameter_data
 from .data import MaybeAdaptR11Source
 from .emission import ef_for_input
 from .util import COMMON
@@ -43,8 +44,11 @@ Li = "::LDV+ixmp"
 #: quantities.
 DIMS = util.DIMS | dict(node_dest="n", node_loc="n", node_origin="n")
 
-#: Target key that collects all data generated in this module.
+#: Key for a task that collects all data generated in this module.
 TARGET = f"transport{Li}"
+
+#: Collect parameter data in `TARGET`.
+collect = Collector(TARGET, "{}::LDV+ixmp".format)
 
 
 class LDV(MaybeAdaptR11Source):
@@ -72,9 +76,6 @@ class LDV(MaybeAdaptR11Source):
         self.key = Key(f"{self.options.measure}:n-t-y:LDV+exo")
 
 
-collect = Collector(TARGET, "{}::LDV+ixmp".format)
-
-
 def prepare_computer(c: Computer):
     """Set up `c` to compute parameter data for light-duty-vehicle technologies.
 
@@ -91,9 +92,8 @@ def prepare_computer(c: Computer):
 
     from . import factor
 
-    # Collect data in `TARGET` and connect to the "add transport data" key
-    collect.computer = c
-    c.add("transport_data", __name__, key=TARGET)
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
     context = c.graph["context"]
     config: "Config" = context.transport
@@ -188,13 +188,18 @@ def prepare_tech_econ(
 
         # Broadcast from (y) to (yv, ya) dims to produce the full quantity for
         # input/output efficiency
-        prev = c.add(k[1], "mul", k[0], bcast, K.bcast_y.all)
+        prev = c.add(k, "mul", k[0], bcast, K.bcast_y.all)
+
+        # Check that the resulting key is the same as expected in .key.input
+        if par_name == "input":
+            assert prev == K.input.LDV * "y"
 
         # Convert to ixmp/MESSAGEix-structured pd.DataFrame
-        c.add(k[2], "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
+        k_ixmp = f"{par_name}{Li}+0"
+        c.add(k_ixmp, "as_message_df", prev, name=par_name, dims=DIMS, common=COMMON)
 
         # Convert to target units and append to `TARGET`
-        collect(par_name, convert_units, k[2], "transport info")
+        collect(par_name, convert_units, k_ixmp, "transport info")
 
     ### Transform costs
     kw = dict(fill_value="extrapolate")

@@ -1,0 +1,81 @@
+# Codes appearing as coordinates for the "EMF30_DET" dimension
+# in emission_factor.csv.gz.
+#
+# The concept identity of the dimension ID is unclear.
+# message_ix_models.tools.gains treats it the same as
+# MESSAGEix "technology".
+
+CEMENT: {}
+CHEM: {}
+CUSM: {}
+End_Use_Industry_Bio_Trad: {}
+End_Use_Industry_Coal: {}
+End_Use_Industry_HLF: {}
+End_Use_Industry_LLF: {}
+End_Use_Industry_NatGas: {}
+End_Use_Residential_Bio_Mod: {}
+End_Use_Residential_Bio_Trad_Cook: {}
+End_Use_Residential_Bio_Trad_Heat: {}
+End_Use_Residential_Coal_Cook: {}
+End_Use_Residential_Coal_Heat: {}
+End_Use_Residential_HLF: {}
+End_Use_Residential_LLF: {}
+End_Use_Residential_NatGas: {}
+End_Use_Services_Bio_Trad_Heat: {}
+End_Use_Services_Coal_Heat: {}
+
+End_Use_Transport_AGR_HLF:
+  description: |
+    Agricultural machinery, diesel.
+
+    "HLF" in general refers to diesel fuel.
+
+End_Use_Transport_Coal:
+  description: Transport (CNG)
+
+End_Use_Transport_HDT_HLF:
+  description: Heavy duty vehicles, diesel
+
+End_Use_Transport_HDT_LLF:
+  description: |
+    Heavy duty vehicles, gasoline.
+
+    "LLF" in general refers to gasoline.
+
+End_Use_Transport_LDT_HLF:
+  description: Light duty vehicles, diesel
+
+End_Use_Transport_LDT_LLF:
+  description: Light duty vehicles, gasoline
+
+End_Use_Transport_MC_LLF:
+  description: Motorcycles and mopeds, gasoline
+
+End_Use_Transport_NatGas:
+  description: Transport (CNG)
+
+End_Use_Transport_OFF_HLF:
+  description: Other non-road transport, diesel
+
+End_Use_Transport_OFF_LLF:
+  description: Other non-road transport, gasoline
+
+Losses_Coal: {}
+Losses_Prod_Oil: {}
+NACID: {}
+PAPER: {}
+Power_Gen_Bio_Trad_New: {}
+Power_Gen_Bio_Trad_Old: {}
+Power_Gen_Coal_IGCC_CCS: {}
+Power_Gen_Coal_New: {}
+Power_Gen_Coal_Old: {}
+Power_Gen_HLF: {}
+Power_Gen_LLF: {}
+Power_Gen_NatGas: {}
+STEEL: {}
+Transformations_Coal: {}
+Transformations_HLF: {}
+Transformations_HLF_Refinery: {}
+Transformations_LLF: {}
+Waste_Solid_Municipal: {}
+Waste_Water_Municipal: {}
