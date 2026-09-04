@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "adapt_gains",
     "base_model_data_header",
     "base_shares",
     "broadcast_advance",
@@ -73,6 +74,37 @@ __all__ = [
     "votm",
     "yv_ya_banded",
 ]
+
+
+def adapt_gains(qty: "TQuantity", technologies: list["Code"]) -> "TQuantity":
+    """Adapt data from GAINS to MESSAGEix-Transport codes.
+
+    The function constructs and then applies a :class:`MappingAdapter` to 2 dimensions
+    of `qty`:
+
+    - |e| (emission) dimension: the codes from :file:`gains/emission.yaml` are converted
+      by adding a suffix " transport". For instance, "VOC" becomes "VOC transport".
+    - |t| (technology) dimension: for each MESSAGEix-Transport technology in
+      `technologies`, the annotation :py:`id="gains-technology"` is retrieved. Each (0
+      or more) GAINS technology ID from that list is mapped to the MESSAGEix-Transport
+      technology.
+    """
+    # Mappings for "emission"
+    data_e = []
+    for code in get_codelist("gains/emission"):
+        data_e.append((code.id, f"{code.id} transport"))
+
+    # Mappings for "technology"
+    data_t = []
+    for t in technologies:
+        for t_gains in t.eval_annotation("gains-technology") or ():
+            data_t.append((t_gains, t.id))
+
+    # Construct the adapter for both dimensions
+    adapter = MappingAdapter({"e": tuple(data_e), "t": tuple(data_t)})
+
+    # Apply to `qty`
+    return adapter(qty)
 
 
 def base_model_data_header(scenario: "Scenario", *, name: str) -> dict[str, str]:
