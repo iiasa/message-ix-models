@@ -2,7 +2,10 @@
 
 from typing import TYPE_CHECKING
 
+from message_ix_models.util.genno import Collector
+
 from . import util
+from .build import add_parameter_data
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -31,6 +34,9 @@ PARAM = (
 #: Target key that collects all data generated in this module.
 TARGET = "transport::constraint+ixmp"
 
+#: Collect parameter data in `TARGET`.
+collect = Collector(TARGET, "{}::constraint+ixmp".format)
+
 
 def prepare_computer(c: "Computer") -> None:
     """Prepare calculation of constraint data for transport technologies.
@@ -39,13 +45,10 @@ def prepare_computer(c: "Computer") -> None:
     """
     from genno import Key, Keys
 
-    from message_ix_models.util.genno import Collector
-
     from . import key as K
 
-    collect = Collector(TARGET, "{}::constraint+ixmp".format)
-    collect.computer = c
-    c.add("transport_data", __name__, key=TARGET)
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
     k = Keys(a=Key("constraints", K.exo.constraint_dynamic.dims, "transport"))
     k.b = k.a * tuple("lny")

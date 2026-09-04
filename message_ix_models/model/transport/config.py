@@ -14,12 +14,12 @@ from message_ix_models.util import package_data_path, short_hash
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.util.sdmx import AnnotationsMixIn, StructureFactory
 
-from .policy import ExogenousEmissionPrice, TaxEmission
-
 if TYPE_CHECKING:
     from sdmx.model import common
 
     from message_ix_models.tools.policy import Policy
+
+    from .policy import ExogenousEmissionPrice, TaxEmission
 
 
 log = logging.getLogger(__name__)
@@ -481,9 +481,11 @@ class ScenarioCodeAnnotations(AnnotationsMixIn):
 
     @classmethod
     def from_obj(cls, obj, globals=None):
+        from . import policy
+
         globals = (globals or {}) | dict(
-            TaxEmission=TaxEmission,
-            ExogenousEmissionPrice=ExogenousEmissionPrice,
+            TaxEmission=policy.TaxEmission,
+            ExogenousEmissionPrice=policy.ExogenousEmissionPrice,
         )
         return super().from_obj(obj, globals=globals)
 
@@ -615,7 +617,7 @@ class CL_SCENARIO(StructureFactory["common.Codelist"]):
 
 def iter_price_emission(
     regions: str, ssp_or_led: str
-) -> Iterator[tuple[ExogenousEmissionPrice, str]]:
+) -> Iterator[tuple["ExogenousEmissionPrice", str]]:
     """Iterate over available data in :file:`transport/{regions}/price-emission/`.
 
     Yields 2-tuple, similar to :meth:`.ScenarionInfo.from_path`:
@@ -626,6 +628,7 @@ def iter_price_emission(
     Only files with paths/model names containing ``SSP{ssp_or_led}`` are returned; all
     others are skipped.
     """
+    from .policy import ExogenousEmissionPrice
     # TODO Integrate some or all of this functionality with the PRICE_EMISSION class
 
     base_dir = package_data_path("transport", regions, "price-emission")

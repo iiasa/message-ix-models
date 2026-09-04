@@ -4,21 +4,27 @@ from genno import Key, Quantity, quote
 
 from . import key as K
 from . import util
+from .build import add_parameter_data
 from .util import EXTRAPOLATE
 
 if TYPE_CHECKING:
     from genno import Computer
 
-# - Use y for both year_vtg and year_act. This is because the usage pseudo-
-#   technologies are ephemeral: only existing for year_vtg == year_act.
+#: Common, fixed values for some dimensions of MESSAGE parameters.
+#:
+#: .. todo:: read the "level" value from the spec or template
 COMMON = util.COMMON | dict(
-    commodity="disutility",
-    level="useful",  # TODO Read this from the spec or template
-    mode="all",
-    time_origin="year",
+    commodity="disutility", level="useful", mode="all", time_origin="year"
 )
+
+#: Mapping from :mod:`message_ix` parameter dimensions to source dimensions in some
+#: quantities.
+#:
+#: Use y for both year_vtg and year_act. This is because the usage pseudo-technologies
+#: are ephemeral: only existing for year_vtg == year_act.
 DIMS = dict(node_loc="n", node_origin="n", technology="t", year_vtg="y", year_act="y")
 
+#: Key for a task that collects all data generated in this module.
 TARGET = "disutility::LDV+ixmp"
 
 
@@ -45,5 +51,4 @@ def prepare_computer(c: "Computer") -> None:
     # Convert to message_ix-ready data
     c.add(TARGET, "as_message_df", k, name="input", dims=DIMS, common=COMMON)
 
-    # Add to the scenario
-    c.add("transport_data", __name__, key=TARGET)
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
