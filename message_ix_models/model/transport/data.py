@@ -890,6 +890,8 @@ def navigate_ele(
 
 def prepare_computer(c: Computer):
     """Add miscellaneous transport data."""
+    from .build import add_parameter_data
+
     # Data-generating calculations
     for comp in (
         (conversion, K.n, K.y, "config"),
@@ -897,11 +899,9 @@ def prepare_computer(c: Computer):
         (dummy_supply, K.t, "info", "config"),
         (navigate_ele, K.n, K.t, K.agg.t, K.y, "config"),
     ):
-        # Add 2 computations: one to generate the data
-        name = getattr(comp[0], "__name__")
-        k1 = c.add(f"{name}::ixmp", *comp)
-        # …one to add it to `scenario`
-        c.add("transport_data", f"transport {name}", key=k1)
+        # Generate the data and add to the build
+        name = __name__ + "." + getattr(comp[0], "__name__")
+        add_parameter_data(name, *comp)
 
 
 def read_structures() -> "sdmx.message.StructureMessage":
