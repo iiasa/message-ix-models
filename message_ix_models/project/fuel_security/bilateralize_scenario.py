@@ -44,7 +44,7 @@ def add_scenario_updates(project_name, config_name, data_path):
                     shutil.copy2(base_file, dest_file)
                     print(f"Copied file from scenario_updates to bare: {file}")
 
-def bilateralize_scenario(project_name, config_name, scenario):
+def bilateralize_scenario(project_name, config_name, scenario, target_scenario = None):
     """
     Bilateralize a given scenario
     """
@@ -76,8 +76,9 @@ def bilateralize_scenario(project_name, config_name, scenario):
                                                         config_name = config_name)
 
     # Clone and set up base scenario
+    target_scenario = target_scenario or f"{scenario.scenario}_bilat"
     print(f"Base model: {scenario.model}/{scenario.scenario}")
-    print(f"Target model: fuel_security/{scenario.scenario}")
+    print(f"Target model: {project_name}/{target_scenario}")
 
     print("Setting up scenario")
     load_and_solve(trade_dict = trade_dict,
@@ -87,14 +88,14 @@ def bilateralize_scenario(project_name, config_name, scenario):
                    start_model = scenario.model,
                    start_scen = scenario.scenario,
                    target_model = project_name,
-                   target_scen = scenario.scenario,
+                   target_scen = target_scenario,
                    extra_parameter_updates = liquefaction_parameters)
 
     # Update extraction constraints
     print("Updating extraction constraints")
     mp = ixmp.Platform()
-    base_scenario = message_ix.Scenario(mp, model=project_name, scenario=scenario.scenario)
-    out_scenario = base_scenario.clone(project_name, scenario.scenario)
+    base_scenario = message_ix.Scenario(mp, model=project_name, scenario=target_scenario)
+    out_scenario = base_scenario.clone(project_name, target_scenario)
     out_scenario.set_as_default()
 
     for g in ['growth_activity_up']:
@@ -130,3 +131,5 @@ def bilateralize_scenario(project_name, config_name, scenario):
     print("Solve scenario")
     out_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
     mp.close_db()
+
+    return out_scenario

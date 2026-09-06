@@ -35,7 +35,15 @@ def _set_default(context, scenario):
     scenario.set_as_default()
     return scenario
 
-
+def _bilateralize(context, scenario):
+    """Bilateralize trade technologies on the scenario produced upstream."""
+    return bilateralize_scenario(
+        project_name="fuel_security",
+        config_name="config.yaml",
+        scenario=scenario,
+        target_scenario=f"{scenario.scenario}_bilateral"
+    )
+    
 # Generate workflow
 def generate(context: Context) -> Workflow:
     """
@@ -59,7 +67,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "Base",
         None,
-        target = "ixmp://ixmp-dev/SSP_SSP2_v5.1/baseline" # TODO update this to 6.6   
+        target = "ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline" # TODO update this to 6.6   
     )
 
     wf.add_step(
@@ -76,5 +84,11 @@ def generate(context: Context) -> Workflow:
         add_NPi2030,
         target = "fuel_security/NPi2030"
     )
-    
+
+    wf.add_step(
+        "NPi2030 bilateralized",
+        "Add and solve NPi2030",
+        _bilateralize,
+        target="fuel_security/NPi2030_bilateral"
+    )
     return wf
