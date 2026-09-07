@@ -43,7 +43,7 @@ def broadcast_years(
     all_new_rows = []
     for _, row in df.iterrows():
         for y in year_list:
-            new_row = row.copy()
+            new_row = row.copy().astype(object)
             new_row[year_type] = int(y)
             all_new_rows.append(new_row)
     result_df = pd.concat([df, pd.DataFrame(all_new_rows)], ignore_index=True)
@@ -90,7 +90,7 @@ def broadcast_yv_ya(
 
             # Create new rows for each vintage year
             for yv in yv_list:
-                new_row = row.copy()
+                new_row = row.copy().astype(object)
                 new_row["year_act"] = int(ya)
                 new_row["year_vtg"] = int(yv)
                 all_new_rows.append(new_row)
