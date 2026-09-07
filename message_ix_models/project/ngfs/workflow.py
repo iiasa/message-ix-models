@@ -26,14 +26,19 @@ from message_ix_models.project.engage.workflow import (
     step_3,
     step_4,
 )
-from message_ix_models.project.ngfs import interpolate_c_price
+from message_ix_models.project.ngfs import (
+    interpolate_c_price,
+    qf_freeze_truck_history,
+    qf_remove_ELC100_near_term_infeasibility,
+    qf_remove_meth_h2_co2_relations,
+)
 from message_ix_models.tools import add_CO2_emission_constraint
 from message_ix_models.workflow import Workflow
 
 log = logging.getLogger(__name__)
 
 # Single source of truth for the NGFS model name (config key and scenario target prefix)
-NGFS_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12"
+NGFS_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3"
 
 # Functions for individual workflow steps
 
@@ -758,37 +763,108 @@ _scen_en_steps = [
 
 
 def generate(context: Context) -> Workflow:
-    """Create the NGFS workflow."""
+    """Create the NGFS workflow.
+
+    Both BMT setps and NGFS steps are included in this workflow.
+    """
+    from message_ix_models.model.bmt.config import apply_bmt_config
+    from message_ix_models.model.bmt.workflow import (
+        _set_as_default,
+        add_macro,
+        prep_for_macro,
+    )
+    from message_ix_models.model.buildings.build import main as build_B
+    from message_ix_models.model.transport import workflow as transport
+
     wf = Workflow(context)
     context.ssp = "SSP2"
     context.model.regions = "R12"
+    apply_bmt_config(context)
+    # YJ: model name is defined there in the bmt config but fine
+    # YJ: nothing in this file reads context.bmt["model_name"] so all good
 
     # Full scenario target prefix (platform + model name)
     model_name = f"ixmp://ixmp-dev/{NGFS_MODEL_NAME}"
-
-    wf.add_step(
-        "base",
-        None,
-        # target="ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline", # for c0
-        # fmy of the whole workflow afterwards starts from 2030
-        target=(
-            "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 2.2-BMT-R12/"
-            "baseline_BMTX_message_macro#10"
-        ),
+    base_url = (
+        "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC/"
+        "baseline_DEFAULT_step_14b"
     )
+    # which is the Oliver v6.6 step14 with the loil bunker fix by LC
 
+    c = dict(keep_solution=False)
+
+    # BMT steps
+    name = wf.add_step("M", None, target=base_url)
+    name = wf.add_step(
+        "M cloned",
+        name,
+        target=f"{model_name}/baseline_M",
+        clone=dict(keep_solution=True),
+    )
+    name = wf.add_step(
+        "M fix1",
+        name,
+        qf_remove_meth_h2_co2_relations,
+        target=f"{model_name}/baseline_M_fix1",
+        clone=True,
+    )
+    # name = wf.add_step("M reported", name, report)
+
+    name = transport.add_steps(wf, name, context.transport.code)
+
+    name = wf.add_step(
+        "MT built",
+        name,
+        _set_as_default,
+        target=f"{model_name}/baseline_MT",
+        clone=True,
+    )
+    name = wf.add_step(
+        "MT fix1",
+        name,
+        qf_remove_ELC100_near_term_infeasibility,
+        target=f"{model_name}/baseline_MT_fix1",
+        clone=True,
+    )
+    name = wf.add_step(
+        "MT fix2",
+        name,
+        qf_freeze_truck_history,
+        target=f"{model_name}/baseline_MT_fix2",
+        clone=True,
+    )
+    name = wf.add_step("MT solved", name, solve)
+    # name = wf.add_step("MT reported", name, report)
+
+    name = wf.add_step(
+        "BMT built", "MT solved", build_B, target=f"{model_name}/baseline_BMT", clone=c
+    )
+    name = wf.add_step("BMT solved", name, solve)
+    name = wf.add_step("BMT reported", "BMT solved", report)
+
+    name = wf.add_step(
+        "BMT prep macro",
+        "BMT reported",
+        prep_for_macro,
+        target=f"{model_name}/baseline_BMT_message",
+        clone=dict(shift_first_model_year=2030),
+    )
+    name = wf.add_step(
+        "BMTX baseline macro",
+        name,
+        add_macro,
+        target=f"{model_name}/baseline_BMT_message_macro",
+    )
+    # name = wf.add_step("BMTX baseline macro reported", name, report)
+
+    # NGFS steps
     wf.add_step(
         "base cloned",
-        "base",
+        name,
         target=f"{model_name}/baseline_DEFAULT",
         clone=dict(keep_solution=True),
     )
-
-    wf.add_step(
-        "base reported",
-        "base cloned",
-        report,
-    )
+    wf.add_step("base reported", "base cloned", report)
 
     # wf.add_step(
     #     "NPi2030 solved",

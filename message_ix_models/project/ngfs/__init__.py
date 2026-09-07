@@ -844,7 +844,8 @@ def qf_freeze_truck_history(context, scenario, year_freeze: int = 2030):
 
     bound_lo = bound_up.copy()
 
-    scenario.remove_solution()
+    if scenario.has_solution():
+        scenario.remove_solution()
 
     with scenario.transact("Freeze truck activity from bound_activity_up (option B)"):
         scenario.add_par("bound_activity_lo", bound_lo)

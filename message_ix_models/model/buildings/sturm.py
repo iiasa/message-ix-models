@@ -403,8 +403,8 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
 
     # Run STURM (via Rscript)
     for name in (
-        "run_STURM_bmt_resid.R",
-        "run_STURM_bmt_comm.R",
+        "run_STURM_bmt_resid_2026_07_01.R",
+        "run_STURM_bmt_comm_2026_07_01.R",
         "run_GLANCE_placeholder.R",
         "run_MIXB_aligner.R",
     ):
