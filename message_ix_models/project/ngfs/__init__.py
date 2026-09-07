@@ -660,7 +660,7 @@ _LOOSE_BOTTLENECK_YEAR_BOUND_EMISS: tuple[tuple[str, int], ...] = (
 )
 
 
-def aas_loose_bottleneck_year_tce(
+def aas_loose_bottleneck_year_tce(  # noqa: C901
     context,
     scenario,
     direction: Literal["before", "after"] = "after",
@@ -671,7 +671,8 @@ def aas_loose_bottleneck_year_tce(
     For each configured (node, anchor year), ``direction`` selects disjoint edits:
 
     - ``"before"``: set the anchor year bound to 50 % of the bound in the single model
-      year before the anchor; that earlier year is unchanged. No other years are changed.
+      year before the anchor; that earlier year is unchanged. No other years are
+      changed.
     - ``"after"``: loosen the two model years after the anchor to 50 % and 25 % of
       the anchor bound. Anchor and earlier years are unchanged.
 
@@ -816,12 +817,14 @@ _TRUCK_TECHNOLOGIES: tuple[str, ...] = (
 )
 
 
-def freeze_truck_history(context, scenario, year_freeze: int = 2030):
+def qf_freeze_truck_history(context, scenario, year_freeze: int = 2030):
     """Temporary function to freeze truck activity, deprecated after MixT update.
 
     Option A (commented): equality bounds from solved ``ACT`` in year_freeze.
     Option B (active): copy all ``bound_activity_up`` rows for truck techs to
     ``bound_activity_lo`` in year_freeze.
+
+    Quick fix from YJ.
     """
     del context
     del year_freeze  # used by Option A only
@@ -847,8 +850,8 @@ def freeze_truck_history(context, scenario, year_freeze: int = 2030):
         scenario.add_par("bound_activity_lo", bound_lo)
 
     log.info(
-        "freeze_truck_history (B): added %d bound_activity_lo rows from bound_activity_up "
-        "(%d technologies) for %s/%s",
+        "freeze_truck_history (B): added %d bound_activity_lo rows from "
+        "bound_activity_up (%d technologies) for %s/%s",
         len(bound_lo),
         len(_TRUCK_TECHNOLOGIES),
         scenario.model,
@@ -931,4 +934,85 @@ def freeze_truck_history(context, scenario, year_freeze: int = 2030):
     #     scenario.scenario,
     # )
 
+    # return scenario
+
+
+def qf_remove_ELC100_near_term_infeasibility(context, scenario):
+    """Quick fix from FM."""
+    log.info(
+        "Remove values from growth_new_capacity_up/lo to avoid near-term infeasibility",
+    )
+    for suffix in ["_up", "_lo"]:
+        bound = scenario.par(
+            f"bound_new_capacity{suffix}",
+            filters={"technology": "ELC_100", "year_vtg": [2020, 2025]},
+        )
+        grow = scenario.par(
+            f"growth_new_capacity{suffix}",
+            filters={col: bound[col].unique().tolist() for col in bound.columns[:-2]},
+        )
+        to_remove = pd.merge(
+            grow, bound[["node_loc", "technology", "year_vtg"]], how="inner"
+        )
+        bad_coeff = scenario.par(
+            f"bound_new_capacity{suffix}",
+            filters={
+                "technology": ["ELC_100", "PHEV_ptrp"],
+                "year_vtg": 2020,
+                "node_loc": "R12_SAS",
+            },
+        )
+        with scenario.transact():
+            scenario.remove_par(f"growth_new_capacity{suffix}", to_remove)
+            scenario.remove_par(f"bound_new_capacity{suffix}", bad_coeff)
+
+    return scenario
+
+
+METH_H2_CO2_RELATIONS = ("CO2_Emission", "CO2_Emission_Global_Total")
+METH_H2_CO2_COEFFICIENT = 0.549
+
+
+def qf_remove_meth_h2_co2_relations(context, scenario):
+    """Match upstream PR #537 by removing both meth_h2 CO2 relation charges.
+
+    Quick fix from LC.
+    """
+    del context
+    rows = scenario.par(
+        "relation_activity",
+        filters={
+            "technology": "meth_h2",
+            "relation": list(METH_H2_CO2_RELATIONS),
+        },
+    )
+    selected = rows[
+        (rows["technology"] == "meth_h2")
+        & (rows["relation"].isin(METH_H2_CO2_RELATIONS))
+    ]
+    bad = selected[(selected["value"] - METH_H2_CO2_COEFFICIENT).abs() > 1e-9]
+    if not bad.empty:
+        raise RuntimeError(
+            "Unexpected meth_h2 CO2 relation coefficients: "
+            f"{sorted(bad['value'].unique())}"
+        )
+    if selected.empty:
+        log.info("meth_h2 CO2 relation charges are already absent")
+        return scenario
+
+    with scenario.transact("Remove meth_h2 CO2 relation charges"):
+        scenario.remove_par("relation_activity", selected)
+
+    remaining = scenario.par(
+        "relation_activity",
+        filters={
+            "technology": "meth_h2",
+            "relation": list(METH_H2_CO2_RELATIONS),
+        },
+    )
+    if not remaining.empty:
+        raise RuntimeError(
+            f"Failed to remove {len(remaining)} meth_h2 CO2 relation rows"
+        )
+    log.info("Removed %d meth_h2 CO2 relation rows", len(selected))
     return scenario
