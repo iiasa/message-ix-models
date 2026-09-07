@@ -95,3 +95,25 @@ def add_NPi2030(
     sr.scen["NPi2030"].set_as_default()
 
     return sr.scen["NPi2030"]
+
+def add_NDC2030(context, scenario):
+    """Add NDC policies to the scenario."""
+    sr = make_scenario_runner(context)
+
+    sr.add(
+        "INDC2030i_weak",
+        "baseline_DEFAULT",
+        mk_INDC=True,
+        slice_year=2025,
+        policy_year=2030,
+        target_kind="Target",
+        copy_demands="baseline_low_dem_scen",
+        run_reporting=False,
+        solve_typ="MESSAGE-MACRO",
+    )
+
+    sr.run_all()
+    
+    sr.scen["INDC2030i_weak"].set_as_default()
+    
+    return sr.scen["INDC2030i_weak"]

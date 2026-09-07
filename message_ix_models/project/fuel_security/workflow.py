@@ -19,6 +19,7 @@ from message_ix_models.workflow import Workflow
 
 from message_ix_models.project.fuel_security.policy import (
     add_NPi2030,
+    add_NDC2030,
 )
 
 log = logging.getLogger(__name__)
@@ -85,11 +86,20 @@ def generate(context: Context) -> Workflow:
         add_NPi2030,
         target = "fuel_security/NPi2030"
     )
+    
+    wf.add_step(
+        "Add and solve INDC2030i_weak",
+        "Base cloned",
+        add_NDC2030,
+        target = "fuel_security/INDC2030i_weak"
+    )
 
+    # Add step for holding carbon price
     wf.add_step(
         "NPi2030 bilateralized",
         "Add and solve NPi2030",
         _bilateralize,
         target="fuel_security/NPi2030_bilateral"
     )
+        
     return wf
