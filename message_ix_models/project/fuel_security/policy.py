@@ -87,4 +87,11 @@ def add_NPi2030(
 
     sr.run_all()
 
+    # ixmp's Scenario.clone() (used internally by ScenarioRunner) does not mark
+    # the new version as default - see _set_default() in workflow.py for the same
+    # issue on "Base cloned". Without this, downstream code loading
+    # "fuel_security/NPi2030" by name only would silently resolve to a stale
+    # default version instead of the one just produced by this run.
+    sr.scen["NPi2030"].set_as_default()
+
     return sr.scen["NPi2030"]
