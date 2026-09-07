@@ -11,6 +11,7 @@ from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 from message_ix_models.project.fuel_security.liquefaction_calibration import *
 from message_ix_models.project.fuel_security.adjust_reexports import *
+from message_ix_models.project.fuel_security.bilateralize_scenario import *
 
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
