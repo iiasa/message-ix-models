@@ -44,10 +44,20 @@ def add_scenario_updates(project_name, config_name, data_path):
                     shutil.copy2(base_file, dest_file)
                     print(f"Copied file from scenario_updates to bare: {file}")
 
-def bilateralize_scenario(project_name, config_name, scenario):
+def bilateralize_scenario(project_name, config_name, scenario, target_scen=None):
     """
     Bilateralize a given scenario
+
+    Args:
+        project_name: Name of project (message_ix_models/project/[THIS])
+        config_name: Name of the bilateralize config file for this project
+        scenario: Base scenario to bilateralize
+        target_scen: Name for the bilateralized output scenario, in the
+            `project_name` model. Defaults to f"{scenario.scenario}_bilateral"
+            so the output never collides with the input's own name.
     """
+    target_scen = target_scen or f"{scenario.scenario}_bilateral"
+
     # Load config
     config, config_name = load_config(project_name = project_name, config_name = config_name)
     data_path = package_data_path("bilateralize")
@@ -77,24 +87,24 @@ def bilateralize_scenario(project_name, config_name, scenario):
 
     # Clone and set up base scenario
     print(f"Base model: {scenario.model}/{scenario.scenario}")
-    print(f"Target model: fuel_security/{scenario.scenario}")
+    print(f"Target model: {project_name}/{target_scen}")
 
     print("Setting up scenario")
     load_and_solve(trade_dict = trade_dict,
                    solve = False,
-                   project_name = project_name, 
-                   config_name = config_name, 
+                   project_name = project_name,
+                   config_name = config_name,
                    start_model = scenario.model,
                    start_scen = scenario.scenario,
                    target_model = project_name,
-                   target_scen = scenario.scenario,
+                   target_scen = target_scen,
                    extra_parameter_updates = liquefaction_parameters)
 
     # Update extraction constraints
     print("Updating extraction constraints")
     mp = ixmp.Platform()
-    base_scenario = message_ix.Scenario(mp, model=project_name, scenario=scenario.scenario)
-    out_scenario = base_scenario.clone(project_name, scenario.scenario)
+    base_scenario = message_ix.Scenario(mp, model=project_name, scenario=target_scen)
+    out_scenario = base_scenario.clone(project_name, target_scen)
     out_scenario.set_as_default()
 
     for g in ['growth_activity_up']:
@@ -130,3 +140,5 @@ def bilateralize_scenario(project_name, config_name, scenario):
     print("Solve scenario")
     out_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
     mp.close_db()
+
+    return out_scenario
