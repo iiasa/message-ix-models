@@ -21,7 +21,7 @@ def clean_bare_files(data_path):
         if os.path.exists(os.path.join(data_path, tec, "bare_files")):
             for file in os.listdir(os.path.join(data_path, tec, "bare_files")):
                 if os.path.isfile(os.path.join(data_path, tec, "bare_files", file)):
-                os.remove(os.path.join(data_path, tec, "bare_files", file))
+                    os.remove(os.path.join(data_path, tec, "bare_files", file))
         if os.path.exists(os.path.join(data_path, tec, "bare_files", "flow_technology")):
             for file in os.listdir(os.path.join(data_path, tec, "bare_files", "flow_technology")):
                 if os.path.isfile(os.path.join(data_path, tec, "bare_files", "flow_technology", file)):
