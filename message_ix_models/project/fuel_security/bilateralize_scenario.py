@@ -33,7 +33,7 @@ def add_scenario_updates(project_name, config_name, data_path):
     Add scenario updates for project
     """
     print("Add scenario updates for project")
-    config = load_config(project_name = project_name, config_name = config_name)
+    config, config_name = load_config(project_name = project_name, config_name = config_name)
     for tec in config['constrained_tec']:
         print(f"...{tec}")
         if os.path.exists(package_data_path(project_name, "scenario_updates", tec)):
