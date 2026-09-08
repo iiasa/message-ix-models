@@ -14,6 +14,7 @@ from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.bilateralize_scenario import *
 from message_ix_models.project.fuel_security.FSU_restriction import *
 from message_ix_models.project.fuel_security.MEA_conflict import run_mea_conflict_scenario
+from message_ix_models.project.fuel_security.NAM_boost import run_nam_boost_scenario
 
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
@@ -60,6 +61,13 @@ def _mea_conflict(context, scenario, conf_level):
     return run_mea_conflict_scenario(
         base_scenario=scenario,
         conf_level=conf_level
+    )
+
+def _nam_boost(context, scenario, bound_level_ej):
+    """Apply a NAM export boost to the scenario produced upstream."""
+    return run_nam_boost_scenario(
+        base_scenario=scenario,
+        bound_level_ej=bound_level_ej
     )
 
 # Generate workflow
@@ -207,5 +215,20 @@ def generate(context: Context) -> Workflow:
                 conf_level=level,
                 target=f"fuel_security/{base_name}_MEACON_{level}"
             ) # Apply MEA conflict shock (level={level}) onto {base_name}
+
+    # NAM export boost sensitivities: applied to each bilateralized base and
+    # each FSU-restricted variant, at 5 boost levels (EJ of additional NAM exports)
+    nam_bases = mea_bases  # same base scenarios as the MEA conflict shocks
+    nam_levels = [30, 25, 20, 15, 10]
+
+    for base_step, base_name in nam_bases:
+        for level in nam_levels:
+            wf.add_step(
+                f"{base_step} - NAM{level}EJ",
+                base_step,
+                _nam_boost,
+                bound_level_ej=level,
+                target=f"fuel_security/{base_name}_NAM{level}EJ"
+            ) # Apply NAM export boost (level={level}EJ) onto {base_name}
 
     return wf
