@@ -13,6 +13,7 @@ from message_ix_models.project.fuel_security.liquefaction_calibration import *
 from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.bilateralize_scenario import *
 from message_ix_models.project.fuel_security.FSU_restriction import *
+from message_ix_models.project.fuel_security.MEA_conflict import run_mea_conflict_scenario
 
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
@@ -52,6 +53,13 @@ def _FSU_restriction(context, scenario, friction_endyear):
     return run_friction_scenario(
         base_scenario=scenario,
         friction_endyear=friction_endyear
+    )
+
+def _mea_conflict(context, scenario, conf_level):
+    """Apply an MEA conflict shock to the scenario produced upstream."""
+    return run_mea_conflict_scenario(
+        base_scenario=scenario,
+        conf_level=conf_level
     )
 
 # Generate workflow
@@ -174,5 +182,30 @@ def generate(context: Context) -> Workflow:
         friction_endyear=2040,
         target="fuel_security/INDC2030i_forever_FSU2040"
     ) # Run FSU2040 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2040
+
+    # MEA conflict shock sensitivities: applied to each bilateralized base and
+    # each FSU-restricted variant, at 6 severity levels (1.0 = no shock)
+    mea_bases = [
+        ("Baseline bilateralized", "baseline_bilateral"),
+        ("Baseline - FSU2100", "baseline_FSU2100"),
+        ("Baseline - FSU2040", "baseline_FSU2040"),
+        ("NPi2030 bilateralized", "NPi2030_bilateral"),
+        ("NPi2030 - FSU2100", "NPi2030_FSU2100"),
+        ("NPi2030 - FSU2040", "NPi2030_FSU2040"),
+        ("INDC2030i_forever bilateralized", "INDC2030i_forever_bilateral"),
+        ("INDC2030i_forever - FSU2100", "INDC2030i_forever_FSU2100"),
+        ("INDC2030i_forever - FSU2040", "INDC2030i_forever_FSU2040"),
+    ]
+    mea_levels = [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]
+
+    for base_step, base_name in mea_bases:
+        for level in mea_levels:
+            wf.add_step(
+                f"{base_step} - MEA{level}",
+                base_step,
+                _mea_conflict,
+                conf_level=level,
+                target=f"fuel_security/{base_name}_MEACON_{level}"
+            ) # Apply MEA conflict shock (level={level}) onto {base_name}
 
     return wf
