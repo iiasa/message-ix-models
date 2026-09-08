@@ -69,8 +69,15 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "Base",
         None,
-        target = "ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline" # TODO update this to 6.6   
-    )
+        target = "ixmp://ixmp-dev/SSP_SSP2_v6.6/baseline" 
+    ) # Load baseline scenario from SSP_SSP2_v6.6
+
+    wf.add_step(
+        "INDC2030i_forever",
+        None,
+        target = "ixmp://ixmp-dev/SSP_SSP2_v6.6/INDC2030i_forever",
+        target = "fuel_security/INDC2030i_weak"
+    ) # Load INDC2030i_forever scenario from SSP_SSP2_v6.6
 
     wf.add_step(
         "Base cloned",
@@ -78,28 +85,42 @@ def generate(context: Context) -> Workflow:
         _set_default,
         target = "fuel_security/baseline_DEFAULT", # This has to be named baseline_DEFAULT to match policy tool requirement
         clone = dict(keep_solution = True)
-    )
+    ) # Clone baseline scenario to fuel_security/baseline_DEFAULT
+
+    wf.add_step(
+        "Clone INDC2030i_forever",
+        "INDC2030i_forever",
+        _set_default,
+        target = "fuel_security/INDC2030i_forever",
+        clone = dict(keep_solution = True)
+    ) # Clone INDC2030i_forever to fuel_security/INDC2030i_forever
 
     wf.add_step(
         "Add and solve NPi2030",
         "Base cloned",
         add_NPi2030,
         target = "fuel_security/NPi2030"
-    )
-    
-    wf.add_step(
-        "Add and solve INDC2030i_weak",
-        "Base cloned",
-        add_NDC2030,
-        target = "fuel_security/INDC2030i_weak"
-    )
+    ) # Add and solve NPi2030 onto baseline_DEFAULT to create fuel_security/NPi2030
 
-    # Add step for holding carbon price
+    wf.add_step(
+        "Baseline bilateralized",
+        "Base cloned",
+        _bilateralize,
+        target="fuel_security/NPi2030_bilateral"
+    ) # Bilateralize fuel_security/baseline_DEFAULT to create fuel_security/baseline_bilateral
+    
     wf.add_step(
         "NPi2030 bilateralized",
         "Add and solve NPi2030",
         _bilateralize,
         target="fuel_security/NPi2030_bilateral"
-    )
+    ) # Bilateralize NPi2030 to create fuel_security/NPi2030_bilateral
+
+    wf.add_step(
+        "INDC2030i_forever bilateralized",
+        "Clone INDC2030i_forever",
+        _bilateralize,
+        target="fuel_security/INDC2030i_forever_bilateral"
+    ) # Bilateralize INDC2030i_forever to create fuel_security/INDC2030i_forever_bilateral
         
     return wf

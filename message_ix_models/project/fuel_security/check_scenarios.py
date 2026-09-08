@@ -3,9 +3,9 @@ import message_ix
 
 mp = ixmp.Platform()
 
-base_scen = message_ix.Scenario(mp, model = 'fuel_security', scenario = 'NPi2030')
-run_scen = base_scen.clone(model = 'fuel_security', scenario = 'NPi2030_test', keep_solution = False)
+slist = mp.scenario_list()
 
-run_scen.solve(quiet = False, solve_options={"scaind":"-1"})
+slist = slist[slist['model'] == 'SSP_SSP2_v6.6']
+print(slist['scenario'].unique().tolist())
 
 mp.close_db()
