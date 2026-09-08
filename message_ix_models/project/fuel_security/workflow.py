@@ -12,6 +12,7 @@ from message_ix_models.tools.bilateralize.load_and_solve import *
 from message_ix_models.project.fuel_security.liquefaction_calibration import *
 from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.bilateralize_scenario import *
+from message_ix_models.project.fuel_security.FSU_restriction import *
 
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
@@ -127,11 +128,51 @@ def generate(context: Context) -> Workflow:
     ) # Bilateralize INDC2030i_forever to create fuel_security/INDC2030i_forever_bilateral
         
     wf.add_step(
-        "FSU2100",
+        "Baseline - FSU2100",
         "Baseline bilateralized",
         _FSU_restriction,
         friction_endyear=2100,
         target="fuel_security/baseline_FSU2100"
     ) # Run FSU2100 scenario on baseline bilateralized to create fuel_security/baseline_FSU2100
-\
+
+    wf.add_step(
+        "Baseline - FSU2040",
+        "Baseline bilateralized",
+        _FSU_restriction,
+        friction_endyear=2040,
+        target="fuel_security/baseline_FSU2040"
+    ) # Run FSU2040 scenario on baseline bilateralized to create fuel_security/baseline_FSU2040
+
+    wf.add_step(
+        "NPi2030 - FSU2100",
+        "NPi2030 bilateralized",
+        _FSU_restriction,
+        friction_endyear=2100,
+        target="fuel_security/NPi2030_FSU2100"
+    ) # Run FSU2100 scenario on NPi2030 bilateralized to create fuel_security/NPi2030_FSU2100
+
+    wf.add_step(
+        "NPi2030 - FSU2040",
+        "NPi2030 bilateralized",
+        _FSU_restriction,
+        friction_endyear=2040,
+        target="fuel_security/NPi2030_FSU2040"
+    ) # Run FSU2040 scenario on NPi2030 bilateralized to create fuel_security/NPi2030_FSU2040
+
+    wf.add_step(
+        "INDC2030i_forever - FSU2100",
+        "INDC2030i_forever bilateralized",
+        _FSU_restriction,
+        friction_endyear=2100,
+        target="fuel_security/INDC2030i_forever_FSU2100"
+    ) # Run FSU2100 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2100
+
+    wf.add_step(
+        "INDC2030i_forever - FSU2040",
+        "INDC2030i_forever bilateralized",
+        _FSU_restriction,
+        friction_endyear=2040,
+        target="fuel_security/INDC2030i_forever_FSU2040"
+    ) # Run FSU2040 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2040
+
     return wf

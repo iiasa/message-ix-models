@@ -67,9 +67,9 @@ def run_friction_scenario(base_scenario: message_ix.Scenario,
     config, config_path = load_config(project_name = 'fuel_security', config_name = 'config.yaml')
 
     # Build dictionary
-    bound_out = friction_dictionary("restriction", friction_endyear)
+    bound_out = friction_dictionary("FSU", friction_endyear)
 
-    target_scenario_name = base_scenario.scenario.str.replace("_bilateralize", "") + "_FSU" + str(friction_endyear)
+    target_scenario_name = base_scenario.scenario.replace("_bilateralize", "") + "_FSU" + str(friction_endyear)
     target_scenario = base_scenario.clone('fuel_security', target_scenario_name, keep_solution = False)
     target_scenario.set_as_default()
 
