@@ -45,7 +45,14 @@ def _bilateralize(context, scenario):
         scenario=scenario,
         target_scenario=f"{scenario.scenario}_bilateral"
     )
-    
+
+def _FSU_restriction(context, scenario, friction_endyear):
+    """Run FSU restriction scenario."""
+    return run_friction_scenario(
+        base_scenario=scenario,
+        friction_endyear=friction_endyear
+    )
+
 # Generate workflow
 def generate(context: Context) -> Workflow:
     """
@@ -119,4 +126,12 @@ def generate(context: Context) -> Workflow:
         target="fuel_security/INDC2030i_forever_bilateral"
     ) # Bilateralize INDC2030i_forever to create fuel_security/INDC2030i_forever_bilateral
         
+    wf.add_step(
+        "FSU2100",
+        "Baseline bilateralized",
+        _FSU_restriction,
+        friction_endyear=2100,
+        target="fuel_security/baseline_FSU2100"
+    ) # Run FSU2100 scenario on baseline bilateralized to create fuel_security/baseline_FSU2100
+\
     return wf

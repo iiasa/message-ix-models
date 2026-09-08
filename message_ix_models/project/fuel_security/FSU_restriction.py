@@ -24,7 +24,7 @@ def friction_dictionary(sensitivity_scenario: str,
                         friction_endyear:int):
 
     # Import scenario and models
-    config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
+    config, config_path = load_config(project_name = 'fuel_security', config_name = 'config.yaml')
     data_path = package_data_path("bilateralize")
 
     sens_i = config['restriction'][sensitivity_scenario]['exporters']
@@ -59,28 +59,18 @@ def friction_dictionary(sensitivity_scenario: str,
         
     return bound_out
 
-def run_friction_scenario(base_scenario_name: str,
-                          sensitivity_scenario: str,
+def run_friction_scenario(base_scenario: message_ix.Scenario,
                           friction_endyear = 2110,
-                          solve_scenario = True,
-                          scenario_name_adder = None):
+                          solve_scenario = True):
     
     # Import scenario and models
-    config, config_path = load_config(project_name = 'weu_security', config_name = 'config.yaml')
+    config, config_path = load_config(project_name = 'fuel_security', config_name = 'config.yaml')
 
     # Build dictionary
-    bound_out = friction_dictionary(sensitivity_scenario, friction_endyear)
+    bound_out = friction_dictionary("restriction", friction_endyear)
 
-    mp = ixmp.Platform()
-
-    base_scenario = message_ix.Scenario(mp, model = 'weu_security', scenario = base_scenario_name)
-    if scenario_name_adder is not None:
-        target_scenario_name = scenario_name_adder + sensitivity_scenario + str(friction_endyear)
-    else:
-        target_scenario_name = sensitivity_scenario + str(friction_endyear)
-    target_scenario = base_scenario.clone('weu_security',
-                                          target_scenario_name, 
-                                          keep_solution = False)
+    target_scenario_name = base_scenario.scenario.str.replace("_bilateralize", "") + "_FSU" + str(friction_endyear)
+    target_scenario = base_scenario.clone('fuel_security', target_scenario_name, keep_solution = False)
     target_scenario.set_as_default()
 
     with target_scenario.transact(f"Add friction sensitivity"):
@@ -95,12 +85,6 @@ def run_friction_scenario(base_scenario_name: str,
                 target_scenario.remove_par(par, basepar)
                 
     if solve_scenario == True:
-        target_scenario.solve(quiet = False, solve_options={"scaind":"-1"})
-
-    mp.close_db()
-    
-# Run scenarios
-run_friction_scenario('SSP2', 'FSU', 2100)
-run_friction_scenario('SSP2', 'FSU', 2040)
-run_friction_scenario('INDC2030', 'FSU', 2100, scenario_name_adder = "INDC2030_")
-run_friction_scenario('INDC2030', 'FSU', 2040, scenario_name_adder = "INDC2030_")
+        target_scenario.solve(quiet = False, 
+                              model = 'MESSAGE-MACRO',
+                              solve_options={"scaind":"-1"})
