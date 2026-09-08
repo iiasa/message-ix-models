@@ -61,10 +61,7 @@ def generate(context: Context) -> Workflow:
     context.policy_data_file = "fuel_security_policy_data.xlsx"
     context.policy_config_path = ("projects", "fuel_security", "config.yaml")
     context.region_id = "R12"
-
-    # Set up target scenario
-    model_name = "ixmp://ixmp-dev/fuel_security"
-
+    
     # Workflow steps
     wf.add_step(
         "Base",
@@ -76,7 +73,6 @@ def generate(context: Context) -> Workflow:
         "INDC2030i_forever",
         None,
         target = "ixmp://ixmp-dev/SSP_SSP2_v6.6/INDC2030i_forever",
-        target = "fuel_security/INDC2030i_weak"
     ) # Load INDC2030i_forever scenario from SSP_SSP2_v6.6
 
     wf.add_step(
@@ -106,7 +102,7 @@ def generate(context: Context) -> Workflow:
         "Baseline bilateralized",
         "Base cloned",
         _bilateralize,
-        target="fuel_security/NPi2030_bilateral"
+        target="fuel_security/baseline_bilateral"
     ) # Bilateralize fuel_security/baseline_DEFAULT to create fuel_security/baseline_bilateral
     
     wf.add_step(
