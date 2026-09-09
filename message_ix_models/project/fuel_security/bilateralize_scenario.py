@@ -103,7 +103,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
 
     # Update extraction constraints
     print("Updating extraction constraints")
-    mp = ixmp.Platform()
+    mp = scenario.platform
     base_scenario = message_ix.Scenario(mp, model=project_name, scenario=target_scenario)
     out_scenario = base_scenario.clone(project_name, target_scenario)
     out_scenario.set_as_default()
@@ -139,9 +139,8 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                      base_level = 'secondary')
 
     print("Solve scenario")
-    out_scenario.solve(quiet = False, 
+    out_scenario.solve(quiet = False,
                        model = 'MESSAGE-MACRO',
                        solve_options={"scaind":"-1"})
-    mp.close_db()
 
     return out_scenario
