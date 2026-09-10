@@ -1,0 +1,16 @@
+# Codes appearing as coordinates for the "emission" dimension
+# in emission_factor.csv.gz.
+
+CO: {}
+
+NH3: {}
+
+NOX: {}
+
+PM_BC: {}
+
+PM_OC: {}
+
+SO2: {}
+
+VOC: {}

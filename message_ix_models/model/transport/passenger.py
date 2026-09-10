@@ -20,6 +20,7 @@ from message_ix_models.util import (
 from message_ix_models.util.genno import Collector
 
 from . import key as K
+from .build import add_parameter_data
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -53,18 +54,19 @@ Units: TJ
 #: Shorthand for tags on keys.
 Pi = "::P+ixmp"
 
-#: Target key that collects all data generated in this module.
+#: Key for a task that collects all data generated in this module.
 TARGET = f"transport{Pi}"
 
+#: Collect parameter data in `TARGET`.
 collect = Collector(TARGET, "{}::P+ixmp".format)
 
 
 def prepare_computer(c: Computer):
-    context: "Context" = c.graph["context"]
+    """Prepare `c` to calculate and add data for passenger transport."""
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
-    # Collect data in `TARGET` and connect to the "add transport data" key
-    collect.computer = c
-    c.add("transport_data", __name__, key=TARGET)
+    context: "Context" = c.graph["context"]
 
     source = context.transport.data_source.non_LDV
     log.info(f"non-LDV data from {source}")

@@ -14,6 +14,7 @@ from message_ix_models.util import broadcast
 
 from . import factor
 from . import key as K
+from .build import add_parameter_data
 from .data import PDT_CAP
 from .util import EXTRAPOLATE
 
@@ -26,6 +27,9 @@ if TYPE_CHECKING:
     from .config import Config
 
 log = logging.getLogger(__name__)
+
+#: Key for a task that collects all data generated in this module.
+TARGET = "transport::demand+ixmp"
 
 
 def dummy(
@@ -165,13 +169,7 @@ TASKS = [
     # Dummy demands, if these are configured
     ("demand::dummy+ixmp", dummy, "c::transport", "nodes::ex world", K.y, "config"),
     # Merge all data together
-    (
-        "transport demand::ixmp",
-        "merge_data",
-        "demand::LDV+ixmp",
-        "demand::P+ixmp",
-        "demand::dummy+ixmp",
-    ),
+    (TARGET, "merge_data", "demand::LDV+ixmp", "demand::P+ixmp", "demand::dummy+ixmp"),
 ]
 
 
@@ -298,4 +296,4 @@ def prepare_computer(c: "Computer") -> None:
     except FileNotFoundError:
         log.info(f"No exogenous PDT_CAP data for scenario label {config.label!r}")
 
-    c.add("transport_data", __name__, key="transport demand::ixmp")
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build

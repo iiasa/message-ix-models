@@ -68,6 +68,7 @@ docs = [
   "sphinx_rtd_theme",
   "sphinxcontrib-bibtex",
 ]
+gains = ["zstandard"]
 iea-web = ["dask[dataframe]"]
 material = ["xlrd"]
 migrate = [
@@ -88,7 +89,7 @@ tests = [
 ]
 transport = [
   "genno[graphviz]",
-  "message-ix-models[iea-web,report]",
+  "message-ix-models[gains,iea-web,report]",
   "requests-cache",
   "transport-energy",
   "xarray",

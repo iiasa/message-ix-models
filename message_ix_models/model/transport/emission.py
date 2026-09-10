@@ -4,16 +4,20 @@ import logging
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from genno import Quantity
+from genno import Key, Keys, Quantity
 from genno.operator import convert_units, load_file, mul
 from iam_units import registry
 from message_ix import make_df
 
 from message_ix_models.util import package_data_path
+from message_ix_models.util.genno import Collector
 
-from .util import region_path_fallback
+from . import key as K
+from .build import add_parameter_data
+from .util import COMMON, DIMS, region_path_fallback
 
 if TYPE_CHECKING:
+    from genno import Computer
     from genno.types import AnyQuantity
 
     from message_ix_models import Context
@@ -22,8 +26,21 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+#: Shorthand for tags on keys.
+Te = "::T+emission"
+
+#: Key for a task that collects all data generated in this module.
+TARGET = f"transport{Te}+ixmp"
+
+#: Collect parameter data in `TARGET`.
+collect = Collector(TARGET, "{}::T+emission+ixmp".format)
+
+
 def get_emissions_data(context: "Context") -> "ParameterData":
-    """Load emissions data from a file."""
+    """Load emissions data from a file.
+
+    .. todo:: Move to :mod:`.transport.data` and use the same mechanisms.
+    """
 
     fn = f"{context.transport.data_source.emissions}-emission_factor.csv"
     qty = load_file(region_path_fallback(context, "emi", fn))
@@ -32,17 +49,43 @@ def get_emissions_data(context: "Context") -> "ParameterData":
 
 
 def get_intensity(context: "Context") -> "AnyQuantity":
-    """Load emissions intensity data from a file."""
-    # FIXME use through the build computer
+    """Load emissions intensity data from a file.
+
+    .. todo:: Move to :mod:`.transport.data` and use the same mechanisms.
+    """
     return load_file(package_data_path("transport", "fuel-emi-intensity.csv"))
 
 
-def strip_emissions_data(scenario, context):
-    """Remove base model's parametrization of freight transport emissions.
+def prepare_computer(c: "Computer") -> None:
+    """Prepare `c` to calculate and add transport emissions data."""
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
-    They are re-added by :func:`get_freight_data`.
-    """
-    log.warning("Not implemented")
+    k = Keys(
+        y=Key("emission_factor", K.exo.emission_factor.dims, "T"),
+    )
+    k.yv = k.y / "y" * "yv"  # Same key with "yv" dimension
+
+    # - Append " transport" to emission species names
+    # - Adapt some technologies from EmissionFactor to MESSAGEix-Transport techs
+    c.add(k.y, "adapt_gains", K.exo.emission_factor, K.t)
+
+    # Rename dimension "y" to "yv". This treats the "year" dimension in GAINS as
+    # pertaining to the vintage year of technology, as opposed to its period of
+    # operation ("ya").
+    prev = c.add(k.yv, "rename_dims", k.y, name_dict={"y": "yv"})
+
+    dims = DIMS | dict(node_loc="n")
+    for mode in ("LDV", "vehicle"):
+        # Multiply by `input` energy intensities:
+        # (mass / energy) * (energy / ACT) [=] mass / ACT
+        prev = c.add(k.yv + mode, "mul", k.yv, getattr(K.input, mode))
+
+        prev = c.add(prev + "units", "convert_units", prev, units="kt / (Gv km)")
+
+        # Convert to MESSAGE parameter data; add to `TARGET`
+        ef = "emission_factor"
+        collect(mode, "as_message_df", prev, name=ef, dims=dims, common=COMMON)
 
 
 # TODO read from configuration

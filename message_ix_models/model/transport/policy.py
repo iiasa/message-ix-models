@@ -10,6 +10,8 @@ from message_ix_models.tools.policy import Policy
 from message_ix_models.util import package_data_path
 from message_ix_models.util.genno import Collector
 
+from .build import add_parameter_data
+
 if TYPE_CHECKING:
     from typing import TypedDict
 
@@ -25,13 +27,14 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: Target key that collects all data generated in this module.
+#: Key for a task that collects all data generated in this module.
 TARGET = "transport::policy+ixmp"
 
 TAX_EMISSION_KW: "AsMessageDfKw" = dict(
     name="tax_emission", dims=dict(type_year="y"), common={}
 )
 
+#: Collect parameter data in `TARGET`.
 collect = Collector(TARGET, "{}::policy+ixmp".format)
 
 
@@ -132,10 +135,8 @@ class ExogenousEmissionPrice(Policy):
 
 def prepare_computer(c: "Computer") -> None:
     """Prepare `c` to calculate and add data for transport policies."""
-
-    # Collect data in `TARGET` and connect to the "add transport data" key
-    collect.computer = c
-    c.add("transport_data", __name__, key=TARGET)
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
     # Retrieve the configuration
     config: "Config" = c.graph["context"].transport

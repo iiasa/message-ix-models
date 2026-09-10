@@ -28,6 +28,10 @@ log = logging.getLogger(__name__)
 #: the legacy reporting to properly handle the result.
 _FE_UNIT = "EJ/yr"
 
+#: Units for emissions. TODO Check which exact value is required for the legacy
+#: reporting.
+_EMI_UNIT = "kt/yr"
+
 #: Quantities to convert to IAMC. See :func:`convert_iamc`.
 CONVERT_IAMC = (
     # NB these are currently tailored to produce the variable names expected for the
@@ -61,7 +65,7 @@ CONVERT_IAMC = (
         sums=["c"],
         unit=_FE_UNIT,
     ),
-    # Emissions using MESSAGEix emission_factor parameter
+    # CO₂/GHG emissions, using MESSAGEix emission_factor parameter
     # base: auto-sum over dimensions yv, m, h
     # var: Same as in data/report/global.yaml
     # dict(
@@ -83,6 +87,13 @@ CONVERT_IAMC = (
     #     unit="Mt/yr",
     # ),
     #
+    # Non-CO₂ emissions, using emission_factor
+    dict(
+        variable="T emission",
+        base="emi:nl-t-ya-e:T",
+        var=["Emissions", "e", "Energy|Demand|Transportation", "t"],
+        unit=_EMI_UNIT,
+    ),
     # # For debugging
     # dict(variable="debug ACT", base="ACT:nl-t-ya", var=["DEBUG", "t"], unit="-"),
     # dict(variable="debug CAP", base="CAP:nl-t-ya", var=["DEBUG", "t"], unit="-"),
@@ -324,6 +335,7 @@ def convert_iamc(c: "Computer") -> None:
 
     # Configure replacements for technology IDs in conversion to IAMC data structure
     cfg: Config = c.graph["context"].transport
+    util.add_replacements("e", cfg.spec.add.set["emission"])
     util.add_replacements("t", cfg.spec.add.set["technology"])
 
     # Update replacements for fully-constructed IAMC variable codes

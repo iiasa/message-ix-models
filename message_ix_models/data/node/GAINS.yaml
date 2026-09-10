@@ -1,0 +1,343 @@
+# Node code list for GAINS
+#
+# Source: Transcribed 2026-09-02 by PN Kishimoto
+#
+# - The top-level codes are those appearing in a particular
+#   emissions data file.
+# - A supplementary table from an unknown report, in a section
+#   labelled “S2: Regional aggregations”, is used to populate
+#   the children (countries) of each node. See inline comments.
+
+World:
+  name: World
+
+AFRI_EAST:
+  parent: World
+  # “EastAfrica_region” in the source file.
+  child:
+  - BDI
+  - COM
+  - DJI
+  - ERI
+  - ETH
+  - MDG
+  - MUS
+  - MYT
+  - REU
+  - RWA
+  - SDN
+  - SOM
+  - SSD
+  - SYC
+  - UGA
+  # Listed under “Africa” in the source file, but there is
+  # no corresponding code.
+  - KEN
+  - TZA
+
+AFRI_NORT:
+  parent: World
+  child:
+  # “NorthAfrica_region” in the source file.
+  - DZA
+  - LBY
+  - MAR
+  - TUN
+  - ESH
+  # Listed under “Africa” in the source file, but there is
+  # no corresponding code.
+  - EGY
+
+AFRI_WEST:
+  parent: World
+  child:
+  # “WestAfrica_region” in the source file.
+  - BEN
+  - BFA
+  - CAF
+  - CIV
+  - CMR
+  - COD
+  - COG
+  - CPV
+  - GAB
+  - GHA
+  - GIN
+  - GMB
+  - GNB
+  - GNQ
+  - LBR
+  - MLI
+  - MRT
+  - NER
+  - SEN
+  - SHN
+  - SLE
+  - TCD
+  - TGO
+  # Listed under “Africa” in the source file, but there is
+  # no corresponding code.
+  - NGA
+
+ASIA_STAN:
+  parent: World
+  # Subset of "South and Central Asia",
+  # purely a guess based on the code ID.
+  child:
+  - AFG
+  - KAZ
+  - KGZ
+  - TJK
+  - TKM
+  - UZB
+
+BRAZ_WHOL:
+  parent: World
+  child: [BRA]
+
+CANA_WHOL:
+  parent: World
+  child: [CAN]
+
+CEAM_REST:
+  parent: World
+  # “CentralAmerica_region” in the source file.
+  child:
+  - BLZ
+  - CRI
+  - SLV
+  - GTM
+  - HND
+  - NIC
+  - PAN
+
+CENT_EURO:  
+  parent: World
+  # "Non-EU Europe" in the source file,
+  # minus UKR (see UKRA_WHOL).
+  #
+  # This is still clearly incorrect, as e.g. GBR is not in
+  # central Europe.
+  child:
+  - ALB
+  - BIH
+  - BLR
+  - CHE
+  - GBR
+  - ISL
+  - MDA
+  - MKD
+  - MNE
+  - NOR
+  - SRB
+
+CHIN_PLUS:
+  parent: World
+  # NB “_PLUS” would seem to indicate additional countries,
+  #    but no information is available.
+  child:
+  - CHN
+
+INDI_WHOL:
+  parent: World
+  child: [IND]
+
+INDO_PLUS:
+  parent: World
+  # NB “_PLUS” would seem to indicate additional countries,
+  #    but no information is available.
+  child: [IDN]
+
+JAPA_WHOL:
+  parent: World
+  child: [JPN]
+
+KORE_AALL:
+  parent: World
+  # NB “_AALL” may be the word ‘all’ extended to 4 characters
+  #    to fit the scheme. Since this is no "_WHOL", it may be
+  #    not just one country, so PRK is added.
+  child:
+  - KOR
+  - PRK
+
+LAME_REST:
+  parent: World
+  child:
+  # “Latin and Central America” in the source file,
+  # not including “Caribbean_region” or “CentralAmerica_region”
+  # (see CEAM_REST).
+  - BOL
+  - CHL
+  - COL
+  - ECU
+  - PER
+  - PRY
+  - URY
+  - VEN
+  # In the source file this is listed under “Country results displayed”,
+  # but there is no corresponding ****_WHOL.
+  - ARG
+
+MEXI_WHOL:
+  parent: World
+  child: [MEX]
+
+MIDD_EAST:
+  parent: World
+  child:
+  # “Middle East” in the source file.
+  - ARE
+  - BHR
+  - IRN
+  - IRQ
+  - ISR
+  - JOR
+  - KWT
+  - LBN
+  - OMN
+  - PSE
+  - QAT
+  - SYR
+  - YEM
+  # In the source file this is listed under “Country results displayed”,
+  # but there is no corresponding ****_WHOL.
+  - SAU
+
+OCEA_WHOL:
+  parent: World
+  child:
+  # “Australia and NZ” in the source file.
+  - AUS
+  - NZL
+  # The following do not appear at all in the source file,
+  # but are added from R12_PAS in R12.yaml, purely at a guess.
+  - ASM
+  - BRN
+  - CCK
+  - COK
+  - CXR
+  - FJI
+  - FSM
+  - KIR
+  - MAC
+  - MHL
+  - MMR
+  - MNP
+  - MYS
+  - NCL
+  - NFK
+  - NIU
+  - NRU
+  - PCI
+  - PCN
+  - PHL
+  - PLW
+  - PNG
+  - PYF
+  - SGP
+  - SLB
+  - THA
+  - TKL
+  - TLS
+  - TON
+  - TUV
+  - VUT
+  - WLF
+  - WSM
+
+RUSS_PLUS:
+  parent: World
+  # NB “_PLUS” would seem to indicate additional countries,
+  #    but no information is available.
+  child:
+  - RUS
+
+SAFR_WHOL:
+  parent: World
+  child: [ZAF]
+
+SOEA_ASIA:
+  parent: World
+  # "South and Central Asia" in the source file,
+  # minus those added to "ASIA_STAN", above, and PRK.
+  child:
+  - ARM
+  - AZE
+  - BGD
+  - BRN
+  - BTN
+  - GEO
+  - KHM
+  - LAO
+  - LKA
+  - MMR
+  - MNG
+  - MYS
+  - NPL
+  - PAK
+  - PHL
+  - SGP
+  - THA
+  - TWN
+  - VNM
+
+SOUA_REST:
+  parent: World
+  # “SouthernAfrica_region” in the source file.
+  child:
+  - AGO
+  - BWA
+  - LSO
+  - MWI
+  - MOZ
+  - NAM
+  - SWZ
+  - ZMB
+  - ZWE
+
+TURK_WHOL:
+  parent: World
+  child: [TUR]
+
+UKRA_PLUS:
+  parent: World
+  # NB “_PLUS” would seem to indicate additional countries,
+  #    but no information is available.
+  child:
+  - UKR
+
+USAM_WHOL:
+  parent: World
+  child: [USA]
+
+WEST_EURO:
+  parent: World
+  # “EU-27” in the source file
+  child:
+  - AUT
+  - BEL
+  - BGR
+  - HRV
+  - CYP
+  - CZE 
+  - DNK
+  - EST
+  - FIN
+  - FRA
+  - DEU
+  - GRC
+  - HUN
+  - IRL
+  - ITA
+  - LVA
+  - LTU
+  - LUX
+  - MLT
+  - NLD
+  - POL
+  - PRT
+  - ROU
+  - SVK
+  - ESP
+  - SWE
