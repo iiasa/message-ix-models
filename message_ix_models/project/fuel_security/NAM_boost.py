@@ -142,6 +142,6 @@ def run_nam_boost_scenario(base_scenario: message_ix.Scenario,
                  target_scenario.add_par(par, adjpar)
 
     if solve_scenario == True:
-        target_scenario.solve(quiet = False, model = 'MESSAGE-MACRO', solve_options={"scaind":"-1"})
+        target_scenario.solve(quiet = False, model = 'MESSAGE', solve_options={"scaind":"-1"})
 
     return target_scenario

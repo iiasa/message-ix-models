@@ -140,7 +140,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
 
     print("Solve scenario")
     out_scenario.solve(quiet = False,
-                       model = 'MESSAGE-MACRO',
+                       model = 'MESSAGE',
                        solve_options={"scaind":"-1"})
 
     return out_scenario

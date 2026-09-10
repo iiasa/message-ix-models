@@ -82,7 +82,7 @@ def add_NPi2030(
         policy_year=2030,
         target_kind="Target",
         run_reporting=False,
-        solve_typ="MESSAGE-MACRO",
+        solve_typ="MESSAGE",
     )
 
     sr.run_all()
@@ -109,11 +109,11 @@ def add_NDC2030(context, scenario):
         target_kind="Target",
         copy_demands="baseline_low_dem_scen",
         run_reporting=False,
-        solve_typ="MESSAGE-MACRO",
+        solve_typ="MESSAGE",
     )
 
     sr.run_all()
-    
+
     sr.scen["INDC2030i_weak"].set_as_default()
     
     return sr.scen["INDC2030i_weak"]

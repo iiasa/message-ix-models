@@ -114,6 +114,6 @@ def run_mea_conflict_scenario(base_scenario: message_ix.Scenario,
             target_scenario.remove_par("bound_emission", remdf)
 
     if solve_scenario:
-        target_scenario.solve(quiet = False, model = 'MESSAGE-MACRO', solve_options={"scaind":"-1"})
+        target_scenario.solve(quiet = False, model = 'MESSAGE', solve_options={"scaind":"-1"})
 
     return target_scenario

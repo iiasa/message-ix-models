@@ -85,6 +85,6 @@ def run_friction_scenario(base_scenario: message_ix.Scenario,
                 target_scenario.remove_par(par, basepar)
                 
     if solve_scenario == True:
-        target_scenario.solve(quiet = False, 
-                              model = 'MESSAGE-MACRO',
+        target_scenario.solve(quiet = False,
+                              model = 'MESSAGE',
                               solve_options={"scaind":"-1"})
