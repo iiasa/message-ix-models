@@ -1,80 +1,68 @@
 ﻿TY  - RPRT
-AD  - International Institute for Applied System Analysis (IIASA), Schlossplatz 1, 2361 Laxenburg, Austria
-AU  - Krey, V.
-AU  - Havlik, P.
-AU  - Kishimoto, P. N.
-AU  - Fricko, O.
-AU  - Zilliacus, J.
-AU  - Gidden, M.
-AU  - Strubegger, M.
-AU  - Kartasasmita, G.
-AU  - Ermolieva, T.
-AU  - Forsell, N.
-AU  - Gusti, M.
-AU  - Johnson, N.
-AU  - Kikstra, J.
-AU  - Kindermann, G.
-AU  - Kolp, P.
-AU  - Lovat, F.
-AU  - McCollum, D. L.
-AU  - Min, J.
-AU  - Pachauri, S.
-AU  - Parkinson, S. C.
-AU  - Rao, S.
-AU  - Rogelj, J.
-AU  - Ünlü, G.
-AU  - Valin, H.
-AU  - Wagner, P.
-AU  - Zakeri, B.
-AU  - Obersteiner, M.
-AU  - Riahi, K.
-CY  - Laxenburg, Austria
+AU  - IIASA Energy, Climate, and Environment Program
+TI  - MESSAGEix-GLOBIOM-GAINS Documentation - 2026 release
+PY  - 2026
 PB  - International Institute for Applied Systems Analysis (IIASA)
-PY  - 2020
-ST  - MESSAGEix-GLOBIOM Documentation - 2020 release
-TI  - MESSAGEix-GLOBIOM Documentation
-DO  - 10.22022/iacc/03-2021.17115
-UR  - https://pure.iiasa.ac.at/id/eprint/17115
-UR  - https://docs.messageix.org/global/en/v2020
-ER  -
+AD  - International Institute for Applied Systems Analysis (IIASA), Schlossplatz 1, 2361 Laxenburg, Austria
+N1  - In preparation. Author list and DOI to be completed at release.
+ER  - 
 
-
-TY  - JOUR
-AU  - Fricko, O.
-AU  - Havlik, P.
-AU  - Rogelj, J.
-AU  - Klimont, Z.
-AU  - Gusti, M.
-AU  - Johnson, N.
-AU  - Kolp, P.
-AU  - Strubegger, M.
-AU  - Valin, H.
-AU  - Amann, M.
-AU  - Ermolieva, T.
-AU  - Forsell, N.
-AU  - Herrero, M.
-AU  - Heyes, C.
-AU  - Kindermann, G.
-AU  - Krey, V.
-AU  - McCollum, D. L.
-AU  - Obersteiner, M.
-AU  - Pachauri, S.
-AU  - Rao, S.
-AU  - Schmid, E.
-AU  - Schoepp, W.
-AU  - Riahi, K.
-DO  - https://doi.org/10.1016/j.gloenvcha.2016.06.004
-VL  - 42
-IS  -
-SP  - 251
-EP  - 267
-DA  - 2017/01/01/
-PY  - 2017
-ST  - The marker quantification of the Shared Socioeconomic Pathway 2: A middle-of-the-road scenario for the 21st century
-T2  - Global Environmental Change
-TI  - The marker quantification of the Shared Socioeconomic Pathway 2: A middle-of-the-road scenario for the 21st century
-ER  -
-
+TY  - GEN
+AU  - Fricko, Oliver
+AU  - Wu, Yazhen
+AU  - Zhang, Shaohui
+AU  - Frank, Stefan
+AU  - Gusti, Mykola
+AU  - Höglund-Isaksson, Lena
+AU  - Javaid, Aneeque
+AU  - Joshi, Siddarth
+AU  - Kramel, Diogo
+AU  - Maczek, Florian
+AU  - Mastrucci, Alessio
+AU  - Pelz, Setu
+AU  - Pratama, Yoga
+AU  - Rogner, Holger
+AU  - Shepard, Jun
+AU  - Arbelaez-Gaviria, Juliana
+AU  - Casamassima, Luca
+AU  - Chang, Jinfeng
+AU  - Gidden, Matt
+AU  - Hammer-Stromman, Anders
+AU  - Ju, Yiyi
+AU  - Kikstra, Jarmo
+AU  - Kishimoto, Paul Natsuo
+AU  - Kozicka, Marta
+AU  - Krisztin, Tamás
+AU  - Leclère, David
+AU  - Lessa Derci Augustynczik, Andrey
+AU  - Meng, Measrainsey
+AU  - Palazzo, Amanda
+AU  - Poblete, Miguel
+AU  - Purohit, Pallav
+AU  - Ringwald, Leopold
+AU  - Rouet-Pollakis, Sibylle
+AU  - Unlu, Gamze
+AU  - Vinca, Adriano
+AU  - Wagner, Fabian
+AU  - Winiwarter, Wilfried
+AU  - Wögerer, Michael
+AU  - Woo, Jung-Hun
+AU  - Zakeri, Behnam
+AU  - Zhang, Xiuming
+AU  - Klimont, Zbigniew
+AU  - Pachauri, Shonali
+AU  - Havlík, Petr
+AU  - van Ruijven, Bas
+AU  - Riahi, Keywan
+AU  - Krey, Volker
+TI  - The ScenarioMIP-CMIP7 Low Emission marker scenario: Holding warming likely below 2°C in a middle-of-the-road world
+PY  - 2026
+DA  - 2026/09/02
+PB  - Zenodo
+DO  - 10.5281/zenodo.22233361
+UR  - https://zenodo.org/records/22233361
+N1  - Preprint. Replace with the journal version once published.
+ER  - 
 
 TY  - JOUR
 AU  - Huppmann, Daniel
