@@ -13,6 +13,7 @@ from message_ix_models.model.water.config import Config
 from message_ix_models.util import add_par_data
 
 from .demands import add_irrigation_demand, add_sectoral_demands, add_water_availability
+from .hist_dispatch import add_water_hist_dispatch
 from .infrastructure import add_desalination, add_infrastructure_techs
 from .irrigation import add_irr_structure
 from .water_for_ppl import cool_tech, non_cooling_tec
@@ -37,6 +38,7 @@ DATA_FUNCTIONS: list[DataFunc] = [
     add_desalination,
     add_e_flow,
     add_irr_structure,
+    add_water_hist_dispatch,
 ]
 
 DATA_FUNCTIONS_COUNTRY: list[DataFunc] = [
@@ -49,7 +51,7 @@ DATA_FUNCTIONS_COUNTRY: list[DataFunc] = [
     add_infrastructure_techs,
     add_desalination,
     add_e_flow,
-    # add if statement: if irrigation: land component from external model
+    add_water_hist_dispatch,
 ]
 
 
