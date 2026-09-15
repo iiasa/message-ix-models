@@ -64,6 +64,18 @@ SOURCE: MutableMapping[str, Mapping[str, Any]] = {
         ),
         processor=Extract(extract_dir="cepii-baci"),
     ),
+    "JGCRI_CEDS": dict(
+        pooch_args=dict(
+            base_url="doi:https://doi.org/10.5281/zenodo.15059443",
+            registry={
+                "CEDS_v_2025_03_18_aggregate.zip": "sha256:b55f0dddb4eb8e14435b13d835f99497b789cb3378eee391d1c78af58c5e8095",  # noqa: E501
+                "CEDS_v_2025_03_18_detailed.zip": "sha256:c2215c88b71c6b0230f6826c131cdd055f869b8b31620f521ca173837d4e6045",  # noqa: E501
+                "CEDS_v_2025_03_18_supplementary_bunkers.zip": "sha256:53050a413244cdcc53c7008bc4bde032bbc7ca1fe4bc4871d5b03f3c432cfeea",  # noqa: E501
+                "CEDS_v_2025_03_18_supplementary_extension.zip": "sha256:c62973a8745346e5a0df3d381cdc01529aa76877013dfd02b559745571a58813",  # noqa: E501
+            },
+        ),
+        processor=Extract(extract_dir="jgcri_ceds"),
+    ),
     "PRIMAP": dict(
         pooch_args=dict(
             base_url="ftp://datapub.gfz-potsdam.de/download/10.5880.PIK.2019.001/",
