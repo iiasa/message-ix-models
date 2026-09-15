@@ -50,7 +50,7 @@ R12_EEU:
   description: >-
     Serbia and Montenegro (SCG) and Yugoslavia (YUG) still included in this list,
     even though their ISO 3166-1 codes were deleted in 2006 and 2003, respectively.
-  child: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SCG, SRB, SVK, SVN, YUG]
+  child: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SCG, SRB, SVK, SVN, YUG, XKX]
   iea-weo-region: European Union
   # All children explicitly defined for "material-region" here, instead of using "*"
   # since YUG should not be included here (IEA EWEB data is only used from 1990 onwards)
