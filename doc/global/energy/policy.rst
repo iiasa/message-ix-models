@@ -2,34 +2,95 @@
 
 Modeling policies
 =================
-The global energy model distinguishes between eleven global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes.
+The global energy model distinguishes between twelve global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes.
 
-Representation of single country Nationally Determined Contributions (NDCs)
----------------------------------------------------------------------------
-The targets formulated in the NDCs come in many different flavors. This applies to the sectors and gases covered by these  policies, but it also applies to how these are expressed and quantified. In the global energy model, four broad categories of policy types related to the NDCs are represented, each of which is translated into a set of constraints.
+From national targets to regional constraints
+----------------------------------------------
+National targets are first harmonised against the historical emissions the model
+carries, then translated into constraints on the region the country belongs to.
+Historical national emissions are taken from PRIMAP-hist
+(Gütschow and Pflüger, 2022 :cite:`gutschow_primap_2022`),
+EDGAR (Crippa et al., 2023 :cite:`crippa_edgar_2023`)
+and CAIT, now published as Climate Watch
+(Climate Watch, 2022 :cite:`climate_watch_2022`),
+with PRIMAP as the default and the other two used in that order
+where a country is missing.
 
-1. Emission targets
-2. Energy shares
-3. Capacity or generation targets
-4. Macro-economic targets
+Because the model's historical emissions may differ slightly from historical data
+sources, aggregate national emissions and regional model emissions differ.
+The difference for region :math:`r` in period :math:`t` is
 
-A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy-related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`.
-Additional policies implemented in the model can also be found in Roelfsema et al. (2020) :cite:`roelfsema_2020_paris`.
+.. math:: EDiff_{r,t} = GHG_{r,t} - \sum_{iso \in r} GHG_{iso,t}
 
-Emission targets
-----------------
-Country-specific emission reduction targets are specified either in relation to historical emissions (e.g. x% reduction compared to 1990) or in relation to a reference emission trajectory (in the form of a baseline or business as usual scenario (BAU); e.g. x% reduction compared to 2030 emission levels in the baseline). The targets themselves are expressed as either (1) absolute reduction, (2) a percentage reduction or (3) intensity reductions e.g. emissions per GDP or per capita. In order to account for these different reduction targets in the global energy model, the targets are translated so that a regionally specific upper bound on emissions can be formulated. If not further specified, emission constraints are assumed to apply to all sectors and all gases, i.e. total GHGs.
+and is distributed across the countries of that region in proportion to their
+share of the national total,
 
-Energy shares
--------------
-Energy share targets refer to any target which aims to provide a specific energy level (e.g. primary, secondary or final energy) through a specific sub-set of energy forms.  The five different forms in which these are formulated in the NDCs are: (1) renewable energy as share of total primary energy, (2) non-fossil energy forms as share of total primary energy, (3) renewable energy as a share of total electricity generation, (4) non-fossil energy as a share of total electricity generation, (5) renewable energy as a form of final energy.  All of these share constraint variants can be implemented in the model using the following `mathematical formulation <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#constraints-on-shares-of-technologies-and-commodities>`_. In order to be able to implement these for aggregate regions, it is necessary to harmonize these to single type of share constraint, so that their effects are considered cumulatively within a region. All variants are therefore harmonized to either the share type specified by the largest country, in terms of share of energy within a region, or the most frequently specified type within a region.
-Separately biofuel shares are implemented specifically for the transport sector.
+.. math:: GHGsh_{iso,t} = \frac{GHG_{iso,t}}{\sum_{iso \in r} GHG_{iso,t}}
 
+.. math:: GHG^{adj}_{iso,t} = GHG_{iso,t} + EDiff_{r,t} \cdot GHGsh_{iso,t}
 
-Capacity and generation targets
--------------------------------
-Some NDCs specify capacity installation targets, e.g. for planned power plants which will be operational by a certain year.  Others specify that a given energy commodity will come from a specific source, for example a certain amount of electricity will stem form a specific intermittent renewable source or nuclear. These targets types are implemented in the model as lower bounds on generation.
+The adjustment is held constant across the other historical years.
 
+Projected national emissions are derived by downscaling the regional pathway of
+the reference scenario. The regional GHG intensity is extrapolated to a
+convergence year :math:`CY` beyond the model horizon using the growth rate of
+the last ten years of the baseline, which gives each country a constant annual
+intensity growth rate from its own intensity in the base year :math:`BY`,
+
+.. math:: GHGIgr_{iso} = \left( \frac{GHGI_{r,CY}}{GHGI_{iso,BY}} \right)^{\frac{1}{CY-BY}}
+
+from which baseline national intensities follow period by period,
+
+.. math:: GHGI^{*}_{iso,t} = GHGI_{iso,t-1} \cdot GHGIgr_{iso}
+
+The scaling above is then reapplied so that the downscaled national emissions
+sum back to the regional baseline.
+
+Targets expressed relative to a historical base year are computed against the
+harmonised inventory. Where a target names no reference-year emissions, the
+downscaled no-policy baseline is used instead. Unless a target says otherwise it
+is taken to apply to all sectors and all gases. Unquantified targets, non-emission
+land-use targets, and countries lacking the historical emission or GDP data the
+calculation needs are omitted.
+
+Aggregating share targets
+-------------------------
+A national share target becomes a regional one weighted by the country's share
+of regional energy in the reference year :math:`RY`,
+
+.. math:: shr_{r,TY} = \sum_{iso \in r} \frac{Energy_{iso,RY}}{Energy_{reg,RY}} \cdot Tshr_{iso,TY}
+
+where :math:`Tshr_{iso,TY}` is the national target share in the target year
+:math:`TY`, and :math:`Energy` is primary energy, electricity generation or
+final energy depending on the target type.
+
+Countries within one region rarely express their targets against the same
+quantity. Implemented separately, such targets would not act cumulatively at the
+regional level and the region would underachieve them. Each region therefore
+converts all of its national targets to one dominant type, chosen as the type
+used by the largest country by energy share or by the majority of countries in
+that region. Nine conversions are defined between the five share types, each with
+a direct-equivalent and a substitution-accounting variant. Converting a renewable
+share of primary energy into a renewable share of electricity generation, for
+example, is
+
+.. math:: NewTshr_{iso,TY} = \frac{Tshr_{iso,TY} \cdot \frac{ReEg_{iso,RY}}{RePe_{iso,RY}} \cdot TotPe_{iso,RY}}{TotEg_{iso,RY}}
+
+Implementing share constraints
+------------------------------
+The model does not resolve national energy systems, so each country's share of
+regional energy is held at its reference-year value. The regional target is then
+imposed as a relation between the energy produced by the technologies the target
+covers, :math:`lhs_{r,t}`, and everything else, :math:`rhs_{r,t}`,
+
+.. math:: \sum_{r,t} lhs_{r,t} \geq \left( \sum_{r,TY} lhs_{r,t} + \sum_{r,TY} rhs_{r,t} \right) \cdot shr
+
+which rearranges into the form the model carries,
+
+.. math:: \frac{1-shr}{shr} \cdot \sum_{r,TY} lhs_{r,t} - \sum_{r,TY} rhs_{r,t} \geq 0
+
+where :math:`shr` is the minimum share of total energy production required from
+the covered technologies.
 
 .. TODO complete the following. See iiasa/message_doc#43
 
