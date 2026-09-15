@@ -1089,11 +1089,10 @@ def main(
         def _load_csv(attr: str) -> pd.DataFrame:
             path = message_linking_path(context_b, attr)
             df = pd.read_csv(path)
-            columns = columns or df.columns.tolist()
             try:
-                return df.loc[:, columns]
+                return df.loc[:, _DEMAND_CSV_COLUMNS]
             except KeyError:
-                missing = sorted(set(columns) - set(df.columns))
+                missing = sorted(set(_DEMAND_CSV_COLUMNS) - set(df.columns))
                 raise ValueError(f"{path}: missing demand columns {sorted(missing)}")
 
         # Inputs for prepare_data_B from context.buildings or defaults
