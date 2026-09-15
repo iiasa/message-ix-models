@@ -5,7 +5,9 @@ from typing import TYPE_CHECKING
 from message_ix_models.model.transport import (
     Config,
     constraint,
+    demand,
     disutility,
+    emission,
     freight,
     key,
     ldv,
@@ -183,7 +185,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     key.fv_cny: (HasUnits("Gt km / a"),),
     #
     # Exogenous demand calculation succeeds
-    "transport demand::ixmp": (
+    demand.TARGET: (
         # Data is returned for the demand parameter only
         ContainsDataForParameters({"demand"}),
         HasCoords({"level": ["useful"]}),
@@ -199,6 +201,11 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # .disutility.prepare_computer()
     "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
     disutility.TARGET: (ContainsDataForParameters({"input"}),),
+    emission.TARGET: (
+        ContainsDataForParameters({"emission_factor"}),
+        # Emissions species are transformed
+        HasCoords({"emission": ["VOC transport"]}),
+    ),
     # The following partly replicates .test_ldv.test_get_ldv_data()
     # NB Cannot use NoDuplicates here yet due to:
     # - inv_cost: 50076 duplicated keys
@@ -266,7 +273,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     "input::vehicle+ixmp": (
         # Includes data for historical vintages operating within the model time horizon
-        HasCoords({"year_vtg": [2010]}),
+        HasCoords({"technology": ["ELE_moto"], "year_vtg": [2010]}),
         # No data are generated for R12_GLB
         HasCoords({"node_loc": ["R12_GLB"]}, inverse=True),
     ),

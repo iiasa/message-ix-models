@@ -18,6 +18,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.report import STAGE, add_plots
+from message_ix_models.report.operator import summarize
 from message_ix_models.util import (
     MappingAdapter,
     WildcardAdapter,
@@ -25,10 +26,12 @@ from message_ix_models.util import (
     minimum_version,
 )
 from message_ix_models.util._logging import mark_time
+from message_ix_models.util.genno import Collector
 from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 from . import Config, plot
 from . import key as K
+from .data import LABEL_SUBS
 from .structure import get_commodity_groups, get_technology_groups
 
 if TYPE_CHECKING:
@@ -42,6 +45,9 @@ if TYPE_CHECKING:
 
 
 log = logging.getLogger(__name__)
+
+#: Key for a task that computes all transport data and adds it to the scenario.
+TARGET = "add transport data"
 
 
 def add_debug(c: Computer) -> None:
@@ -90,8 +96,17 @@ def add_debug(c: Computer) -> None:
     add_plots(c, plot, k_debug["plot"], stage=STAGE.BUILD, single=True)
 
     # Also generate these debugging outputs when building the scenario
-    c.add(k_debug, "summarize", *k_debug.generated)
-    c.graph["add transport data"].append(k_debug)
+    def _summarize(*args):
+        """Summarize the arguments, but return only an empty :class:`dict`."""
+        log.info("\n" + summarize(args))
+        return {}
+
+    c.add(k_debug, _summarize, *k_debug.generated)
+    add_parameter_data("debug", _summarize, *k_debug.generated)
+
+
+#: Collect parameter data from all transport modules at "transport::build+ixmp".
+add_parameter_data = Collector("transport::build+ixmp", "add {}".format)
 
 
 def debug_multi(context: Context, *paths: Path) -> None:
@@ -134,6 +149,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     from message_ix_models.project.advance.data import ADVANCE
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.project.ssp.data import SSPOriginal, SSPUpdate
+    from message_ix_models.tools.gains import EmissionFactor
     from message_ix_models.tools.iea.web import IEA_EWEB, TRANSFORM
     from message_ix_models.util.sdmx import Dataflow
 
@@ -146,7 +162,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     config: "Config" = c.graph["config"]["transport"]
 
     # Common arguments for ExoDataSource.add_tasks(…)
-    c_s: "AddTasksKw" = dict(context=context, strict=False)
+    cs: "AddTasksKw" = dict(context=context, strict=False)
 
     # Identify appropriate source keyword arguments for loading GDP and population data
     if config.ssp in SSP_2017:
@@ -169,30 +185,35 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         )
 
     for kw in source_kw:
-        keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **c_s)
+        keys[kw["measure"]] = cls.add_tasks(c, source=config.ssp.urn, **kw, **cs)
 
     # Miscellaneous input data flows
     kw = dict(nodes=context.model.regions)
-    data.ActivityVehicle.add_tasks(c, **kw, **c_s)
-    data.CapShareT.add_tasks(c, **kw, **c_s)
-    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **c_s)
-    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **c_s)
-    data.InputVehicle.add_tasks(c, **kw, **c_s)
-    data.InvestmentCost.add_tasks(c, **kw, **c_s)
-    data.Lifetime.add_tasks(c, **kw, **c_s)
-    data.LoadFactorF.add_tasks(c, **kw, **c_s)
-    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **c_s)
+    data.ActivityVehicle.add_tasks(c, **kw, **cs)
+    data.CapShareT.add_tasks(c, **kw, **cs)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=1, **cs)
+    data.IEA_Future_of_Trucks.add_tasks(c, measure=2, **cs)
+    data.InputVehicle.add_tasks(c, **kw, **cs)
+    data.InvestmentCost.add_tasks(c, **kw, **cs)
+    data.Lifetime.add_tasks(c, **kw, **cs)
+    data.LoadFactorF.add_tasks(c, **kw, **cs)
+    data.LoadFactorLDV.add_tasks(c, config=config, **kw, **cs)
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", nodes=context.model.regions)
-    data.MERtoPPP.add_tasks(c, **kw, **c_s)
+    data.MERtoPPP.add_tasks(c, **kw, **cs)
+
+    # Add GAINS emission factor data
+    s = LABEL_SUBS["E"](config.label)
+    kw = dict(nodes=context.model.regions, scenario=s, variant="L")
+    setattr(K.exo, "emission_factor", EmissionFactor.add_tasks(c, **kw, **cs)[0])
 
     # Add IEA Extended World Energy Balances data; select only the flows related to
     # transport
     kw = dict(provider="IEA", edition="2024", regions=context.model.regions)
     if context.model.regions == "R12":
         kw.update(flow=data.IEA_EWEB_FLOW, transform=TRANSFORM.B | TRANSFORM.C)
-    IEA_EWEB.add_tasks(c, **kw, **c_s)
+    IEA_EWEB.add_tasks(c, **kw, **cs)
 
     # Add ADVANCE data
     adv_common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
@@ -202,7 +223,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     ):
         # Add the base data
         kw = adv_common | dict(measure=m, name=f"advance {n}")
-        keys_advance = ADVANCE.add_tasks(c, **kw, **c_s)
+        keys_advance = ADVANCE.add_tasks(c, **kw, **cs)
         # Broadcast to R12
         c.add(f"{n}:n:advance", "broadcast_advance", keys_advance[0], "y0", "config")
 
@@ -254,8 +275,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #:
 #: These include:
 #:
-#: - ``add transport data``: an empty list. The :py:`prepare_computer()` functions in
-#:   individual modules listed by :attr:`.transport.Config.modules` can append keys.
+#: - :data:`TARGET`: call :func:`.add_par_data` with the collected and merged data
+#:   from :any:`add_parameter_data`.
 #: - :data:`key.report.all`: same, but for reporting.
 #: - ``info``: :attr:`transport.Config.base_model_info
 #:   <transport.config.Config.base_model_info>`, an instance of :class:`.ScenarioInfo`.
@@ -276,7 +297,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 #: - ``nl::world agg``: :class:`dict` mapping to aggregate "World" from individual |n|.
 #:   See :func:`.nodes_world_agg`.
 STRUCTURE_STATIC: tuple[tuple, ...] = (
-    ("add transport data", []),
+    (TARGET, "add_par_data", "scenario", add_parameter_data.target, "dry_run"),
     (K.report.all, "summarize"),
     (
         "transport info",
@@ -350,7 +371,6 @@ def add_structure(c: Computer) -> None:
     """
     from ixmp.report import configure
 
-    from .data import LABEL_SUBS
     from .operator import broadcast_t_c_l, broadcast_y_yv_ya
 
     # Retrieve configuration and other information
@@ -496,8 +516,6 @@ def get_computer(
       the :py:`prepare_computer()` function in that module.
     - "context": a reference to `context`.
     - "scenario": a reference to `scenario`.
-    - "add transport data": a list of keys which, when computed, causes all data for
-      MESSAGEix-Transport to be computed and added to the "scenario".
 
     Parameters
     ----------
@@ -507,7 +525,7 @@ def get_computer(
        new Computer is created and populated.
     visualize :
        If :any:`True` (the default), a file :file:`transport/build.svg` is written in
-       the local data directory with a visualization of the "add transport data" key.
+       the local data directory with a visualization of task graph for :data:`TARGET`.
     options :
        Passed to :meth:`.transport.Config.from_context` *except* if the single key
        "config" is present: if so, the corresponding value **must** be an instance
@@ -574,7 +592,9 @@ def get_computer(
     c.add("context", context)
     c.add("scenario", scenario)
 
-    # Add structure-related keys
+    # Connect add_parameter_data to this Computer
+    add_parameter_data.computer = c
+    # Add structure-related tasks
     add_structure(c)
     # Add exogenous data
     add_exogenous_data(c, config.base_model_info)
@@ -591,7 +611,7 @@ def get_computer(
     if visualize and HAS_GRAPHVIZ:
         path = context.get_local_path("transport", "build.svg")
         path.parent.mkdir(exist_ok=True)
-        c.visualize(filename=path, key="add transport data", rankdir="LR")
+        c.visualize(filename=path, key=TARGET, rankdir="LR")
         log.info(f"Visualization written to {path}")
 
     return c
@@ -602,7 +622,7 @@ def main(
     scenario: Scenario,
     options: dict | None = None,
     **option_kwargs,
-):
+) -> Scenario:
     """Build MESSAGEix-Transport on `scenario`.
 
     Parameters
@@ -618,9 +638,6 @@ def main(
     apply_spec
     get_spec
     """
-    from .emission import strip_emissions_data
-    from .util import sum_numeric
-
     options = either_dict_or_kwargs("options", options, option_kwargs)
 
     # Remove the "dry_run" option, if any, and update `context`
@@ -630,23 +647,22 @@ def main(
     mark_time()
 
     # Set up a Computer for input data calculations. This also:
-    # - Creates a Config instance
+    # - Creates a Config instance.
     # - Generates and stores context.transport.spec, i.e the specification of the
-    #   MESSAGEix-Transport structure: required, added, and removed set items
-    # - Prepares the "add transport data" key used below
+    #   MESSAGEix-Transport structure: required, added, and removed set items.
+    # - Prepares the "add transport data" key used below.
     c = get_computer(context, scenario=scenario, options=options)
 
-    def _add_data(s, **kw):
-        assert s is c.graph["scenario"]
-        result = c.get("add transport data")
-        # For calls to add_par_data(), int() are returned with number of observations
-        log.info(f"Added {sum_numeric(result)} total obs")
-
     if context.core.dry_run:
-        return c.get(K.debug)
+        print(c.get(K.debug))
+        return scenario
 
-    # First strip existing emissions data
-    strip_emissions_data(scenario, context)
+    def _add_data(s, **kw) -> None:
+        """Data-adding callback for :func:`.build.apply_spec`."""
+        assert s is c.graph["scenario"]  # Ensure consistency
+        # Compute all transport data and add it to the scenario
+        result: int = c.get(TARGET)
+        log.info(f"Added {result} total obs")
 
     # Apply the structural changes AND add the data
     log.info("Build MESSAGEix-Transport")

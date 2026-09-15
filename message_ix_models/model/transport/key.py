@@ -22,6 +22,7 @@ __all__ = [
     "gdp_cap",
     "gdp_index",
     "gdp_ppp",
+    "input",
     "ldv_cny",
     "ldv_ny",
     "ldv_nycg",
@@ -98,6 +99,7 @@ coord = Keys(
     scenario_label_B="coords:scenario:label+B",
     scenario_label_C="coords:scenario:label+C",
     scenario_label_D="coords:scenario:label+D",
+    scenario_label_E="coords:scenario:label+E",
     scenario="coords:scenario:T",
     y_0="coords:y:y0",
     y_0_drop="coords:y:y0+drop",
@@ -128,6 +130,12 @@ gdp_index = gdp_cap + "index"
 
 fv = Key("freight activity", "nty")
 fv_cny = Key("freight activity", "cny")
+
+#: ``input`` parameter data as a :class:`Quantity`.
+input = Keys(
+    LDV="input:c-l-n-t-ya-yv:LDV",
+    vehicle="input:c-l-n-t-ya-yv:vehicle",
+)
 
 ldv_cny = Key("pdt ldv", "cny")
 ldv_ny = Key("pdt ldv", "ny")

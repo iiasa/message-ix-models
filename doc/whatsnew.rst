@@ -46,6 +46,7 @@ Next release
   - New :func:`_sturm_rscript_B` to call updated versions of MESSAGEix-Buildings.
 
 - Improve :doc:`/transport/index` (:pull:`497`, except where noted):
+- Improve :doc:`/transport/index` (:pull:`497`, :pull:`541`):
 
   - Consolidate handling of vehicle stock, input, and output intensities in
     :mod:`.transport.vehicle`, from :mod:`.transport.freight`

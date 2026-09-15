@@ -93,6 +93,13 @@ IEA_EWEB_FLOW = [
 #:    1. Strip (ignore) leading "M " or trailing " tax" or " exo price a1b2".
 #:    2. "CircEUlar-[AE]" becomes "CircEUlar-N".
 #:    2. All *except* "CircEUlar-[CN]" become "*".
+#:
+#: Set "E"
+#:    This set is used to map label to a value for
+#:    :attr:`.gains.EmissionFactor.Options.scenario`.
+#:
+#:    1. Full SSP codes such as "SSP_2024.1" become "SSP1".
+#:    2. All other values become "SSP2".
 LABEL_SUBS = dict(
     A=Substitutions(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
@@ -115,6 +122,10 @@ LABEL_SUBS = dict(
         (r"^(M )?(.*?)( (tax|exo price \w{4}))?$", r"\2"),
         ("^CircEUlar-[AE]$", "CircEUlar-N"),
         (r"^(?!CircEUlar-[CN]).*$", "*"),
+    ),
+    E=Substitutions(
+        (r"^SSP_2024.([1235])", r"SSP\1"),
+        (r"^(?!SSP).*$", "SSP2"),
     ),
 )
 
@@ -879,6 +890,8 @@ def navigate_ele(
 
 def prepare_computer(c: Computer):
     """Add miscellaneous transport data."""
+    from .build import add_parameter_data
+
     # Data-generating calculations
     for comp in (
         (conversion, K.n, K.y, "config"),
@@ -886,11 +899,9 @@ def prepare_computer(c: Computer):
         (dummy_supply, K.t, "info", "config"),
         (navigate_ele, K.n, K.t, K.agg.t, K.y, "config"),
     ):
-        # Add 2 computations: one to generate the data
-        name = getattr(comp[0], "__name__")
-        k1 = c.add(f"{name}::ixmp", *comp)
-        # …one to add it to `scenario`
-        c.add("transport_data", f"transport {name}", key=k1)
+        # Generate the data and add to the build
+        name = __name__ + "." + getattr(comp[0], "__name__")
+        add_parameter_data(name, *comp)
 
 
 def read_structures() -> "sdmx.message.StructureMessage":

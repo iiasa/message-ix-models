@@ -57,6 +57,8 @@ def extract_if_newer(
     path: Path,
     target_dir: Path = Path("."),
     members: list[str] | None = None,
+    *,
+    ignore: list[str] | None = None,
 ) -> list[Path]:
     """Extract all members from an archive at `path` to `target_dir`.
 
@@ -65,6 +67,14 @@ def extract_if_newer(
 
     .. todo:: Extend to use a configurable set of attributes (including 0 or more of
        size, mtime, etc.) to determine whether to extract.
+
+    Parameters
+    ----------
+    members :
+        If given, extract only these members.
+    ignore :
+        If given, ignore any file within the archive with a path part that appears in
+        this list.
     """
 
     # Identify the directory for extracted files
@@ -88,9 +98,13 @@ def extract_if_newer(
 
             # Candidate path for the extracted file
             target = target_dir.joinpath(filename)
-            if target.exists() and target.stat().st_size >= size:
-                result.append(target)
+            if set(target.relative_to(target_dir).parts) & set(ignore or []):
+                # One or more of the path parts is in `ignore`
                 skip.append(target)
+            elif target.exists() and target.stat().st_size >= size:
+                # Existing file with the same size; skip
+                skip.append(target)
+                result.append(target)
             else:
                 result.append(archive.extract(member, path=target_dir))
 
