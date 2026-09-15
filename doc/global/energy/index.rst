@@ -36,10 +36,10 @@ including energy,
 industrial processes,
 and—through its linkage to GLOBIOM—agriculture and forestry.
 The emissions of the full basket of greenhouse gases including CO2, CH4, N2O and F-gases (CF4, C2F6, HFC125, HFC134a, HFC143a, HFC227ea, HFC245ca and SF6) as well as other radiatively
-active gases, such as NOx, volatile organic compounds (VOCs), CO, SO2, and BC/OC is represented in hte model.
+active gases, such as NOx, volatile organic compounds (VOCs), CO, SO2, and BC/OC is represented in the model.
 |name| is used in conjunction with MAGICC
 (Model for Greenhouse gas Induced Climate Change)
-version 6.8
+version 7.6.0a3
 (cf. Section :ref:`magicc`)
 to calculate atmospheric concentrations,
 radiative forcing,
@@ -55,13 +55,22 @@ the model identifies the least-cost portfolio of mitigation technologies. The ch
 economics of the abatement measures, assuming full temporal and spatial flexibility (i.e., emissions-reduction measures are assumed to occur when and where they are
 cheapest to implement).
 
-The Reference Energy System (RES) defines the full set of available energy conversion technologies.
+The Reference Energy System (RES) defines the full set of available energy conversion technologies
+(:numref:`fig-res`).
 In MESSAGE terms, “energy conversion technology” refers to
 all types of energy technologies,
 from resource extraction to transformation,
 transport,
 distribution of energy carriers,
 and end-use technologies.
+
+.. _fig-res:
+.. figure:: /_static/RES_overview.png
+
+   Reference Energy System (RES).
+   Schematic of the reference energy system,
+   showing how primary energy resources are converted
+   through secondary energy carriers to energy demands.
 
 Because few conversion technologies convert resources directly into useful energy,
 the energy system in |name| is divided into 5 energy levels:
@@ -70,7 +79,7 @@ the energy system in |name| is divided into 5 energy levels:
 * Primary energy: raw product at a generation site (e.g., crude oil input to the refinery)
 * Secondary energy: finalized product at a generation site (e.g., gasoline or diesel fuel output from the refinery)
 * Final energy: finalized product at its consumption point (e.g., gasoline in the tank of a car or electricity leaving a socket)
-* Useful energy: finalized product satisfying demand for services (e.g., heating, lighting or moving people)
+* Useful energy (Demand): finalized product satisfying demand for services (e.g., heating, lighting or moving people)
 
 Technologies can take in energy commodities from one level and put out at another level (e.g., refineries produce refined oil products at secondary level from crude oil at the primary level)
 or at the same level (e.g., hydrogen electrolyzers produce hydrogen at the secondary energy level from electricity at the secondary level). The energy forms defined in each level can be
