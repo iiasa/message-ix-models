@@ -23,18 +23,22 @@ class Extract:
     - :file:`.zip` or :file:`.tar.xz` archives.
     """
 
-    def __init__(self, members=None, extract_dir=None):
+    def __init__(self, members=None, extract_dir=None) -> None:
         self.members = members
         self.extract_dir = Path(extract_dir or ".")
 
-    def __call__(self, fname, action, pooch):
-        return extract_if_newer(Path(fname), self.extract_dir, self.members)
+    def __call__(self, fname: str, action, pooch) -> list[Path]:
+        ignore = ["__MACOSX", ".DS_Store"]
+        paths = extract_if_newer(
+            Path(fname), self.extract_dir, self.members, ignore=ignore
+        )
+        return list(filter(lambda p: p.is_file(), paths))
 
 
 class UnpackSnapshot:
     """Pooch processor that calls :func:`.snapshot.unpack`."""
 
-    def __call__(self, fname, action, pooch):
+    def __call__(self, fname, action, pooch) -> Path:
         from message_ix_models.model.snapshot import unpack
 
         path = Path(fname)
