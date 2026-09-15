@@ -273,7 +273,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     "input::vehicle+ixmp": (
         # Includes data for historical vintages operating within the model time horizon
-        HasCoords({"year_vtg": [2010]}),
+        HasCoords({"technology": ["ELE_moto"], "year_vtg": [2010]}),
         # No data are generated for R12_GLB
         HasCoords({"node_loc": ["R12_GLB"]}, inverse=True),
     ),
