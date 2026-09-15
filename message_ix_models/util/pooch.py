@@ -149,10 +149,16 @@ def fetch(
 
     p = pooch.create(**pooch_args)
 
-    if len(p.registry) > 1:  # pragma: no cover
-        raise NotImplementedError("fetch() with registries with >1 files")
+    if "fname" not in fetch_kwargs:
+        # No explicit fname keyword argument to Pooch.fetch()
+        keys = list(p.registry.keys())
+        fetch_kwargs.update(fname=keys[0])
+        if len(keys) > 1:
+            log.warning(
+                f"Missing Pooch.fetch(fname=…); using 1st of {len(keys)}: {keys[0]}"
+            )
 
-    filenames = p.fetch(next(iter(p.registry.keys())), **fetch_kwargs)
+    filenames = p.fetch(**fetch_kwargs)
 
     if isinstance(filenames, (str, Path)):
         filenames = [filenames]
