@@ -97,6 +97,22 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     return bmt_report(context, scenario)
     # TODO: it seems transport report cannot work alone without following after build
 
+# YJ: just for quick vetting, not really needed, can remove later
+def report_transport(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Run only MESSAGEix-Transport reporting."""
+    from message_ix_models.model.bmt.workflow import _run_transport_report
+    from message_ix_models.model.transport.config import Config
+
+    if "transport" not in context:
+        context.transport = Config.from_context(context)
+    if getattr(context.transport, "_code", None) is None:
+        context.transport.code = "SSP2"
+        log.info("Transport reporting enabled with manually set codes.")
+
+    return _run_transport_report(context, scenario)
+
 
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Placeholder function that does nothing, just for building workflow."""
@@ -819,22 +835,24 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/baseline_MT",
         clone=True,
     )
-    name = wf.add_step(
-        "MT fix1",
-        name,
-        qf_remove_ELC100_near_term_infeasibility,
-        target=f"{model_name}/baseline_MT_fix1",
-        clone=True,
-    )
-    name = wf.add_step(
-        "MT fix2",
-        name,
-        qf_freeze_truck_history,
-        target=f"{model_name}/baseline_MT_fix2",
-        clone=True,
-    )
+
+    # YJ: not needed anymore after w34 rebase
+    # name = wf.add_step(
+    #     "MT fix1",
+    #     name,
+    #     qf_remove_ELC100_near_term_infeasibility,
+    #     target=f"{model_name}/baseline_MT_fix1",
+    #     clone=True,
+    # )
+    # name = wf.add_step(
+    #     "MT fix2",
+    #     name,
+    #     qf_freeze_truck_history,
+    #     target=f"{model_name}/baseline_MT_fix2",
+    #     clone=True,
+    # )
     name = wf.add_step("MT solved", name, solve)
-    # name = wf.add_step("MT reported", name, report)
+    name = wf.add_step("MT reported", "MT solved", report_transport)
 
     name = wf.add_step(
         "BMT built", "MT solved", build_B, target=f"{model_name}/baseline_BMT", clone=c
