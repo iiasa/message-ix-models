@@ -50,8 +50,8 @@ class METHOD(Enum):
 
 #: R files used for :data:`METHOD.RSCRIPT_B`.
 RSCRIPT_B_FILES = [
-    "run_STURM_Circular_resid_glo.R",
-    "run_STURM_Circular_comm_glo.R",
+    "run_STURM_bmt_resid_2026_07_01.R",
+    "run_STURM_bmt_comm_2026_07_01.R",
     "run_GLANCE_placeholder.R",
     "run_MIXB_aligner.R",
 ]
