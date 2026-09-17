@@ -170,18 +170,6 @@ Dry cooling uses air instead of water to dissipate heat, eliminating water consu
 * Required in some jurisdictions with limited water
 * Growing market share for new plants in arid regions
 
-Hybrid Cooling
-^^^^^^^^^^^^^^
-
-Hybrid systems combine wet and dry cooling to balance water use and performance:
-
-* **Parallel hybrid**: Wet and dry systems operate in parallel; can shift load seasonally
-* **Series hybrid**: Dry pre-cooling with wet trim cooling
-* **Wet operation in peak demand**: Use wet cooling when electricity value is highest
-* **Dry operation in water scarcity**: Save water when scarce
-
-Hybrid systems offer flexibility but add complexity and cost. They are represented in MESSAGEix-Nexus as a distinct technology option for some plant types.
-
 Implementation in MESSAGEix-Nexus
 ----------------------------------
 
@@ -221,21 +209,11 @@ The model simultaneously optimizes:
 Cost Representation
 ^^^^^^^^^^^^^^^^^^^
 
-Cooling technology costs are represented as:
+Cooling technology costs enter the model as:
 
-* **Capital cost differential**: Additional investment for cooling system relative to reference
-
-  * Once-through: Reference (lowest cost)
-  * Recirculating: +5-10% of plant cost
-  * Dry cooling: +8-15% of plant cost
-
-* **Efficiency penalty**: Parasitic load reducing net electricity output
-
-  * Once-through: 0.2-0.5% reduction
-  * Recirculating: 1-2% reduction
-  * Dry cooling: 3-8% reduction (climate-dependent)
-
-* **Operating costs**: Maintenance and additional fuel consumption
+* **Capital cost differential**: the additional investment for the cooling system relative to once-through cooling, which is the cheapest option
+* **Efficiency penalty**: the parasitic load of pumps and fans, which reduces net electricity output and is largest for dry cooling
+* **Operating costs**: maintenance and the additional fuel implied by the efficiency penalty
 
 Cost assumptions are derived from technology assessments (Zhai and Rubin, 2010 :cite:`zhai_2010`; Zhang et al., 2014 :cite:`zhang_2014`; Loew et al., 2016 :cite:`loew_2016`).
 
@@ -290,37 +268,19 @@ Example: In a water-scarce basin, if groundwater costs 0.20 USD/m³ and a gas co
 Climate Change Amplification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Climate change affects cooling technology performance through:
+.. note:: **Placeholder — to be completed.**
+   Earlier versions of the module adjusted the cooling technology capacity
+   factor by a climate- and region-dependent impact factor, so that warming
+   degraded cooling performance directly. That representation has been removed
+   from the build pending its replacement, and the cooling technology
+   parameterisation is currently independent of the climate forcing scenario.
 
-1. **Higher ambient temperatures**: 
+   Climate change still reaches cooling indirectly, through basin water
+   availability: a drier basin raises the cost of the water that wet cooling
+   needs, which shifts the technology choice. The direct temperature effect on
+   plant and cooling system performance is not currently represented.
 
-   * Reduce efficiency of all cooling technologies
-   * Particularly severe for dry cooling (larger penalty)
-   * Can force output derating during heat waves
-
-2. **Higher water temperatures**:
-
-   * Once-through cooling constrained by discharge temperature limits
-   * Recirculating cooling less affected (evaporative cooling)
-
-3. **Reduced water availability**:
-
-   * Increases water scarcity and costs
-   * Incentivizes shift to dry cooling or alternative generation
-
-4. **Increased electricity demand**:
-
-   * More cooling demand for buildings
-   * Increases value of generation, making efficiency penalties more costly
-
-These interactions can create "compound events" where heat waves simultaneously:
-
-* Increase electricity demand (cooling loads)
-* Reduce power plant efficiency (high ambient temperature)
-* Constrain water availability (drought)
-* Limit once-through cooling (high water temperature)
-
-MESSAGEix-Nexus captures these dynamics, showing that climate impacts on the energy-water nexus can be more severe than impacts on either sector individually (Awais et al., 2024 :cite:`awais_2024_nexus`).
+   This section should describe the replacement representation once it lands.
 
 Regional Patterns
 ^^^^^^^^^^^^^^^^^
@@ -349,68 +309,19 @@ Cooling technology evolution varies by region:
 
 * Mix of technologies depending on local water availability
 * Retrofits of once-through to recirculating
-* New plants increasingly using dry or hybrid cooling in water-scarce areas
+* New plants increasingly using dry cooling in water-scarce areas
 
 Scenario Results
 ----------------
 
-Results from MESSAGEix-Nexus scenarios illustrate the cooling technology dynamics (Awais et al., 2024 :cite:`awais_2024_nexus`):
-
-Baseline Scenarios (No Climate Policy)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In baseline scenarios without climate policy:
-
-* **Thermal generation** continues to dominate (40-50% of global generation)
-* **Recirculating cooling** becomes dominant technology (60-70% of new thermal capacity)
-* **Dry cooling** grows in water-scarce regions (10-20% of new thermal capacity)
-* **Once-through cooling** declines due to environmental regulations (20-30% of capacity by 2100, down from ~50% in 2020)
-
-Water consumption from power generation increases by 50-100% by 2050 despite efficiency improvements, driven by:
-
-* Generation growth in developing regions
-* Shift from once-through (low consumption) to recirculating (high consumption)
-
-Climate Change Impacts
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Adding climate change impacts (no adaptation):
-
-* **Thermal generation efficiency** declines by 1-3% due to higher ambient temperatures
-* **Water scarcity** intensifies, particularly in already water-stressed regions
-* **Compound heat-drought events** force generation curtailments
-* **Energy-water nexus stress** increases costs of electricity generation
-
-With endogenous adaptation:
-
-* **Dry cooling share** increases to 30-40% of new thermal capacity in hot, water-scarce regions
-* **Renewable generation** (solar PV, wind) expands faster due to cooling water constraints on thermal
-* **Thermal generation declines** more rapidly than in scenarios without water-energy nexus constraints
-
-Climate Mitigation Scenarios
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In stringent climate mitigation scenarios (1.5-2°C):
-
-* **Thermal generation** declines rapidly (coal phase-out, reduced gas)
-* **Cooling water demand** peaks around 2030-2040 and then declines
-* **Cooling technology choice** matters less for new capacity (less thermal being built)
-* **Existing capacity** may see retrofits to dry cooling in water-scarce regions
-* **Renewable generation** eliminates most cooling water demand by 2070-2100
-
-Climate mitigation substantially reduces water-energy nexus stress by reducing thermal generation.
-
-SDG Interactions
-^^^^^^^^^^^^^^^^
-
-When SDG6 (water access) constraints are enforced:
-
-* **Municipal water demand** increases due to infrastructure for universal access
-* **Competition for water** intensifies between municipal and energy sectors
-* **Dry cooling adoption** accelerates in regions with SDG-driven water stress
-* **Trade-offs** emerge between energy access (SDG7) and water access (SDG6) in water-scarce regions
-
-The model can quantify these trade-offs and identify least-cost pathways to achieve both SDGs (Awais et al., 2024 :cite:`awais_2024_nexus`).
+.. note:: **Placeholder — to be completed.**
+   This section should summarise cooling technology results from the current
+   model version: the evolution of the once-through, recirculating and dry
+   cooling shares across SSPs and forcing scenarios, how mitigation changes
+   cooling water demand as thermal generation declines, and how SDG6 water
+   access constraints interact with cooling technology choice. The figures
+   previously given here described an earlier model version and have been
+   removed rather than carried forward unverified.
 
 Key Insights
 ------------
@@ -421,7 +332,7 @@ The cooling technology representation in MESSAGEix-Nexus provides several key in
 
 2. **Endogenous cooling technology choice** enables the model to find cost-effective adaptation strategies to water scarcity, including shifts to dry cooling and alternative generation technologies.
 
-3. **Climate change creates compound risks** at the water-energy nexus, with simultaneous temperature, water availability, and demand stresses.
+3. **Water availability links the water and energy systems**, so climate-driven changes in basin hydrology propagate into energy system technology choice.
 
 4. **Mitigation reduces nexus stress**: Climate mitigation scenarios reduce cooling water demand by phasing out thermal generation, providing a co-benefit for water resources.
 

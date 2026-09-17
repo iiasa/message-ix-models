@@ -13,14 +13,16 @@ Surface water resources include runoff from precipitation, snowmelt, and glacier
 Hydrological Data Sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Basin-scale surface water availability is derived from global hydrological models that simulate the terrestrial water cycle:
+Basin-scale surface water availability is derived from the **CWatM** Community Water Model (Burek et al., 2020 :cite:`burek_2020_cwatm`), a spatially distributed global hydrological model that simulates runoff, groundwater recharge and environmental flows.
 
-* **PCR-GLOBWB 2** (Sutanudjaja et al., 2018 :cite:`sutanudjaja_2018_pcrglobwb`): A global hydrological model at 5 arcmin resolution (~10km at equator) that simulates river discharge, soil moisture, and groundwater recharge
-* **CWatM** (Community Water Model; Burek et al., 2020 :cite:`burek_2020_cwatm`): A spatially distributed hydrological model representing water demand, supply, and environmental flows
-* **Historical data** (1971-2000): Used for calibration and baseline water availability
-* **Future projections** (2020-2100): Derived from hydrological models forced by climate model outputs from CMIP5/CMIP6
+CWatM is driven by the **ISIMIP3b** climate forcing ensemble:
 
-The hydrological model outputs provide monthly or seasonal water availability data that are spatially aggregated from grid cells to MESSAGE basins using area-weighted averages. For MESSAGE applications, seasonal or 5-yearly average values are typically used (Awais et al., 2024 :cite:`awais_2024_nexus`).
+* **Five global climate models**: GFDL-ESM4, IPSL-CM6A-LR, MPI-ESM1-2-HR, MRI-ESM2-0 and UKESM1-0-LL, bias-adjusted against W5E5
+* **Three forcing scenarios**: ssp126, ssp370 and ssp585, reported in the model under the legacy RCP labels 2p6, 7p0 and 8p5
+* **Spatial resolution**: 0.5 degree global grid
+* **Projection period**: five-yearly values from 2015 to 2100
+
+Gridded monthly outputs are aggregated onto the MESSAGE basin delineation, the ensemble is collapsed to a cross-model mean per basin and month, and the resulting series is reduced to the five-yearly values used by MESSAGE (Awais et al., 2024 :cite:`awais_2024_nexus`). Three basins are entirely missing from the hydrological source and are excluded from the basin set.
 
 Temporal Variability
 ^^^^^^^^^^^^^^^^^^^^
@@ -30,9 +32,28 @@ Surface water availability exhibits strong seasonal and interannual variability:
 * **Seasonal patterns**: Monsoon regions show pronounced wet/dry seasons; snow-dominated basins have spring snowmelt peaks
 * **Interannual variability**: Represented through statistical analysis of multi-year hydrological simulations
 * **Climate trends**: Long-term changes in mean availability and variability under different climate scenarios
-* **Extreme events**: Droughts represented as low quantiles (e.g., 10th percentile) of flow distributions
+* **Extreme events**: Droughts represented as low quantiles of the flow distribution
 
-For sub-annual MESSAGE implementations, seasonal water availability is explicitly represented. For annual implementations, average annual availability is used with optional constraints on reliability (e.g., water available in 90% of years).
+Availability is supplied at three **reliability** levels, selected per run. The labels refer to the level of water stress, not to the level of availability, so the quantiles are inverted relative to what the names suggest:
+
+.. list-table:: Reliability settings and the underlying quantile
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Setting
+     - Quantile of the monthly series
+     - Interpretation
+   * - ``low``
+     - 50th percentile
+     - Median availability, lowest stress
+   * - ``med``
+     - 30th percentile
+     - Reduced availability
+   * - ``high``
+     - 10th percentile
+     - Tail of low availability, highest stress
+
+For sub-annual MESSAGE implementations, seasonal water availability is explicitly represented. For annual implementations, the five-yearly value at the selected reliability level is used.
 
 Environmental Flow Requirements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -51,18 +72,9 @@ Surface Water Extraction Technologies
 Surface water extraction is represented through technology archetypes with associated costs and infrastructure requirements:
 
 * **River/lake extraction**: Direct abstraction with intake structures, screening, and pumping
-* **Small-scale reservoirs**: Storage for seasonal regulation and reliability
 * **Large-scale reservoir storage**: Represented through hydropower technologies in MESSAGE
-* **Inter-basin transfers**: Explicit connections between basins where infrastructure exists
 
-Extraction costs include:
-
-* Capital costs for intake structures, pumps, and basic treatment
-* Operating costs for energy (pumping), maintenance, and operation
-* Conveyance costs proportional to distance from source to demand location
-* Treatment costs to achieve required water quality
-
-Typical costs range from 0.01-0.05 USD/m³ for surface water extraction and basic treatment (Awais et al., 2024 :cite:`awais_2024_nexus`).
+Extraction is parameterised with investment and fixed costs, and with an electricity input representing the energy needed to abstract and convey water. Growth in surface water extraction activity is limited to 2% per year, so the supply mix cannot restructure instantaneously.
 
 Groundwater
 -----------
@@ -78,7 +90,7 @@ Groundwater resources are characterized by:
 * **Non-renewable (fossil) groundwater**: Deep aquifers with negligible recharge on human timescales
 * **Groundwater storage**: Cumulative volume in aquifers (not fully represented in current implementation)
 
-Renewable groundwater recharge is derived from the same hydrological models as surface water (PCR-GLOBWB, CWatM), which simulate infiltration, percolation, and recharge processes. Basin-scale recharge rates are typically 10-30% of precipitation in humid regions and <5% in arid regions.
+Renewable groundwater recharge is derived from the same CWatM simulations as surface water, which represent infiltration, percolation and recharge processes, and is supplied per basin on the same five-yearly grid.
 
 Groundwater Extraction
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -89,180 +101,86 @@ Groundwater extraction costs depend on:
 2. **Extraction rate**: Higher rates require more/deeper wells
 3. **Water quality**: Treatment requirements for brackish or contaminated groundwater
 
-The extraction cost function is represented as:
+Groundwater extraction is parameterised per basin from a harmonised table of pumping energy intensities, which reflect basin-specific water table depth, plus a uniform adder representing the energy needed to lift and convey the extracted water. This electricity input creates the water-energy feedback loop: deeper aquifers draw more electricity per unit of water, which in turn adds to the load the energy system must serve.
 
-:math:`Cost_{GW} = c_0 + c_1 \cdot d + c_2 \cdot d^2`
-
-where :math:`d` is the effective extraction depth and :math:`c_0`, :math:`c_1`, :math:`c_2` are cost parameters. Depths range from shallow (<50m) to deep (>500m) groundwater.
-
-Energy requirements for groundwater pumping create a water-energy feedback loop:
-
-:math:`E_{pump} = \dfrac{\rho \cdot g \cdot d \cdot V}{\eta}`
-
-where :math:`E_{pump}` is pumping energy, :math:`\rho` is water density, :math:`g` is gravitational acceleration, :math:`d` is depth, :math:`V` is volume pumped, and :math:`\eta` is pump efficiency (~0.6-0.8).
-
-Typical groundwater extraction costs range from 0.02 USD/m³ for shallow groundwater to 0.30 USD/m³ for deep groundwater (Awais et al., 2024 :cite:`awais_2024_nexus`), plus energy costs for pumping.
+Growth in renewable groundwater extraction activity is limited to 2% per year, matching the constraint on surface water.
 
 Groundwater Sustainability Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Groundwater extraction is constrained to sustainable levels to prevent aquifer depletion:
+Sustainable use is enforced through a **share constraint** rather than a cumulative volume balance. In each basin and period, renewable groundwater must supply at least its recharge-implied share of total renewable availability:
 
-:math:`\sum_{t'=t_0}^{t} GW_{extract,b,t'} \leq \sum_{t'=t_0}^{t} GW_{recharge,b,t'} + GW_{buffer,b}`
+:math:`share_{GW,b,t} \geq \dfrac{GW_{recharge,b,t}}{SW_{available,b,t} + GW_{recharge,b,t}} \cdot 0.95`
 
-This ensures that cumulative extraction does not exceed cumulative recharge plus an allowable buffer representing accessible storage. This constraint prevents the model from mining groundwater unsustainably, which is a major concern in regions such as:
+The 0.95 factor leaves headroom against numerical error in the optimisation. The same expression is used both for this in-horizon constraint and for the historical calibration described below, so the two cannot drift apart.
 
-* Northwest India and Pakistan (Indus-Ganges basin)
-* North China Plain
-* Arabian Peninsula
-* High Plains Aquifer (USA)
-* Mexico City basin
-
-Aquifer Storage and Recovery
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In some basins, managed aquifer recharge (MAR) technologies are represented:
-
-* **Excess surface water** during wet periods can be used to recharge aquifers
-* **Stored water** can be extracted during dry periods or drought
-* Provides a form of inter-seasonal and inter-annual water storage
-
-This technology is particularly valuable in basins with strong seasonal variability and available aquifer storage capacity.
+Fossil (non-renewable) groundwater is represented as a separate extraction technology acting as a **residual backstop**: it is available when renewable sources cannot meet demand, and is priced at a 20% premium over renewable groundwater on investment cost and pumping electricity, with the same 20-year technical lifetime. It is therefore unattractive relative to renewable sources, but not prohibited outright. Basins that draw on this backstop correspond to regions of known aquifer depletion, such as the Indus-Ganges basin, the North China Plain, the Arabian Peninsula and the High Plains Aquifer.
 
 Desalination
 ------------
 
-Desalination technologies convert saline water (seawater or brackish groundwater) into freshwater, providing a climate-independent water source for coastal regions. Desalination is critical for water-scarce regions and is explicitly represented in MESSAGEix-Nexus (Awais et al., 2024 :cite:`awais_2024_nexus`).
+Desalination converts saline water into freshwater, providing a water source that is independent of basin hydrology. It is explicitly represented in MESSAGEix-Nexus (Awais et al., 2024 :cite:`awais_2024_nexus`) and is a key option for water-scarce coastal basins.
 
 Desalination Technologies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Two main desalination technology categories are represented:
+Two technology categories are represented:
 
-**Reverse Osmosis (RO)**: Membrane-based separation
+**Membrane desalination** (reverse osmosis): membrane-based separation driven by electricity. It is modular, scalable, and the technology of choice for most new capacity.
 
-* Lower energy consumption: 3-4 kWh/m³ for seawater, 1-2 kWh/m³ for brackish water
-* Requires electrical energy (high-quality energy)
-* Modular and scalable
-* Suitable for small to large plants
-* Current technology of choice for new capacity
+**Distillation** (thermal processes such as MSF and MED): evaporation-based separation driven by heat, which can draw on waste heat from co-located thermal power generation. Historically dominant, it remains significant in the Middle East.
 
-**Thermal Desalination**: Evaporation-based processes (MSF, MED)
+Both draw on a shared saline water extraction technology, so their combined activity is limited by the saline extraction capacity available in the basin.
 
-* Higher energy consumption: 15-25 kWh/m³ thermal energy equivalent
-* Can use waste heat from power plants (cogeneration)
-* Historically dominant, now mostly in Middle East
-* Often coupled with thermal power generation
+Capacity and Projections
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The technology choice depends on:
+Historical desalination capacity and its future projection are supplied as exogenous basin-level data, downscaled from country-level sources:
 
-* Availability of waste heat from power generation
-* Cost of electricity vs. thermal energy
-* Plant size and water demand patterns
-* Feedwater salinity and quality
+* **Projections are keyed on the SSP**, not on the climate forcing scenario. Source projections exist for SSP1, SSP3 and SSP5 only; SSP2 uses the SSP1 projection and SSP4 uses the SSP3 projection.
+* **Basins with no projection have zero capacity.** An absent basin-year entry is treated as a hard zero on saline water extraction rather than leaving extraction unconstrained.
+* **Historical capacity sets an activity floor** in the early model periods. Where the membrane and distillation floors together would exceed the shared saline extraction cap, both are scaled down proportionally so the two are consistent.
+* **New capacity growth is limited to 10% per year**, which smooths the vintage-replacement sawtooth that otherwise appears in basin-level desalination capacity.
 
-Energy Requirements and Costs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Beyond these bounds, capacity expansion is endogenous and responds to water scarcity, the cost and availability of alternative sources, energy prices, and climate impacts on conventional supply.
 
-Desalination is energy-intensive, creating a water-energy nexus feedback:
+Energy Requirements
+^^^^^^^^^^^^^^^^^^^
 
-* **RO energy**: 3-4 kWh_e/m³ for seawater (~0.50-0.70 USD/m³ at typical electricity prices)
-* **Thermal desalination**: 50-80 MJ_th/m³ heat (~0.30-0.50 USD/m³ with waste heat)
-* **Additional costs**: Chemicals, membranes, maintenance, brine disposal
-
-Total levelized costs for desalinated water:
-
-* Seawater RO: 0.50-1.50 USD/m³ (decreasing with technology improvements)
-* Brackish RO: 0.30-0.80 USD/m³ (lower salinity = lower costs)
-* Thermal desalination: 1.00-2.50 USD/m³ (decreasing with scale)
-
-Costs have declined significantly (>50% reduction since 2000) due to:
-
-* Improved membrane technology and energy recovery devices
-* Economies of scale in large plants
-* Operational experience and optimization
-
-Regional Availability
-^^^^^^^^^^^^^^^^^^^^^
-
-Desalination is only available in basins with access to:
-
-* **Coastal regions**: Seawater desalination
-* **Inland brackish groundwater**: Brackish water desalination
-
-The model includes geographical constraints limiting desalination to appropriate basins. Transport costs increase with distance from coast to demand centers.
-
-Current and Projected Capacity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Historical desalination capacity (base year ~2020):
-
-* Global total: ~100 million m³/day
-* Middle East and North Africa: ~70% of global capacity
-* Growing rapidly in water-scarce regions
-
-Projected capacity expansion is endogenous in MESSAGEix-Nexus based on:
-
-* Water scarcity and availability of alternatives
-* Energy costs and availability
-* Economic development and water demands
-* Climate change impacts on conventional water sources
-
-In water-stressed scenarios, desalination can grow to provide 10-20% of urban water supply in coastal MESSAGE regions by 2050-2100 (Awais et al., 2024 :cite:`awais_2024_nexus`).
+Desalination is energy-intensive, and this is where it enters the nexus: membrane desalination draws electricity, distillation draws heat, and both therefore compete for energy that the rest of the system also needs. Deploying desalination at scale in a water-scarce basin raises that basin's energy demand, which in turn has its own water requirements for cooling.
 
 Wastewater Treatment and Reuse
 -------------------------------
 
-Treated wastewater provides an additional water source, particularly for non-potable uses such as industrial cooling, irrigation, and environmental flows.
+Treated wastewater provides an additional water source, particularly for non-potable uses such as industrial cooling and irrigation.
 
-Treatment Technologies
-^^^^^^^^^^^^^^^^^^^^^^
+Return flows from municipal and industrial use are tracked explicitly. The fraction of those flows that is collected and treated, and the fraction that is subsequently recycled back into supply, are set by exogenous **treatment and recycling rates** specified per region and scenario:
 
-Multiple treatment levels are represented:
+* Urban treatment rate
+* Rural treatment rate
+* Urban recycling rate
 
-* **Primary treatment**: Solids removal (~30% pollutant removal)
-* **Secondary treatment**: Biological treatment (~85% pollutant removal)
-* **Tertiary treatment**: Advanced treatment for reuse (~95% pollutant removal)
+These rates are not differentiated across SSPs — every SSP reads the SSP2 values. Treatment requires energy and capital, so higher treatment and recycling ambition raises both the cost of the water system and its electricity demand.
 
-Energy and cost requirements increase with treatment level:
-
-* Primary: 0.1-0.2 kWh/m³, 0.02-0.05 USD/m³
-* Secondary: 0.3-0.6 kWh/m³, 0.10-0.20 USD/m³
-* Tertiary: 0.5-1.0 kWh/m³, 0.30-0.60 USD/m³
-
-Reuse Applications
-^^^^^^^^^^^^^^^^^^
-
-Treated wastewater can be used for:
-
-* **Industrial cooling**: Requires secondary treatment
-* **Agricultural irrigation**: Requires secondary or tertiary treatment depending on crop type
-* **Environmental flows**: Return to rivers with minimum treatment
-* **Groundwater recharge**: Requires tertiary treatment
-* **Potable reuse**: Requires advanced treatment (not currently represented)
-
-The economic attractiveness of wastewater reuse depends on:
-
-* Cost of alternative water sources
-* Stringency of discharge regulations
-* Proximity of treatment plant to reuse location
-* Seasonal patterns of supply and demand
-
-Water reuse can provide 5-15% of total water supply in water-scarce urban regions (Awais et al., 2024 :cite:`awais_2024_nexus`).
+The economic attractiveness of reuse depends on the cost of alternative water sources in the same basin, the stringency of the assumed treatment requirement, and the proximity of return flows to the demands that could use them.
 
 Water Supply Portfolio
 -----------------------
 
-The model endogenously selects the optimal portfolio of water supply technologies based on:
+The model endogenously selects the portfolio of water supply technologies in each basin, subject to:
 
-* Resource availability and variability
+* Resource availability at the selected reliability level
 * Technology costs and energy requirements
-* Water quality requirements for different demands
-* Infrastructure constraints and existing capacity
-* Climate change impacts on conventional sources
-* Sustainability constraints on groundwater use
+* The groundwater sustainability share constraint
+* Desalination capacity bounds and growth limits
+* A 2% per year limit on growth in surface water and renewable groundwater activity
 
-In baseline scenarios, surface water typically provides 60-80% of total supply, groundwater 20-35%, and desalination/reuse 0-10% globally. In water-stressed climate scenarios, these shares shift substantially toward groundwater and desalination (Awais et al., 2024 :cite:`awais_2024_nexus`).
+Historical Calibration
+^^^^^^^^^^^^^^^^^^^^^^
+
+The starting point of the portfolio is not left to the optimisation. Historical extraction activity is seeded by a **merit-order dispatch**: historical sectoral and irrigation demand in each basin is met from the available sources — surface water, renewable groundwater and fossil groundwater — in order of operating cost, subject to historical basin capacity and to the same groundwater share floor that applies in the model horizon. This anchors the base-year supply mix to something defensible and prevents the first model period from restructuring the water system implausibly fast.
+
+Because fossil groundwater is now priced as a residual backstop rather than penalised outright, this calibration attributes more use to fossil groundwater than earlier versions of the model did — consistent with observed aquifer depletion in the basins concerned.
 
 .. footbibliography::
 

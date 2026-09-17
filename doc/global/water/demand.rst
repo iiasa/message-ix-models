@@ -3,7 +3,7 @@
 Water Demand
 ============
 
-Water demand in MESSAGEix-Nexus is represented across four major sectors: energy, municipal, industrial manufacturing, and agriculture (Awais et al., 2024 :cite:`awais_2024_nexus`). Demands are specified at the basin scale and evolve over time based on socioeconomic drivers (population, GDP, urbanization) and technological change. Competition between sectors for limited water resources is explicitly resolved through the optimization.
+Water demand in MESSAGEix-Nexus is represented across four major sectors: energy, municipal, industrial manufacturing, and agriculture (Awais et al., 2024 :cite:`awais_2024_nexus`). Energy sector demand emerges from the technologies the model builds and operates. Municipal, industrial and agricultural demands are exogenous basin-scale trajectories that differ by SSP, reflecting population, income, urbanisation and efficiency assumptions. Competition between all four for limited water is resolved through the optimisation.
 
 Energy Sector Water Demand
 ---------------------------
@@ -13,227 +13,65 @@ The energy sector is the most explicitly represented water demand in MESSAGEix-N
 Power Plant Cooling
 ^^^^^^^^^^^^^^^^^^^
 
-Thermal power plants (coal, gas, nuclear, concentrated solar power, geothermal) require cooling to dissipate waste heat. Cooling water requirements are the largest energy sector water demand in most regions. The cooling technology implementation is described in detail in :ref:`water-cooling`.
+Thermal power plants (coal, gas, nuclear, concentrated solar power, geothermal) require cooling to dissipate waste heat. Cooling water is the largest energy sector water demand in most regions. The cooling technology implementation is described in detail in :ref:`water-cooling`.
 
-Water withdrawal and consumption intensities vary by:
+Water withdrawal and consumption intensities are not exogenous demands but emerge from the technology parameterisation, and vary by:
 
-* **Power plant type**: Different heat rates and cooling requirements
-* **Cooling technology**: Once-through, recirculating (wet tower), dry cooling
-* **Climate conditions**: Ambient temperature affects cooling requirements
+* **Power plant type**: Different heat rates imply different quantities of waste heat per unit of electricity
+* **Cooling technology**: Once-through cooling withdraws large volumes but returns most of the water to the source; recirculating cooling withdraws far less but consumes most of what it withdraws through evaporation; dry cooling nearly eliminates water use at the cost of an efficiency penalty
+* **Ambient conditions**: Temperature and humidity affect cooling performance
 
-Typical water intensities (Meldrum et al., 2013 :cite:`meldrum_2013`):
-
-.. list-table:: Power plant cooling water intensities
-   :widths: 30 25 25
-   :header-rows: 1
-
-   * - Technology
-     - Withdrawal (m³/MWh)
-     - Consumption (m³/MWh)
-   * - Coal - once-through
-     - 100-150
-     - 1-2
-   * - Coal - recirculating
-     - 2-3
-     - 2-3
-   * - Coal - dry cooling
-     - 0.05-0.10
-     - 0.05-0.10
-   * - Gas combined cycle - once-through
-     - 40-80
-     - 0.5-1
-   * - Gas combined cycle - recirculating
-     - 0.5-1.5
-     - 0.5-1.5
-   * - Nuclear - once-through
-     - 100-200
-     - 1.5-2.5
-   * - Nuclear - recirculating
-     - 2.5-4
-     - 2.5-4
-   * - Concentrated solar power - recirculating
-     - 2.5-3.5
-     - 2.5-3.5
-
-Once-through cooling withdraws large volumes but returns most water to the source (albeit warmer). Recirculating cooling withdraws less but consumes most of what is withdrawn through evaporation. Dry cooling eliminates water use but has efficiency penalties and higher capital costs.
-
-The model endogenously chooses cooling technologies based on water availability, costs, and performance impacts (see :ref:`water-cooling`).
+Intensities are calibrated to the ranges reported in Meldrum et al., 2013 :cite:`meldrum_2013` and Macknick et al., 2012 :cite:`macknick_2012`. The model endogenously chooses cooling technologies based on water availability, costs and performance (see :ref:`water-cooling`).
 
 Fuel Extraction and Processing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Water is required for fossil fuel extraction and processing:
+Water is also required for fossil fuel extraction and processing — coal washing and dust suppression, drilling and processing of oil and gas, and steam injection or hydraulic fracturing for unconventional resources. Biofuel production draws water mainly through crop irrigation, which is captured in the agricultural demand rather than here.
 
-* **Coal mining**: 0.05-0.30 m³/GJ (washing, dust suppression)
-* **Conventional oil and gas**: 0.02-0.10 m³/GJ (drilling, processing)
-* **Unconventional oil (oil sands, shale)**: 0.50-2.00 m³/GJ (steam injection, hydraulic fracturing)
-* **Biofuel production**: 1-5 m³/GJ (crop irrigation, processing) - mainly captured through agricultural demand
-
-These demands are relatively small compared to cooling but can be significant in water-scarce regions with large extractive industries.
+These demands are small relative to cooling, but can matter in water-scarce regions with large extractive industries.
 
 Hydropower
 ^^^^^^^^^^
 
-Hydropower generation does not consume water (it is non-consumptive) but affects water availability through:
+Hydropower generation is non-consumptive, but it interacts with the water system through:
 
 * **Reservoir evaporation**: Can be significant in arid regions with large reservoirs
-* **Flow timing**: Alters seasonal patterns of water availability downstream  
-* **Environmental flows**: Minimum release requirements affect energy generation
+* **Flow timing**: Alters seasonal patterns of water availability downstream
+* **Environmental flows**: Minimum release requirements constrain generation
 
-Reservoir evaporation is calculated based on:
+Municipal and Industrial Water Demand
+--------------------------------------
 
-:math:`Evap = A_{reservoir} \cdot E_{rate} \cdot f_{exposure}`
+Municipal demand covers residential, commercial and public sector water use in urban and rural areas. Industrial demand covers manufacturing and mining processes, distinct from the energy sector demands already counted in power generation.
 
-where :math:`A_{reservoir}` is surface area, :math:`E_{rate}` is evaporation rate (mm/year, climate-dependent), and :math:`f_{exposure}` is the fraction of time the reservoir is full.
+Data Source
+^^^^^^^^^^^
 
-Typical evaporation from reservoirs ranges from 1-3 m/year in temperate climates to 2-4 m/year in arid regions.
+Unlike energy sector water use, municipal and industrial demands are **exogenous inputs**, not quantities derived inside the model. Basin-level withdrawal projections are taken from Khan et al. (2022) and supplied per SSP for three sectors:
 
-Municipal Water Demand
-----------------------
+* Urban domestic withdrawal
+* Rural domestic withdrawal
+* Manufacturing and mining withdrawal
 
-Municipal water demand includes residential, commercial, and public sector water use in urban and rural areas.
+The projections run from 2010 to 2100 and reflect the socioeconomic drivers of each SSP — population, urbanisation, income growth, and assumed improvements in water use efficiency. Because the data are already SSP-differentiated at the basin level, the model does not re-estimate demand from population and GDP; it takes the trajectory as given and resolves the competition for water that results.
 
-Demand Drivers
-^^^^^^^^^^^^^^
+Return Flows
+^^^^^^^^^^^^
 
-Municipal water demand is driven by:
+Municipal and industrial water use returns a substantial share of withdrawals to the system. Return flows are derived by applying a **per-basin return ratio** to the corresponding withdrawal. These ratios are fixed characteristics of the basin and are applied uniformly across all SSPs.
 
-* **Population**: Total population in each basin/region
-* **Urbanization rate**: Urban populations have higher per-capita demand
-* **Income level**: Water use increases with GDP per capita (up to saturation)
-* **Water access rates**: Connection to piped water systems
-* **Water use efficiency**: Technological change and policy-driven improvements
-
-Demand Estimation
-^^^^^^^^^^^^^^^^^
-
-Municipal water demand is projected using a regression-based approach:
-
-:math:`D_{municipal,b,t} = Pop_{b,t} \cdot \left( f_{urban,b,t} \cdot d_{urban}(GDP_{pc,t}) + (1-f_{urban,b,t}) \cdot d_{rural}(GDP_{pc,t}) \right) \cdot access_{b,t}`
-
-where:
-
-* :math:`D_{municipal,b,t}` is municipal demand in basin :math:`b`, time :math:`t`
-* :math:`Pop_{b,t}` is population
-* :math:`f_{urban,b,t}` is urbanization rate
-* :math:`d_{urban}`, :math:`d_{rural}` are per-capita demand functions of GDP per capita
-* :math:`access_{b,t}` is the fraction of population with access to improved water supply
-
-Per-Capita Demand Patterns
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Per-capita municipal water demand follows an income-dependent pattern:
-
-* **Low income** (<5,000 USD/capita/year): 20-50 liters/capita/day
-* **Middle income** (5,000-20,000 USD/capita/year): 100-200 liters/capita/day  
-* **High income** (>20,000 USD/capita/year): 150-300 liters/capita/day (saturates)
-
-The relationship is typically modeled as a logarithmic or logistic function that saturates at high income levels. Urban demand is typically 2-3 times rural demand at similar income levels due to:
-
-* Access to piped water systems
-* Water-using appliances
-* Commercial and public sector demands
-* Landscape irrigation
-
-Regional variations exist based on climate (outdoor water use), culture, and water pricing.
+Return flows can be released to rivers, adding to downstream availability; treated and recycled back into supply, subject to the treatment and recycling rates described in :doc:`supply`; or used to meet environmental flow requirements.
 
 SDG6 Water Access Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Sustainable Development Goals framework includes targets for universal water access (SDG 6.1):
-
-* **Universal access** to safely managed drinking water by 2030
-* Requires infrastructure investment proportional to unserved population
-* Creates minimum demand for municipal water infrastructure
+The Sustainable Development Goals framework includes targets for universal access to safely managed drinking water (SDG 6.1). Access rates are supplied as exogenous regional projections, with an urban/rural split where the source data allow one.
 
 SDG constraints can be activated in MESSAGEix-Nexus scenarios:
 
 :math:`access_{b,t} \geq access_{target}(t)`
 
-where :math:`access_{target}(t)` is the target access rate trajectory (e.g., reaching 100% by 2030).
-
-Achieving universal access requires substantial investment in water supply infrastructure, particularly in sub-Saharan Africa and South Asia where current access rates are 50-70% (Awais et al., 2024 :cite:`awais_2024_nexus`).
-
-Return Flows
-^^^^^^^^^^^^
-
-Municipal water use has significant return flows:
-
-* **Wastewater return rate**: 70-90% of withdrawals return as wastewater
-* **Treatment level**: Determines usability for reuse or environmental release
-* **Timing**: Return flows available in same period as withdrawal (no storage)
-
-Return flows can be:
-
-* Released to rivers (adding to downstream availability)
-* Treated and reused locally
-* Used for environmental flows
-
-Industrial Manufacturing Demand
---------------------------------
-
-Industrial water demand includes manufacturing processes, cooling, and product incorporation. It is distinct from energy sector industrial demands (already counted in power generation).
-
-Demand Drivers
-^^^^^^^^^^^^^^
-
-Industrial water demand is driven by:
-
-* **Manufacturing output**: GDP from industrial sector
-* **Industrial structure**: Heavy vs. light industry have different water intensities
-* **Technology and efficiency**: Water recycling and process improvements
-* **Water pricing**: Higher prices incentivize efficiency
-
-Demand Estimation
-^^^^^^^^^^^^^^^^^
-
-Industrial demand is estimated using a water intensity approach:
-
-:math:`D_{industrial,b,t} = GDP_{ind,b,t} \cdot I_{water}(t)`
-
-where:
-
-* :math:`GDP_{ind,b,t}` is industrial GDP in basin :math:`b`, time :math:`t`
-* :math:`I_{water}(t)` is water intensity (m³ per USD of industrial output)
-
-Water intensity typically declines over time due to:
-
-* **Technological improvement**: More efficient processes and water recycling
-* **Structural change**: Shift from heavy to light industry
-* **Regulations**: Water use restrictions and pricing
-
-Historical trends show water intensity declining at 1-2% per year in developed economies.
-
-Sectoral Water Intensities
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Different industrial sectors have very different water requirements:
-
-* **Chemicals and petrochemicals**: 10-50 m³/1000 USD
-* **Paper and pulp**: 50-300 m³/1000 USD
-* **Steel and metals**: 20-100 m³/1000 USD
-* **Food and beverages**: 10-50 m³/1000 USD
-* **Textiles**: 50-200 m³/1000 USD
-* **Electronics**: 5-20 m³/1000 USD
-
-Aggregate industrial water intensity depends on the sectoral composition of manufacturing in each region.
-
-Return Flows and Recycling
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Industrial water use has variable return flows:
-
-* **High-recycling industries** (steel, chemicals): 50-90% return rate
-* **Low-recycling industries** (food, textiles): 20-40% return rate
-* **Product incorporation** (beverages): 5-10% consumed in products
-
-Industrial wastewater may require treatment before reuse or environmental release, depending on:
-
-* Pollutant loads (organic, inorganic, thermal)
-* Discharge regulations
-* Reuse opportunities
-
-Industrial demand is relatively stable seasonally compared to agricultural demand.
+where :math:`access_{target}(t)` is the target access rate trajectory. Raising access rates increases the population served, which raises municipal demand and requires investment in water supply infrastructure — creating additional competition for water with the energy sector, most acutely in the regions where current access rates are lowest.
 
 Agricultural Irrigation Demand
 -------------------------------
@@ -277,19 +115,7 @@ Seasonal variability creates critical periods when irrigation competes strongly 
 Irrigation Technologies
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Irrigation efficiency depends on technology:
-
-* **Flood/furrow irrigation**: 40-60% efficiency (large conveyance and field losses)
-* **Sprinkler irrigation**: 60-75% efficiency
-* **Drip/micro irrigation**: 75-90% efficiency
-
-Efficiency improvements reduce demand for the same crop production:
-
-:math:`D_{irrigation} = \dfrac{CWR \cdot Area}{Eff_{irrigation}}`
-
-where :math:`CWR` is crop water requirement, :math:`Area` is irrigated area, and :math:`Eff_{irrigation}` is irrigation efficiency.
-
-Higher efficiency technologies have higher capital costs but reduce water demand and can enable expansion of irrigated area in water-constrained regions.
+Irrigation efficiency depends on the delivery and application technology, rising from flood and furrow irrigation through sprinkler systems to drip and micro-irrigation. Higher efficiency technologies cost more per hectare but reduce the water required for the same crop production, and can enable irrigated area to expand in water-constrained basins.
 
 Climate Change Impacts
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -306,18 +132,9 @@ In most regions, climate change increases net irrigation demand despite CO₂ ef
 Sectoral Competition and Allocation
 ------------------------------------
 
-When water is scarce (demand exceeds availability), the model must allocate water across competing sectors. Allocation is determined by:
+When water is scarce, the model allocates it across competing sectors as part of the same least-cost optimisation that solves the energy system. There is no separate allocation rule and no exogenous ranking of sectors by economic value: water goes to the use where displacing it would be most expensive for the system as a whole, given the alternatives available in that basin.
 
-Economic Value
-^^^^^^^^^^^^^^
-
-Sectors with higher economic value per unit water receive priority:
-
-* **Industrial/municipal**: High value (1-10 USD/m³)
-* **Energy (cooling)**: Medium-high value (0.50-5 USD/m³)
-* **Irrigation**: Variable value (0.01-1 USD/m³ depending on crop and productivity)
-
-The model balances marginal values across sectors to maximize total economic welfare.
+What differs between sectors is how costly it is to go without, and how quickly they can adjust.
 
 Infrastructure and Flexibility
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -404,19 +221,7 @@ Climate change affects demands through:
 * **Precipitation**: Changed irrigation requirements
 * **Extremes**: Droughts increase marginal value of water
 
-Combined SSP-RCP scenarios (SSP2-4.5, SSP5-8.5, etc.) capture both socioeconomic and climate drivers (Awais et al., 2024 :cite:`awais_2024_nexus`).
-
-Global Demand Outlook
-^^^^^^^^^^^^^^^^^^^^^^
-
-Baseline global water demand projections (2020-2100):
-
-* **Municipal**: 50-150% increase (driven by population and urbanization)
-* **Industrial**: 100-300% increase (driven by economic growth)
-* **Irrigation**: 10-70% increase (limited by water availability and efficiency)
-* **Energy**: 50-200% increase (depends on generation mix and cooling choices)
-
-Regional patterns vary substantially, with largest growth in South Asia, Middle East, and Sub-Saharan Africa.
+Demands are read for the SSP of the run, and water availability for the selected climate forcing scenario, so a scenario combines both drivers. The available forcing scenarios are listed in :doc:`climate_impacts`.
 
 .. footbibliography::
 

@@ -17,7 +17,7 @@ MESSAGEix-Nexus builds upon earlier water-energy linkages (Parkinson et al., 201
 Overview
 ========
 
-The nexus module represents water resources and demands at the spatial scale of ~200 river basins globally, while maintaining consistency with the 12-region spatial resolution of MESSAGEix-GLOBIOM (R12). Water is explicitly tracked through the energy system via cooling technologies for thermal power plants, while also accounting for sectoral water demands that compete with energy sector water use.
+The nexus module represents water resources and demands at the spatial scale of river basins (basin capacity units, BCUs) globally, while maintaining consistency with the 12-region spatial resolution of MESSAGEix-GLOBIOM (R12). Three basins for which the hydrological source provides no data are excluded from the basin set. Water is explicitly tracked through the energy system via cooling technologies for thermal power plants, while also accounting for sectoral water demands that compete with energy sector water use.
 
 Basin-scale Spatial Resolution
 -------------------------------
@@ -26,10 +26,9 @@ Water resources are represented at the basin scale using a global delineation of
 
 * Spatial heterogeneity in water availability within MESSAGE regions
 * Local water scarcity constraints that affect technology choices
-* Inter-basin water transfers where infrastructure exists
 * Climate impacts on basin-specific hydrology
 
-:numref:`fig-global-basin-map` shows the global distribution of approximately 200 basins mapped to the 12 MESSAGE regions (R12), providing the spatial foundation for the nexus module.
+:numref:`fig-global-basin-map` shows the global distribution of basins mapped to the 12 MESSAGE regions (R12), providing the spatial foundation for the nexus module.
 
 .. _fig-global-basin-map:
 .. figure:: /_static/global_r12_basin_map.png
@@ -69,8 +68,8 @@ The nexus module comprises three main components:
 **Technologies**: Water extraction, treatment, conveyance, and end-use technologies including:
 
 * Surface water extraction and distribution
-* Groundwater extraction (with depth-dependent costs)
-* Desalination (thermal and reverse osmosis)
+* Renewable groundwater extraction (with depth-dependent pumping energy) and fossil groundwater
+* Desalination (membrane and distillation)
 * Wastewater treatment and reuse
 * Power plant cooling technologies (once-through, recirculating, dry cooling)
 * Irrigation technologies
@@ -135,7 +134,7 @@ Climate Change Impacts
 
 The nexus module incorporates climate change impacts on both water availability and energy systems (Awais et al., 2024 :cite:`awais_2024_nexus`):
 
-**Hydrological Impacts**: Basin-specific changes in renewable water availability derived from global hydrological models (PCR-GLOBWB, CWatM) forced by climate model outputs. Impacts include:
+**Hydrological Impacts**: Basin-specific changes in renewable water availability derived from the CWatM hydrological model driven by the ISIMIP3b climate forcing ensemble. Impacts include:
 
 * Changes in mean annual runoff and groundwater recharge
 * Shifts in seasonal water availability patterns
@@ -144,16 +143,16 @@ The nexus module incorporates climate change impacts on both water availability 
 
 **Energy System Impacts**:
 
-* Reduced thermal power plant efficiency due to higher ambient temperatures
-* Increased cooling water requirements from higher water temperatures
-* Changes in hydropower generation potential
-* Modified electricity demand patterns (cooling vs. heating)
+.. note:: **Placeholder — to be completed.**
+   The earlier representation of climate impacts on power plant performance
+   (a climate-dependent adjustment to the cooling technology capacity factor)
+   has been removed from the build pending its replacement.
+   This section should describe the replacement representation once it lands.
 
 **Adaptation Measures**: The model can endogenously select adaptation measures such as:
 
 * Shifts to less water-intensive cooling technologies
 * Investment in desalination and water reuse
-* Inter-basin water transfers
 * Changes in electricity generation technology mix
 
 For comprehensive discussion of climate change impacts on the water-energy nexus, see :doc:`climate_impacts`.
