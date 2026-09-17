@@ -3,31 +3,31 @@
 Electricity
 ***********
 
-|name| covers a large number of electricity generation options utilizing a wide range of primary energy sources.
+|MESSAGEix| covers a large number of electricity generation options utilizing a wide range of primary energy sources.
 For fossil-based electricity generation technologies, typically a number of different technology variants with different efficiencies, environmental characteristics and costs are represented
 For example, in the case of coal,
-|name| distinguishes subcritical and supercritical pulverized coal (PC) power plants
+|MESSAGEix| distinguishes subcritical and supercritical pulverized coal (PC) power plants
 where the subcritical variant is available with and without flue gas desulpherization/denox
 and one internal gasification combined cycle (IGCC) power plant.
 The supercritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants (see :numref:`fig-elec-fossil-nuc`).
-:numref:`tab-elec` below shows the different power plant types represented in |name|.
+:numref:`tab-elec` below shows the different power plant types represented in |MESSAGEix|.
 
 .. _fig-elec-fossil-nuc:
 .. figure:: /_static/electricity_generation_fossil_nuclear.png
 
-   Schematic diagram of the fossil and nuclear power plants represented in |name|.
+   Schematic diagram of the fossil and nuclear power plants represented in |MESSAGEix|.
 
-Four different nuclear power plant types are represented in |name|,
+Four different nuclear power plant types are represented in |MESSAGEix|,
 i.e. two light water reactor types,
 a fast breeder reactor,
 and a high temperature reactor,
 but only the two light water types are included in the majority of scenarios
-being developed with |name| in the recent past.
-In addition, |name| includes a representation of the nuclear fuel cycle,
+being developed with |MESSAGEix| in the recent past.
+In addition, |MESSAGEix| includes a representation of the nuclear fuel cycle,
 including reprocessing and the plutonium fuel cycle,
 and keeps track of the amounts of nuclear waste being produced.
 
-The conversion of five renewable energy sources to electricity is represented in |name|
+The conversion of five renewable energy sources to electricity is represented in |MESSAGEix|
 (see :numref:`fig-elec-renewable`).
 For wind power,
 both on- and offshore electricity generation are covered
@@ -35,7 +35,7 @@ and for solar energy,
 utility-scale photovoltaics (PV),
 rooftop PV
 and solar thermal (concentrating solar power, CSP) electricity generation
-are included in |name|
+are included in |MESSAGEix|
 (see also sections on :ref:`renewable` and :ref:`syst_integration`).
 Utility-scale PV feeds the secondary electricity level
 and its output passes through transmission and distribution like that of any other power plant.
@@ -49,18 +49,18 @@ Two CSP technologies are modeled: (1) a flexible plant with a solar multiple of 
 .. _fig-elec-renewable:
 .. figure:: /_static/electricity_generation_renewable.png
 
-   Schematic diagram of the renewable power generation options represented in |name|.
+   Schematic diagram of the renewable power generation options represented in |MESSAGEix|.
 
 Most thermal power plants offer the option of coupled heat production (CHP, see :numref:`tab-elec`). This option is modeled as a passout turbine via a penalty on the electricity generation efficiency.
 In addition to the main electricity generation technologies described in this section,
 also the co-generation of electricity
 in conversion technologies primarily devoted to producing non-electric energy carriers
 (e.g., synthetic liquid fuels)
-is included in |name|
+is included in |MESSAGEix|
 (see section on :ref:`other`).
 
 .. _tab-elec:
-.. table:: List of electricity generation technologies represented in |name| by energy source.
+.. table:: List of electricity generation technologies represented in |MESSAGEix| by energy source.
 
    +------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
    | Energy source    | Technology                                                                                                                                                                                                                                                                             | CHP option               |
@@ -125,7 +125,7 @@ is included in |name|
 Calibration of the existing fleet
 ---------------------------------
 
-The power plant fleet in |name| is calibrated from two main sources,
+The power plant fleet in |MESSAGEix| is calibrated from two main sources,
 complemented with more detailed data for specific technologies.
 Unit- and vintage-specific data on installed and operational power plants
 from the World Electric Power Plants Database (S&P Global Platts, 2021 :cite:`platts_wepp_2021`)
