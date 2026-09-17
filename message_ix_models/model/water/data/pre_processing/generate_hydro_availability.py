@@ -5,11 +5,11 @@ IPSL-CM6A-LR, MPI-ESM1-2-HR, MRI-ESM2-0, UKESM1-0-LL) × climate scenarios
 ``ssp126``, ``ssp370``, ``ssp585``, W5E5 bias-adjusted, 0.5° global. See the
 ISIMIP protocol repository `ISI-MIP/isimip-protocol-3`_ for the specifier
 vocabulary; the raw NetCDFs live in the IIASA local ISIMIP sample at
-``/mnt/p/watxene/ISIMIP/ISIMIP3b/``. Basin-level aggregation onto the
+:file:`/mnt/p/watxene/ISIMIP/ISIMIP3b/`. Basin-level aggregation onto the
 MESSAGE R12 BCU mapping (``basins_delineated/basins_by_region_simpl_R12.shp``)
 is performed by the standalone ``hydro_preprocess`` pipeline (Julia + Python);
 its outputs are staged at
-``/mnt/p/watxene/ISIMIP_postprocessed/data_for_vignesh/message_nexus_input_2026/``.
+:file:`/mnt/p/watxene/ISIMIP_postprocessed/data_for_vignesh/message_nexus_input_2026/`.
 
 Method (linear except the quantile order statistic and the Variable-MF
 environmental-flow mask):

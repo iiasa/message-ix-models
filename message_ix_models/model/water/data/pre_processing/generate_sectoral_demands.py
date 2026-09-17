@@ -7,7 +7,7 @@ rural, and manufacturing withdrawal and return for SSP1-SSP5.
 Inputs:
 
 - Sectoral basin-level withdrawal projections on pdrive at
-  ``/mnt/p/ene.model/NEST/water_demands/Khan2022/withdrawals/annual/R12``
+  :file:`/mnt/p/ene.model/NEST/water_demands/Khan2022/withdrawals/annual/R12`
   (per-SSP per-sector ``ssp{N}_{Domestic_urban,Domestic_rural,Industry&Mining}
   _{value,total}_annual_ensemble_basin_level.csv``, km3/yr, 5-year cadence
   2010-2100).

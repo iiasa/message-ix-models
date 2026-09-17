@@ -2,15 +2,15 @@
 
 The generator writes both committed R12 desalination files:
 
-- ``projected_desalination_potential_km3_year_R12.csv``
-- ``historical_capacity_desalination_km3_year_R12.csv``
+- :file:`projected_desalination_potential_km3_year_R12.csv`
+- :file:`historical_capacity_desalination_km3_year_R12.csv`
 
 Source data live on pdrive at
-``/mnt/p/watxene/Wat-Data/desalination/marina_refresh_2026``. Country-level
+:file:`/mnt/p/watxene/Wat-Data/desalination/marina_refresh_2026`. Country-level
 ``total.desal`` supplies the projected and observed capacity levels; regional
 technology cumulative columns supply historical technology shares. Basin
 allocation uses the fixed R12 desalination template in
-``data/water/infrastructure/desalination_basin_allocation_template_R12.csv``.
+:file:`data/water/infrastructure/desalination_basin_allocation_template_R12.csv`.
 
 Run with ``uv run --no-sync python -m`` and the module path
 ``message_ix_models.model.water.data.pre_processing.generate_desalination``.

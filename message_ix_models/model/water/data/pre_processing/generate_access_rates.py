@@ -3,9 +3,9 @@
 Reads ``Improved water services`` rows from two source files under
 ``data/water/demands/drinking_water_access``:
 
-- ``projections_people_UR_income_10_25.csv``: with urban/rural split, used
+- :file:`projections_people_UR_income_10_25.csv`: with urban/rural split, used
   for AFR, EEU, FSU, LAM, MEA, PAS, RCPA, SAS, WEU.
-- ``projections_people_merge_countries_10_25(in).csv``: no split, used for
+- :file:`projections_people_merge_countries_10_25(in).csv`: no split, used for
   NAM and CHN with the same rate assigned to both settings.
 
 PAO is hard-coded to 0.99 for both urban and rural.
@@ -13,7 +13,7 @@ PAO is hard-coded to 0.99 for both urban and rural.
 Source values are population-weighted to R12 regions, carried backward to fill
 early target years, and capped forward at the 2090 value for 2100/2110. The R12
 rate is then broadcast uniformly to every basin column in that region; the
-basin set and column order come from ``connection_rate_basins_R12.csv``.
+basin set and column order come from :file:`connection_rate_basins_R12.csv`.
 """
 
 # TODO: move this module's docstring content to DOCS when the docs update lands.
