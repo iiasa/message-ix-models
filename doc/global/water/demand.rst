@@ -222,6 +222,3 @@ Climate change affects demands through:
 * **Extremes**: Droughts increase marginal value of water
 
 Demands are read for the SSP of the run, and water availability for the selected climate forcing scenario, so a scenario combines both drivers. The available forcing scenarios are listed in :doc:`climate_impacts`.
-
-.. footbibliography::
-

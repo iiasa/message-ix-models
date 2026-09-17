@@ -254,5 +254,3 @@ Planned enhancements to the climate impact representation:
 * Propagation of the climate model ensemble spread rather than the ensemble mean
 * Explicit flood representation
 * Cascading infrastructure failures
-
-.. footbibliography::

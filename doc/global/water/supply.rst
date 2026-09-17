@@ -181,6 +181,3 @@ Historical Calibration
 The starting point of the portfolio is not left to the optimisation. Historical extraction activity is seeded by a **merit-order dispatch**: historical sectoral and irrigation demand in each basin is met from the available sources — surface water, renewable groundwater and fossil groundwater — in order of operating cost, subject to historical basin capacity and to the same groundwater share floor that applies in the model horizon. This anchors the base-year supply mix to something defensible and prevents the first model period from restructuring the water system implausibly fast.
 
 Because fossil groundwater is now priced as a residual backstop rather than penalised outright, this calibration attributes more use to fossil groundwater than earlier versions of the model did — consistent with observed aquifer depletion in the basins concerned.
-
-.. footbibliography::
-

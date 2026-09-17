@@ -341,6 +341,3 @@ The cooling technology representation in MESSAGEix-Nexus provides several key in
 6. **Regional heterogeneity matters**: Global average trends obscure important regional dynamics where water-energy constraints are binding.
 
 The implementation demonstrates the value of integrated water-energy modeling for understanding nexus interactions, identifying vulnerabilities, and evaluating policy and technology options.
-
-.. footbibliography::
-

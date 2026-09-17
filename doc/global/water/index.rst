@@ -208,5 +208,3 @@ Vinca, A., Parkinson, S., Byers, E., Burek, P., Khan, Z., Krey, V., Diuana, F.A.
 Power plant cooling implementation is described in:
 
 Parkinson, S., Byers, E., Gidden, M., Krey, V., Burek, P., Vollmer, D.,Jalava, M., Palazzo, A., Graham, N., Fricko, O., Tracking the water-energy-land-food nexus: integrated assessment of sustainable development goal interactions. Submitted to *Nature Sustainability*. 2019.
-
-.. footbibliography::
