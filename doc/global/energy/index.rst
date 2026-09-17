@@ -7,7 +7,7 @@ MESSAGE (short for Model for Energy Supply Strategy Alternatives and their Gener
 (specifically, linear programming, or LP)
 energy systems engineering model
 (Messner and Strubegger, 1995 :cite:`messner_users_1995`).
-The `|MESSAGEix| <https://docs.messageix.org>`_ modeling framework
+The `MESSAGEix <https://docs.messageix.org>`_ modeling framework
 combines a concrete implementation of MESSAGE (in GAMS) with programming tools (in Python) for applications including medium- to long-term energy system planning,
 energy policy analysis, and scenario development
 (Huppmann et al., 2019 :cite:`huppmann_2019_messageix`).
@@ -24,7 +24,7 @@ industrial production processes,
 and transportation.
 
 
-|name| links MESSAGE to GLOBIOM
+|name| links |MESSAGEix| to GLOBIOM
 (GLObal BIOsphere Model, cf. Section :ref:`globiom`)
 to consistently assess the implications of utilizing bioenergy of different types
 and to integrate the GHG emissions from energy and land use;
@@ -57,7 +57,7 @@ cheapest to implement).
 
 The Reference Energy System (RES) defines the full set of available energy conversion technologies
 (:numref:`fig-res`).
-In MESSAGE terms, “energy conversion technology” refers to
+In |MESSAGEix| terms, “energy conversion technology” refers to
 all types of energy technologies,
 from resource extraction to transformation,
 transport,
@@ -85,11 +85,11 @@ Technologies can take in energy commodities from one level and put out at anothe
 or at the same level (e.g., hydrogen electrolyzers produce hydrogen at the secondary energy level from electricity at the secondary level). The energy forms defined in each level can be
 envisioned as a transfer hub, that the various technologies feed into or pump away from. The useful energy demand is given as a time series. Technology characteristics generally vary over time period.
 
-The MESSAGE mathematical formulation ensures that the flows are consistent:
+The |MESSAGEix| mathematical formulation ensures that the flows are consistent:
 demand is met,
 inflows equal outflows,
 and constraints are not exceeded.
-In other words, MESSAGE *on its own* is a partial equilibrium model.
+In other words, |MESSAGEix| *on its own* is a partial equilibrium model.
 However, through its linkage to MACRO,
 general equilibrium effects are taken into account
 (cf. Section :ref:`macro`).
