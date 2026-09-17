@@ -28,6 +28,7 @@ from message_ix_models.project.engage.workflow import (
 )
 from message_ix_models.project.ngfs import (
     aas_coal_growth_near_term,
+    aas_dri_coal_steel_growth_near_term,
     interpolate_c_price,
     qf_freeze_truck_history,
     qf_remove_ELC100_near_term_infeasibility,
@@ -830,6 +831,13 @@ def generate(context: Context) -> Workflow:
         name,
         aas_coal_growth_near_term,
         target=f"{model_name}/baseline_M_fix2",
+        clone=True,
+    )
+    name = wf.add_step(
+        "M fix3",
+        name,
+        aas_dri_coal_steel_growth_near_term,
+        target=f"{model_name}/baseline_M_fix3",
         clone=True,
     )
     # name = wf.add_step("M reported", name, report)

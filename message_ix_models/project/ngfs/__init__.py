@@ -505,6 +505,64 @@ def aas_coal_growth_long_term(
     return scenario
 
 
+# AAS3b, zero near-term growth_activity_lo for dri_coal_steel in R12_SAS
+def aas_dri_coal_steel_growth_near_term(
+    context,
+    scenario,
+    technology: str = "dri_coal_steel",
+    *,
+    node: str = "R12_SAS",
+    start_year: int = 2020,
+    end_year: int = 2030,
+    limit: float = -0.0001,
+):
+    info = ScenarioInfo(scenario)
+    years = [y for y in info.Y if start_year <= y <= end_year]
+
+    growth_lo = scenario.par(
+        "growth_activity_lo",
+        filters={
+            "technology": [technology],
+            "node_loc": [node],
+            "year_act": years,
+        },
+    )
+
+    if len(growth_lo):
+        df = growth_lo.assign(value=limit)
+    else:
+        df = make_df(
+            "growth_activity_lo",
+            technology=technology,
+            time="year",
+            value=limit,
+            unit="???",
+        ).pipe(
+            broadcast,
+            node_loc=[node],
+            year_act=years,
+        )
+
+    with scenario.transact(
+        f"Set growth_activity_lo={limit} for {technology} at {node}."
+    ):
+        scenario.add_par("growth_activity_lo", df)
+
+    log.info(
+        "Set growth_activity_lo=%s for technology %s, node %s, "
+        "year_act %s–%s (%d existing rows updated / %d rows written)",
+        limit,
+        technology,
+        node,
+        start_year,
+        end_year,
+        len(growth_lo),
+        len(df),
+    )
+
+    return scenario
+
+
 # AAS4, adding emission factors for transport technologies
 # and constraint truck emissions
 def _transport_emission_factor_csv_path() -> Path:
