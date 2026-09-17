@@ -291,12 +291,6 @@ def eflow_seasonal_5y(eflow_monthly: np.ndarray, months: pd.PeriodIndex) -> np.n
 # ---------- Output formatting ----------
 
 
-def _annual_columns() -> pd.Index:
-    return pd.Index(
-        pd.to_datetime([f"{y}-12-31" for y in SAMPLE_YEARS]).strftime("%Y-%m-%d")
-    )
-
-
 def _monthly_columns() -> pd.Index:
     cols = []
     for y in SAMPLE_YEARS:
@@ -306,7 +300,9 @@ def _monthly_columns() -> pd.Index:
 
 
 def _annual_frame(values: np.ndarray, basins: pd.Index) -> pd.DataFrame:
-    return pd.DataFrame(values, index=basins, columns=_annual_columns())
+    # Columns are the last day of each sample year
+    columns = pd.to_datetime([f"{y}-12-31" for y in SAMPLE_YEARS]).strftime("%Y-%m-%d")
+    return pd.DataFrame(values, index=basins, columns=pd.Index(columns))
 
 
 def _monthly_frame(values: np.ndarray, basins: pd.Index) -> pd.DataFrame:
