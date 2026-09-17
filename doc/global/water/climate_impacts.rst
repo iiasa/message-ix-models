@@ -33,7 +33,7 @@ Climate Forcing and Scenarios
 Forcing Scenarios
 ^^^^^^^^^^^^^^^^^
 
-Water availability data are provided for three forcing scenarios, drawn from the ISIMIP3b protocol and reported in the model under the legacy RCP labels (van Vuuren et al., 2011 :cite:`vanvuuren_2011_rcp`):
+Water availability is supplied as a fixed set of CWatM runs over the SSP-RCP scenario combinations. Three forcing scenarios are shipped, drawn from the ISIMIP3b protocol and reported in the model under the legacy RCP labels (van Vuuren et al., 2011 :cite:`vanvuuren_2011_rcp`):
 
 .. list-table:: Available climate forcing scenarios
    :widths: 25 25 50
@@ -53,6 +53,8 @@ Water availability data are provided for three forcing scenarios, drawn from the
      - Very high emissions
 
 The default setting is ``2p6``. There is no unforced or "no climate" option: every build reads a climate-driven availability series.
+
+Because these are pre-computed hydrological runs, a scenario whose emissions pathway does not correspond to one of the three shipped forcing levels has to be approximated by the nearest available one. An **experimental emulation of arbitrary emission pathways** exists for cases where that approximation is too coarse — for example when assessing a mitigation pathway that sits between ``2p6`` and ``7p0``. It is not part of the shipped data and is available on request.
 
 Shared Socioeconomic Pathways
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
