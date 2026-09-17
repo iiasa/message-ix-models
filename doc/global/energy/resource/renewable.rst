@@ -4,7 +4,7 @@ Non-Biomass Renewable Resources
 ================================
 
 :numref:`tab-depl` shows the assumed global potentials of non-biomass renewable energy deployment,
-by resource type, in |name|.
+by resource type, in |MESSAGEix|.
 Wind and solar potentials follow the assessment made for the ScenarioMIP-CMIP7 quantification
 (Fricko et al., 2026 :cite:`fricko_wu_2026`).
 On- and offshore wind potentials draw on the assessment of the U.S. National Renewable Energy Laboratory
@@ -15,19 +15,19 @@ Hydro and concentrating solar power potentials are based on
 the assessment described in the Global Energy Assessment
 (Rogner et al., 2012 :cite:`rogner_chapter_2012`) and Johnson et al. (2016 :cite:`johnson_vre_2016`)
 and are the same across all narratives.
-Geothermal deployment is not limited by a resource potential in |name|
+Geothermal deployment is not limited by a resource potential in |MESSAGEix|
 but by the technology diffusion constraints described in Section :ref:`techchange`.
-In this context, it is important to note that typical MESSAGE
+In this context, it is important to note that typical |MESSAGEix|
 scenarios do not consider the full technical potential of renewable energy resources, but rather only a subset of those potentials, owing to additional constraints (e.g., sustainability
 criteria, technology diffusion and systems integration issues, and other economic considerations). These constraints may lead to a significant reduction of the technical potential.
 
 .. _tab-depl:
-.. list-table:: Assumed global non-biomass renewable energy deployment potentials in |name|. Wind and solar potentials from the ScenarioMIP-CMIP7 assessment (Fricko et al., 2026 :cite:`fricko_wu_2026`); where the potential differs across the SSP narratives, the range is given. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
+.. list-table:: Assumed global non-biomass renewable energy deployment potentials in |MESSAGEix|. Wind and solar potentials from the ScenarioMIP-CMIP7 assessment (Fricko et al., 2026 :cite:`fricko_wu_2026`); where the potential differs across the SSP narratives, the range is given. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
    :widths: 24 28 28
    :header-rows: 2
 
    * - Source
-     - |name|
+     - |MESSAGEix|
      - Rogner et al., 2012 :cite:`rogner_chapter_2012`
    * -
      - Deployment Potential [EJ/yr]
@@ -51,7 +51,7 @@ criteria, technology diffusion and systems integration issues, and other economi
      - 2132
      - same as Solar PV above
 
-*Notes: MESSAGE renewable energy potentials are estimated based on the methods explained in* Pietzcker et al., 2014 :cite:`pietzcker_solar_2014`, Eurek et al., 2017 :cite:`eurek_wind_2017`,
+*Notes:* |MESSAGEix| *renewable energy potentials are estimated based on the methods explained in* Pietzcker et al., 2014 :cite:`pietzcker_solar_2014`, Eurek et al., 2017 :cite:`eurek_wind_2017`,
 Joshi et al., 2024 :cite:`joshi_rooftop_2024`, Christiansson, 1995 :cite:`christiansson_diffusion_1995`, *and* Rogner et al., 2012 :cite:`rogner_chapter_2012`. *The potentials for non-combustible renewable energy sources are specified
 in terms of the electricity or heat that can be produced by specific technologies (i.e., from a secondary energy perspective). By contrast, the technical potentials from* :cite:`rogner_chapter_2012`
 *refer to the flows of energy that could become available as inputs for technology conversion. So for example, the technical potential for wind is given as the kinetic energy available for wind power

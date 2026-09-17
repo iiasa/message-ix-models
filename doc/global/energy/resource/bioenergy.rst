@@ -1,16 +1,16 @@
 Biomass Resources
 ======================
-Biomass energy is another potentially important renewable energy resource in the MESSAGE model. This includes both commercial and non-commercial use. 
+Biomass energy is another potentially important renewable energy resource in the |MESSAGEix| model. This includes both commercial and non-commercial use. 
 Commercial refers to the use of bioenergy in, for example, power plants or biofuel refineries, while non-commercial refers to the use of bioenergy for 
 residential heating and cooking, primarily in rural households of today’s developing countries.
 Bioenergy potentials are derived from the GLOBIOM model
-and enter |name| through the land-use emulator (see :ref:`emulator`).
+and enter |MESSAGEix| through the land-use emulator (see :ref:`emulator`).
 For the emulator, GLOBIOM is run at seven biomass price levels, ranging up to 68 $2005/GJ,
 chosen so that the range covers the full biomass potential in every region.
 Each run yields a complete land-use pathway,
 with land cover, agricultural and forestry production and land-use emissions
 alongside the biomass available to the energy system at that price,
-and the emulator carries all of these into |name|.
+and the emulator carries all of these into |MESSAGEix|.
 The biomass component of these pathways gives the regional biomass supply curves for each narrative,
 shown at the global aggregate level for the year 2100 in :numref:`fig-beavail` (a)
 across the five SSP narratives and the LED variant.
@@ -27,7 +27,7 @@ which are determined by agricultural productivity and global food demand
 and are described in the land-use section (see :ref:`globiom`).
 
 Non-commercial biomass, that is fuel wood, is typically not traded or sold,
-and in |name| it is represented as a demand category rather than as part of this resource potential
+and in |MESSAGEix| it is represented as a demand category rather than as part of this resource potential
 (see :ref:`demand`).
 Where a market exists, prices range from 0.1 to 1.5 $/GJ
 (Pachauri et al., 2013 :cite:`pachauri_pathways_2013`) ($ equals 2005 USD).

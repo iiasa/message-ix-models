@@ -3,7 +3,7 @@
 Fossil Fuel Reserves and Resources
 ====================================
 The availability and costs of fossil fuels influences the future development of the energy system, and therewith future mitigation challenges. Understanding the variations in
-fossil fuel availability and the underlying extraction cost assumptions across the SSPs is hence important. Our fossil energy resource assumptions in MESSAGE are derived from various sources, including
+fossil fuel availability and the underlying extraction cost assumptions across the SSPs is hence important. Our fossil energy resource assumptions in |MESSAGEix| are derived from various sources, including
 global databases such as The Federal Institute for Geosciences and Natural Resources (BGR, 2024 :cite:`bgr_energiedaten_2024`) and The U.S. Geological Survey
 (`USGS <https://www.usgs.gov/energy-and-minerals/energy-resources-program/science/energy-resources>`_), as well as market reports and outlooks provided by different energy institutes and agencies.
 The availability of fossil energy resources in different regions under different socio-economic assumptions are then aligned with the storylines of the individual SSPs
@@ -70,14 +70,14 @@ possible, but yet to be found. The remainder are ‘Undiscovered resources’ an
 :cite:`rogner_chapter_2012`.
 
 :numref:`tab-global-ff-res` gives the resource base by fuel and category
-as it enters |name|,
+as it enters |MESSAGEix|,
 split into reserves and resources following the definitions above.
 Because the resource base is held fixed across the narratives,
 a single set of volumes applies to all of them,
 and it is the extraction cost curves rather than the volumes that differ.
 
 .. _tab-global-ff-res:
-.. list-table:: Global fossil resource base in |name| by category, in ZJ, from the assessment described in the text.
+.. list-table:: Global fossil resource base in |MESSAGEix| by category, in ZJ, from the assessment described in the text.
    :widths: 34 16 16 16
    :header-rows: 1
 

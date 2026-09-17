@@ -2,7 +2,7 @@ Nuclear Resources
 ======================
 
 Estimates of available uranium resources in the literature vary considerably, which could become relevant if advanced nuclear fuel cycles (e.g., the plutonium cycle including fast breeder
-reactors, the thorium cycle) are not available. In MESSAGE advanced nuclear cycles such as the plutonium cycle and nuclear fuel reprocessing are in principle represented, but their
+reactors, the thorium cycle) are not available. In |MESSAGEix| advanced nuclear cycles such as the plutonium cycle and nuclear fuel reprocessing are in principle represented, but their
 availability varies following the scenario narrative.
 :numref:`fig-uran` shows seven uranium supply curves from a literature review,
 together with the uranium resource levels assumed in the three pathway groups
@@ -28,7 +28,7 @@ Nuclear resources and fuel cycle are modeled at the global level.
    FCCCG(1) and (2) as well as DANESS refer to estimates from more complicated models
    of the dependency of extraction costs on uranium concentration (and therefore resource grade).
 
-The uranium resource availability in |name| is based on the Red Book *Uranium 2024*
+The uranium resource availability in |MESSAGEix| is based on the Red Book *Uranium 2024*
 (NEA and IAEA, 2025 :cite:`nea_iaea_uranium_2024`).
 Narrative-specific adjustments are made by differentiating between uranium resource categories
 according to their extraction costs.
@@ -49,7 +49,7 @@ These totals lie well within the range spanned by the literature curves
 and the GEA levels in :numref:`fig-uran`.
 The conventional categories follow the Red Book cost classes
 of 40, 80, 130 and 260 USD per kg U,
-and up to that cost the roughly 16 MtU available in |name|
+and up to that cost the roughly 16 MtU available in |MESSAGEix|
 sits inside the spread of the literature curves.
 The unconventional occurrences beyond it are placed at 400 to 600 USD2005 per kg U,
 above the range covered by the literature curves,
