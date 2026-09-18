@@ -889,16 +889,9 @@ def generate(context: Context) -> Workflow:
         add_macro,
         target=f"{model_name}/baseline_BMT_message_macro",
     )
-    # name = wf.add_step("BMTX baseline macro reported", name, report)
+    name = wf.add_step("base reported", name, report)
 
     # NGFS steps
-    wf.add_step(
-        "base cloned",
-        name,
-        target=f"{model_name}/baseline_DEFAULT",
-        clone=dict(keep_solution=True),
-    )
-    wf.add_step("base reported", "base cloned", report)
 
     # wf.add_step(
     #     "NPi2030 solved",
