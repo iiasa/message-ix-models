@@ -339,6 +339,23 @@ def add_NDC2030(context, scenario):
     return sr.scen["INDC2030i"]
 
 
+def add_NDC2030_anchors(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Add PBL NDC 2030 TCE bounds using :func:`~message_ix_models.tools.policy.add_anchor`.
+
+    Reads ``20260918ngfs.csv`` from ``data/anchor/`` (local data, then message-data)
+    and applies rows with ``policy_id="ndc2030_tce"``.
+    """
+    from message_ix_models.tools.policy import add_anchor
+
+    context.anchor_data_file = "20260918ngfs.csv"
+    scenario = add_anchor(context, scenario, policy_ids=["ndc2030_tce"])
+    solve(context, scenario, model="MESSAGE-MACRO")
+    scenario.set_as_default()
+    return scenario
+
+
 def add_glasgow(context, scenario, level, start_scen, target_scen, slice_yr):
     """Add Glasgow policies to the scenario."""
     sr = make_scenario_runner(context)
@@ -968,6 +985,8 @@ def generate(context: Context) -> Workflow:
         level="Partial",
     )
 
+    # NDC scenarios
+    # Approach 1: add NDC2030 through ScenarioRunner
     wf.add_step(
         "NDC2030 solved",
         "base reported",
@@ -979,6 +998,15 @@ def generate(context: Context) -> Workflow:
         "NDC2030 reported",
         "NDC2030 solved",
         report,
+    )
+
+    # Approach 2: use anchor class to add PBL ndc levels
+    wf.add_step(
+        "NDC2030pbl solved",
+        "base reported",
+        add_NDC2030_anchors,
+        target=f"{model_name}/INDC2030i_pbl",
+        clone=dict(keep_solution=False),
     )
 
     # wf.add_step(
