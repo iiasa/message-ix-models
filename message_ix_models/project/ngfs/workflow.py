@@ -323,7 +323,7 @@ def add_NDC2030(context, scenario):
     sr = make_scenario_runner(context)
 
     sr.add(
-        "INDC2030i_weak",
+        "INDC2030i",
         "baseline_DEFAULT",
         mk_INDC=True,
         slice_year=2025,
@@ -331,13 +331,12 @@ def add_NDC2030(context, scenario):
         target_kind="Target",
         copy_demands=False,  # Turned off for bmt version
         run_reporting=False,
-        # TODO: set to MESSAGE-MACRO when workflow test finished.
         solve_typ="MESSAGE-MACRO",
     )
 
     sr.run_all()
 
-    return sr.scen["INDC2030i_weak"]
+    return sr.scen["INDC2030i"]
 
 
 def add_glasgow(context, scenario, level, start_scen, target_scen, slice_yr):
@@ -891,7 +890,15 @@ def generate(context: Context) -> Workflow:
         name,
         add_macro,
         target=f"{model_name}/baseline_BMT_message_macro",
+        # YJ: cannot rename
     )
+    name = wf.add_step(
+        "base built", 
+        name, target=f"{model_name}/baseline_DEFAULT", 
+        clone=dict(keep_solution=True)
+        # YJ: cannot rename in the last step but have to
+        # start with this scen name for the old SR policy scenarios
+        )
     name = wf.add_step("base reported", name, report)
 
     # NGFS steps
@@ -965,14 +972,14 @@ def generate(context: Context) -> Workflow:
         "NDC2030 solved",
         "base reported",
         add_NDC2030,
-        target=f"{model_name}/INDC2030i_weak",
+        target=f"{model_name}/INDC2030i",
     )
 
-    # wf.add_step(
-    #     "NDC2030 reported",
-    #     "NDC2030 solved",
-    #     report,
-    # )
+    wf.add_step(
+        "NDC2030 reported",
+        "NDC2030 solved",
+        report,
+    )
 
     # wf.add_step(
     #     "h_ndc solved",
