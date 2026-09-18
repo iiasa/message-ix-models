@@ -473,8 +473,11 @@ def _growth(base_value: float, speed: float, step: int) -> float:
 
 
 def _year_act_num(df: pd.DataFrame) -> pd.Series:
-    """Numeric year for comparisons (``year_act``, ``year_rel``, or ``year_vtg``)."""
-    for col in ("year_act", "year_rel", "year_vtg"):
+    """Numeric year for comparisons.
+
+    Looks for ``year_act``, ``year_rel``, ``year_vtg``, or ``type_year``.
+    """
+    for col in ("year_act", "year_rel", "year_vtg", "type_year"):
         if col in df.columns:
             return pd.to_numeric(df[col], errors="coerce")
     raise KeyError(f"no year column in DataFrame; columns: {list(df.columns)}")
@@ -671,6 +674,7 @@ def add_anchor(
     anchor_inv_cost(df_anchor, scenario)
     anchor_share_comm(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
+    anchor_bound_emission(df_anchor, scenario)
 
     return scenario
 
@@ -1331,6 +1335,71 @@ def anchor_relation_activity(  # noqa: C901
         len(df_ra),
         len(df_rl),
         len(df_ru),
+    )
+
+    return
+
+
+def anchor_bound_emission(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``bound_emission``.
+
+    Uses ``type_emission`` and ``type_tec`` from the anchor sheet directly.
+    ``year_act`` / speed / arrival drive the shared depth logic over
+    ``type_year``.
+    """
+
+    df_be = df_anchor.loc[df_anchor["parameter"] == "bound_emission"].copy()
+    if df_be.empty:
+        log.info("anchor_bound_emission: no policies tuning 'bound_emission'")
+        return
+
+    info = ScenarioInfo(scenario)
+    updates: list[pd.DataFrame] = []
+
+    for (_policy_id, type_emission, type_tec), group in df_be.groupby(
+        ["policy_id", "type_emission", "type_tec"], dropna=False
+    ):
+        type_emission = str(type_emission)
+        type_tecs = [t.strip() for t in str(type_tec).split(",") if t.strip()]
+        nodes = _nodes(group) or nodes_ex_world(info.N)
+        years = [int(y) for y in info.Y]
+
+        for tec in type_tecs:
+            df_initial = scenario.par(
+                "bound_emission",
+                filters={
+                    "type_emission": [type_emission],
+                    "type_tec": [tec],
+                },
+            )
+            if df_initial.empty:
+                df_initial = make_df(
+                    "bound_emission",
+                    type_emission=type_emission,
+                    type_tec=tec,
+                    unit="???",
+                    value=0.0,
+                ).pipe(broadcast, node=nodes, type_year=years)
+
+            updates.append(
+                _apply_depth_speed_arrival(df_initial, group.copy(), node_col="node")
+            )
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        return
+
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_bound_emission.csv")
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    with scenario.transact("apply anchor bound_emission"):
+        scenario.add_par("bound_emission", df_updates)
+
+    log.info(
+        "anchor_bound_emission: added %d bound_emission rows",
+        len(df_updates),
     )
 
     return
