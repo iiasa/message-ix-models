@@ -57,6 +57,9 @@ class Config(ConfigHelper):
     #: :obj:`True` to call :func:`.reserve_margin.res_marg.main` in :func:`solve`.
     reserve_margin: bool = True
 
+    #: Scenario name to pass as ``base`` to :func:`.res_marg.main`.
+    reserve_margin_base: str | None = None
+
     #: Keyword arguments for :meth:`.message_ix.Scenario.solve` via :func:`solve`.
     #:
     #: To replicate the behaviour of the `macro_params` argument to
@@ -185,7 +188,13 @@ def solve(
         # FIXME Use an analogous function in message-ix-models, with tests
         from message_data.scenario_generation.reserve_margin import res_marg
 
-        res_marg.main(scenario)
+        # res_marg.main(scenario)
+        res_marg_kwargs = {}
+        if config.reserve_margin_base:
+            res_marg_kwargs["base"] = Scenario(
+                scenario.platform, scenario.model, config.reserve_margin_base
+            )
+        res_marg.main(scenario, **res_marg_kwargs)
 
     # Explicit list of model variables for which to read data
     var_list = ["I", "C"]

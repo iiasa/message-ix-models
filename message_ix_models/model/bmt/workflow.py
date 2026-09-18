@@ -23,6 +23,7 @@ def solve_args(model: str = "MESSAGE") -> dict:
     return dict(
         set_as_default=True,
         config=ModelConfig(
+            reserve_margin_base="baseline_BMT",
             solve=dict(
                 model=model,
                 gams_args=["--cap_comm=1"],
