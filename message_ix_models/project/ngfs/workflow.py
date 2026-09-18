@@ -30,8 +30,6 @@ from message_ix_models.project.ngfs import (
     aas_coal_growth_near_term,
     aas_dri_coal_steel_growth_near_term,
     interpolate_c_price,
-    qf_freeze_truck_history,
-    qf_remove_ELC100_near_term_infeasibility,
     qf_remove_meth_h2_co2_relations,
 )
 from message_ix_models.tools import add_CO2_emission_constraint
@@ -98,6 +96,7 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 
     return bmt_report(context, scenario)
     # TODO: it seems transport report cannot work alone without following after build
+
 
 # YJ: just for quick vetting, not really needed, can remove later
 def report_transport(
@@ -410,7 +409,7 @@ def add_NPiREF(context, scenario):
     return scenario
 
 
-# Constant carbon price (USD/tC) per region from 2030 to 2110 for h_cpol_c0
+# Constant carbon price (USD/tC) per region for h_cpol
 NPiREF_C0_PRICE = {
     "R12_AFR": 7.33,
     "R12_CHN": 7.33,
@@ -428,52 +427,56 @@ NPiREF_C0_PRICE = {
 
 
 def add_NPiREF_c0(
-    context: Context, scenario: message_ix.Scenario
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    start_year: int = 2030,
+    end_year: int = 2110,
 ) -> message_ix.Scenario:
-    """Apply constant carbon price (tax_emission) per region from 2030 to 2110.
-
-    Uses NPiREF_C0_PRICE for each R12 region; model years in [2030, 2110]
-    are taken from the scenario.
-    """
+    """Apply constant regional carbon prices (``tax_emission``) for a year window."""
     info = ScenarioInfo(scenario)
-    model_years = [y for y in info.Y if 2030 <= y <= 2110]
+    model_years = [y for y in info.Y if start_year <= y <= end_year]
     regions = [n for n in info.N if n in NPiREF_C0_PRICE]
 
-    rows = []
-    for node in regions:
-        value = NPiREF_C0_PRICE[node]
-        for type_year in model_years:
-            rows.append(
-                {
-                    "node": node,
-                    "type_emission": "TCE",
-                    "type_tec": "all",
-                    "type_year": type_year,
-                    "unit": "USD/tC",
-                    "value": value,
-                }
+    if not model_years:
+        raise ValueError(
+            f"No model years in [{start_year}, {end_year}] for {scenario.url}"
+        )
+
+    df = pd.concat(
+        [
+            make_df(
+                "tax_emission",
+                node=node,
+                type_emission="TCE",
+                type_tec="all",
+                type_year=model_years,
+                unit="USD/tC",
+                value=NPiREF_C0_PRICE[node],
             )
-    df = make_df(
-        "tax_emission",
-        node=[r["node"] for r in rows],
-        type_emission="TCE",
-        type_tec="all",
-        type_year=[r["type_year"] for r in rows],
-        unit="USD/tC",
-        value=[r["value"] for r in rows],
+            for node in regions
+        ],
+        ignore_index=True,
     )
 
-    with scenario.transact("applying constant cprice"):
+    with scenario.transact(
+        f"Apply constant NPiREF c0 carbon prices ({start_year}–{end_year})"
+    ):
         bound_df = scenario.par("bound_emission")
         if not bound_df.empty:
             scenario.remove_par("bound_emission", bound_df)
         scenario.add_par("tax_emission", df)
 
     log.info(
-        f"Added constant carbon prices (2030-2110) to "
-        f"{scenario.model}/{scenario.scenario}"
+        "Added constant carbon prices (%s–%s) to %s/%s (%d regions, %d years)",
+        start_year,
+        end_year,
+        scenario.model,
+        scenario.scenario,
+        len(regions),
+        len(model_years),
     )
-    solve(context, scenario)
+    solve(context, scenario, model="MESSAGE-MACRO")
     scenario.set_as_default()
     return scenario
 
@@ -893,6 +896,10 @@ def generate(context: Context) -> Workflow:
 
     # NGFS steps
 
+    # Starting fromh_cpol
+    # Approach 1: add NPi2030 through ScenarioRunner
+    # disabled as our coverage of demand sector current policy is thin,
+    # the run did not generate meaningful carbon prices
     # wf.add_step(
     #     "NPi2030 solved",
     #     "base reported",
@@ -900,31 +907,39 @@ def generate(context: Context) -> Workflow:
     #     target=f"{model_name}/NPi2030",
     # )
 
+    # Approach 2: borrow the constraints from other project workflow runs
+    # disabled as SMIP version can have zeros in specific regions,
+    # while NGFS context interprets carbon prices as mitigation efforts.
+    # The inconsistency makes this approach not suitable.
     # wf.add_step(
-    #     "h_cpol_c0 solved",
     #     "NPi2030 solved",
-    #     add_NPiREF_c0,
-    #     target=f"{model_name}/h_cpol_c0",
+    #     "base reported",
+    #     temp_borrow_par,
+    #     target=f"{model_name}/NPi2030",
     #     clone=dict(keep_solution=False),
+    #     target_model_name="SSP_SSP2_v6.6",
+    #     target_scen_name="NPi2030",
+    #     par_names=["bound_emission", "tax_emission"],
     # )
 
-    # wf.add_step(
-    #     "h_cpol_c0 reported",
-    #     "h_cpol_c0 solved",
-    #     report,
-    # )
-
+    # Approach 3: use carbon price proxies from lookup runs
+    wf.add_step(
+        "NPi2030 solved",
+        "base reported",
+        add_NPiREF_c0,
+        target=f"{model_name}/NPi2030",
+        clone=dict(keep_solution=False),
+        start_year=2030,
+        end_year=2030,
+    )
     wf.add_step(
         "h_cpol solved",
-        # "NPi2030 solved",
-        # add_NPiREF,
         "base reported",
-        temp_borrow_par,
+        add_NPiREF_c0,
         target=f"{model_name}/h_cpol",
         clone=dict(keep_solution=False),
-        target_model_name="SSP_SSP2_v6.6",
-        target_scen_name="NPiREF",
-        par_names=["bound_emission", "tax_emission"],
+        start_year=2030,
+        end_year=2110,
     )
 
     # wf.add_step(
