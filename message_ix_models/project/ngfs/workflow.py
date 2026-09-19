@@ -1125,8 +1125,17 @@ def generate(context: Context) -> Workflow:
 
     # Approach 2: use anchor and mapper to add PBL ndc levels
     wf.add_step(
+        "NDC2030 anchored",
+        "base reported",
+        add_anchor,
+        target=f"{model_name}/INDC2030i_anchor",
+        clone=dict(keep_solution=False),
+        stage="INDC2030i",
+    )
+
+    wf.add_step(
         "NDC2030 solved",
-        "BMT calibrated",
+        "NDC anchored",
         add_NDC2030_anchor,
         target=f"{model_name}/INDC2030i",
         clone=dict(keep_solution=False),
