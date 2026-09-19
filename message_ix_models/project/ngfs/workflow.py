@@ -27,8 +27,6 @@ from message_ix_models.project.engage.workflow import (
     step_4,
 )
 from message_ix_models.project.ngfs import (
-    aas_coal_growth_near_term,
-    aas_dri_coal_steel_growth_near_term,
     interpolate_c_price,
     qf_remove_meth_h2_co2_relations,
 )
@@ -358,7 +356,7 @@ def add_NDC2030_anchor(
         mp=scenario.platform,
         model=scenario.model,
         scenario="baseline_BMT",
-    ) #YJ: move to args later, maybe
+    )  # YJ: move to args later, maybe
 
     result = map_ndc_targets(
         source,
@@ -837,10 +835,12 @@ def generate(context: Context) -> Workflow:
     )
     from message_ix_models.model.buildings.build import main as build_B
     from message_ix_models.model.transport import workflow as transport
+    from message_ix_models.tools.policy import add_anchor
 
     wf = Workflow(context)
     context.ssp = "SSP2"
     context.model.regions = "R12"
+    context.anchor_data_file = "20260918ngfs.csv"
     apply_bmt_config(context)
     # YJ: model name is defined there in the bmt config but fine
     # YJ: nothing in this file reads context.bmt["model_name"] so all good
@@ -869,21 +869,23 @@ def generate(context: Context) -> Workflow:
         qf_remove_meth_h2_co2_relations,
         target=f"{model_name}/baseline_M_fix1",
         clone=True,
-    )
-    name = wf.add_step(
-        "M fix2",
-        name,
-        aas_coal_growth_near_term,
-        target=f"{model_name}/baseline_M_fix2",
-        clone=True,
-    )
-    name = wf.add_step(
-        "M fix3",
-        name,
-        aas_dri_coal_steel_growth_near_term,
-        target=f"{model_name}/baseline_M_fix3",
-        clone=True,
-    )
+    )  # YJ: to be integrated into anchor sheet too
+
+    # YJ: not needed after applying anchor
+    # name = wf.add_step(
+    #     "M fix2",
+    #     name,
+    #     aas_coal_growth_near_term,
+    #     target=f"{model_name}/baseline_M_fix2",
+    #     clone=True,
+    # )
+    # name = wf.add_step(
+    #     "M fix3",
+    #     name,
+    #     aas_dri_coal_steel_growth_near_term,
+    #     target=f"{model_name}/baseline_M_fix3",
+    #     clone=True,
+    # )
     # name = wf.add_step("M reported", name, report)
 
     name = transport.add_steps(wf, name, context.transport.code)
@@ -912,13 +914,25 @@ def generate(context: Context) -> Workflow:
     #     clone=True,
     # )
     name = wf.add_step("MT solved", name, solve)
-    name = wf.add_step("MT reported", "MT solved", report_transport)
+    # name = wf.add_step("MT reported", "MT solved", report_transport)
 
     name = wf.add_step(
-        "BMT built", "MT solved", build_B, target=f"{model_name}/baseline_BMT", clone=c
+        "BMT built",
+        "MT solved",
+        build_B,
+        target=f"{model_name}/baseline_BMT_raw",
+        clone=c,
     )
     name = wf.add_step("BMT solved", name, solve)
-    name = wf.add_step("BMT reported", "BMT solved", report)
+    name = wf.add_step(
+        "BMT calibrated",
+        name,
+        add_anchor,
+        target=f"{model_name}/baseline_BMT",
+        clone=c,
+        stage="baseline",
+    )
+    name = wf.add_step("BMT reported", "BMT calibrated", report)
 
     name = wf.add_step(
         "BMT prep macro",
@@ -935,12 +949,13 @@ def generate(context: Context) -> Workflow:
         # YJ: cannot rename
     )
     name = wf.add_step(
-        "base built", 
-        name, target=f"{model_name}/baseline_DEFAULT", 
-        clone=dict(keep_solution=True)
+        "base built",
+        name,
+        target=f"{model_name}/baseline_DEFAULT",
+        clone=dict(keep_solution=True),
         # YJ: cannot rename in the last step but have to
         # start with this scen name for the old SR policy scenarios
-        )
+    )
     name = wf.add_step("base reported", name, report)
 
     # NGFS steps
