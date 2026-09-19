@@ -45,6 +45,10 @@ DEFAULT_SUBST_ISO = {"CHN", "VNM", "LAO", "KHM", "PRK", "MNG"}
 DEFAULT_BIOMASS_NC_REG = ("CHN", "RCPA", "SAS", "PAS", "LAM", "AFR", "MEA")
 DEFAULT_SUBST_REG = ("R12_CHN",)
 
+#: IEA ``MESSAGE_R12`` region ``CHN`` double-counts mainland China (country
+#: row + aggregate). Replace the regional total with the ISO member sum.
+REGIONS_TOTAL_FROM_ISO = frozenset({"R12_CHN"})
+
 
 def load_iso_mapping(region_id: str = "R12") -> pd.DataFrame:
     """Return ISO 3166-1 alpha-3 → MESSAGE region mapping from the node codelist."""
@@ -198,14 +202,34 @@ def retrieve_energy_shares(
         for full_reg, tot in reg_tot.items():
             log.info("%s Tot%s(%s) = %.6g", full_reg, basis, year, tot)
 
+        iso_rows: list[tuple[str, str, str, float]] = []
         for iso, row in mapping.iterrows():
             full_reg = row["region"]
             val = run_sql(curs, iso_sql_fn(sql, iso, year, full_reg.split("_", 1)[1]))
+            iso_rows.append((str(iso), row["country"], full_reg, val))
+
+        for full_reg in sorted(REGIONS_TOTAL_FROM_ISO & target_regs):
+            iso_sum = sum(v for _iso, _name, reg, v in iso_rows if reg == full_reg)
+            if iso_sum <= 0:
+                continue
+            iea_tot = reg_tot[full_reg]
+            log.warning(
+                "%s IEA regional Tot%s(%s)=%.6g double-counts mainland China; "
+                "using ISO sum %.6g instead",
+                full_reg,
+                basis,
+                year,
+                iea_tot,
+                iso_sum,
+            )
+            reg_tot[full_reg] = iso_sum
+
+        for iso, country, full_reg, val in iso_rows:
             tot = reg_tot[full_reg]
             rows.append(
                 {
                     "iso": iso,
-                    "country": row["country"],
+                    "country": country,
                     "region": full_reg,
                     "energy_basis": basis,
                     "year": year,
