@@ -636,6 +636,8 @@ def _apply_depth_speed_arrival(
     return df_update
 
 
+# YJ: should give examples of whether multiple tech/region/commodity
+# can be filled in one cell.
 def add_anchor(
     context: Context,
     scenario: message_ix.Scenario,
@@ -670,6 +672,7 @@ def add_anchor(
 
     anchor_emission_factor(df_anchor, scenario)
     anchor_input_output(df_anchor, scenario)
+    anchor_demand(df_anchor, scenario)
     anchor_growth_activity(df_anchor, scenario)
     anchor_inv_cost(df_anchor, scenario)
     anchor_share_comm(df_anchor, scenario)
@@ -781,6 +784,58 @@ def anchor_input_output(  # noqa: C901
             len(df_updates),
             par_name,
         )
+
+    return
+
+
+def anchor_demand(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``demand``."""
+
+    df_dem = df_anchor.loc[df_anchor["parameter"] == "demand"].copy()
+    if df_dem.empty:
+        log.info("anchor_demand: no policies tuning 'demand'")
+        return
+
+    info = ScenarioInfo(scenario)
+    updates: list[pd.DataFrame] = []
+
+    for (_policy_id, commodity, level), group in df_dem.groupby(
+        ["policy_id", "commodity", "level"], dropna=False
+    ):
+        nodes = _nodes(group) or nodes_ex_world(info.N)
+        years = [int(y) for y in info.Y]
+        commodities = [c.strip() for c in str(commodity).split(",") if c.strip()]
+        levels = [lv.strip() for lv in str(level).split(",") if lv.strip()]
+        for comm in commodities:
+            for lev in levels:
+                df_initial = make_df(
+                    "demand",
+                    commodity=comm,
+                    level=lev,
+                    time="year",
+                    unit="???",
+                    value=0.0,
+                ).pipe(broadcast, node=nodes, year=years)
+
+                updates.append(
+                    _apply_depth_speed_arrival(
+                        df_initial, group.copy(), node_col="node"
+                    )
+                )
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        return
+
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_demand.csv")
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    with scenario.transact("apply anchor demand"):
+        scenario.add_par("demand", df_updates)
+
+    log.info("anchor_demand: added %d demand rows", len(df_updates))
 
     return
 
