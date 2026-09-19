@@ -339,20 +339,45 @@ def add_NDC2030(context, scenario):
     return sr.scen["INDC2030i"]
 
 
-def add_NDC2030_anchors(
-    context: Context, scenario: message_ix.Scenario
+def add_NDC2030_anchor(
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    policy_file: str = "20260917pbl_ndc_2030.csv",
+    year_act: int = 2030,
 ) -> message_ix.Scenario:
-    """Add PBL NDC 2030 TCE bounds using :func:`~message_ix_models.tools.policy.add_anchor`.
+    """Add PBL NDC 2030 TCE bounds from national targets.
 
-    Reads ``20260918ngfs.csv`` from ``data/anchor/`` (local data, then message-data)
-    and applies rows with ``policy_id="ndc2030_tce"``.
+    Maps ``policy_file`` (under ``data/anchor/``) to R12 ``bound_emission``
+    with :func:`~message_ix_models.tools.anchor.map_ndc_targets`, using
+    baseline ``EMISS``/``TCE`` at ``year_act`` and PE shares.
     """
-    from message_ix_models.tools.policy import add_anchor
+    from message_ix_models.tools.anchor import map_ndc_targets
 
-    context.anchor_data_file = "20260918ngfs.csv"
-    scenario = add_anchor(context, scenario, policy_ids=["ndc2030_tce"])
-    solve(context, scenario, model="MESSAGE-MACRO")
-    scenario.set_as_default()
+    source = message_ix.Scenario(
+        mp=scenario.platform,
+        model=scenario.model,
+        scenario="baseline_BMT",
+    ) #YJ: move to args later, maybe
+
+    result = map_ndc_targets(
+        source,
+        policy_file=policy_file,
+        year_act=year_act,
+        region_id=context.model.regions,
+    )
+
+    with scenario.transact("add NDC bound_emission from PBL mapper"):
+        scenario.add_par("bound_emission", result["bound_emission"])
+
+    log.info(
+        "Added %d bound_emission rows from %s (year_act=%s)",
+        len(result["bound_emission"]),
+        policy_file,
+        year_act,
+    )
+    # solve(context, scenario, model="MESSAGE-MACRO")
+    # scenario.set_as_default()
     return scenario
 
 
@@ -987,25 +1012,25 @@ def generate(context: Context) -> Workflow:
 
     # NDC scenarios
     # Approach 1: add NDC2030 through ScenarioRunner
+    # wf.add_step(
+    #     "NDC2030 solved",
+    #     "base reported",
+    #     add_NDC2030,
+    #     target=f"{model_name}/INDC2030i",
+    # )
+
+    # wf.add_step(
+    #     "NDC2030 reported",
+    #     "NDC2030 solved",
+    #     report,
+    # )
+
+    # Approach 2: use anchor and mapper to add PBL ndc levels
     wf.add_step(
         "NDC2030 solved",
         "base reported",
-        add_NDC2030,
+        add_NDC2030_anchor,
         target=f"{model_name}/INDC2030i",
-    )
-
-    wf.add_step(
-        "NDC2030 reported",
-        "NDC2030 solved",
-        report,
-    )
-
-    # Approach 2: use anchor class to add PBL ndc levels
-    wf.add_step(
-        "NDC2030pbl solved",
-        "base reported",
-        add_NDC2030_anchors,
-        target=f"{model_name}/INDC2030i_pbl",
         clone=dict(keep_solution=False),
     )
 
