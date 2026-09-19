@@ -678,6 +678,7 @@ def add_anchor(
     anchor_share_comm(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
     anchor_bound_emission(df_anchor, scenario)
+    anchor_tax_emission(df_anchor, scenario)
     anchor_growth_land_scen_lo(df_anchor, scenario)
 
     return scenario
@@ -1457,6 +1458,70 @@ def anchor_bound_emission(  # noqa: C901
 
     log.info(
         "anchor_bound_emission: added %d bound_emission rows",
+        len(df_updates),
+    )
+
+    return
+
+
+def anchor_tax_emission(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``tax_emission``.
+
+    Same keys as ``bound_emission``.
+    """
+
+    df_te = df_anchor.loc[df_anchor["parameter"] == "tax_emission"].copy()
+    if df_te.empty:
+        log.info("anchor_tax_emission: no policies tuning 'tax_emission'")
+        return
+
+    info = ScenarioInfo(scenario)
+    updates: list[pd.DataFrame] = []
+
+    for (_policy_id, type_emission, type_tec), group in df_te.groupby(
+        ["policy_id", "type_emission", "type_tec"], dropna=False
+    ):
+        type_emission = str(type_emission)
+        type_tecs = [t.strip() for t in str(type_tec).split(",") if t.strip()]
+        nodes = _nodes(group) or nodes_ex_world(info.N)
+
+        start = group["year_act"].dropna()
+        end = group["arrival"].dropna()
+        if start.empty:
+            continue
+        start_year = int(start.min())
+        end_year = int(end.max()) if not end.empty else start_year
+        years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+        if not years:
+            continue
+
+        for tec in type_tecs:
+            df_initial = make_df(
+                "tax_emission",
+                type_emission=type_emission,
+                type_tec=tec,
+                unit="???",
+                value=0.0,
+            ).pipe(broadcast, node=nodes, type_year=years)
+
+            updates.append(
+                _apply_depth_speed_arrival(df_initial, group.copy(), node_col="node")
+            )
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        return
+
+    debug_updates_path = local_data_path("anchor", "_debug_anchor_tax_emission.csv")
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    with scenario.transact("apply anchor tax_emission"):
+        scenario.add_par("tax_emission", df_updates)
+
+    log.info(
+        "anchor_tax_emission: added %d tax_emission rows",
         len(df_updates),
     )
 
