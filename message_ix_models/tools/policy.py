@@ -1347,7 +1347,8 @@ def anchor_bound_emission(  # noqa: C901
 
     Uses ``type_emission`` and ``type_tec`` from the anchor sheet directly.
     ``year_act`` / speed / arrival drive the shared depth logic over
-    ``type_year``.
+    ``type_year``. Scaffolded years are only those between ``year_act`` and
+    ``arrival`` (inclusive).
     """
 
     df_be = df_anchor.loc[df_anchor["parameter"] == "bound_emission"].copy()
@@ -1364,24 +1365,25 @@ def anchor_bound_emission(  # noqa: C901
         type_emission = str(type_emission)
         type_tecs = [t.strip() for t in str(type_tec).split(",") if t.strip()]
         nodes = _nodes(group) or nodes_ex_world(info.N)
-        years = [int(y) for y in info.Y]
+
+        start = group["year_act"].dropna()
+        end = group["arrival"].dropna()
+        if start.empty:
+            continue
+        start_year = int(start.min())
+        end_year = int(end.max()) if not end.empty else start_year
+        years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+        if not years:
+            continue
 
         for tec in type_tecs:
-            df_initial = scenario.par(
+            df_initial = make_df(
                 "bound_emission",
-                filters={
-                    "type_emission": [type_emission],
-                    "type_tec": [tec],
-                },
-            )
-            if df_initial.empty:
-                df_initial = make_df(
-                    "bound_emission",
-                    type_emission=type_emission,
-                    type_tec=tec,
-                    unit="???",
-                    value=0.0,
-                ).pipe(broadcast, node=nodes, type_year=years)
+                type_emission=type_emission,
+                type_tec=tec,
+                unit="???",
+                value=0.0,
+            ).pipe(broadcast, node=nodes, type_year=years)
 
             updates.append(
                 _apply_depth_speed_arrival(df_initial, group.copy(), node_col="node")
