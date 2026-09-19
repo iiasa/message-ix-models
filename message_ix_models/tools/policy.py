@@ -642,6 +642,7 @@ def add_anchor(
     context: Context,
     scenario: message_ix.Scenario,
     policy_ids: Collection[str] | None = None,
+    stage: str | Collection[str] | None = None,
 ) -> message_ix.Scenario:
     """Add anchor data to the scenario.
 
@@ -649,6 +650,8 @@ def add_anchor(
     ----------
     policy_ids : collection of str, optional
         If given, only rows with these ``policy_id`` values are applied.
+    stage : str or collection of str, optional
+        If given, only rows whose ``stage`` column matches are applied.
 
     Examples
     --------
@@ -660,9 +663,18 @@ def add_anchor(
     as a keyword argument to :meth:`~message_ix_models.workflow.Workflow.add_step`::
 
         wf.add_step("with anchors", "base", add_anchor, policy_ids=["gp_1"])
+        wf.add_step(
+            "BMT calibrated", "BMT solved", add_anchor, stage="baseline"
+        )
     """
 
     df_anchor = load_anchor_data(context)
+
+    if stage is not None:
+        stages = {str(s) for s in ((stage,) if isinstance(stage, str) else stage)}
+        df_anchor = df_anchor.loc[df_anchor["stage"].astype(str).isin(stages)].copy()
+        if df_anchor.empty:
+            log.warning("add_anchor: no anchor rows match stage=%s", sorted(stages))
 
     if policy_ids is not None:
         ids = {str(p) for p in policy_ids}
