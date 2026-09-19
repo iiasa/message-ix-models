@@ -337,6 +337,71 @@ def add_NDC2030(context, scenario):
     return sr.scen["INDC2030i"]
 
 
+# Hardcoded EEU/WEU split of combined Europe ``target_mtc``.
+EEU_WEU_SHARE = {"R12_EEU": 0.22, "R12_WEU": 0.78}
+
+# Hardcoded regional shares of global bunker ``EMISS`` (``R12_GLB`` / ``TCE``).
+BUNKER_SHARE_R12 = {
+    "R12_AFR": 0.01,
+    "R12_CHN": 0.34,
+    "R12_EEU": 0.005,
+    "R12_FSU": 0.19,
+    "R12_LAM": 0.04,
+    "R12_MEA": 0.04,
+    "R12_NAM": 0.01,
+    "R12_PAO": 0.005,
+    "R12_PAS": 0.01,
+    "R12_RCPA": 0.005,
+    "R12_SAS": 0.34,
+    "R12_WEU": 0.005,
+}
+BUNKER_SCALE = 2.8  # aviation bunker + international CO2 trade
+BUNKER_GLB_DEFAULT = 237.539  # MtC fallback if R12_GLB EMISS missing
+
+
+def _adjust_ndc_target_mtc(
+    region_df: pd.DataFrame,
+    source: message_ix.Scenario,
+    year_act: int,
+) -> pd.DataFrame:
+    """EEU/WEU reallocation + subtract scaled R12_GLB bunker by region share."""
+    df = region_df.copy()
+    n = df["region"].astype(str)
+
+    eu = n.isin(EEU_WEU_SHARE)
+    if eu.any():
+        total = float(df.loc[eu, "target_mtc"].sum())
+        for node, share in EEU_WEU_SHARE.items():
+            df.loc[n.eq(node), "target_mtc"] = total * share
+
+    bunker = source.var(
+        "EMISS",
+        filters={
+            "emission": ["TCE"],
+            "year": [year_act],
+            "node": ["R12_GLB"],
+            "type_tec": ["all"],
+        },
+    )
+    if bunker.empty:
+        bunker = source.var(
+            "EMISS",
+            filters={"emission": ["TCE"], "year": [year_act], "node": ["R12_GLB"]},
+        )
+    glb = float(bunker["lvl"].sum()) if not bunker.empty else BUNKER_GLB_DEFAULT
+    if bunker.empty:
+        log.warning(
+            "No EMISS/TCE R12_GLB year=%s; using default %.4g MtC",
+            year_act,
+            BUNKER_GLB_DEFAULT,
+        )
+    glb *= BUNKER_SCALE
+
+    for node, share in BUNKER_SHARE_R12.items():
+        df.loc[n.eq(node), "target_mtc"] -= glb * share
+    return df
+
+
 def add_NDC2030_anchor(
     context: Context,
     scenario: message_ix.Scenario,
@@ -348,7 +413,9 @@ def add_NDC2030_anchor(
 
     Maps ``policy_file`` (under ``data/anchor/``) to R12 ``bound_emission``
     with :func:`~message_ix_models.tools.anchor.map_ndc_targets`, using
-    baseline ``EMISS``/``TCE`` at ``year_act`` and PE shares.
+    baseline ``EMISS``/``TCE`` at ``year_act`` and PE shares. Adjusts
+    ``target_mtc`` for the EEU/WEU split and bunker ``R12_GLB`` allocation
+    before adding ``bound_emission``.
     """
     from message_ix_models.tools.anchor import map_ndc_targets
 
@@ -358,19 +425,34 @@ def add_NDC2030_anchor(
         scenario="baseline_BMT",
     )  # YJ: move to args later, maybe
 
-    result = map_ndc_targets(
+    region_df = _adjust_ndc_target_mtc(
+        map_ndc_targets(
+            source,
+            policy_file=policy_file,
+            year_act=year_act,
+            region_id=context.model.regions,
+        )["region"],
         source,
-        policy_file=policy_file,
-        year_act=year_act,
-        region_id=context.model.regions,
+        year_act,
+    )
+
+    ok = region_df.dropna(subset=["target_mtc"])
+    bound_emission = make_df(
+        "bound_emission",
+        node=ok["region"].astype(str),
+        type_emission="TCE",
+        type_tec="all",
+        type_year=year_act,
+        value=ok["target_mtc"].astype(float),
+        unit="Mt C/yr",
     )
 
     with scenario.transact("add NDC bound_emission from PBL mapper"):
-        scenario.add_par("bound_emission", result["bound_emission"])
+        scenario.add_par("bound_emission", bound_emission)
 
     log.info(
         "Added %d bound_emission rows from %s (year_act=%s)",
-        len(result["bound_emission"]),
+        len(bound_emission),
         policy_file,
         year_act,
     )
