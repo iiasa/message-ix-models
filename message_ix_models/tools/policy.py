@@ -686,12 +686,13 @@ def add_anchor(
     anchor_input_output(df_anchor, scenario)
     anchor_demand(df_anchor, scenario)
     anchor_growth_activity(df_anchor, scenario)
+    anchor_growth_new_capacity(df_anchor, scenario)
     anchor_inv_cost(df_anchor, scenario)
     anchor_share_comm(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
     anchor_bound_emission(df_anchor, scenario)
     anchor_tax_emission(df_anchor, scenario)
-    anchor_growth_land_scen_lo(df_anchor, scenario)
+    anchor_growth_land_scen(df_anchor, scenario)
 
     return scenario
 
@@ -818,7 +819,15 @@ def anchor_demand(  # noqa: C901
         ["policy_id", "commodity", "level"], dropna=False
     ):
         nodes = _nodes(group) or nodes_ex_world(info.N)
-        years = [int(y) for y in info.Y]
+        start = group["year_act"].dropna()
+        end = group["arrival"].dropna()
+        if start.empty:
+            continue
+        start_year = int(start.min())
+        end_year = int(end.max()) if not end.empty else start_year
+        years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+        if not years:
+            continue
         commodities = [c.strip() for c in str(commodity).split(",") if c.strip()]
         levels = [lv.strip() for lv in str(level).split(",") if lv.strip()]
         for comm in commodities:
@@ -877,7 +886,15 @@ def anchor_growth_activity(  # noqa: C901
             ["policy_id", "technology"], dropna=False
         ):
             nodes = _nodes(group) or nodes_ex_world(info.N)
-            years = [int(y) for y in info.Y]
+            start = group["year_act"].dropna()
+            end = group["arrival"].dropna()
+            if start.empty:
+                continue
+            start_year = int(start.min())
+            end_year = int(end.max()) if not end.empty else start_year
+            years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+            if not years:
+                continue
             techs = [t.strip() for t in str(technology).split(",") if t.strip()]
             for tec in techs:
                 df_initial = make_df(
@@ -913,6 +930,79 @@ def anchor_growth_activity(  # noqa: C901
     return
 
 
+_GROWTH_NEW_CAPACITY_PARS = ("growth_new_capacity_up", "growth_new_capacity_lo")
+
+
+def anchor_growth_new_capacity(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to ``growth_new_capacity_up`` and ``lo``.
+
+    Scaffolds over ``year_vtg`` for model years between ``year_act`` and
+    ``arrival``.
+    """
+
+    df_growth = df_anchor.loc[
+        df_anchor["parameter"].isin(_GROWTH_NEW_CAPACITY_PARS)
+    ].copy()
+    if df_growth.empty:
+        log.info(
+            "anchor_growth_new_capacity: no policies tuning "
+            "'growth_new_capacity_up'/'growth_new_capacity_lo'"
+        )
+        return
+
+    info = ScenarioInfo(scenario)
+
+    for par_name, df_par in df_growth.groupby("parameter", dropna=False):
+        updates: list[pd.DataFrame] = []
+        for (_policy_id, technology), group in df_par.groupby(
+            ["policy_id", "technology"], dropna=False
+        ):
+            nodes = _nodes(group) or nodes_ex_world(info.N)
+            start = group["year_act"].dropna()
+            end = group["arrival"].dropna()
+            if start.empty:
+                continue
+            start_year = int(start.min())
+            end_year = int(end.max()) if not end.empty else start_year
+            years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+            if not years:
+                continue
+            techs = [t.strip() for t in str(technology).split(",") if t.strip()]
+            for tec in techs:
+                df_initial = make_df(
+                    par_name,
+                    technology=tec,
+                    unit="???",
+                    value=0.0,
+                ).pipe(broadcast, node_loc=nodes, year_vtg=years)
+
+                updates.append(
+                    _apply_depth_speed_arrival(
+                        df_initial, group.copy(), node_col="node_loc"
+                    )
+                )
+
+        df_updates = pd.concat(updates, ignore_index=True)
+        if df_updates.empty:
+            continue
+
+        debug_updates_path = local_data_path("anchor", f"_debug_anchor_{par_name}.csv")
+        df_updates.to_csv(debug_updates_path, index=False)
+
+        with scenario.transact(f"apply anchor {par_name}"):
+            scenario.add_par(par_name, df_updates)
+
+        log.info(
+            "anchor_growth_new_capacity: added %d %s rows",
+            len(df_updates),
+            par_name,
+        )
+
+    return
+
+
 def anchor_inv_cost(  # noqa: C901
     df_anchor: pd.DataFrame, scenario: message_ix.Scenario
 ) -> None:
@@ -930,7 +1020,15 @@ def anchor_inv_cost(  # noqa: C901
         ["policy_id", "technology"], dropna=False
     ):
         nodes = _nodes(group) or nodes_ex_world(info.N)
-        years = [int(y) for y in info.Y]
+        start = group["year_act"].dropna()
+        end = group["arrival"].dropna()
+        if start.empty:
+            continue
+        start_year = int(start.min())
+        end_year = int(end.max()) if not end.empty else start_year
+        years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+        if not years:
+            continue
         techs = [t.strip() for t in str(technology).split(",") if t.strip()]
         for tec in techs:
             df_initial = scenario.par(
@@ -1146,22 +1244,6 @@ def _tech_mode(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows) if rows else df.iloc[0:0].copy()
 
 
-def _relation_years(scenario: message_ix.Scenario, relation_name: str) -> list[int]:
-    """Years to use when scaffolding a relation parameter time series."""
-    existing = scenario.par("relation_activity", filters={"relation": [relation_name]})
-    if not existing.empty and "year_act" in existing.columns:
-        years = (
-            pd.to_numeric(existing["year_act"], errors="coerce")
-            .dropna()
-            .astype(int)
-            .unique()
-            .tolist()
-        )
-        if years:
-            return sorted(set(years))
-    return [int(y) for y in ScenarioInfo(scenario).Y]
-
-
 def _prepare_relation_activity_coefficient(
     scenario: message_ix.Scenario,
     technology: str,
@@ -1221,7 +1303,16 @@ def _prepare_relation_bounds(
 
         if df_initial.empty:
             nodes = _nodes(df_loop)
-            years = _relation_years(scenario, relation_name)
+            info = ScenarioInfo(scenario)
+            start = df_loop["year_act"].dropna()
+            end = df_loop["arrival"].dropna()
+            if start.empty:
+                continue
+            start_year = int(start.min())
+            end_year = int(end.max()) if not end.empty else start_year
+            years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+            if not years:
+                continue
             frames = [
                 make_df(
                     par_name,
@@ -1540,56 +1631,70 @@ def anchor_tax_emission(  # noqa: C901
     return
 
 
-def anchor_growth_land_scen_lo(  # noqa: C901
+_GROWTH_LAND_SCEN_PARS = ("growth_land_scen_lo", "growth_land_scen_up")
+
+
+def anchor_growth_land_scen(  # noqa: C901
     df_anchor: pd.DataFrame, scenario: message_ix.Scenario
 ) -> None:
-    """Apply anchor settings to parameter ``growth_land_scen_lo``.
+    """Apply anchor settings to ``growth_land_scen_lo`` and ``growth_land_scen_up``."""
 
-    Uses ``land_scenario`` from the anchor sheet directly.
-    ``year_act`` over ``year``.
-    """
-
-    df_gl = df_anchor.loc[df_anchor["parameter"] == "growth_land_scen_lo"].copy()
+    df_gl = df_anchor.loc[df_anchor["parameter"].isin(_GROWTH_LAND_SCEN_PARS)].copy()
     if df_gl.empty:
-        log.info("anchor_growth_land_scen_lo: no policies tuning 'growth_land_scen_lo'")
+        log.info(
+            "anchor_growth_land_scen: no policies tuning "
+            "'growth_land_scen_lo'/'growth_land_scen_up'"
+        )
         return
 
     info = ScenarioInfo(scenario)
-    updates: list[pd.DataFrame] = []
 
-    for (_policy_id, land_scenario), group in df_gl.groupby(
-        ["policy_id", "land_scenario"], dropna=False
-    ):
-        nodes = _nodes(group) or nodes_ex_world(info.N)
-        years = [int(y) for y in info.Y]
-        scenarios = [s.strip() for s in str(land_scenario).split(",") if s.strip()]
-        for scen in scenarios:
-            df_initial = make_df(
-                "growth_land_scen_lo",
-                land_scenario=scen,
-                unit="???",
-                value=0.0,
-            ).pipe(broadcast, node=nodes, year=years)
+    for par_name, df_par in df_gl.groupby("parameter", dropna=False):
+        updates: list[pd.DataFrame] = []
+        for (_policy_id, land_scenario), group in df_par.groupby(
+            ["policy_id", "land_scenario"], dropna=False
+        ):
+            nodes = _nodes(group) or nodes_ex_world(info.N)
+            start = group["year_act"].dropna()
+            end = group["arrival"].dropna()
+            if start.empty:
+                continue
+            start_year = int(start.min())
+            end_year = int(end.max()) if not end.empty else start_year
+            years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+            if not years:
+                continue
+            scenarios = [s.strip() for s in str(land_scenario).split(",") if s.strip()]
+            for scen in scenarios:
+                df_initial = make_df(
+                    par_name,
+                    land_scenario=scen,
+                    unit="???",
+                    value=0.0,
+                ).pipe(broadcast, node=nodes, year=years)
 
-            updates.append(
-                _apply_depth_speed_arrival(df_initial, group.copy(), node_col="node")
-            )
+                updates.append(
+                    _apply_depth_speed_arrival(
+                        df_initial, group.copy(), node_col="node"
+                    )
+                )
 
-    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
-    if df_updates.empty:
-        return
+        df_updates = (
+            pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+        )
+        if df_updates.empty:
+            continue
 
-    debug_updates_path = local_data_path(
-        "anchor", "_debug_anchor_growth_land_scen_lo.csv"
-    )
-    df_updates.to_csv(debug_updates_path, index=False)
+        debug_updates_path = local_data_path("anchor", f"_debug_anchor_{par_name}.csv")
+        df_updates.to_csv(debug_updates_path, index=False)
 
-    with scenario.transact("apply anchor growth_land_scen_lo"):
-        scenario.add_par("growth_land_scen_lo", df_updates)
+        with scenario.transact(f"apply anchor {par_name}"):
+            scenario.add_par(par_name, df_updates)
 
-    log.info(
-        "anchor_growth_land_scen_lo: added %d growth_land_scen_lo rows",
-        len(df_updates),
-    )
+        log.info(
+            "anchor_growth_land_scen: added %d %s rows",
+            len(df_updates),
+            par_name,
+        )
 
     return
