@@ -475,9 +475,9 @@ def _growth(base_value: float, speed: float, step: int) -> float:
 def _year_act_num(df: pd.DataFrame) -> pd.Series:
     """Numeric year for comparisons.
 
-    Looks for ``year_act``, ``year_rel``, ``year_vtg``, or ``type_year``.
+    Looks for ``year_act``, ``year_rel``, ``year_vtg``, ``type_year``, or ``year``.
     """
-    for col in ("year_act", "year_rel", "year_vtg", "type_year"):
+    for col in ("year_act", "year_rel", "year_vtg", "type_year", "year"):
         if col in df.columns:
             return pd.to_numeric(df[col], errors="coerce")
     raise KeyError(f"no year column in DataFrame; columns: {list(df.columns)}")
@@ -675,6 +675,7 @@ def add_anchor(
     anchor_share_comm(df_anchor, scenario)
     anchor_relation_activity(df_anchor, scenario)
     anchor_bound_emission(df_anchor, scenario)
+    anchor_growth_land_scen_lo(df_anchor, scenario)
 
     return scenario
 
@@ -1401,6 +1402,61 @@ def anchor_bound_emission(  # noqa: C901
 
     log.info(
         "anchor_bound_emission: added %d bound_emission rows",
+        len(df_updates),
+    )
+
+    return
+
+
+def anchor_growth_land_scen_lo(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to parameter ``growth_land_scen_lo``.
+
+    Uses ``land_scenario`` from the anchor sheet directly.
+    ``year_act`` over ``year``.
+    """
+
+    df_gl = df_anchor.loc[df_anchor["parameter"] == "growth_land_scen_lo"].copy()
+    if df_gl.empty:
+        log.info("anchor_growth_land_scen_lo: no policies tuning 'growth_land_scen_lo'")
+        return
+
+    info = ScenarioInfo(scenario)
+    updates: list[pd.DataFrame] = []
+
+    for (_policy_id, land_scenario), group in df_gl.groupby(
+        ["policy_id", "land_scenario"], dropna=False
+    ):
+        nodes = _nodes(group) or nodes_ex_world(info.N)
+        years = [int(y) for y in info.Y]
+        scenarios = [s.strip() for s in str(land_scenario).split(",") if s.strip()]
+        for scen in scenarios:
+            df_initial = make_df(
+                "growth_land_scen_lo",
+                land_scenario=scen,
+                unit="???",
+                value=0.0,
+            ).pipe(broadcast, node=nodes, year=years)
+
+            updates.append(
+                _apply_depth_speed_arrival(df_initial, group.copy(), node_col="node")
+            )
+
+    df_updates = pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+    if df_updates.empty:
+        return
+
+    debug_updates_path = local_data_path(
+        "anchor", "_debug_anchor_growth_land_scen_lo.csv"
+    )
+    df_updates.to_csv(debug_updates_path, index=False)
+
+    with scenario.transact("apply anchor growth_land_scen_lo"):
+        scenario.add_par("growth_land_scen_lo", df_updates)
+
+    log.info(
+        "anchor_growth_land_scen_lo: added %d growth_land_scen_lo rows",
         len(df_updates),
     )
 
