@@ -415,9 +415,12 @@ def add_NDC2030_anchor(
     with :func:`~message_ix_models.tools.anchor.map_ndc_targets`, using
     baseline ``EMISS``/``TCE`` at ``year_act`` and PE shares. Adjusts
     ``target_mtc`` for the EEU/WEU split and bunker ``R12_GLB`` allocation
-    before adding ``bound_emission``.
+    before adding ``bound_emission``. Then applies
+    :func:`~message_ix_models.tools.policy.add_anchor` for stage
+    ``INDC2030i`` and solves.
     """
     from message_ix_models.tools.anchor import map_ndc_targets
+    from message_ix_models.tools.policy import add_anchor
 
     source = message_ix.Scenario(
         mp=scenario.platform,
@@ -456,8 +459,9 @@ def add_NDC2030_anchor(
         policy_file,
         year_act,
     )
-    # solve(context, scenario, model="MESSAGE-MACRO")
-    # scenario.set_as_default()
+    add_anchor(context, scenario, stage="INDC2030i")
+    solve(context, scenario, model="MESSAGE")
+    scenario.set_as_default()
     return scenario
 
 
@@ -531,19 +535,20 @@ def add_NPiREF(context, scenario):
 
 
 # Constant carbon price (USD/tC) per region for h_cpol
+# YJ: only EEU/WEU/USA are solved benchmark regions, other regions proxies
 NPiREF_C0_PRICE = {
-    "R12_AFR": 7.33,
-    "R12_CHN": 7.33,
-    "R12_EEU": 91.667,
-    "R12_FSU": 7.33,
-    "R12_LAM": 18.33,
-    "R12_MEA": 7.33,
-    "R12_NAM": 18.33,
-    "R12_PAO": 7.33,
-    "R12_PAS": 18.33,
-    "R12_RCPA": 7.33,
-    "R12_SAS": 7.33,
-    "R12_WEU": 14.667,
+    "R12_AFR": 5.12,
+    "R12_CHN": 22.34,
+    "R12_EEU": 67.99,
+    "R12_FSU": 6.57,
+    "R12_LAM": 15.13,
+    "R12_MEA": 6.57,
+    "R12_NAM": 34.57,
+    "R12_PAO": 68.54,
+    "R12_PAS": 15.13,
+    "R12_RCPA": 6.57,
+    "R12_SAS": 6.57,
+    "R12_WEU": 82.43,
 }
 
 
@@ -1014,32 +1019,8 @@ def generate(context: Context) -> Workflow:
         clone=c,
         stage="baseline",
     )
-    name = wf.add_step("BMT calibrated", name, solve)
-    name = wf.add_step("BMT reported", "BMT calibrated", report)
-
-    name = wf.add_step(
-        "BMT prep macro",
-        "BMT reported",
-        prep_for_macro,
-        target=f"{model_name}/baseline_BMT_message",
-        clone=dict(shift_first_model_year=2030),
-    )
-    name = wf.add_step(
-        "BMTX baseline macro",
-        name,
-        add_macro,
-        target=f"{model_name}/baseline_BMT_message_macro",
-        # YJ: cannot rename
-    )
-    name = wf.add_step(
-        "base built",
-        name,
-        target=f"{model_name}/baseline_DEFAULT",
-        clone=dict(keep_solution=True),
-        # YJ: cannot rename in the last step but have to
-        # start with this scen name for the old SR policy scenarios
-    )
-    name = wf.add_step("base reported", name, report)
+    name = wf.add_step("BMT anchor solved", name, solve)
+    name = wf.add_step("BMT reported", "BMT anchor solved", report)
 
     # NGFS steps
 
@@ -1052,6 +1033,13 @@ def generate(context: Context) -> Workflow:
     #     "base reported",
     #     add_NPi2030,
     #     target=f"{model_name}/NPi2030",
+    # )
+    # wf.add_step(
+    #     "NPi_low_dem solved",
+    #     "NPi2030 solved",
+    #     add_NPi_low_dem,
+    #     target=f"{model_name}/npi_low_dem_scen",
+    #     clone=dict(keep_solution=False),
     # )
 
     # Approach 2: borrow the constraints from other project workflow runs
@@ -1069,33 +1057,54 @@ def generate(context: Context) -> Workflow:
     #     par_names=["bound_emission", "tax_emission"],
     # )
 
-    # Approach 3: use carbon price proxies from lookup runs
+    # Approach 3: use benchmark region prices
     wf.add_step(
-        "NPi2030 solved",
-        "base reported",
-        add_NPiREF_c0,
+        "NPi2030 anchored",
+        "BMT reported",
+        add_anchor,
         target=f"{model_name}/NPi2030",
         clone=dict(keep_solution=False),
-        start_year=2030,
-        end_year=2030,
+        stage="NPi2030",
+    ) # solve EEU/WEU/USA current policy targets
+    wf.add_step("NPi2030 solved", "NPi2030 anchored", solve)
+    wf.add_step("NPi2030 reported", "NPi2030 solved", report)
+    wf.add_step(
+        "NPi2030 prep macro",
+        "NPi2030 reported",
+        prep_for_macro,
+        target=f"{model_name}/NPi2030_message",
+        clone=dict(shift_first_model_year=2030),
     )
     wf.add_step(
-        "h_cpol solved",
-        "base reported",
-        add_NPiREF_c0,
+        "NPi2030 macro",
+        "NPi2030 prep macro",
+        add_macro,
+        target=f"{model_name}/NPi2030_message_macro",
+        # YJ: cannot rename
+    )
+    wf.add_step(
+        "baseline built",
+        "NPi2030 macro",
+        target=f"{model_name}/baseline_DEFAULT",
+        clone=dict(keep_solution=True),
+        # YJ: cannot rename in the last step but have to
+        # start with this scen name for the old SR policy scenarios
+        # YJ: the baseline_DEFAULT in this wf is actually
+        # solved NPi2030 with FMY=2030 and MACRO added,
+        # as this is what NiGEM takes as a baseline to compare other scens with
+    )
+    wf.add_step("baseline reported", "baseline built", report)
+    wf.add_step(
+        "h_cpol anchored",
+        "baseline reported",
+        add_anchor,
         target=f"{model_name}/h_cpol",
         clone=dict(keep_solution=False),
-        start_year=2030,
-        end_year=2110,
+        stage="NPiREF",
     )
+    wf.add_step("h_cpol solved", "h_cpol anchored", solve)
 
-    # wf.add_step(
-    #     "NPi_low_dem solved",
-    #     "NPi2030 solved",
-    #     add_NPi_low_dem,
-    #     target=f"{model_name}/npi_low_dem_scen",
-    #     clone=dict(keep_solution=False),
-    # )
+
 
     wf.add_step(
         "d_strain solved",
@@ -1125,35 +1134,12 @@ def generate(context: Context) -> Workflow:
 
     # Approach 2: use anchor and mapper to add PBL ndc levels
     wf.add_step(
-        "NDC2030 anchored",
-        "base reported",
-        add_anchor,
-        target=f"{model_name}/INDC2030i_anchor",
-        clone=dict(keep_solution=False),
-        stage="INDC2030i",
-    )
-
-    wf.add_step(
         "NDC2030 solved",
-        "NDC anchored",
+        "BMT reported",
         add_NDC2030_anchor,
         target=f"{model_name}/INDC2030i",
         clone=dict(keep_solution=False),
     )
-
-    # wf.add_step(
-    #     "h_ndc solved",
-    #     # "NDC2030 solved",
-    #     # add_NDC_forever,
-    #     "base reported",
-    #     temp_borrow_par,
-    #     target=f"{model_name}/h_ndc",
-    #     clone=dict(keep_solution=False),
-    #     target_model_name="SSP_SSP2_v6.6",
-    #     target_scen_name="INDC2030i_forever",
-    #     par_names=["bound_emission","tax_emission"],
-    # Oliver prices too wierd... better not to borrow
-    # )
 
     wf.add_step(
         "h_ndc solved",
@@ -1187,7 +1173,7 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "glasgow_partial_2030 solved",
-        "base reported",
+        "baseline reported",
         add_glasgow,
         target=f"{model_name}/glasgow_partial_2030",
         target_scen="glasgow_partial_2030",
@@ -1212,7 +1198,7 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "glasgow_full_2030 solved",
-        "base reported",
+        "baseline reported",
         add_glasgow,
         target=f"{model_name}/glasgow_full_2030",
         start_scen="baseline_DEFAULT",
