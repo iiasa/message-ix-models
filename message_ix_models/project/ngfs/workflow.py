@@ -455,7 +455,7 @@ def add_NDC2030_anchor(
     add_anchor(context, scenario, stage="INDC2030i")
 
     # 5. Solve
-    solve(context, scenario, model="MESSAGE-MACRO")
+    solve(context, scenario, model="MESSAGE")
     scenario.set_as_default()
     return scenario
 
@@ -511,10 +511,10 @@ def add_NDC2035_anchor(
     )
 
     # 4. Apply remaining anchors
-    add_anchor(context, scenario, stage="INDC2035_forever")
+    add_anchor(context, scenario, stage="INDC2035i")
 
     # 5. Solve
-    solve(context, scenario, model="MESSAGE-MACRO")
+    solve(context, scenario, model="MESSAGE")
     scenario.set_as_default()
     return scenario
 
@@ -539,6 +539,26 @@ def add_glasgow(context, scenario, level, start_scen, target_scen, slice_yr):
 
     # Return the target scenario that was created
     return sr.scen[target_scen]
+
+
+def remove_2030_tce_tax_emission(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Remove 2030 ``tax_emission`` rows with ``type_emission`` TCE."""
+    df = scenario.par(
+        "tax_emission", filters={"type_emission": ["TCE"], "type_year": [2030, "2030"]}
+    )
+    if df.empty:
+        log.info("No 2030 TCE tax_emission rows to remove from %s", scenario.url)
+        return scenario
+
+    with scenario.transact("Remove 2030 TCE tax_emission"):
+        scenario.remove_par("tax_emission", df)
+    log.info("Removed %d 2030 TCE tax_emission rows from %s", len(df), scenario.url)
+
+    solve(context, scenario, model="MESSAGE")
+    scenario.set_as_default()
+    return scenario
 
 
 def add_NPiREF(context, scenario):
@@ -1141,10 +1161,17 @@ def generate(context: Context) -> Workflow:
         start_scen="baseline_DEFAULT",
         level="Partial",
     )
+    wf.add_step(
+        "d_strain calibrated",
+        "glasgow_partial_2030 solved",
+        remove_2030_tce_tax_emission,
+        target=f"{model_name}/d_strain_calibrated",
+        clone=dict(keep_solution=False),
+    )
 
     wf.add_step(
         "d_strain mixb called",
-        "glasgow_partial_2030 solved",
+        "d_strain calibrated",
         call_sturm,
     )
 
@@ -1179,9 +1206,16 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "h_ndc solved",
+        "NDC2035 solved",
         "NDC2030 solved",
         add_NDC2035_anchor,
+        target=f"{model_name}/INDC2035i",
+        clone=dict(keep_solution=False),
+    )
+
+    wf.add_step(
+        "h_ndc solved",
+        "NDC2035 solved",
         target=f"{model_name}/h_ndc",
         clone=dict(keep_solution=False),
     )
