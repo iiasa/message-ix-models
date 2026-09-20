@@ -6,16 +6,16 @@ import re
 import subprocess
 from collections.abc import Mapping, MutableMapping
 from enum import Enum, auto
-from typing import TYPE_CHECKING
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 import ixmp
 import numpy as np
 import pandas as pd
 from message_ix import Scenario
-from message_ix import Scenario
 
 from message_ix_models import Context
+from message_ix_models.util import load_package_data
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -490,11 +490,15 @@ def _write_sturm_prices(
 def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM.
 
-    Read reference levels from ``sturm/data/input_prices_R12_default.csv``. If
-    `scenario` has a solution, apply ``PRICE_COMMODITY`` (with floors) and write
+    Uses :data:`METHOD.RSCRIPT_B` (BMT resid/comm + GLANCE + MIXB aligner).
+
+    Read reference price levels from ``sturm/data/input_prices_R12_default.csv``.
+    Apply scenario solved ``PRICE_COMMODITY`` (with floors) and write
     ``sturm/data/input_prices_R12.csv``; otherwise copy the reference file unchanged.
     Update ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
     """
+    context.buildings.sturm_method = METHOD.RSCRIPT_B
+
     buildings_root = _message_buildings_install_dir()
     sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
     price_dir = sturm_dir.joinpath("data")
@@ -509,16 +513,11 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
     log.info("Updated prices written to %s (reference: %s)", price_input, price_default)
     log.info("Rows with updated prices: %d", rows_updated)
 
-    code = context.buildings.code
-    _pass_scen_config_to_mixb(sturm_dir, [code + "_r" if code != "R" else code])
+    code = format_sturm_code(context.buildings.code)
+    _pass_scen_config_to_mixb(sturm_dir, [code])
 
-    # Run STURM (via Rscript)
-    for name in (
-        "run_STURM_bmt_resid_2026_07_01.R",
-        "run_STURM_bmt_comm_2026_07_01.R",
-        "run_GLANCE_placeholder.R",
-        "run_MIXB_aligner.R",
-    ):
+    # Run STURM / MIXB (via Rscript), method B
+    for name in RSCRIPT_B_FILES:
         script = sturm_dir.joinpath(name)
         if not script.is_file():
             raise FileNotFoundError(f"STURM BMT R script not found: {script}")
@@ -533,29 +532,48 @@ def call_sturm(context: Context, scenario: Scenario) -> Scenario:
 
 
 def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
-    """Retrieve buildings demand from message_buildings_dir and add to scenario."""
-    # Support both key spellings in local ixmp config.
+    """Retrieve MIXB buildings demand from ``sturm/message_linking`` and add it."""
     buildings_root = _message_buildings_install_dir()
     linking_dir = buildings_root.joinpath(
         "message_ix_buildings", "sturm", "message_linking"
     )
+    if not linking_dir.exists():
+        raise FileNotFoundError(f"Buildings demand directory not found: {linking_dir}")
+
     code = format_sturm_code(context.buildings.code)
     demand = pd.concat(
         [
-            pd.read_csv(temp_dir / name)
-            for name in ("resid_sturm.csv", "comm_sturm.csv")
+            pd.read_csv(linking_dir / name.format(code=code))
+            for name in _MIXB_DEMAND_CSV
         ],
         ignore_index=True,
     )
 
-    exclude_expr = r"_mat_|_floor_|v_no_heat|non-comm"
-    # TODO: do we need dynamic materials demand for CircEUlar too?
-    demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
+    # Keep only Buildings energy commodities (same allowlist as prepare_data_B).
+    commodity_info = cast(
+        "MutableMapping", load_package_data("buildings", "commodity.yaml")
+    )
+    buildings_commodities = set(commodity_info.keys())
+    demand = demand[demand["commodity"].isin(buildings_commodities)].copy()
     demand["level"] = "useful"
-    # TODO: "useful" to match build; consider unifying demand levels to "final"
 
-    with scenario.transact("Add Buildings demand from message_ix_buildings/sturm/temp"):
+    if 2110 not in demand["year"].values and 2100 in demand["year"].values:
+        df_2110 = demand[demand["year"] == 2100].copy()
+        df_2110["year"] = 2110
+        demand = pd.concat([demand, df_2110], ignore_index=True)
+        log.info("Added 2110 demand rows by copying from 2100")
+
+    with scenario.transact(
+        "Add Buildings demand from message_ix_buildings/sturm/message_linking"
+    ):
         scenario.add_par("demand", demand)
 
-    log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
+    log.info(
+        "Added %d demand rows to %s/%s (code=%r, %s)",
+        len(demand),
+        scenario.model,
+        scenario.scenario,
+        code,
+        linking_dir,
+    )
     return scenario
