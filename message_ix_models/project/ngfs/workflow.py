@@ -356,15 +356,15 @@ BUNKER_SHARE_R12 = {
     "R12_WEU": 0.005,
 }
 BUNKER_SCALE = 2.8  # aviation bunker + international CO2 trade
-BUNKER_GLB_DEFAULT = 237.539  # MtC fallback if R12_GLB EMISS missing
+BUNKER_GLB_DEFAULT = 237.539  # baseline MtC if R12_GLB EMISS missing
 
 
-def _adjust_ndc_target_mtc(
+def _adjust_ndc_2030(
     region_df: pd.DataFrame,
     source: message_ix.Scenario,
     year_act: int,
 ) -> pd.DataFrame:
-    """EEU/WEU reallocation + subtract scaled R12_GLB bunker by region share."""
+    """2030 adjustments: EEU/WEU split + subtract scaled R12_GLB bunker shares."""
     df = region_df.copy()
     n = df["region"].astype(str)
 
@@ -402,6 +402,18 @@ def _adjust_ndc_target_mtc(
     return df
 
 
+def _adjust_ndc_2035(
+    region_df: pd.DataFrame,
+    source: message_ix.Scenario,
+    year_act: int,
+) -> pd.DataFrame:
+    """2035 adjustments to mapped ``target_mtc``.
+
+    TODO: specify 2035-specific adjustments here.
+    """
+    return region_df.copy()
+
+
 def add_NDC2030_anchor(
     context: Context,
     scenario: message_ix.Scenario,
@@ -409,59 +421,113 @@ def add_NDC2030_anchor(
     policy_file: str = "20260917pbl_ndc_2030.csv",
     year_act: int = 2030,
 ) -> message_ix.Scenario:
-    """Add PBL NDC 2030 TCE bounds from national targets.
+    """Add PBL NDC 2030 TCE bounds from national targets, then solve.
 
-    Maps ``policy_file`` (under ``data/anchor/``) to R12 ``bound_emission``
-    with :func:`~message_ix_models.tools.anchor.map_ndc_targets`, using
-    baseline ``EMISS``/``TCE`` at ``year_act`` and PE shares. Adjusts
-    ``target_mtc`` for the EEU/WEU split and bunker ``R12_GLB`` allocation
-    before adding ``bound_emission``. Then applies
-    :func:`~message_ix_models.tools.policy.add_anchor` for stage
-    ``INDC2030i`` and solves.
+    Steps: map → adjust → add_par → add_anchor → solve.
     """
     from message_ix_models.tools.anchor import map_ndc_targets
-    from message_ix_models.tools.policy import add_anchor
 
+    # 1. Map national targets → regional ``target_mtc``
     source = message_ix.Scenario(
         mp=scenario.platform,
         model=scenario.model,
         scenario="baseline_BMT",
     )  # YJ: move to args later, maybe
-
-    region_df = _adjust_ndc_target_mtc(
-        map_ndc_targets(
-            source,
-            policy_file=policy_file,
-            year_act=year_act,
-            region_id=context.model.regions,
-        )["region"],
+    region_df = map_ndc_targets(
         source,
-        year_act,
-    )
+        policy_file=policy_file,
+        year_act=year_act,
+        region_id=context.model.regions,
+    )["region"]
 
+    # 2. Addtional adjustments to ``target_mtc``
+    region_df = _adjust_ndc_2030(region_df, source, year_act)
+
+    # 3. Add ``bound_emission``
     ok = region_df.dropna(subset=["target_mtc"])
-    bound_emission = make_df(
-        "bound_emission",
-        node=ok["region"].astype(str),
-        type_emission="TCE",
-        type_tec="all",
-        type_year=year_act,
-        value=ok["target_mtc"].astype(float),
-        unit="Mt C/yr",
-    )
+    print(ok.to_string())
+    # bound_emission = make_df(
+    #     "bound_emission",
+    #     node=ok["region"].astype(str),
+    #     type_emission="TCE",
+    #     type_tec="all",
+    #     type_year=year_act,
+    #     value=ok["target_mtc"].astype(float),
+    #     unit="Mt C/yr",
+    # )
+    # with scenario.transact("add NDC bound_emission from PBL mapper"):
+    #     scenario.add_par("bound_emission", bound_emission)
+    # log.info(
+    #     "Added %d bound_emission rows from %s (year_act=%s)",
+    #     len(bound_emission),
+    #     policy_file,
+    #     year_act,
+    # )
 
-    with scenario.transact("add NDC bound_emission from PBL mapper"):
-        scenario.add_par("bound_emission", bound_emission)
+    # # 4. Apply remaining anchors
+    # add_anchor(context, scenario, stage="INDC2030i")
 
-    log.info(
-        "Added %d bound_emission rows from %s (year_act=%s)",
-        len(bound_emission),
-        policy_file,
-        year_act,
-    )
-    add_anchor(context, scenario, stage="INDC2030i")
-    solve(context, scenario, model="MESSAGE")
-    scenario.set_as_default()
+    # # 5. Solve
+    # solve(context, scenario, model="MESSAGE-MACRO")
+    # scenario.set_as_default()
+    return scenario
+
+
+def add_NDC2035_anchor(
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    policy_file: str = "20260917pbl_ndc_2035.csv",
+    year_act: int = 2035,
+) -> message_ix.Scenario:
+    """Add PBL NDC 2035 TCE bounds from national targets, then solve.
+
+    Steps: map → adjust → add_par → add_anchor → solve.
+    """
+    from message_ix_models.tools.anchor import map_ndc_targets
+
+    # 1. Map national targets → regional ``target_mtc``
+    source = message_ix.Scenario(
+        mp=scenario.platform,
+        model=scenario.model,
+        scenario="baseline_BMT",
+    )  # YJ: move to args later, maybe
+    region_df = map_ndc_targets(  # noqa: F841
+        source,
+        policy_file=policy_file,
+        year_act=year_act,
+        region_id=context.model.regions,
+    )["region"]
+
+    # # 2. Addtional adjustments to ``target_mtc``
+    # region_df = _adjust_ndc_2035(region_df, source, year_act)
+
+    # # 3. Add ``bound_emission``
+    # ok = region_df.dropna(subset=["target_mtc"])
+    # bound_emission = make_df(
+    #     "bound_emission",
+    #     node=ok["region"].astype(str),
+    #     type_emission="TCE",
+    #     type_tec="all",
+    #     type_year=year_act,
+    #     value=ok["target_mtc"].astype(float),
+    #     unit="Mt C/yr",
+    # )
+    # with scenario.transact("add NDC bound_emission from PBL mapper"):
+    #     scenario.add_par("bound_emission", bound_emission)
+    # log.info(
+    #     "Added %d bound_emission rows from %s (year_act=%s)",
+    #     len(bound_emission),
+    #     policy_file,
+    #     year_act,
+    # )
+
+    # # 4. Apply remaining anchors
+    # add_anchor(context, scenario, stage="INDC2035")
+
+    # # 5. Solve
+    # solve(context, scenario, model="MESSAGE-MACRO")
+    # scenario.set_as_default()
     return scenario
 
 
@@ -1024,7 +1090,7 @@ def generate(context: Context) -> Workflow:
 
     # NGFS steps
 
-    # Starting fromh_cpol
+    # --- h_cpol scenario ---
     # Approach 1: add NPi2030 through ScenarioRunner
     # disabled as our coverage of demand sector current policy is thin,
     # the run did not generate meaningful carbon prices
@@ -1065,7 +1131,7 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/NPi2030",
         clone=dict(keep_solution=False),
         stage="NPi2030",
-    ) # solve EEU/WEU/USA current policy targets
+    )  # solve EEU/WEU/USA current policy targets
     wf.add_step("NPi2030 solved", "NPi2030 anchored", solve)
     wf.add_step("NPi2030 reported", "NPi2030 solved", report)
     wf.add_step(
@@ -1102,10 +1168,14 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
         stage="NPiREF",
     )
-    wf.add_step("h_cpol solved", "h_cpol anchored", solve)
+    wf.add_step(
+        "h_cpol solved",
+        "h_cpol anchored",
+        solve,
+        model="MESSAGE-MACRO",
+    )
 
-
-
+    # --- d_strain scenario ---
     wf.add_step(
         "d_strain solved",
         "h_cpol solved",
@@ -1117,8 +1187,12 @@ def generate(context: Context) -> Workflow:
         level="Partial",
     )
 
-    # NDC scenarios
+    # --- h_ndc scenario ---
     # Approach 1: add NDC2030 through ScenarioRunner
+    # disabled to be consistent with other model implementations,
+    # also the SR way can give higher emission bounds under NDC
+    # than baseline in some regions (see red flagged regions in mapper),
+    # which generates zero carbon prices and is not desirable for NGFS context.
     # wf.add_step(
     #     "NDC2030 solved",
     #     "base reported",
@@ -1126,51 +1200,24 @@ def generate(context: Context) -> Workflow:
     #     target=f"{model_name}/INDC2030i",
     # )
 
-    # wf.add_step(
-    #     "NDC2030 reported",
-    #     "NDC2030 solved",
-    #     report,
-    # )
-
     # Approach 2: use anchor and mapper to add PBL ndc levels
     wf.add_step(
         "NDC2030 solved",
-        "BMT reported",
+        "baseline reported",
         add_NDC2030_anchor,
         target=f"{model_name}/INDC2030i",
         clone=dict(keep_solution=False),
     )
 
     wf.add_step(
-        "h_ndc solved",
+        "NDC2035 solved",
         "NDC2030 solved",
-        add_NDC_forever,
-        target=f"{model_name}/h_ndc",
+        add_NDC2035_anchor,
+        target=f"{model_name}/INDC2035i",
         clone=dict(keep_solution=False),
     )
 
-    # wf.add_step(
-    #     "NDC2035 solved",
-    #     "NDC2030 solved",
-    #     add_NDC2035,
-    #     target=f"{model_name}/INDC2035",
-    #     clone=dict(keep_solution=False, shift_first_model_year=2035),
-    # )
-
-    # wf.add_step(
-    #     "NDC2035 reported",
-    #     "NDC2035 solved",
-    #     report,
-    # )
-
-    # wf.add_step(
-    #     "h_ndc_2035 solved",
-    #     "NDC2035 reported",
-    #     add_NDC_forever,
-    #     target=f"{model_name}/h_ndc_2035",
-    #     clone=dict(keep_solution=False),
-    # )
-
+    # --- glasgow_partial_2030-based scenarios---
     wf.add_step(
         "glasgow_partial_2030 solved",
         "baseline reported",
