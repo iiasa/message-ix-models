@@ -402,18 +402,6 @@ def _adjust_ndc_2030(
     return df
 
 
-def _adjust_ndc_2035(
-    region_df: pd.DataFrame,
-    source: message_ix.Scenario,
-    year_act: int,
-) -> pd.DataFrame:
-    """2035 adjustments to mapped ``target_mtc``.
-
-    TODO: specify 2035-specific adjustments here.
-    """
-    return region_df.copy()
-
-
 def add_NDC2030_anchor(
     context: Context,
     scenario: message_ix.Scenario,
@@ -445,31 +433,30 @@ def add_NDC2030_anchor(
 
     # 3. Add ``bound_emission``
     ok = region_df.dropna(subset=["target_mtc"])
-    print(ok.to_string())
-    # bound_emission = make_df(
-    #     "bound_emission",
-    #     node=ok["region"].astype(str),
-    #     type_emission="TCE",
-    #     type_tec="all",
-    #     type_year=year_act,
-    #     value=ok["target_mtc"].astype(float),
-    #     unit="Mt C/yr",
-    # )
-    # with scenario.transact("add NDC bound_emission from PBL mapper"):
-    #     scenario.add_par("bound_emission", bound_emission)
-    # log.info(
-    #     "Added %d bound_emission rows from %s (year_act=%s)",
-    #     len(bound_emission),
-    #     policy_file,
-    #     year_act,
-    # )
+    bound_emission = make_df(
+        "bound_emission",
+        node=ok["region"].astype(str),
+        type_emission="TCE",
+        type_tec="all",
+        type_year=year_act,
+        value=ok["target_mtc"].astype(float),
+        unit="Mt C/yr",
+    )
+    with scenario.transact("add NDC bound_emission from PBL mapper"):
+        scenario.add_par("bound_emission", bound_emission)
+    log.info(
+        "Added %d bound_emission rows from %s (year_act=%s)",
+        len(bound_emission),
+        policy_file,
+        year_act,
+    )
 
-    # # 4. Apply remaining anchors
-    # add_anchor(context, scenario, stage="INDC2030i")
+    # 4. Apply remaining anchors
+    add_anchor(context, scenario, stage="INDC2030i")
 
-    # # 5. Solve
-    # solve(context, scenario, model="MESSAGE-MACRO")
-    # scenario.set_as_default()
+    # 5. Solve
+    solve(context, scenario, model="MESSAGE-MACRO")
+    scenario.set_as_default()
     return scenario
 
 
@@ -498,36 +485,36 @@ def add_NDC2035_anchor(
         year_act=year_act,
         region_id=context.model.regions,
     )["region"]
+    print(region_df.to_string())
 
-    # # 2. Addtional adjustments to ``target_mtc``
-    # region_df = _adjust_ndc_2035(region_df, source, year_act)
+    # 2. No additional adjustments to ``target_mtc`` (to anchor)
 
-    # # 3. Add ``bound_emission``
-    # ok = region_df.dropna(subset=["target_mtc"])
-    # bound_emission = make_df(
-    #     "bound_emission",
-    #     node=ok["region"].astype(str),
-    #     type_emission="TCE",
-    #     type_tec="all",
-    #     type_year=year_act,
-    #     value=ok["target_mtc"].astype(float),
-    #     unit="Mt C/yr",
-    # )
-    # with scenario.transact("add NDC bound_emission from PBL mapper"):
-    #     scenario.add_par("bound_emission", bound_emission)
-    # log.info(
-    #     "Added %d bound_emission rows from %s (year_act=%s)",
-    #     len(bound_emission),
-    #     policy_file,
-    #     year_act,
-    # )
+    # 3. Add ``bound_emission``
+    ok = region_df.dropna(subset=["target_mtc"])
+    bound_emission = make_df(
+        "bound_emission",
+        node=ok["region"].astype(str),
+        type_emission="TCE",
+        type_tec="all",
+        type_year=year_act,
+        value=ok["target_mtc"].astype(float),
+        unit="Mt C/yr",
+    )
+    with scenario.transact("add NDC bound_emission from PBL mapper"):
+        scenario.add_par("bound_emission", bound_emission)
+    log.info(
+        "Added %d bound_emission rows from %s (year_act=%s)",
+        len(bound_emission),
+        policy_file,
+        year_act,
+    )
 
-    # # 4. Apply remaining anchors
-    # add_anchor(context, scenario, stage="INDC2035")
+    # 4. Apply remaining anchors
+    add_anchor(context, scenario, stage="INDC2035_forever")
 
-    # # 5. Solve
-    # solve(context, scenario, model="MESSAGE-MACRO")
-    # scenario.set_as_default()
+    # 5. Solve
+    solve(context, scenario, model="MESSAGE-MACRO")
+    scenario.set_as_default()
     return scenario
 
 
@@ -1210,10 +1197,10 @@ def generate(context: Context) -> Workflow:
     )
 
     wf.add_step(
-        "NDC2035 solved",
+        "h_ndc solved",
         "NDC2030 solved",
         add_NDC2035_anchor,
-        target=f"{model_name}/INDC2035i",
+        target=f"{model_name}/h_ndc",
         clone=dict(keep_solution=False),
     )
 
