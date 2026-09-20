@@ -5,9 +5,7 @@
 
 import logging
 import re
-from pathlib import Path
 
-import ixmp
 import message_ix  # type: ignore
 import pandas as pd
 
@@ -17,6 +15,7 @@ from genno import Key  # type: ignore
 from message_ix import make_df
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model.buildings.sturm import call_buildings_demand, call_sturm
 from message_ix_models.model.material.data_util import add_macro_materials
 from message_ix_models.model.material.util import update_macro_calib_file
 from message_ix_models.project.engage.workflow import (
@@ -414,6 +413,7 @@ def add_NDC2030_anchor(
     Steps: map → adjust → add_par → add_anchor → solve.
     """
     from message_ix_models.tools.anchor import map_ndc_targets
+    from message_ix_models.tools.policy import add_anchor
 
     # 1. Map national targets → regional ``target_mtc``
     source = message_ix.Scenario(
@@ -472,6 +472,7 @@ def add_NDC2035_anchor(
     Steps: map → adjust → add_par → add_anchor → solve.
     """
     from message_ix_models.tools.anchor import map_ndc_targets
+    from message_ix_models.tools.policy import add_anchor
 
     # 1. Map national targets → regional ``target_mtc``
     source = message_ix.Scenario(
@@ -479,7 +480,7 @@ def add_NDC2035_anchor(
         model=scenario.model,
         scenario="baseline_BMT",
     )  # YJ: move to args later, maybe
-    region_df = map_ndc_targets(  # noqa: F841
+    region_df = map_ndc_targets(
         source,
         policy_file=policy_file,
         year_act=year_act,
@@ -783,47 +784,14 @@ def call_low_macro_demand(
     return scenario
 
 
-def call_buildings_demand(
+def iterate_mixB(
     context: Context, scenario: message_ix.Scenario
 ) -> message_ix.Scenario:
-    """Prepare Buildings demand from message_buildings_dir and add to scenario."""
-    # Support both key spellings in local ixmp config.
-    message_buildings_dir = None
-    for key in ("message_buildings_dir", "message buildings dir"):
-        try:
-            value = ixmp.config.get(key)
-        except (AttributeError, KeyError):
-            continue
-        if value:
-            message_buildings_dir = value
-            break
-    if not message_buildings_dir:
-        raise ValueError(
-            "ixmp config key 'message_buildings_dir' (or 'message buildings dir') is "
-            "not set."
-        )
+    """Load MIXB buildings demand from STURM outputs, then solve."""
 
-    base_dir = Path(message_buildings_dir).expanduser().resolve()
-    temp_dir = base_dir.joinpath("message_ix_buildings", "sturm", "temp")
-    if not temp_dir.exists():
-        raise FileNotFoundError(f"Buildings temp directory not found: {temp_dir}")
+    scenario = call_buildings_demand(context, scenario)
+    solve(context, scenario, model="MESSAGE-MACRO")
 
-    demand = pd.concat(
-        [
-            pd.read_csv(temp_dir / name)
-            for name in ("resid_sturm.csv", "comm_sturm.csv")
-        ],
-        ignore_index=True,
-    )
-
-    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|_cook_|_apps_"
-    demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
-    demand["level"] = "useful"
-
-    with scenario.transact("Add Buildings demand from message_buildings_dir/temp"):
-        scenario.add_par("demand", demand)
-
-    log.info("Added %d Buildings demand rows from %s", len(demand), temp_dir)
     return scenario
 
 
@@ -1164,14 +1132,28 @@ def generate(context: Context) -> Workflow:
 
     # --- d_strain scenario ---
     wf.add_step(
-        "d_strain solved",
-        "h_cpol solved",
+        "glasgow_partial_2030 solved",
+        "baseline reported",
         add_glasgow,
-        target=f"{model_name}/d_strain_2030_glasgow_partial",
-        target_scen="d_strain_2030_glasgow_partial",
+        target=f"{model_name}/glasgow_partial_2030",
+        target_scen="glasgow_partial_2030",
         slice_yr=2025,
-        start_scen="h_cpol",
+        start_scen="baseline_DEFAULT",
         level="Partial",
+    )
+
+    wf.add_step(
+        "d_strain mixb called",
+        "glasgow_partial_2030 solved",
+        call_sturm,
+    )
+
+    wf.add_step(
+        "d_strain solved",
+        "d_strain mixb called",
+        iterate_mixB,
+        target=f"{model_name}/d_strain",
+        clone=dict(keep_solution=False),
     )
 
     # --- h_ndc scenario ---
@@ -1205,23 +1187,6 @@ def generate(context: Context) -> Workflow:
     )
 
     # --- glasgow_partial_2030-based scenarios---
-    wf.add_step(
-        "glasgow_partial_2030 solved",
-        "baseline reported",
-        add_glasgow,
-        target=f"{model_name}/glasgow_partial_2030",
-        target_scen="glasgow_partial_2030",
-        slice_yr=2025,
-        start_scen="baseline_DEFAULT",
-        level="Partial",
-    )
-
-    wf.add_step(
-        "glasgow_partial_2030 reported",
-        "glasgow_partial_2030 solved",
-        report,
-    )
-
     wf.add_step(
         "o_2c base built",
         "glasgow_partial_2030 solved",
