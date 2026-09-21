@@ -770,6 +770,24 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         type_rel="lower",
     )
 
+    # Temporary fix: round buildings demand values to 4 decimal places
+    # YJ: no need after rebuild the baseline_BMT with an updated MixB branch
+    # that has the round up in its aligner.
+    from message_ix_models.util import load_package_data
+
+    buildings_commodities = list(
+        load_package_data("buildings", "commodity.yaml").keys()
+    )
+    demand = scenario.par("demand", filters={"commodity": buildings_commodities}).copy()
+    demand["value"] = demand["value"].round(4)
+    with scenario.transact("Round buildings demand to 4 decimals"):
+        scenario.add_par("demand", demand)
+    log.info(
+        "Rounded %d buildings demand rows to 4 decimals (%d commodities)",
+        len(demand),
+        len(buildings_commodities),
+    )
+
     scenario.set_as_default()
     return scenario
 
@@ -840,7 +858,7 @@ def step_1_and_solve(
     step_1(context, scenario, policy_config)
     # call_low_macro_demand(context, scenario)
     call_buildings_demand(context, scenario)
-    solve(context, scenario)
+    solve(context, scenario, model="MESSAGE")
 
     return scenario
 
@@ -900,7 +918,7 @@ def step_3_and_solve(
     policy_config = PolicyConfig(step_3_type_emission=step_3_type_emission)
 
     step_3(context, scenario, policy_config)
-    solve(context, scenario)
+    solve(context, scenario, model="MESSAGE")
 
     return scenario
 
@@ -911,7 +929,7 @@ def step_4_and_solve(
     """Lock in regional TCE emission path to deliver regional carbon prices."""
 
     step_4(context, scenario)
-    solve(context, scenario)
+    solve(context, scenario, model="MESSAGE")
 
     return scenario
 
@@ -949,6 +967,13 @@ _scen_en_steps = [
     "d_delfrag",
 ]
 
+# Anchor stage applied after EN4 for each EN scenario.
+_scen_en_anchor_stage = {
+    "o_1p5c": "glasgow_full",
+    "o_2c": "glasgow_partial",
+    "d_delfrag": "glasgow_partial",
+}
+
 
 def generate(context: Context) -> Workflow:
     """Create the NGFS workflow.
@@ -966,7 +991,6 @@ def generate(context: Context) -> Workflow:
     from message_ix_models.tools.policy import (
         add_anchor,
         add_forever_constant,
-        add_forever_interpolate,
     )
 
     wf = Workflow(context)
@@ -1238,43 +1262,24 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-    # --- o_2c scenario ---
+    # --- o_2c / o_1p5c / d_delfrag: same EN steps ---
+    # # Prepare: high carbon price test runs
+    # wf.add_step(
+    #     "o_1p5c high price test",
+    #     "baseline reported",
+    #     add_forever_interpolate,
+    #     target=f"{model_name}/o_1p5c_high_price_test",
+    #     clone=dict(keep_solution=True),
+    #     price_2110=1400,
+    #     solve_type="MESSAGE",
+    # )
+
     wf.add_step(
         "o_2c base built",
-        "glasgow_partial_2030 solved",
+        "baseline reported",
         step_0,
         target=f"{model_name}/o_2c_base",
         clone=dict(keep_solution=False),
-    )
-
-    # --- o_1p5c scenario ---
-    # Prepare: high carbon price test runs
-    wf.add_step(
-        "o_1p5c high price test",
-        "baseline reported",
-        add_forever_interpolate,
-        target=f"{model_name}/o_1p5c_high_price_test",
-        clone=dict(keep_solution=True),
-        price_2110=1400,
-        solve_type="MESSAGE",
-    )
-
-    # Approach 1: add through ScenarioRunner
-    wf.add_step(
-        "glasgow_full_2030 solved",
-        "baseline reported",
-        add_glasgow,
-        target=f"{model_name}/glasgow_full_2030",
-        start_scen="baseline_DEFAULT",
-        target_scen="glasgow_full_2030",
-        slice_yr=2025,
-        level="Full",
-    )
-
-    wf.add_step(
-        "glasgow_full_2030 reported",
-        "glasgow_full_2030 solved",
-        report,
     )
 
     wf.add_step(
@@ -1285,62 +1290,22 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-    # --- d_delfrag scenario ---
-    # Approach 1: add through ScenarioRunner and with delay by 2035
-    # wf.add_step(
-    #     "d_delfrag_2030_2035 solved",
-    #     "h_cpol solved",
-    #     add_glasgow,
-    #     target=f"{model_name}/d_delfrag_2030_glasgow_partial",
-    #     target_scen="d_delfrag_2030_glasgow_partial",
-    #     slice_yr=2030,
-    #     start_scen="h_cpol",
-    #     level="Partial",
-    #     clone=dict(keep_solution=True, shift_first_model_year=2035),
-    # )
-
-    # wf.add_step(
-    #     "d_delfrag_2030_2035 reported",
-    #     "d_delfrag_2030_2035 solved",
-    #     report,
-    # )
-
-    # wf.add_step(
-    #     "d_delfrag base built",
-    #     "d_delfrag_2030_2035 reported",
-    #     step_0,
-    #     target=f"{model_name}/d_delfrag_base",
-    #     clone=dict(keep_solution=False),
-    # )
-
-    # Approach 2: add through ScenarioRunner and with delay by 2030
     wf.add_step(
-        "d_delfrag_2035 solved",
+        "d_delfrag shift",
         "h_cpol solved",
-        add_glasgow,
-        target=f"{model_name}/d_delfrag_2035_glasgow_partial",
-        target_scen="d_delfrag_2035_glasgow_partial",
-        slice_yr=2035,
-        start_scen="h_cpol",
-        level="Partial",
-        clone=dict(keep_solution=True, shift_first_model_year=2040),
-    )
-
-    wf.add_step(
-        "d_delfrag_2035 reported",
-        "d_delfrag_2035 solved",
-        report,
+        target=f"{model_name}/d_delfrag_shift",
+        clone=dict(keep_solution=False, shift_first_model_year=2035),
     )
 
     wf.add_step(
         "d_delfrag base built",
-        "d_delfrag_2035 reported",
+        "d_delfrag shift",
         step_0,
         target=f"{model_name}/d_delfrag_base",
         clone=dict(keep_solution=False),
     )
 
-    # --- Fill in EN steps ---
+    # --- EN steps ---
     for scen in _scen_en_steps:
         wf.add_step(
             f"{scen} EN1",
@@ -1381,14 +1346,38 @@ def generate(context: Context) -> Workflow:
         )
 
         wf.add_step(
-            f"{scen} solved",
+            f"{scen} EN4 solved",
             f"{scen} EN3",
             step_4_and_solve,
-            target=f"{model_name}/{scen}",
+            target=f"{model_name}/{scen}_EN4",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
 
+    # --- Add glasgow + MIXB for EN scenarios ---
+    for scen in _scen_en_steps:
+        wf.add_step(
+            f"{scen} anchored",
+            f"{scen} EN4 solved",
+            add_anchor,
+            target=f"{model_name}/{scen}_anchored",
+            clone=dict(keep_solution=False),
+            stage=_scen_en_anchor_stage[scen],
+        )
+        wf.add_step(
+            f"{scen} anchor mixb called",
+            f"{scen} anchored",
+            call_sturm,
+        )
+        wf.add_step(
+            f"{scen} solved",
+            f"{scen} anchor mixb called",
+            iterate_mixB,
+            target=f"{model_name}/{scen}",
+            clone=dict(keep_solution=False),
+        )
+
+    # --- Report all scenarios ---
     for scen in _scen_all:
         wf.add_step(
             f"{scen} reported",
