@@ -1199,23 +1199,39 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/INDC2030i",
         clone=dict(keep_solution=False),
     )
-
+    wf.add_step(
+        "NDC2030 reported",
+        "NDC2030 solved",
+        report,
+    )
     wf.add_step(
         "NDC2035 solved",
-        "NDC2030 solved",
+        "NDC2030 reported",
         add_NDC2035_anchor,
         target=f"{model_name}/INDC2035i",
-        clone=dict(keep_solution=False),
+        clone=dict(keep_solution=False, shift_first_model_year=2035),
     )
 
     wf.add_step(
-        "h_ndc solved",
+        "NDC_forever solved",
         "NDC2035 solved",
         add_forever_constant,
-        target=f"{model_name}/h_ndc",
+        target=f"{model_name}/NDC_forever",
         clone=dict(keep_solution=True),
         price_year=2035,
         solve_type="MESSAGE",
+    )
+    wf.add_step(
+        "NDC_forever mixb called",
+        "NDC_forever solved",
+        call_sturm,
+    )
+    wf.add_step(
+        "h_ndc solved",
+        "NDC_forever mixb called",
+        iterate_mixB,
+        target=f"{model_name}/h_ndc",
+        clone=dict(keep_solution=False),
     )
 
     # --- glasgow_partial_2030-based scenarios---
