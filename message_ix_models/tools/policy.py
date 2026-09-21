@@ -243,13 +243,17 @@ def add_forever_constant(
     context: Context,
     scenario: message_ix.Scenario,
     specified_price: Mapping[str, float] | None = None,
+    price_year: int | None = None,
     solve_type: str = "MESSAGE-MACRO",
 ) -> message_ix.Scenario:
-    """Apply constant carbon prices from first model year to 2110.
+    """Apply constant carbon prices from `price_year` (or FMY) through 2110.
 
-    - If `specified_price` is given, use those node-level constant values.
-    - Otherwise, use model-derived values from ``PRICE_EMISSION`` at
-      ``scenario.firstmodelyear`` and extend them as constants through 2110.
+    - If `specified_price` is given, use those node-level constant values for
+      all model years from `price_year` (default: FMY) through 2110, and remove
+      matching ``bound_emission`` rows in that window.
+    - Otherwise, use ``PRICE_EMISSION`` at `price_year` (default: FMY) and hold
+      those levels constant for years **after** `price_year` through 2110;
+      remove post-`price_year` ``bound_emission`` only.
 
     Example
     -------
@@ -263,9 +267,17 @@ def add_forever_constant(
     or copied from a lookup run.
     """
     fmy = int(scenario.firstmodelyear)
+    year_price = int(price_year) if price_year is not None else fmy
 
     info = ScenarioInfo(scenario)
-    model_years = [y for y in info.Y if fmy <= y <= 2110]
+    # Specified prices: hold from ``year_price`` (default FMY) through 2110.
+    # PRICE_EMISSION mode: hold only for years *after* ``year_price``.
+    if specified_price:
+        model_years = [y for y in info.Y if year_price <= int(y) <= 2110]
+        bound_cut = year_price  # remove bounds at and after year_price
+    else:
+        model_years = [y for y in info.Y if year_price < int(y) <= 2110]
+        bound_cut = year_price  # remove bounds after year_price only
 
     if specified_price:
         base_prices = pd.DataFrame(
@@ -273,7 +285,7 @@ def add_forever_constant(
         )
     else:
         base_prices = scenario.var("PRICE_EMISSION").loc[
-            lambda df: df.year == fmy, ["node", "lvl"]
+            lambda df: df.year == year_price, ["node", "lvl"]
         ]
         missing = (set(info.N) - {"World", "R12_GLB"}) - set(base_prices.node)
         if missing:
@@ -281,6 +293,15 @@ def add_forever_constant(
                 [base_prices, pd.DataFrame({"node": list(missing), "lvl": 0})],
                 ignore_index=True,
             )
+
+    if not model_years:
+        log.warning(
+            "add_forever_constant: no model years for constant tax through 2110 "
+            "(price_year=%s, specified=%s); skipping",
+            year_price,
+            specified_price is not None,
+        )
+        return scenario
 
     price_long = pd.concat(
         [base_prices.assign(year=year) for year in model_years], ignore_index=True
@@ -298,7 +319,13 @@ def add_forever_constant(
     with scenario.transact("applying constant cprice"):
         bound_df = scenario.par("bound_emission")
         if not bound_df.empty:
-            scenario.remove_par("bound_emission", bound_df)
+            year_num = pd.to_numeric(bound_df["type_year"], errors="coerce")
+            if specified_price:
+                to_remove = bound_df.loc[year_num >= bound_cut]
+            else:
+                to_remove = bound_df.loc[year_num > bound_cut]
+            if not to_remove.empty:
+                scenario.remove_par("bound_emission", to_remove)
         scenario.add_par("tax_emission", df)
 
     if specified_price:
@@ -306,13 +333,19 @@ def add_forever_constant(
             f"{node}={price}" for node, price in sorted(specified_price.items())
         )
         log.info(
-            f"Added specified constant carbon prices ({fmy}-2110) to "
-            f"{scenario.model}/{scenario.scenario}: {detail}"
+            "Added specified constant carbon prices (%s-2110) to %s/%s: %s",
+            model_years[0],
+            scenario.model,
+            scenario.scenario,
+            detail,
         )
     else:
         log.info(
-            f"Added constant carbon prices ({fmy}-2110) to "
-            f"{scenario.model}/{scenario.scenario}"
+            "Added constant carbon prices (%s-2110 from PRICE_EMISSION@%s) to %s/%s",
+            model_years[0],
+            year_price,
+            scenario.model,
+            scenario.scenario,
         )
     solve(context, scenario, model=solve_type)
     scenario.set_as_default()
@@ -322,40 +355,53 @@ def add_forever_constant(
 def add_forever_interpolate(
     context: Context,
     scenario: message_ix.Scenario,
-    price_2100: float = 200,
+    price_2110: float = 200,
+    price_year: int | None = None,
     solve_type: str = "MESSAGE-MACRO",
 ) -> message_ix.Scenario:
-    """Apply interpolated carbon prices from first model year to 2110.
+    """Apply interpolated carbon prices after `price_year` (or FMY) through 2110.
 
-    - Base values are taken from ``PRICE_EMISSION`` at ``scenario.firstmodelyear``.
-    - Values are interpolated to reach `price_2100` in years 2100 and 2110.
+    - Base values are taken from ``PRICE_EMISSION`` at `price_year`
+      (default: ``scenario.firstmodelyear``).
+    - Values are interpolated to reach `price_2110` in year 2110 for all model
+      years **after** `price_year`.
+    - Post-`price_year` ``bound_emission`` rows are removed; earlier years are
+      left unchanged.
     """
     fmy = int(scenario.firstmodelyear)
+    year_price = int(price_year) if price_year is not None else fmy
+
     info = ScenarioInfo(scenario)
     regions = set(info.N) - {"World", "R12_GLB"}
-    years = [y for y in info.Y if fmy <= y <= 2110]
+    years = [y for y in info.Y if year_price < int(y) <= 2110]
+
+    if not years:
+        log.warning(
+            "add_forever_interpolate: no model years after %s through 2110; skipping",
+            year_price,
+        )
+        return scenario
 
     base = scenario.var("PRICE_EMISSION").loc[
-        lambda df: df.year == fmy, ["node", "lvl"]
+        lambda df: df.year == year_price, ["node", "lvl"]
     ]
     missing = regions - set(base.node)
     if missing:
         base = pd.concat(
             [base, pd.DataFrame({"node": list(missing), "lvl": 0})], ignore_index=True
         )
-    base = base.assign(year=fmy)
+    base = base.assign(year=year_price)
 
     long = (
         pd.concat(
             [
                 base,
-                pd.DataFrame({"node": list(regions), "lvl": price_2100, "year": 2100}),
-                pd.DataFrame({"node": list(regions), "lvl": price_2100, "year": 2110}),
+                pd.DataFrame({"node": list(regions), "lvl": price_2110, "year": 2110}),
             ],
             ignore_index=True,
         )
         .pivot_table(values="lvl", index="year", columns="node")
-        .reindex(sorted(set(years) | {fmy, 2100, 2110}))
+        .reindex(sorted(set(years) | {year_price, 2110}))
         .sort_index()
         .interpolate(method="index")
         .loc[years]
@@ -375,12 +421,20 @@ def add_forever_interpolate(
     with scenario.transact("applying interpolated cprice"):
         bound_df = scenario.par("bound_emission")
         if not bound_df.empty:
-            scenario.remove_par("bound_emission", bound_df)
+            year_num = pd.to_numeric(bound_df["type_year"], errors="coerce")
+            to_remove = bound_df.loc[year_num > year_price]
+            if not to_remove.empty:
+                scenario.remove_par("bound_emission", to_remove)
         scenario.add_par("tax_emission", df)
 
     log.info(
-        f"Added interpolated carbon prices ({fmy}-2110, {price_2100} at 2100/2110) to "
-        f"{scenario.model}/{scenario.scenario}"
+        "Added interpolated carbon prices (%s-2110 from PRICE_EMISSION@%s, "
+        "%s at 2110) to %s/%s",
+        years[0],
+        year_price,
+        price_2110,
+        scenario.model,
+        scenario.scenario,
     )
     solve(context, scenario, model=solve_type)
     scenario.set_as_default()
