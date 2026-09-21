@@ -316,6 +316,9 @@ def add_forever_constant(
         value=price_long["lvl"],
     )
 
+    if scenario.has_solution():
+        scenario.remove_solution()
+
     with scenario.transact("applying constant cprice"):
         bound_df = scenario.par("bound_emission")
         if not bound_df.empty:
@@ -417,6 +420,9 @@ def add_forever_interpolate(
         unit="USD/tC",
         value=long["lvl"],
     )
+
+    if scenario.has_solution():
+        scenario.remove_solution()
 
     with scenario.transact("applying interpolated cprice"):
         bound_df = scenario.par("bound_emission")
