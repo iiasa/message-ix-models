@@ -963,7 +963,7 @@ def generate(context: Context) -> Workflow:
     )
     from message_ix_models.model.buildings.build import main as build_B
     from message_ix_models.model.transport import workflow as transport
-    from message_ix_models.tools.policy import add_anchor
+    from message_ix_models.tools.policy import add_anchor, add_forever_constant
 
     wf = Workflow(context)
     context.ssp = "SSP2"
@@ -1136,18 +1136,13 @@ def generate(context: Context) -> Workflow:
     )
     wf.add_step("baseline reported", "baseline built", report)
     wf.add_step(
-        "h_cpol anchored",
-        "baseline reported",
-        add_anchor,
-        target=f"{model_name}/h_cpol",
-        clone=dict(keep_solution=False),
-        stage="NPiREF",
-    )
-    wf.add_step(
         "h_cpol solved",
-        "h_cpol anchored",
-        solve,
-        model="MESSAGE-MACRO",
+        "baseline reported",
+        add_forever_constant,
+        target=f"{model_name}/h_cpol",
+        clone=dict(keep_solution=True),
+        price_year=2030,
+        solve_type="MESSAGE-MACRO",
     )
 
     # --- d_strain scenario ---
@@ -1216,8 +1211,11 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "h_ndc solved",
         "NDC2035 solved",
+        add_forever_constant,
         target=f"{model_name}/h_ndc",
-        clone=dict(keep_solution=False),
+        clone=dict(keep_solution=True),
+        price_year=2035,
+        solve_type="MESSAGE",
     )
 
     # --- glasgow_partial_2030-based scenarios---
