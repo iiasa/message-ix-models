@@ -455,7 +455,7 @@ def add_NDC2030_anchor(
     add_anchor(context, scenario, stage="INDC2030i")
 
     # 5. Solve
-    solve(context, scenario, model="MESSAGE")
+    solve(context, scenario, model="MESSAGE-MACRO")
     scenario.set_as_default()
     return scenario
 
@@ -838,7 +838,7 @@ def step_1_and_solve(
     policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
 
     step_1(context, scenario, policy_config)
-    call_low_macro_demand(context, scenario)
+    # call_low_macro_demand(context, scenario)
     call_buildings_demand(context, scenario)
     solve(context, scenario)
 
@@ -868,7 +868,7 @@ def step_2_and_solve(
     policy_config = PolicyConfig()
 
     step_2(context, scenario, policy_config)
-    scenario.solve(model="MESSAGE")
+    solve(context, scenario, model="MESSAGE")
 
     return scenario
 
@@ -1279,7 +1279,7 @@ def generate(context: Context) -> Workflow:
 
     wf.add_step(
         "o_1p5c base built",
-        "glasgow_full_2030 solved",
+        "baseline reported",
         step_0,
         target=f"{model_name}/o_1p5c_base",
         clone=dict(keep_solution=False),
