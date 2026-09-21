@@ -963,7 +963,11 @@ def generate(context: Context) -> Workflow:
     )
     from message_ix_models.model.buildings.build import main as build_B
     from message_ix_models.model.transport import workflow as transport
-    from message_ix_models.tools.policy import add_anchor, add_forever_constant
+    from message_ix_models.tools.policy import (
+        add_anchor,
+        add_forever_constant,
+        add_forever_interpolate,
+    )
 
     wf = Workflow(context)
     context.ssp = "SSP2"
@@ -1234,7 +1238,7 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
-    # --- glasgow_partial_2030-based scenarios---
+    # --- o_2c scenario ---
     wf.add_step(
         "o_2c base built",
         "glasgow_partial_2030 solved",
@@ -1243,6 +1247,19 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
+    # --- o_1p5c scenario ---
+    # Prepare: high carbon price test runs
+    wf.add_step(
+        "o_1p5c high price test",
+        "baseline reported",
+        add_forever_interpolate,
+        target=f"{model_name}/o_1p5c_high_price_test",
+        clone=dict(keep_solution=True),
+        price_2110=1400,
+        solve_type="MESSAGE",
+    )
+
+    # Approach 1: add through ScenarioRunner
     wf.add_step(
         "glasgow_full_2030 solved",
         "baseline reported",
@@ -1268,6 +1285,8 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
+    # --- d_delfrag scenario ---
+    # Approach 1: add through ScenarioRunner and with delay by 2035
     # wf.add_step(
     #     "d_delfrag_2030_2035 solved",
     #     "h_cpol solved",
@@ -1294,6 +1313,7 @@ def generate(context: Context) -> Workflow:
     #     clone=dict(keep_solution=False),
     # )
 
+    # Approach 2: add through ScenarioRunner and with delay by 2030
     wf.add_step(
         "d_delfrag_2035 solved",
         "h_cpol solved",
@@ -1320,6 +1340,7 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=False),
     )
 
+    # --- Fill in EN steps ---
     for scen in _scen_en_steps:
         wf.add_step(
             f"{scen} EN1",
