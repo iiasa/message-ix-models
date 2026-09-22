@@ -312,9 +312,7 @@ def retr_CO2_price(scen: Scenario, regional_price=False):
     """
     df = scen.var("PRICE_EMISSION")
     if regional_price:
-        df = df.loc[
-            (df["node"] != "World") & (~df["node"].str.contains("GLB"))
-        ]
+        df = df.loc[df["node"] != "World"]
     df = (
         df.assign(unit="USD/tC", type_emission=None)
         .rename(columns={"lvl": "value", "year": "type_year"})
@@ -339,7 +337,7 @@ def retr_CO2_trajectory(scen: Scenario, regional_emission_bound=True, emission="
             "EMISS",
             filters={"emission": [emission], "type_tec": ["all"]},
         )
-        df = df.loc[~df.node.isin(glb_nodes)]
+        df = df.loc[df.node != "World"]
     else:
         df = scen.var(
             "EMISS",
