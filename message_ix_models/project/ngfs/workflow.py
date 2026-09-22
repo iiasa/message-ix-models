@@ -68,8 +68,11 @@ def _get_ngfs_config(context):
 
 
 def _ngfs_base_scenario_name(name: str) -> str:
-    """Strip trailing ``_EN1`` / ``_EN2`` / … suffix for :file:`config.yaml` keys."""
-    return re.sub(r"_EN\d+$", "", name)
+    """Keep the name before ``_EN…`` for :file:`config.yaml` keys.
+
+    Examples: ``o_2c_EN1`` → ``o_2c``, ``o_2c_EN1_test`` → ``o_2c``.
+    """
+    return re.sub(r"_EN\d+.*$", "", name)
 
 
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
@@ -724,6 +727,7 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     # A step to get a scenario ready to enter the EN 3 steps
     # For now only add the lower bound of global CO2 emissions
     # to limit high penetration of negative emissions.
+    from message_ix_models.tools.policy import add_anchor
     from message_ix_models.util import identify_nodes
 
     context.model.regions = identify_nodes(scenario)
@@ -787,6 +791,17 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         len(demand),
         len(buildings_commodities),
     )
+
+    glasgow_stage = {
+        "o_1p5c": "glasgow_full",
+        "o_2c": "glasgow_partial",
+        "d_delfrag": "glasgow_partial",
+    }.get(scen)
+    if glasgow_stage is None:
+        raise ValueError(
+            f"step_0: no Glasgow anchor stage for scenario '{scen}'"
+        )
+    add_anchor(context, scenario, stage=glasgow_stage)
 
     scenario.set_as_default()
     return scenario
@@ -856,8 +871,6 @@ def step_1_and_solve(
     policy_config = PolicyConfig(label=str(budget_value), budget=float(budget_value))
 
     step_1(context, scenario, policy_config)
-    # call_low_macro_demand(context, scenario)
-    call_buildings_demand(context, scenario)
     solve(context, scenario, model="MESSAGE")
 
     return scenario
@@ -1311,7 +1324,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN1",
             f"{scen} base built",
             step_1_and_solve,
-            target=f"{model_name}/{scen}_EN1",
+            target=f"{model_name}/{scen}_EN1_test4",
             clone=dict(keep_solution=False),
         )
 
@@ -1319,7 +1332,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN2",
             f"{scen} EN1",
             step_2_and_solve,
-            target=f"{model_name}/{scen}_EN2",
+            target=f"{model_name}/{scen}_EN2_test4",
             # Must have solution to retrieve emission trajectories.
             clone=dict(keep_solution=True),
         )
@@ -1334,7 +1347,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN3",
             f"{scen} EN2",
             step_3_and_solve,
-            target=f"{model_name}/{scen}_EN3",
+            target=f"{model_name}/{scen}_EN3_test4",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
@@ -1346,27 +1359,33 @@ def generate(context: Context) -> Workflow:
         )
 
         wf.add_step(
-            f"{scen} EN4 solved",
+            f"{scen} EN4",
             f"{scen} EN3",
             step_4_and_solve,
-            target=f"{model_name}/{scen}_EN4",
+            target=f"{model_name}/{scen}_EN4_test4",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
 
+        wf.add_step(
+            f"{scen} EN4 reported",
+            f"{scen} EN4",
+            report,
+        )
+
     # --- Add glasgow + MIXB for EN scenarios ---
     for scen in _scen_en_steps:
-        wf.add_step(
-            f"{scen} anchored",
-            f"{scen} EN4 solved",
-            add_anchor,
-            target=f"{model_name}/{scen}_anchored",
-            clone=dict(keep_solution=False),
-            stage=_scen_en_anchor_stage[scen],
-        )
+        # wf.add_step(
+        #     f"{scen} anchored",
+        #     f"{scen} EN4",
+        #     add_anchor,
+        #     target=f"{model_name}/{scen}_anchored",
+        #     clone=dict(keep_solution=False),
+        #     stage=_scen_en_anchor_stage[scen],
+        # )
         wf.add_step(
             f"{scen} anchor mixb called",
-            f"{scen} anchored",
+            f"{scen} EN4",
             call_sturm,
         )
         wf.add_step(
