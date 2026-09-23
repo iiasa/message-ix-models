@@ -3,21 +3,54 @@
 Forestry
 --------
 
-The forestry sector is represented in GLOBIOM with five categories of primary products (pulp logs, saw logs, biomass for energy, traditional fuel wood, and other industrial logs) which are consumed by industrial energy, 
-cooking fuel demand, or processed and sold on the market as final products (wood pulp and sawnwood). These products are supplied from managed forests and short rotation plantations. Harvesting cost and mean annual 
-increments are informed by the G4M global forestry model (Kindermann et al., 2006 :cite:`kindermann_predicting_2006`) which in turn calculates them based on thinning strategies and length of the rotation period.
+Total forest area is calibrated to the FAO Global Forest Resources Assessment
+(FAO, 2020 :cite:`fao_forest_2020`)
+and is divided into managed and unmanaged forest
+through a downscaling routine based on the human activity impact index.
+Available woody biomass resources are provided by the G4M global forestry model
+(Kindermann et al., 2006 :cite:`kindermann_predicting_2006`)
+for each forest area unit in the form of mean annual increments,
+which G4M derives from thinning strategies and the length of the rotation period.
+Wood is supplied from managed forests and from short rotation plantations.
+
+GLOBIOM divides the mean annual increment into commercial roundwood,
+non-commercial roundwood, and harvest losses.
+Commercial roundwood covers saw logs, pulp logs and other industrial roundwood.
+The distinction between harvest losses and non-commercial roundwood
+follows differences in stem size on the one hand and in wood characteristics on the other.
+Woody biomass also includes branches and stumps,
+whose use for energy purposes is constrained by environmental and sustainability considerations.
 
 Primary forest production from traditional managed forests is characterized also at the level of SimUs. The most important parameters for the model are mean annual increment, maximum share of saw logs in the mean annual 
 increment, and harvesting cost. These parameters are shared with the G4M model – a successor of the model described by Kindermann et al. (2006) :cite:`kindermann_predicting_2006`. More specifically, mean annual increment 
 for the current management, is obtained by downscaling biomass stock data from the Global Forest Resources Assessment (FAO, 2006 :cite:`FAO_global_2006`) from the country level to a 0.5 x 0.5 degree grid using the method 
 described in Kindermann et al. (2008) :cite:`kindermann_global_forest_2008`. The downscaled biomass stock data is subsequently used to parameterize increment curves. Finally, the saw logs share is estimated by the tree size, 
 which in turn depends on yield and rotation time. Harvesting costs are adjusted for slope and tree size as well. 
-Among the five primary forest products, saw logs, pulp logs and biomass for energy are further processed. Sawn wood and wood pulp production and demand parameters rely on the 4DSM model described in 
+
+Harvest costs for forests are spatially explicit,
+are based on G4M estimates,
+and vary with region and terrain steepness.
+Transport costs are represented through regional constant elasticity functions
+that evolve over time with harvested volumes and infrastructure investment.
+
+The downstream forest industries produce seven final products,
+namely chemical pulp, mechanical pulp, sawn wood, plywood, fiberboard,
+other industrial roundwood and household fuelwood.
+Demand for these products is modelled with regional constant elasticity demand functions.
+Production technologies are Leontief functions
+with coefficients taken from the engineering literature.
+By-products, that is bark, black liquor, sawdust and saw chips,
+can be used for energy production or as raw material for pulp and fiberboard.
+Initial production capacities are calibrated to FAOSTAT production quantities
+and evolve endogenously thereafter through depreciation rates and investment costs.
+
+Sawn wood and wood pulp production and demand parameters rely on the 4DSM model described in 
 Rametsteiner et al. (2007) :cite:`rametsteiner_study_2007`. FAO data and other secondary sources have been used for quantities and prices of sawn wood and wood pulp. For processing cost estimates of these products an internal 
-IIASA database and proprietary data (e.g. RISI database for locations of individual pulp and paper mills, with additional economic and technical information, http://www.risiinfo.com) were used. Biomass for energy can be converted 
+IIASA database and proprietary data (e.g. RISI database for locations of individual pulp and paper mills, with additional economic and technical information, https://www.risiinfo.com) were used. Biomass for energy can be converted 
 in several processes: combined heat and power production, fermentation for ethanol, heat, power and gas production, and gasification for methanol and heat production. Processing cost and conversion coefficients are obtained from 
 various sources (Biomass Technology Group, 2005 :cite:`biomass_handbook_2005`; Hamelinck and Faaij, 2001 :cite:`hamelinck_future_2001`; Leduc et al., 2008 :cite:`leduc_optimal_2008`; Sorensen, 2005 :cite:`sorensen_economies_2005`). 
 Demand for woody bioenergy production is implemented through minimum quantity constraints, similar to demand for other industrial logs and for firewood.
+
 Woody biomass for bioenergy can also be produced on short rotation tree plantations. To parameterize this land use type in terms of yields, an evaluation of the land availability and suitability was carried out. 
 Calculated plantation costs involve the establishment cost and the harvesting cost. The establishment related capital cost includes only sapling cost for manual planting 
 (Carpentieri et al., 1993 :cite:`carpentieri_future_1993`; Herzogbaum GmbH, 2008 :cite:`herzogbaum_forstpflanzen_2008`). Labour requirements for plantation establishment are based on Jurvelius (1997) :cite:`jurvelius_labor_1997`, 
