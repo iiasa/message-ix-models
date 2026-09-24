@@ -3,11 +3,14 @@
 CO2 removal (CDR) methods
 -------------------------
 
+Technology-based CDR methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 In MESSAGE, a range of technology-based CO2 removal approaches are represented. This representation includes bioenergy with carbon capture sequestration (BECCS), 
 direct air carbon capture and sequestration (DACCS), biochar for non-land-use applications, biomass burial, enhanced rock weathering (ERW), and ocean alkalinity enhancement (OAE).
 
 CO2 Transport, Utilisation, and Storage Infrastructure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The availability of carbon dioxide transport, utilisation, and storage (TU&S)
 infrastructure is essential for CO2 capture technologies. In the previous
@@ -64,13 +67,13 @@ transported, stored, utilised, leaked, or ultimately released, rather than
 treating all captured CO2 as permanently removed from the atmosphere.
 
 Bioenergy with CCS (BECCS)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 [Need to check if there is any documentation from legacy BECCS implementation]
 
 
 Direct Air Capture (DACCS)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In MESSAGEix, we represent three distinct DAC technology configurations, namely `dac_hte`, `dac_htg`, and `dac_lt`, which differ in their CO₂ capture and regeneration processes and in the energy sources used to meet their heat requirements. 
 The high-temperature configurations, `dac_hte` and `dac_htg`, use aqueous solutions to capture CO₂ and require high-temperature regeneration. 
@@ -104,7 +107,7 @@ DAC technology costs are indexed to the costs of analogous technologies and evol
 
 
 Biochar for non-land-use applications
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Biochar is pyrogenic carbon produced by the incomplete combustion of plant
 biomass. It can be used as a carbon dioxide removal (CDR) method by storing
@@ -238,7 +241,7 @@ availability, represented using cement demand as a proxy.
 
 
 Biomass Burial
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 Biomass burial is a carbon dioxide removal (CDR) method that removes CO2 from
 the atmosphere by physically storing woody biomass underground.
@@ -285,7 +288,7 @@ removal potential represented in MESSAGEix-GLOBIOM varies by region according
 to the availability of cropland and biomass resources.
 
 Enhanced Rock Weathering (ERW)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Enhanced rock weathering (ERW), also referred to as enhanced weathering (EW),
 is a carbon dioxide removal (CDR) method that accelerates natural mineral
@@ -380,7 +383,7 @@ temperature of the application area, while the maximum annual quantity of ERW
 that can be applied depends on the available cropland area in each region.
 
 Ocean Alkalinity Enhancement (OAE)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ocean alkalinity enhancement (OAE) removes CO2 from the atmosphere by
 artificially increasing ocean alkalinity through the addition of alkaline
@@ -472,3 +475,19 @@ the constraints governing OAE deployment are region-specific. In particular,
 the availability of CO2 storage and the annual limit on limestone excavation
 vary across regions and therefore determine the regional deployment potential
 of OAE.
+
+Conventional CDR methods on land
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Temporary placeholder for conventional CDR methods on land.]
+
+Afforestation, reforestation, and agroforestry (A/R & Agroforestry)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Soil Carbon Management
+^^^^^^^^^^^^^^^^^^^^^^
+
+Forest Management
+^^^^^^^^^^^^^^^^^
+
+Biochar for land-use applications
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
