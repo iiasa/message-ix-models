@@ -13,6 +13,17 @@ for each forest area unit in the form of mean annual increments,
 which G4M derives from thinning strategies and the length of the rotation period.
 Wood is supplied from managed forests and from short rotation plantations.
 
+The two models take different parts of the forest sector.
+G4M represents the forests themselves. It decides forest area change and the
+management of standing forest,
+weighing the returns from forestry against those from the alternative uses
+of the same land,
+and it supplies the increments
+and harvest costs that the rest of this page rests on.
+GLOBIOM represents the wood assortments cut from those increments,
+the industries that process them, and the clearing of the wood markets.
+The coupling between the two models is described in :ref:globiom.
+
 GLOBIOM divides the mean annual increment into commercial roundwood,
 non-commercial roundwood, and harvest losses.
 Commercial roundwood covers saw logs, pulp logs and other industrial roundwood.

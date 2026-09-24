@@ -37,7 +37,7 @@ demand levels,
 land use and land-use change (see :ref:`landuse`),
 and international trade flows.
 
-Production adjusts to meet demand (see :ref:`food`)
+Production adjusts to meet demand (see :ref:`globiom-demand`)
 at the level of the 59 native GLOBIOM regions,
 which are aggregated to the 12 |name| regions in the linkage.
 Both resolutions are set out in :ref:`spatial`.
