@@ -25,7 +25,9 @@ including crop production, livestock systems, forestry and bioenergy
 and combines biophysical constraints and technological costs,
 resolved on the spatial units described in :ref:`globiom-spatial`,
 with a rich set of environmental parameters,
-including comprehensive AFOLU greenhouse gas emission accounts and irrigation water use.
+including comprehensive AFOLU greenhouse gas emission accounts, irrigation water use,
+and indicators of biodiversity, nitrogen flows and food security
+(see :ref:`globiom-indicators`).
 The model simulates the market equilibrium for agricultural and forest products
 by allocating land and production activities
 so as to maximize the total economic surplus of producers and consumers,
@@ -109,5 +111,6 @@ The emulator is described in :doc:`emulator`.
    forest
    land
    food
+   indicators
    emulator
 
