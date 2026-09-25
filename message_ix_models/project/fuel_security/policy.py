@@ -115,5 +115,69 @@ def add_NDC2030(context, scenario):
     sr.run_all()
 
     sr.scen["INDC2030i_weak"].set_as_default()
-    
+
     return sr.scen["INDC2030i_weak"]
+
+
+def add_gdp_price_growth(
+    context: Context,
+    scenario: message_ix.Scenario,
+    base_year: int = 2030,
+    price_cap: float = 300 * 44 / 12,
+    solve_scenario: bool = True,
+) -> message_ix.Scenario:
+    """Grow the extrapolated NDC carbon price with GDP, subject to a ceiling.
+
+    The SSP_SSP2_v6.6 "_forever" scenarios hold each region's `base_year` carbon
+    price (matched against the pricelookup_baselineS_* scenarios) constant through
+    2110. This rescales it as in message_data's ScenarioRunner._post_target, i.e.
+    price(y) = price(base_year) * gdp_calibrate(y) / gdp_calibrate(base_year),
+    then clips it at `price_cap`.
+
+    Args:
+        context: Workflow context (unused)
+        scenario: A "_forever" scenario with a flat post-`base_year` tax_emission
+        base_year: Year whose price is grown forward
+        price_cap: Ceiling in the tax_emission unit, USD/tC (default: 300
+            USD/tCO2, the top of the v6.6 price lookup)
+        solve_scenario: Whether to solve the new scenario with MESSAGE
+    Returns:
+        target_scenario: Clone of `scenario` named "<scenario>_gdp"
+    """
+    target_scenario = scenario.clone(
+        "fuel_security", f"{scenario.scenario}_gdp", keep_solution=False
+    )
+    target_scenario.set_as_default()
+
+    tax = target_scenario.par("tax_emission")
+    year = tax["type_year"].astype(int)
+    base = tax[year == base_year]
+    if base["node"].duplicated().any():
+        raise ValueError(f"Expected one {base_year} tax_emission row per node")
+    base_price = tax["node"].map(base.set_index("node")["value"])
+
+    gdp = target_scenario.par("gdp_calibrate").pivot_table(
+        index="node", columns="year", values="value"
+    )
+    growth = [gdp.at[n, y] / gdp.at[n, base_year] for n, y in zip(tax["node"], year)]
+
+    new_tax = tax.assign(value=(base_price * growth).clip(upper=price_cap))[
+        year > base_year
+    ]
+    if new_tax["value"].isna().any():
+        raise ValueError(f"Nodes without a {base_year} tax_emission value")
+
+    with target_scenario.transact("Grow carbon price with GDP, capped"):
+        target_scenario.add_par("tax_emission", new_tax)
+
+    log.info(
+        "tax_emission (USD/tC) after GDP growth and cap:\n%s",
+        new_tax.pivot_table(index="node", columns="type_year", values="value"),
+    )
+
+    if solve_scenario:
+        target_scenario.solve(
+            quiet=False, model="MESSAGE", solve_options={"scaind": "-1"}
+        )
+
+    return target_scenario

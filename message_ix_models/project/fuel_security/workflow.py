@@ -23,6 +23,7 @@ from message_ix_models.workflow import Workflow
 from message_ix_models.project.fuel_security.policy import (
     add_NPi2030,
     add_NDC2030,
+    add_gdp_price_growth,
 )
 
 log = logging.getLogger(__name__)
@@ -116,6 +117,13 @@ def generate(context: Context) -> Workflow:
     ) # Clone INDC2030i_forever to fuel_security/INDC2030i_forever
 
     wf.add_step(
+        "INDC2030i_forever_gdp",
+        "Clone INDC2030i_forever",
+        add_gdp_price_growth,
+        target = "fuel_security/INDC2030i_forever_gdp",
+    ) # Grow INDC2030i_forever's flat carbon price with GDP, capped at 300 USD/tCO2
+
+    wf.add_step(
         "Add and solve NPi2030",
         "Base cloned",
         add_NPi2030,
@@ -142,6 +150,13 @@ def generate(context: Context) -> Workflow:
         _bilateralize,
         target="fuel_security/INDC2030i_forever_bilateral"
     ) # Bilateralize INDC2030i_forever to create fuel_security/INDC2030i_forever_bilateral
+
+    wf.add_step(
+        "INDC2030i_forever_gdp bilateralized",
+        "INDC2030i_forever_gdp",
+        _bilateralize,
+        target="fuel_security/INDC2030i_forever_gdp_bilateral"
+    ) # Bilateralize INDC2030i_forever_gdp to create fuel_security/INDC2030i_forever_gdp_bilateral
         
     wf.add_step(
         "Baseline - FSU2100",
@@ -191,6 +206,22 @@ def generate(context: Context) -> Workflow:
         target="fuel_security/INDC2030i_forever_FSU2040"
     ) # Run FSU2040 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2040
 
+    wf.add_step(
+        "INDC2030i_forever_gdp - FSU2100",
+        "INDC2030i_forever_gdp bilateralized",
+        _FSU_restriction,
+        friction_endyear=2100,
+        target="fuel_security/INDC2030i_forever_gdp_FSU2100"
+    ) # Run FSU2100 scenario on INDC2030i_forever_gdp bilateralized to create fuel_security/INDC2030i_forever_gdp_FSU2100
+
+    wf.add_step(
+        "INDC2030i_forever_gdp - FSU2040",
+        "INDC2030i_forever_gdp bilateralized",
+        _FSU_restriction,
+        friction_endyear=2040,
+        target="fuel_security/INDC2030i_forever_gdp_FSU2040"
+    ) # Run FSU2040 scenario on INDC2030i_forever_gdp bilateralized to create fuel_security/INDC2030i_forever_gdp_FSU2040
+
     # MEA conflict shock sensitivities: applied to each bilateralized base and
     # each FSU-restricted variant, at 6 severity levels (1.0 = no shock)
     mea_bases = [
@@ -203,6 +234,9 @@ def generate(context: Context) -> Workflow:
         ("INDC2030i_forever bilateralized", "INDC2030i_forever_bilateral"),
         ("INDC2030i_forever - FSU2100", "INDC2030i_forever_FSU2100"),
         ("INDC2030i_forever - FSU2040", "INDC2030i_forever_FSU2040"),
+        ("INDC2030i_forever_gdp bilateralized", "INDC2030i_forever_gdp_bilateral"),
+        ("INDC2030i_forever_gdp - FSU2100", "INDC2030i_forever_gdp_FSU2100"),
+        ("INDC2030i_forever_gdp - FSU2040", "INDC2030i_forever_gdp_FSU2040"),
     ]
     mea_levels = [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]
 

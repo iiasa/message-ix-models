@@ -82,8 +82,13 @@ class WorkflowStep:
                 raise RuntimeError(
                     f"Step with action {self.action!r} requires a base scenario"
                 )
-            # Use Context to retrieve the identified scenario
+            # Use Context to retrieve the identified scenario. Clear stale info from
+            # any other step that shares this same Context object before merging in
+            # this step's own target, so e.g. a leftover "version" from an unrelated
+            # chain cannot be applied to this step's (model, scenario).
+            context.platform_info.clear()
             context.platform_info.update(self.platform_info)
+            context.scenario_info.clear()
             context.scenario_info.update(self.scenario_info)
             s = context.get_scenario()
             log.info(f"Loaded ixmp://{s.platform.name}/{s.url}")
