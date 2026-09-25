@@ -83,7 +83,9 @@ class WorkflowStep:
                     f"Step with action {self.action!r} requires a base scenario"
                 )
             # Use Context to retrieve the identified scenario
+            context.platform_info.clear()
             context.platform_info.update(self.platform_info)
+            context.scenario_info.clear()
             context.scenario_info.update(self.scenario_info)
             s = context.get_scenario()
             log.info(f"Loaded ixmp://{s.platform.name}/{s.url}")

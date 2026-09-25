@@ -57,6 +57,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             so the output never collides with the input's own name.
     """
     target_scen = target_scenario or f"{scenario.scenario}_bilateral"
+    target_scen = target_scen.replace("_DEFAULT_", "")
     
     # Load config
     config, config_name = load_config(project_name = project_name, config_name = config_name)
