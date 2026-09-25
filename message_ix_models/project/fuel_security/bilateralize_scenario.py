@@ -52,12 +52,15 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
         project_name: Name of project (message_ix_models/project/[THIS])
         config_name: Name of the bilateralize config file for this project
         scenario: Base scenario to bilateralize
-        target_scen: Name for the bilateralized output scenario, in the
+        target_scenario: Name for the bilateralized output scenario, in the
             `project_name` model. Defaults to f"{scenario.scenario}_bilateral"
-            so the output never collides with the input's own name.
+            so the output never collides with the input's own name. Any
+            "_DEFAULT" is dropped, so baseline_DEFAULT -> baseline_bilateral.
     """
-    target_scen = target_scenario or f"{scenario.scenario}_bilateral"
-    
+    target_scenario = (target_scenario or f"{scenario.scenario}_bilateral").replace(
+        "_DEFAULT", ""
+    )
+
     # Load config
     config, config_name = load_config(project_name = project_name, config_name = config_name)
     data_path = package_data_path("bilateralize")
@@ -86,7 +89,6 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                                                         config_name = config_name)
 
     # Clone and set up base scenario
-    target_scenario = target_scenario or f"{scenario.scenario}_bilat"
     print(f"Base model: {scenario.model}/{scenario.scenario}")
     print(f"Target model: {project_name}/{target_scenario}")
 
