@@ -792,6 +792,7 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         len(buildings_commodities),
     )
 
+    # YJ: add glasgow by anchor here, can be independent steps too
     glasgow_stage = {
         "o_1p5c": "glasgow_full",
         "o_2c": "glasgow_partial",
@@ -1306,8 +1307,10 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "d_delfrag shift",
         "h_cpol solved",
+        solve,
         target=f"{model_name}/d_delfrag_shift",
         clone=dict(keep_solution=False, shift_first_model_year=2035),
+        model="MESSAGE-MACRO",
     )
 
     wf.add_step(
@@ -1324,7 +1327,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN1",
             f"{scen} base built",
             step_1_and_solve,
-            target=f"{model_name}/{scen}_EN1_test4",
+            target=f"{model_name}/{scen}_EN1",
             clone=dict(keep_solution=False),
         )
 
@@ -1332,7 +1335,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN2",
             f"{scen} EN1",
             step_2_and_solve,
-            target=f"{model_name}/{scen}_EN2_test4",
+            target=f"{model_name}/{scen}_EN2",
             # Must have solution to retrieve emission trajectories.
             clone=dict(keep_solution=True),
         )
@@ -1347,7 +1350,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN3",
             f"{scen} EN2",
             step_3_and_solve,
-            target=f"{model_name}/{scen}_EN3_test4",
+            target=f"{model_name}/{scen}_EN3",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
@@ -1362,7 +1365,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN4",
             f"{scen} EN3",
             step_4_and_solve,
-            target=f"{model_name}/{scen}_EN4_test4",
+            target=f"{model_name}/{scen}_EN4",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
