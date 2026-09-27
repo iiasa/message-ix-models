@@ -14,6 +14,7 @@ from message_ix_models.util.genno import Collector
 
 from . import key as K
 from . import util
+from .build import add_parameter_data
 from .util import COMMON
 
 if TYPE_CHECKING:
@@ -34,17 +35,17 @@ MODE = ["F", "P ex LDV", "LDV"]
 # Shorthand
 Vi = "vehicle+ixmp"
 
-#: Target key that collects all data generated in this module.
+#: Key for a task that collects all data generated in this module.
 TARGET = f"transport::{Vi}"
 
-
+#: Collect parameter data in `TARGET`.
 collect = Collector(TARGET, "{}+ixmp".format)
 
 
 def prepare_computer(c: "Computer") -> None:
-    # Collect data in `TARGET` and connect to the "add transport data" key
-    collect.computer = c
-    c.add("transport_data", __name__, key=TARGET)
+    """Prepare `c` to calculate and add data for transport vehicles."""
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
     context = c.graph["context"]
     techs = context.transport.spec.add.set["technology"]
@@ -127,10 +128,12 @@ def input_output(c: "Computer") -> None:
     k = Key("input", NTY, "vehicle")
 
     # Concatenate data from (a) file (InputVehicle.key) and (b) IEA Future of Trucks
-    c.add(k[0], "concat", InputVehicle.key, "energy intensity of VDT:n-t")
+    prev = c.add(k[0], "concat", InputVehicle.key, "energy intensity of VDT:n-t")
 
     # Broadcast over dimensions (c, l, y, yv, ya)
-    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.all)
+    prev = c.add(k, "mul", k[0], K.bcast_tcl.input, K.bcast_y.all)
+    # Check that the resulting key is the same as expected in .key.input
+    assert prev == K.input.vehicle * "y"
 
     # Convert to MESSAGE data structure; add to `target`
     collect(
@@ -151,10 +154,10 @@ def input_output(c: "Computer") -> None:
     # Convert to MESSAGE data structure
     prev = c.add(k[2], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
     # Reduce entries to a diagonal band
-    prev = c.add(k[3], "yv_ya_banded", prev, "y0", diff=30)
+    c.add(k, "yv_ya_banded", prev, "y0", diff=30)
     # Convert units; add to `TARGET`
     # TODO convert_units appears to have no effect; check and adjust/remove
-    collect("output::vehicle", convert_units, prev, "transport info")
+    collect("output::vehicle", convert_units, k, "transport info")
 
 
 #: 3-:class:`tuple` of keys for each :data:`MODE`:

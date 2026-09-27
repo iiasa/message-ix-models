@@ -6,6 +6,7 @@ by the MESSAGEix-Materials build (e.g., reading TIMER Excel tables, mapping IEA
 flows, generating emission factors and projections).
 """
 
+import logging
 from collections.abc import Mapping
 from functools import lru_cache
 from typing import TYPE_CHECKING, Literal
@@ -34,6 +35,126 @@ if TYPE_CHECKING:
     from message_ix_models import Context
     from message_ix_models.types import MutableParameterData, ParameterData
 
+log = logging.getLogger(__name__)
+
+#: Duals below this threshold are treated as numerically zero for MACRO calibration.
+ZERO_PRICE_THRESHOLD = 1e-6
+
+
+def _price_value_column(df: pd.DataFrame) -> str | None:
+    """Return the PRICE_COMMODITY value column name, if present."""
+    if "lvl" in df.columns:
+        return "lvl"
+    if "value" in df.columns:
+        return "value"
+    return None
+
+
+def _macro_config_pairs(
+    mapping: pd.DataFrame | None,
+) -> set[tuple[str, str]] | None:
+    """Return MACRO ``config`` commodity/level pairs, if available."""
+    if mapping is None or not {"commodity", "level"}.issubset(mapping.columns):
+        return None
+    return set(zip(mapping["commodity"].astype(str), mapping["level"].astype(str)))
+
+
+def _interpolate_price_group(
+    group: pd.DataFrame,
+    value_col: str,
+    threshold: float,
+    pairs: set[tuple[str, str]] | None,
+    group_cols: list[str],
+) -> tuple[pd.DataFrame, int]:
+    """Interpolate near-zero prices in one node/commodity/level series."""
+    if pairs is not None and {"commodity", "level"}.issubset(group.columns):
+        pair = (str(group["commodity"].iloc[0]), str(group["level"].iloc[0]))
+        if pair not in pairs:
+            return group, 0
+
+    group = group.sort_values("year")
+    values = pd.Series(
+        group[value_col].astype(float).to_numpy(),
+        index=pd.Index(group["year"].to_numpy(), name="year"),
+    )
+    mask = values.abs() < threshold
+    if not mask.any():
+        return group, 0
+    if not (~mask).any():
+        keys = {c: group[c].iloc[0] for c in group_cols} if group_cols else {}
+        log.warning("Cannot interpolate all-zero PRICE_COMMODITY for %s", keys)
+        return group, 0
+
+    filled = values.mask(mask).interpolate(method="index")
+    interior = mask & filled.notna()
+    if not interior.any():
+        return group, 0
+
+    n_filled = int(interior.sum())
+    key_cols = [c for c in ("node", "commodity", "level") if c in group]
+    keys = {c: group[c].iloc[0] for c in key_cols}
+    for year, old, new in zip(
+        values.index[interior], values[interior], filled[interior]
+    ):
+        log.info(
+            "Interpolated PRICE_COMMODITY %s year=%s: %g -> %g",
+            keys,
+            year,
+            old,
+            new,
+        )
+    group = group.copy()
+    group[value_col] = filled.where(interior, values).to_numpy()
+    return group, n_filled
+
+
+def interpolate_zero_commodity_prices(
+    df: pd.DataFrame,
+    *,
+    threshold: float = ZERO_PRICE_THRESHOLD,
+    mapping: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Replace near-zero ``PRICE_COMMODITY`` levels by interpolating adjacent years.
+
+    MACRO calibration rejects any ~0 dual. A single degenerate period can underflow
+    (for example FSU ``i_therm`` in 2035 → ``~1e-324``) while neighbouring years are
+    well-defined. Linear interpolation across ``year`` restores a plausible path.
+
+    Only series in `mapping` (MACRO ``config`` commodity/level pairs) are changed.
+    """
+    if df is None or df.empty or "year" not in df.columns:
+        return df
+
+    value_col = _price_value_column(df)
+    if value_col is None:
+        return df
+
+    pairs = _macro_config_pairs(mapping)
+    group_cols = [c for c in df.columns if c not in {value_col, "year", "mrg"}]
+    groups = (
+        df.groupby(group_cols, sort=False, dropna=False)
+        if group_cols
+        else [(None, df)]
+    )
+
+    out_parts: list[pd.DataFrame] = []
+    n_filled = 0
+    for _, group in groups:
+        filled_group, n = _interpolate_price_group(
+            group, value_col, threshold, pairs, group_cols
+        )
+        out_parts.append(filled_group)
+        n_filled += n
+
+    if n_filled:
+        log.info(
+            "Interpolated %d near-zero PRICE_COMMODITY value(s) (threshold=%g)",
+            n_filled,
+            threshold,
+        )
+
+    return pd.concat(out_parts, ignore_index=True)
+
 
 def _filter_macro_data_to_scenario(
     data: dict[str, pd.DataFrame], scen: message_ix.Scenario
@@ -54,6 +175,9 @@ def add_macro_materials(
     scen: message_ix.Scenario, filename: str, check_converge: bool = False
 ) -> message_ix.Scenario:
     """Prepare data for MACRO calibration by reading data from xlsx file.
+
+    Near-zero ``PRICE_COMMODITY`` duals are interpolated across years before
+    :meth:`message_ix.Scenario.add_macro`, which otherwise raises on 0-prices.
 
     Parameters
     ----------
@@ -91,10 +215,23 @@ def add_macro_materials(
     #     [df_gdphist, df_gdp.loc[df_gdp.year >= info.y0]], ignore_index=True
     # )
 
-    # Calibration
-    scen = scen.add_macro(data, check_convergence=check_converge)
+    # add_macro reads PRICE_COMMODITY from the stored solution via scenario.var().
+    # Interpolate degenerate ~0 duals for calibration only; do not rewrite the solution.
+    orig_var = scen.var
 
-    return scen
+    def var(name, filters=None, **kwargs):
+        result = orig_var(name, filters, **kwargs)
+        if name == "PRICE_COMMODITY":
+            return interpolate_zero_commodity_prices(
+                result, mapping=data.get("config")
+            )
+        return result
+
+    try:
+        scen.var = var  # type: ignore[method-assign]
+        return scen.add_macro(data, check_convergence=check_converge)
+    finally:
+        scen.var = orig_var  # type: ignore[method-assign]
 
 
 @lru_cache

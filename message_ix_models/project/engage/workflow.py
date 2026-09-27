@@ -19,6 +19,7 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import workflow as model_workflow
 from message_ix_models.util import HAS_MESSAGE_DATA, broadcast, identify_nodes
 from message_ix_models.workflow import Workflow
+from message_ix_models.tools import remove_emission_bounds, add_emission_trajectory
 
 if TYPE_CHECKING:
     from typing import TypedDict
@@ -49,10 +50,10 @@ class PolicyConfig(model_workflow.Config):
     #: Which steps of the ENGAGE workflow to run. Empty list = don't run any steps.
     steps: list[int] = field(default_factory=lambda: [1, 2, 3])
 
-    #: In :func:`step_1`, actual quantity of the carbon budget to be imposed , or the
+    #: In :func:`step_1`, actual quantity of the carbon budget to be imposed, or the
     #: value "calc", in which case the value is calculated from :attr:`label` by
     #: :meth:`.ScenarioRunner.calc_budget`.
-    budget: int | Literal["calc"] = "calc"
+    budget: float | Literal["calc"] = "calc"
 
     #: In :func:`step_3`, optional information on a second scenario from which to copy
     #: ``tax_emission`` data.
@@ -139,13 +140,17 @@ def calc_budget(
         Literal "calc" to calculate a constraint budget based on `bdgt`; otherwise,
         budget constraint value expressed as average Mt C-eq / a.
     """
-    from message_data.tools.utilities import add_budget
+    from message_ix_models.tools.add_budget import main as add_budget
 
     if method == "calc":
         info = ScenarioInfo(scenario)
 
         # Target is provided in cumulative Gt 2010-2100
         value = float(bdgt)
+        log.info(
+            f"Calculating budget constraint for {scenario.model}/{scenario.scenario}: "
+            f"target budget = {value} Gt CO₂ (2010-2100)"
+        )
         # Convert Gt CO2 to Mt CO2
         value *= 1000
 
@@ -165,6 +170,11 @@ def calc_budget(
         # (from 2018 to 2100). The number of historic years are subtracted.
         # (do the extra 10 years need to be added)?
         # value /= 82 - hist_year + 10
+        
+        log.info(
+            f"Adding budget constraint to {scenario.model}/{scenario.scenario}: "
+            f"{value:.2f} Mt C-eq/a (type_emission={type_emission})"
+        )
     else:
         value = method
 
@@ -261,13 +271,21 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     #   `scenario` must have solution data.
     sr = ScenarioRunner(context)
     df = sr.retr_CO2_trajectory(scenario)
+    log.info(
+        f"Retrieved CO₂ emission trajectory from {scenario.model}/{scenario.scenario}"
+    )
 
     try:
         scenario.remove_solution()
+        log.info(f"Removed solution from {scenario.model}/{scenario.scenario}")
     except ValueError:
+        log.debug(f"No solution to remove from {scenario.model}/{scenario.scenario}")
         pass  # Solution did not exist
 
     # Add this trajectory as bound_emission values
+    log.info(
+        f"Adding emission trajectory as bound_emission"
+    )
     add_emission_trajectory.main(
         scenario,
         data=df,
@@ -283,8 +301,8 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
     return scenario
 
-
-def retr_CO2_price(scen: Scenario):
+# TODO: each of them should have args such as type_emission and region
+def retr_CO2_price(scen: Scenario, regional_price=False):
     """Retrieve ``PRICE_EMISSION`` data and transform for use as ``tax_emission``.
 
     This is identical to :meth:`ScenarioRunner.retr_CO2_price`, except without the
@@ -292,46 +310,165 @@ def retr_CO2_price(scen: Scenario):
     :meth:`~.DataFrame.assign` or, to create data for multiple ``type_emission``, use
     :func:`message_ix_models.util.broadcast`.
     """
-    return (
-        scen.var("PRICE_EMISSION")
-        .assign(unit="USD/tC", type_emission=None)
+    df = scen.var("PRICE_EMISSION")
+    if regional_price:
+        df = df.loc[df["node"] != "World"]
+    df = (
+        df.assign(unit="USD/tC", type_emission=None)
         .rename(columns={"lvl": "value", "year": "type_year"})
         .drop("mrg", axis=1)
     )
+    return df
 
+def retr_CO2_trajectory(scen: Scenario, regional_emission_bound=True, emission="TCE_CO2"):
+    """Retrieves global CO2 emission trajectory.
+
+    Retrieves variable `EMISS` for `emission`: `TCE_CO2` or other types of emissions for
+    all regions.
+
+    Parameters
+    ----------
+    scen : :class:`message_ix.Scenario`
+        Scenario for which emission trajectory should be retrieved.
+    """
+    glb_nodes = ["World"] + [n for n in scen.set("node") if "GLB" in n]
+    if regional_emission_bound is True:
+        df = scen.var(
+            "EMISS",
+            filters={"emission": [emission], "type_tec": ["all"]},
+        )
+        df = df.loc[df.node != "World"]
+    else:
+        df = scen.var(
+            "EMISS",
+            filters={
+                "emission": [emission],
+                "type_tec": ["all"],
+                "node": glb_nodes,
+            },
+        )
+    df = df.pivot(index="node", values="lvl", columns="year")
+
+    return df
 
 def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 3 of the ENGAGE climate policy workflow."""
+    from message_ix_models.tools import remove_emission_bounds
+    
     if config.tax_emission_scenario:
         # Retrieve CO2 prices from a different scenario
         source = Scenario(scenario.platform, **config.tax_emission_scenario)
+        log.info(
+            f"Retrieving CO₂ prices from source scenario: "
+            f"{config.tax_emission_scenario.get('model', '?')}/"
+            f"{config.tax_emission_scenario.get('scenario', '?')}"
+        )
     else:
         # Retrieve CO2 prices from `scenario` itself
         source = scenario
+        log.info(
+            f"Retrieving CO₂ prices from {scenario.model}/{scenario.scenario} itself"
+        )
 
-    # Retrieve a data frame with CO₂ prices, and apply specific ``type_emission``
-    df = retr_CO2_price(source).pipe(
-        broadcast, type_emission=config.step_3_type_emission
+    # Retrieve a data frame with CO₂ prices
+    price_df = retr_CO2_price(source, regional_price=True)
+    
+    # Debug: check what retr_CO2_price returns
+    log.info(f"price_df columns after retr_CO2_price: {list(price_df.columns)}")
+    log.info(f"price_df shape: {price_df.shape}")
+    log.info(f"price_df head:\n{price_df.head()}")
+    
+    # Use type_emission list from config as-is
+    type_emission_list = list(config.step_3_type_emission)
+    
+    # Ensure type_tec column is present in price_df before broadcasting
+    if "type_tec" not in price_df.columns:
+        price_df["type_tec"] = "all"
+    
+    # Apply tax_emission to each type_emission separately and concatenate
+    import pandas as pd
+    df_list = []
+    for type_emi in type_emission_list:
+        df_emi = price_df.pipe(broadcast, type_emission=[type_emi])
+        df_list.append(df_emi)
+    
+    df = pd.concat(df_list, ignore_index=True)
+    
+    # Debug: print dataframe info
+    log.info(
+        f"Retrieved CO₂ prices: {len(df)} data points for type_emission={type_emission_list}"
     )
+    log.info(f"DataFrame columns: {list(df.columns)}")
+    log.info(f"DataFrame shape: {df.shape}")
+    log.info(f"DataFrame head:\n{df.head(10)}")
+    log.info(f"DataFrame dtypes:\n{df.dtypes}")
+    log.info(f"Unique type_emission values: {df['type_emission'].unique() if 'type_emission' in df.columns else 'MISSING'}")
+    log.info(f"Unique type_tec values: {df['type_tec'].unique() if 'type_tec' in df.columns else 'MISSING'}")
 
     del source  # No longer used → free memory
 
     try:
         scenario.remove_solution()
+        log.info(f"Removed solution from {scenario.model}/{scenario.scenario}")
     except ValueError:
+        log.debug(f"No solution to remove from {scenario.model}/{scenario.scenario}")
         pass  # Solution did not exist
 
-    with scenario.transact(message=f"Add price for {config.step_3_type_emission}"):
-        scenario.add_par("tax_emission", df)
+    # Remove all emission bounds first
+    # Otherwise remove_emission_bounds will remove the tax_emission we just added
+    # with scenario.transact(message="Remove all emission bounds"):
+    #     log.info("Removing all emission bounds")
+    #     remove_emission_bounds.main(scenario, remove_all=True)
+        
+    #     # As in step_2, remove the lower bound on global CO2 emissions. This is
+    #     # necessary if step_2 was not run (for instance, NAVIGATE T6.2 protocol)
+    #     name = "relation_lower"
+    #     filters = dict(relation=[context.model.relation_global_co2])
+    #     scenario.remove_par(name, scenario.par(name, filters=filters))
 
-        # As in step_2, remove the lower bound on global CO2 emissions. This is
-        # necessary if step_2 was not run (for instance, NAVIGATE T6.2 protocol)
-        name = "relation_lower"
-        filters = dict(relation=[context.model.relation_global_co2])
-        scenario.remove_par(name, scenario.par(name, filters=filters))
+    # Now add tax_emission AFTER removing bounds
+    with scenario.transact(message=f"Add price for {type_emission_list}"):
+        log.info(
+            f"Adding tax_emission prices to {scenario.model}/{scenario.scenario} "
+            f"(type_emission={type_emission_list})"
+        )
+        log.info(f"About to add {len(df)} rows to tax_emission")
+        try:
+            scenario.add_par("tax_emission", df)
+            # Verify it was added
+            added_df = scenario.par("tax_emission")
+            log.info(f"Successfully added tax_emission. Scenario now has {len(added_df)} rows")
+            log.info(f"Added tax_emission head:\n{added_df.head(10)}")
+        except Exception as e:
+            log.error(f"Error adding tax_emission: {e}")
+            log.error(f"DataFrame that failed:\n{df.head(20)}")
+            raise
 
     return scenario
 
+
+def step_4(context: Context, scenario: Scenario) -> Scenario:
+    """Step 4 of the ENGAGE climate policy workflow. 
+    Optional, locks in regional TCE emission path to deliver regional carbon prices.
+    
+    TODO: can introduce certificate trade in this step, also fix demand
+    """
+
+    df = retr_CO2_trajectory(scenario, regional_emission_bound=True, emission="TCE")
+    try:
+        scenario.remove_solution()
+    except ValueError:  
+        pass  
+
+    remove_emission_bounds.main(scenario, remove_all=True)
+    add_emission_trajectory.main(
+        scenario,
+        data=df,
+        type_emission="TCE",
+        remove_bounds_emission=False, # by default it only removes cumulative bounds
+    )
+
+    return scenario
 
 def add_steps(
     workflow: Workflow, base: str, config: PolicyConfig, name: str | None = None

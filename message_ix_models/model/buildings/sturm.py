@@ -6,12 +6,16 @@ import re
 import subprocess
 from collections.abc import Mapping, MutableMapping
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
+import ixmp
+import numpy as np
 import pandas as pd
 from message_ix import Scenario
 
 from message_ix_models import Context
+from message_ix_models.util import load_package_data
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -46,8 +50,8 @@ class METHOD(Enum):
 
 #: R files used for :data:`METHOD.RSCRIPT_B`.
 RSCRIPT_B_FILES = [
-    "run_STURM_Circular_resid_glo.R",
-    "run_STURM_Circular_comm_glo.R",
+    "run_STURM_bmt_resid_2026_07_01.R",
+    "run_STURM_bmt_comm_2026_07_01.R",
     "run_GLANCE_placeholder.R",
     "run_MIXB_aligner.R",
 ]
@@ -314,36 +318,244 @@ def scenario_name(name: str) -> str:
     }.get(result, result)
 
 
+def _message_buildings_install_dir() -> Path:
+    """Return MESSAGEix-Buildings path from ixmp (``message_buildings_dir``)."""
+    message_buildings_dir = None
+    for key in ("message_buildings_dir", "message buildings dir"):
+        try:
+            value = ixmp.config.get(key)
+        except (AttributeError, KeyError):
+            continue
+        if value:
+            message_buildings_dir = value
+            break
+    if not message_buildings_dir:
+        raise ValueError(
+            "ixmp config key 'message_buildings_dir' (or 'message buildings dir') is "
+            "not set."
+        )
+    return Path(message_buildings_dir).expanduser().resolve()
+
+
 # MIXB demand CSV basenames under ``sturm/message_linking``
-# ({code} = context.buildings.code).
+# ({code} = :func:`format_sturm_code` applied to ``context.buildings.code``).
 _MIXB_DEMAND_CSV = (
-    "resid_sturm_aligned_{}.csv",
-    "comm_sturm_aligned_{}.csv",
-    "resid_comm_glance_aligned_{}.csv",
+    "resid_sturm_aligned_{code}.csv",
+    "comm_sturm_aligned_{code}.csv",
+    "resid_comm_glance_aligned_{code}.csv",
 )
 
 
-def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
-    """Update `scenario` demand with data from :file:`sturm/message_linking`.
+def format_sturm_code(code: str, sturm_scen: str = "r") -> str:
+    """Return MIXB filename suffix under ``sturm/message_linking``."""
+    return code + "_" + sturm_scen if code != "R" else code
 
-    .. note:: Despite the name, this function **does not** call STURM. It appears to
-       parallel the behaviour of :func:`.buildings.build.main` with
-       :func:`prepare_data_B`. It is not currently called anywhere.
+
+def message_linking_path(context: Context, attr: str) -> Path:
+    """Resolve :attr:`~.buildings.Config.data_paths` entry to a CSV path.
+
+    Absolute paths are returned unchanged. Relative paths are resolved under
+    ``message_ix_buildings/sturm/message_linking``, except ``prices``, which resolves
+    under ``message_ix_buildings/sturm/data``. ``{code}`` is substituted using
+    :func:`format_sturm_code` where present in the configured filename.
     """
-    config: "Config" = context.buildings
-    linking_dir = config.sturm_code_dir.joinpath("message_linking")
-    assert linking_dir.exists()
-    code = context.buildings.code
+    val = context.buildings.data_paths[attr]
+    path = Path(val)
+    if path.is_absolute():
+        return path
+    code = format_sturm_code(context.buildings.code)
+    subdir = "data" if attr == "prices" else "message_linking"
+    return (
+        _message_buildings_install_dir()
+        .joinpath("message_ix_buildings", "sturm", subdir)
+        .joinpath(str(val).format(code=code))
+    )
+
+
+def _pass_scen_config_to_mixb(sturm_dir: Path, scenarios: list[str]) -> None:
+    """Write ``scenario_config.yaml`` for MESSAGEix-Buildings STURM runners."""
+    import yaml
+
+    path = sturm_dir.joinpath("scenario_config.yaml")
+    payload = {"scenarios": scenarios}
+    header = (
+        "# Shared STURM scenario list\n"
+        "# Used by STURM / MIXB runner scripts (see message_ix_buildings/sturm)\n"
+    )
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(header)
+        yaml.dump(payload, f, default_flow_style=False, sort_keys=False)
+    log.info("Wrote STURM scenarios %s to %s", scenarios, path)
+
+
+def _write_sturm_prices(
+    scenario: Scenario, price_default: Path, price_input: Path
+) -> int:
+    """Write ``input_prices_R12.csv`` for STURM.
+
+    If `scenario` has a solution, merge ``PRICE_COMMODITY`` into the reference
+    levels from `price_default` (with floors). Otherwise copy `price_default` unchanged.
+
+    Returns
+    -------
+    int
+        Number of price rows updated from the scenario solution.
+    """
+    df_prices_ori = pd.read_csv(price_default)
+
+    if not scenario.has_solution():
+        log.info(
+            "Scenario has no solution; writing reference prices from %s to %s",
+            price_default,
+            price_input,
+        )
+        df_prices_ori.to_csv(price_input, index=False)
+        return 0
+
+    # Retrieve new energy commodity prices from the scenario
+    df_prices = scenario.var(
+        "PRICE_COMMODITY",
+        filters={
+            "level": "final",
+            "commodity": [
+                "biomass",
+                "coal",
+                "lightoil",
+                "gas",
+                "electr",
+                "d_heat",
+            ],
+        },
+    )
+
+    # Map R12 regions to R11 regions
+    # R12_CHN -> R11_CHN
+    # R12_RCPA -> R11_CPA
+    # Other R12_* -> R11_* (replace R12_ with R11_)
+    def map_r12_to_r11(node):
+        """Map R12 region codes to R11 region codes"""
+        if node == "R12_CHN":
+            return "R11_CHN"
+        elif node == "R12_RCPA":
+            return "R11_CPA"
+        elif node.startswith("R12_"):
+            return node.replace("R12_", "R11_")
+        else:
+            return node  # Keep as is if not R12
+
+    # Apply the mapping
+    df_prices["node"] = df_prices["node"].apply(map_r12_to_r11)
+
+    # Identify key columns for merging
+    key_cols = ["node", "commodity", "level", "year", "time"]
+    # Filter to only columns that exist in both dataframes
+    key_cols = [
+        col
+        for col in key_cols
+        if col in df_prices_ori.columns and col in df_prices.columns
+    ]
+
+    # Merge the original dataframe with price data
+    df_updated = pd.merge(
+        df_prices_ori,
+        df_prices[key_cols + ["lvl"]],
+        on=key_cols,
+        how="left",
+        suffixes=("", "_new"),
+    )
+
+    rows_updated = (
+        df_updated["lvl_new"].notna().sum() if "lvl_new" in df_updated.columns else 0
+    )
+
+    lvl_original = df_updated["lvl"].copy()
+    lvl_scenario = df_updated["lvl_new"].fillna(df_updated["lvl"])
+
+    # Calculate the factor (ratio) between scenario and original values for analysis
+    # Factor = scenario / original; factor < 1 means scenario is below STURM reference.
+    factor = np.where(lvl_original != 0, lvl_scenario / lvl_original, np.nan)
+
+    has_scenario = df_updated["lvl_new"].notna()
+    below_reference = (factor < 1) & has_scenario
+    # Floor non-electricity prices at the STURM reference; allow lower electr prices.
+    use_reference_floor = below_reference & (df_updated["commodity"] != "electr")
+    df_updated["lvl"] = np.where(use_reference_floor, lvl_original, lvl_scenario)
+    df_updated = df_updated.drop(columns=["lvl_new"])
+
+    # STURM R scripts read input_prices_R12.csv; default file is left unchanged.
+    df_updated.to_csv(price_input, index=False)
+    return rows_updated
+
+
+def call_sturm(context: Context, scenario: Scenario) -> Scenario:
+    """Merge scenario prices into STURM inputs, then run MESSAGEix-Buildings STURM.
+
+    Uses :data:`METHOD.RSCRIPT_B` (BMT resid/comm + GLANCE + MIXB aligner).
+
+    Read reference price levels from ``sturm/data/input_prices_R12_default.csv``.
+    Apply scenario solved ``PRICE_COMMODITY`` (with floors) and write
+    ``sturm/data/input_prices_R12.csv``; otherwise copy the reference file unchanged.
+    Update ``scenario_config.yaml`` from :attr:`context.buildings.code`, then run STURM.
+    """
+    context.buildings.sturm_method = METHOD.RSCRIPT_B
+
+    buildings_root = _message_buildings_install_dir()
+    sturm_dir = buildings_root.joinpath("message_ix_buildings", "sturm")
+    price_dir = sturm_dir.joinpath("data")
+
+    price_default = price_dir.joinpath("input_prices_R12_default.csv")
+    price_input = price_dir.joinpath("input_prices_R12.csv")
+
+    if not price_default.exists():
+        raise FileNotFoundError(f"STURM reference prices not found: {price_default}")
+
+    rows_updated = _write_sturm_prices(scenario, price_default, price_input)
+    log.info("Updated prices written to %s (reference: %s)", price_input, price_default)
+    log.info("Rows with updated prices: %d", rows_updated)
+
+    code = format_sturm_code(context.buildings.code)
+    _pass_scen_config_to_mixb(sturm_dir, [code])
+
+    # Run STURM / MIXB (via Rscript), method B
+    for name in RSCRIPT_B_FILES:
+        script = sturm_dir.joinpath(name)
+        if not script.is_file():
+            raise FileNotFoundError(f"STURM BMT R script not found: {script}")
+        log.info("Running Rscript %s (cwd=%s)", name, sturm_dir)
+        subprocess.run(
+            ["Rscript", name],
+            cwd=sturm_dir,
+            check=True,
+        )
+
+    return scenario
+
+
+def call_buildings_demand(context: Context, scenario: Scenario) -> Scenario:
+    """Retrieve MIXB buildings demand from ``sturm/message_linking`` and add it."""
+    buildings_root = _message_buildings_install_dir()
+    linking_dir = buildings_root.joinpath(
+        "message_ix_buildings", "sturm", "message_linking"
+    )
+    if not linking_dir.exists():
+        raise FileNotFoundError(f"Buildings demand directory not found: {linking_dir}")
+
+    code = format_sturm_code(context.buildings.code)
     demand = pd.concat(
-        [pd.read_csv(linking_dir / name.format(code)) for name in _MIXB_DEMAND_CSV],
+        [
+            pd.read_csv(linking_dir / name.format(code=code))
+            for name in _MIXB_DEMAND_CSV
+        ],
         ignore_index=True,
     )
 
-    exclude_expr = r"_mat_|_floor_|other_uses_|v_no_heat|non-comm"
-    # TODO: do we need dynamic materials demand for CircEUlar too?
-    demand = demand[~demand["commodity"].str.contains(exclude_expr, na=False)].copy()
+    # Keep only Buildings energy commodities (same allowlist as prepare_data_B).
+    commodity_info = cast(
+        "MutableMapping", load_package_data("buildings", "commodity.yaml")
+    )
+    buildings_commodities = set(commodity_info.keys())
+    demand = demand[demand["commodity"].isin(buildings_commodities)].copy()
     demand["level"] = "useful"
-    # TODO: "useful" to match build; consider unifying demand levels to "final"
 
     if 2110 not in demand["year"].values and 2100 in demand["year"].values:
         df_2110 = demand[demand["year"] == 2100].copy()

@@ -260,12 +260,14 @@ def test_navigate_ele(test_context, regions, years, options):
         ctx, regions=regions, years=years, options=options
     )
 
-    k = "navigate_ele::ixmp"
+    k = "add message_ix_models.model.transport.data.navigate_ele"
 
     # Computation runs without error
     result = c.get(k)
 
     if 0 == len(options):
+        # No options → no specific (non-reference) NAVIGATE scenario selected → no
+        # data generated
         assert 0 == len(result)
         return
 
