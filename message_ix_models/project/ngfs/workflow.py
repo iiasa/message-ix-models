@@ -564,6 +564,55 @@ def remove_2030_tce_tax_emission(
     return scenario
 
 
+def add_iamc_diagnostic(
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    protocol_id: str | None = None,
+    cp_scenario: str = "baseline_DEFAULT",
+) -> message_ix.Scenario:
+    """Apply an IAMC diagnostic protocol carbon-price path (Table 2).
+
+    Clears all ``bound_emission`` / ``tax_emission`` (including regional), then
+    calls :meth:`~message_ix_models.tools.iamc.runner.ScenarioRunner._set_carbon_price`
+    with *cp_scenario* as the current-policies floor.
+
+    Parameters
+    ----------
+    protocol_id :
+        STATIC id such as ``"C400-lin"`` or ``"C160-gr5"``.
+    cp_scenario :
+        Scenario providing pre-2030 / floor CP prices. Default is NGFS
+        ``baseline_DEFAULT``.
+    """
+    from message_ix_models.tools.iamc.runner import ScenarioRunner
+    from message_ix_models.tools.remove_emission_bounds import (
+        main as remove_emission_bounds,
+    )
+
+    protocol_id = protocol_id or scenario.scenario.split("-SSP")[0]
+    cp_scen = message_ix.Scenario(scenario.platform, scenario.model, cp_scenario)
+
+    remove_emission_bounds(scenario, remove_all=True)
+
+    if not hasattr(context, "run_reporting_only"):
+        context.run_reporting_only = False
+
+    # Use MA scenario runner
+    rs = ScenarioRunner(context)
+    rs.scen = scenario
+    rs._set_carbon_price(protocol_id, cp_scen)
+
+    log.info(
+        "Applied IAMC diagnostic %s on %s (CP reference: %s)",
+        protocol_id,
+        scenario.url,
+        cp_scen.url,
+    )
+    scenario.set_as_default()
+    return scenario
+
+
 def add_NPiREF(context, scenario):
     """Add NPi forever."""
     # TODO:not using _post_target for now
@@ -799,9 +848,7 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
         "d_delfrag": "glasgow_partial",
     }.get(scen)
     if glasgow_stage is None:
-        raise ValueError(
-            f"step_0: no Glasgow anchor stage for scenario '{scen}'"
-        )
+        raise ValueError(f"step_0: no Glasgow anchor stage for scenario '{scen}'")
     add_anchor(context, scenario, stage=glasgow_stage)
 
     scenario.set_as_default()
@@ -1320,6 +1367,41 @@ def generate(context: Context) -> Workflow:
         target=f"{model_name}/d_delfrag_base",
         clone=dict(keep_solution=False),
     )
+
+    # --- IAMC diagnostic scenarios ---
+    for protocol_id in ("C400-lin", "C160-gr5", "C80-gr5", "C0to400-lin"):
+        wf.add_step(
+            f"{protocol_id} added",
+            "baseline reported",
+            add_iamc_diagnostic,
+            target=f"{model_name}/{protocol_id}",
+            clone=dict(keep_solution=False),
+            protocol_id=protocol_id,
+            cp_scenario="baseline_DEFAULT",
+        )
+        wf.add_step(
+            f"{protocol_id} plain solved",
+            f"{protocol_id} added",
+            solve,
+            model="MESSAGE",
+        )
+        wf.add_step(
+            f"{protocol_id} mixb called",
+            f"{protocol_id} solved",
+            call_sturm,
+        )
+        wf.add_step(
+            f"{protocol_id} solved",
+            f"{protocol_id} mixb called",
+            iterate_mixB,
+            target=f"{model_name}/{protocol_id}",
+            clone=dict(keep_solution=False),
+        )
+        wf.add_step(
+            f"{protocol_id} reported",
+            f"{protocol_id} solved",
+            report,
+        )
 
     # --- EN steps ---
     for scen in _scen_en_steps:
