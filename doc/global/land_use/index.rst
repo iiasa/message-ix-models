@@ -96,7 +96,7 @@ in particular the afforestation and forest related emissions that GLOBIOM does n
 Within |name|, the land-use framework enters the energy system optimization as an emulator.
 GLOBIOM and G4M are run beforehand over a grid of biomass prices and greenhouse gas prices,
 and the resulting cases supply |MESSAGEix|
-with bioenergy supply cost curves
+with regional biomass supply curves
 and with marginal abatement cost curves for AFOLU emissions.
 A full GLOBIOM-G4M run is carried out for every scenario in addition,
 and its results replace the emulated land-use results in the scenario output.

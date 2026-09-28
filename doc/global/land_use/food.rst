@@ -90,10 +90,11 @@ logging residues and forest industry by-products,
 while accounting for their competing material, food, feed and land uses.
 
 The |MESSAGEix| results that set this demand
-are themselves generated from bioenergy cost-supply curves that GLOBIOM provides.
+are themselves generated from regional biomass supply curves that GLOBIOM provides.
 Those curves come from a series of GLOBIOM runs
-carried out beforehand with no bioenergy demand
-but with stepwise prices for primary bioenergy in future periods.
+carried out beforehand without a bioenergy demand target.
+Each run is instead driven by an exogenous biomass price,
+which rises linearly from 2020 to one of seven fixed levels in 2100.
 Bioenergy demand is therefore exogenous to any single GLOBIOM run
 while remaining consistent with what the land system is able to supply.
 The curves and the wider coupling are described in :doc:`emulator`.

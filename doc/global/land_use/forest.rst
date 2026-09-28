@@ -22,7 +22,7 @@ and it supplies the increments
 and harvest costs that the rest of this page rests on.
 GLOBIOM represents the wood assortments cut from those increments,
 the industries that process them, and the clearing of the wood markets.
-The coupling between the two models is described in :ref:globiom.
+The coupling between the two models is described in :ref:`globiom`.
 
 GLOBIOM divides the mean annual increment into commercial roundwood,
 non-commercial roundwood, and harvest losses.
