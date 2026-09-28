@@ -83,7 +83,7 @@ rather than a fixed set of legislation packages.
 Ambition ranges from current legislation (CLE),
 under which only already-adopted policies apply,
 up to the maximum technically feasible reduction (MTFR),
-see :ref:`air pollution <gains>`.
+see :ref:`air pollution <gains_narratives>`.
 
 Methane and nitrous oxide reach the model through the same linkage.
 Emission factors derived from GAINS are attached to source-specific drivers,
