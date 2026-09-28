@@ -1,148 +1,136 @@
 .. _emission_land:
 
-Emissions from land (GLOBIOM)
------------------------------
+Emissions from land (GLOBIOM/G4M)
+---------------------------------
+
+Emissions from agriculture, forestry and other land use are simulated by GLOBIOM,
+together with the forest model G4M for forests (see :ref:`globiom`).
+The emissions enter |MESSAGEix| through the land-use emulator (see :ref:`emulator`).
 
 Crop sector emissions
 ~~~~~~~~~~~~~~~~~~~~~
 
-Crop emissions sources accounted in GLOBIOM are N2O fertilization emissions, from synthetic fertilizer and from organic fertilizers, as well as CH4 methane emissions from rice cultivation.
-Synthetic fertilizers are calculated on a Tier 1 approach, using the information provided by EPIC on the fertilizer use for each management system at the Simulation Unit level and applying
-the emission factor from IPCC AFOLU guidelines. Synthetic fertilizer use is therefore built in a bottom up approach, but upscaled to the International Fertilizer Association statics on total
-fertilizer use per crop at the national level for the case where calculated fertilizers are found too low at the aggregated level. This correction ensures a full consistency with observed fertilizer purchases.
-In the case of rice, only a Tier 1 approach was applied, with a simple formula where emissions are proportional to the area of rice cultivated. Emission factor is taken from EPA
-(2012) :cite:`environmental_protection_agency_epa_US_2012`.
+Crop emissions in GLOBIOM comprise CH4 from rice cultivation
+and N2O from the application of synthetic and organic fertilizers.
+Emission factors for synthetic fertilizers are derived from EPIC model outputs combined with IPCC default factors.
+EPIC provides the fertilizer use for each management system at the level of the simulation units,
+and the IPCC AFOLU guidelines provide the emission factors.
+Synthetic fertilizer use is thus built bottom-up,
+but is scaled up to the International Fertilizer Association statistics on total fertilizer use per crop at the national level
+where the calculated use is too low at the aggregated level.
+This correction ensures consistency with observed fertilizer purchases.
+Emissions from organic fertilizers are linked to the livestock systems
+and derived from outputs of the RUMINANT model.
+Rice emissions follow a Tier 1 approach,
+with emissions proportional to the area of rice cultivated
+and an emission factor from EPA (2012) :cite:`environmental_protection_agency_epa_US_2012`.
 
 Livestock emissions
 ~~~~~~~~~~~~~~~~~~~
 
-In GLOBIOM, the following emission accounts were assigned to livestock directly: CH4 from enteric fermentation, CH4 and N2O from manure management, and N2O from excreta on pasture
-(N2O from manure applied on cropland is reported in a separate account linked to crop production). In brief, CH4 from enteric fermentation is a simultaneous output of the feed-yield
-calculations done with the RUMINANT model, as well as nitrogen content of excreta and the amount of volatile solids. The assumptions about proportions of different manure management systems,
-manure uses, and emission coefficients are based on detailed literature review. A detailed description of how these coefficients have been determined including the literature review is provided
-in (Herrero et al., 2013 :cite:`herrero_global_2013`).
+The emission accounts assigned directly to livestock are
+CH4 from enteric fermentation, CH4 and N2O from manure management,
+and N2O from manure deposited on pastures.
+N2O from manure applied to cropland is reported in a separate account linked to crop production.
+CH4 from enteric fermentation is a simultaneous output of the feed and yield calculations of the RUMINANT model,
+as are the nitrogen content of excreta and the amount of volatile solids.
+Combined with literature-based parameters,
+this differentiates emissions across species, production systems and feeding practices.
+The assumptions on the proportions of manure management systems, manure uses and emission coefficients
+are based on a detailed literature review,
+described in Herrero et al. (2013) :cite:`herrero_global_2013`.
+
+Burning and other sources
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Emissions from crop residue burning and savannah burning
+follow a land-use driver from GLOBIOM,
+the cropland area for crop residue burning and the pasture area for savannah burning.
+The implied emission factor per unit of land is held constant,
+so that the emissions follow the land-use pathway of each scenario.
+Peat fires are held at their last historical value,
+and emissions from organic soils are not represented.
+The historical burning emissions these drivers are applied to,
+and how they are used in the emulator and in the GLOBIOM feedback runs,
+are described with the land-use emulator (see :ref:`emulator`).
 
 Land use change emissions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Land use change emissions are computed based on the difference between initial and final land cover equilibrium carbon stock. For forest, above and below-ground living biomass carbon data are sourced from
-Kindermann et al. (2008) :cite:`kindermann_global_2008`, where geographically explicit allocation of the carbon stocks is provided. The carbon stocks are consistent with the 2010 Forest Assessment Report
-(FAO, 2010 :cite:`food_and_agricultural_organization_fao_global_2010`). Therefore, the emission factors for deforestation are in line with those of FAO. Additionally, carbon stock from grasslands and other
-natural vegetation is also taken into account using the above and below ground carbon from the biomass map from (Ruesch and Gibbs, 2008 :cite:`ruesch_new_ipcc_2008`).
-When forest or natural vegetation is converted into agricultural use, it is considered in this approach that all below and above ground biomass is released in the atmosphere.
-However, the following are not accounted for: litter, dead wood and soil organic carbon.
+CO2 emissions and removals from land-use change and forestry
+are modelled consistently with the IPCC accounting guidelines.
+CO2 fluxes from changes in above- and below-ground biomass, litter and soil carbon in forests
+are estimated endogenously by G4M
+from grid-level land-use change and forest management decisions (see :ref:`forestry`).
+They cover emissions from deforestation, removals from afforestation,
+and the carbon dynamics of forest management.
+Above- and below-ground living biomass carbon in forests is sourced from Kindermann et al. (2008) :cite:`kindermann_global_2008`,
+which provides a geographically explicit allocation of the carbon stocks.
+These carbon stocks are consistent with the 2010 Forest Resources Assessment
+(FAO, 2010 :cite:`food_and_agricultural_organization_fao_global_2010`),
+so that the emission factors for deforestation are in line with those of FAO.
+Carbon stocks in grassland and other natural vegetation
+are taken from the above- and below-ground biomass carbon map of Ruesch and Gibbs (2008) :cite:`ruesch_new_ipcc_2008`.
+When forest or other natural vegetation is converted to agricultural use,
+all above- and below-ground biomass carbon is assumed to be released to the atmosphere.
+Overall, the model combines Tier 1, Tier 2 and Tier 3 methods,
+with most sources represented at Tier 2 or Tier 3
+using region-specific data and biophysical modelling.
 
-Comparison with other literature
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Comparison with FAOSTAT
+~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to put the numbers in perspective with other sources they were compared with FAO (Tubiello et al., 2013 :cite:`tubiello_faostat_2013`) where a simple but transparent approach is used, largely relying on FAOSTAT
-activity numbers and IPCC Tier 1 emission coefficients (see :numref:`tab-ag-emissions-globiom-fao`).
-
-The 2000 data for crops are overall about 11% higher than Tubiello et al., mainly because of rice where the data are closer to EPA (EPA 2012 :cite:`environmental_protection_agency_epa_US_2012`) which is higher than
-Tubiello et al. For livestock, it is by some 18% lower than Tubiello et al. So in total there is about 10% GHG emissions less in 2000 than the values reported. The year 2010 is already the result of simulations
-and hence may be interesting to compare with the data. In order to facilitate the comparison, the columns e), f) and g) in Table 1 are3 included. Columns e) and f) compare GLOBIOM data for 2000 and projections for
-2010 respectively, with numbers reported by Tubiello et al. Column g) compares the relative change in emissions between 2000 and 2010 from these two sources (1.00 would indicate the same relative change in GLOBIOM
-and in Tubiello et al.). It is apparent that the relative change in total agricultural emissions in GLOBIOM is the same as the development reported by Tubiello et al. – an increase by 11%. The behavior of GLOBIOM
-is over this period very close to the reported trends also at the level of individual accounts. The only exception is emissions from manure management where the relative change projected in GLOBIOM is by 13% higher
-than the relative change observed in Tubiello's numbers.
+:numref:`tab-ag-emissions-globiom-fao` compares the agricultural emissions of GLOBIOM
+with FAOSTAT (Tubiello et al., 2013 :cite:`tubiello_faostat_2013`),
+which uses a simple and transparent approach
+based largely on FAOSTAT activity data and IPCC Tier 1 emission coefficients.
+The FAOSTAT categories are aggregated to the categories GLOBIOM reports.
+In 2000,
+GLOBIOM emissions from rice cultivation, enteric fermentation and manure are close to FAOSTAT,
+while emissions from managed soils are higher.
+Between 2000 and 2010,
+GLOBIOM emissions grow somewhat more slowly than FAOSTAT,
+mainly because of managed soils,
+so that total agricultural emissions in 2010 are slightly below FAOSTAT.
 
 .. _tab-ag-emissions-globiom-fao:
-.. list-table:: Comparison of agricultural GHG emissions from GLOBIOM and from FAO for the years 2000 and 2010
-   :header-rows: 3
+.. list-table:: Agricultural GHG emissions from GLOBIOM and from FAOSTAT (Tubiello et al., 2013 :cite:`tubiello_faostat_2013`) for 2000 and 2010, in Mt CO2-equiv/yr, converted with IPCC Second Assessment Report 100-year GWPs. The change ratio divides the relative change from 2000 to 2010 in GLOBIOM by that in FAOSTAT, so that 1.00 means both change at the same rate. Managed soils cover synthetic fertilizer, manure applied to soils and crop residues, manure covers manure management and manure left on pasture.
+   :widths: 30 14 14 14 14 14
+   :header-rows: 1
 
-   * -
-     - GLOBIOM
-     -
-     - Tubiello et al.
-     -
-     -
-     -
-     -
-   * -
-     - (a)
-     - (b)
-     - (c)
-     - (d)
-     - (e)
-     - (f)
-     - (g)
-   * -
-     - 2000
-     - 2010
-     - 2000
-     - 2010
-     - 2000
-     - 2010
-     - 2010/2000
-   * - Crops
-     - 1,239
-     - 1,365
-     - 1,114
-     - 1,298
-     - 1.11
-     - 1.05
-     - 0.95
-   * - Synthetic fertilizer
-     - 522
-     - 640
-     - 521
-     - 683
-     - 1.00
-     - 0.94
-     - 0.93
-   * - Manure applied
-     - 83
-     - 96
-     - 103
-     - 116
-     - 0.81
-     - 0.83
-     - 1.03
-   * - Rice
-     - 633
-     - 629
+   * - Source
+     - GLOBIOM 2000
+     - GLOBIOM 2010
+     - FAOSTAT 2000
+     - FAOSTAT 2010
+     - Change ratio
+   * - Rice cultivation (CH4)
+     - 484
+     - 489
      - 490
      - 499
-     - 1.29
-     - 1.26
-     - 0.98
-   * - Livestock
-     - 2,362
-     - 2,625
-     - 2,893
-     - 3,135
-     - 0.82
-     - 0.84
-     - 1.03
-   * - Enteric fermentation
-     - 1,502
-     - 1,661
+     - 0.99
+   * - Managed soils (N2O)
+     - 862
+     - 984
+     - 753
+     - 950
+     - 0.90
+   * - Enteric fermentation (CH4)
+     - 1,849
+     - 1,928
      - 1,863
      - 2,018
-     - 0.81
-     - 0.82
-     - 1.02
-   * - Manure on pastures
-     - 403
-     - 441
-     - 682
-     - 764
-     - 0.59
-     - 0.58
-     - 0.98
-   * - Manure management
-     - 457
-     - 524
-     - 348
-     - 353
-     - 1.31
-     - 1.48
-     - 1.13
-   * - Total Agriculture
-     - 3,601
-     - 3,991
-     - 4,007
-     - 4,433
-     - 0.90
-     - 0.90
-     - 1.00
+     - 0.96
+   * - Manure (CH4 and N2O)
+     - 1,026
+     - 1,084
+     - 1,030
+     - 1,117
+     - 0.97
+   * - Total agriculture
+     - 4,221
+     - 4,485
+     - 4,136
+     - 4,586
+     - 0.96
