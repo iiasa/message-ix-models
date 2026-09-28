@@ -1374,7 +1374,7 @@ def generate(context: Context) -> Workflow:
             f"{protocol_id} added",
             "baseline reported",
             add_iamc_diagnostic,
-            target=f"{model_name}/{protocol_id}",
+            target=f"{model_name}/{protocol_id}_plain",
             clone=dict(keep_solution=False),
             protocol_id=protocol_id,
             cp_scenario="baseline_DEFAULT",
@@ -1387,7 +1387,7 @@ def generate(context: Context) -> Workflow:
         )
         wf.add_step(
             f"{protocol_id} mixb called",
-            f"{protocol_id} solved",
+            f"{protocol_id} plain solved",
             call_sturm,
         )
         wf.add_step(
