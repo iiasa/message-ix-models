@@ -4,6 +4,7 @@ Workflow for developing baseline scenarios and bilateralizing them for fuel secu
 import logging
 import os
 from ixmp import Platform
+import message_ix
 
 # Import tools
 from message_ix_models.tools.bilateralize.prepare_edit import *
@@ -42,12 +43,23 @@ def _set_default(context, scenario):
     return scenario
 
 def _bilateralize(context, scenario):
-    """Bilateralize trade technologies on the scenario produced upstream."""
+    """Bilateralize trade technologies on the scenario produced upstream.
+
+    Policy scenarios with a first model year after 2030 take their 2030 trade history
+    from fuel_security/baseline_bilateral, so the "Baseline bilateralized" step must
+    have been run (and solved) first.
+    """
+    history_scenario = None
+    if scenario.firstmodelyear > 2030:
+        history_scenario = message_ix.Scenario(
+            scenario.platform, model="fuel_security", scenario="baseline_bilateral"
+        )
     return bilateralize_scenario(
         project_name="fuel_security",
         config_name="config.yaml",
         scenario=scenario,
-        target_scenario=f"{scenario.scenario}_bilateral"
+        target_scenario=f"{scenario.scenario}_bilateral",
+        history_scenario=history_scenario,
     )
 
 def _FSU_restriction(context, scenario, friction_endyear):
