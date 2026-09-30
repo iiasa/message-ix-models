@@ -17,6 +17,7 @@ from itertools import product
 from message_ix_models.tools.bilateralize.prepare_edit import *
 from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
+from message_ix_models.project.fuel_security.gdx_cleanup import delete_gdx
 
 import os
 
@@ -115,5 +116,6 @@ def run_mea_conflict_scenario(base_scenario: message_ix.Scenario,
 
     if solve_scenario:
         target_scenario.solve(quiet = False, model = 'MESSAGE', solve_options={"scaind":"-1"})
+        delete_gdx(target_scenario)
 
     return target_scenario
