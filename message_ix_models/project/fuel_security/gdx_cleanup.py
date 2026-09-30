@@ -4,7 +4,11 @@ import os
 from pathlib import Path
 
 import message_ix
-from message_ix.message import MESSAGE
+
+try:
+    from message_ix.message import MESSAGE  # message_ix >= 3.11
+except ImportError:
+    from message_ix.models import MESSAGE
 
 log = logging.getLogger(__name__)
 
