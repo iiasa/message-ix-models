@@ -4,7 +4,7 @@ import logging
 from collections.abc import Mapping
 from functools import partial
 from itertools import chain, count
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from genno import Key, Quantity, quote
 from genno.core.key import iter_keys, single_key
@@ -283,7 +283,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
 
     # L3059 from message_data/tools/post_processing/default_tables.py
     # "gas_{cc,ppl}_share": shares of gas_cc and gas_ppl in the summed output of both
-    k0 = out(rep, ["gas_cc", "gas_ppl"])
+    k0: Key = out(rep, ["gas_cc", "gas_ppl"])
     for t in "gas_cc", "gas_ppl":
         k1 = out(rep, [t])
         rep.add(Key(f"{t}_share", k1.dims), "div", k0, k1)
@@ -341,7 +341,9 @@ def callback(rep: "Reporter", context: "Context") -> None:
             # ("gas_htfc", "gfc_co2scr", None),
         )
     ]
-    k0 = rep.add(anon(dims=pe_w_ccs_retro_keys[0]), "add", *pe_w_ccs_retro_keys)
+    k0 = cast(
+        Key, rep.add(anon(dims=pe_w_ccs_retro_keys[0]), "add", *pe_w_ccs_retro_keys)
+    )
     k1 = rep.add(
         Key("in", k0.dims, "nonccs_gas_tecs_wo_ccsretro"),
         "sub",
@@ -376,7 +378,9 @@ def callback(rep: "Reporter", context: "Context") -> None:
     # "Transport": CO₂ emissions from transport. "FE_Transport" minus emissions saved by
     # use of biogas in transport, plus emissions from production of hydrogen used in
     # transport.
-    k0 = rep.add(anon(dims=FE_Transport), "sub", FE_Transport, full("Biogas_trp"))
+    k0 = cast(
+        Key, rep.add(anon(dims=FE_Transport), "sub", FE_Transport, full("Biogas_trp"))
+    )
     k1, *_ = iter_keys(
         rep.add(Key("Transport", k0.dims), "add", k0, full("Hydrogen_trp"), sums=True)
     )

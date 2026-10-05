@@ -182,9 +182,8 @@ def add_tax_emission(
     years = ScenarioInfo(scen).Y
     filters = dict(year=years)
     # Default: since the mass of the species is in the denominator, take the inverse
-    conversion_factor = conversion_factor or 1.0 / convert_gwp(
-        "AR5GWP100", "1 t", "CO2", "C"
-    )
+    if conversion_factor is None:
+        conversion_factor = 1.0 / convert_gwp("AR5GWP100", "1 t", "CO2", "C").magnitude
 
     # Duration of periods
     dp = scen.par("duration_period", filters=filters).set_index("year")["value"]

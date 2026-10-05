@@ -154,9 +154,11 @@ def smooth(c: Computer, key: "genno.Key", *, dim: str = "ya") -> "genno.Key":
             .reorder_levels(list(qty.dims))
             .sort_index()
             .where(
-                lambda df: (df.value >= df.threshold)
-                .groupby(others, group_keys=False)
-                .apply(first_block_false)
+                lambda df: (
+                    (df.value >= df.threshold)
+                    .groupby(others, group_keys=False)
+                    .apply(first_block_false)
+                )
             )["value"]
         )
 

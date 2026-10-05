@@ -14,6 +14,7 @@ from message_ix_models.util import package_data_path
 from .util import region_path_fallback
 
 if TYPE_CHECKING:
+    import pint
     from genno.types import AnyQuantity
 
     from message_ix_models import Context
@@ -94,7 +95,7 @@ def ef_for_input(
 
         # Product of the input efficiency [energy / activity units] and emissions
         # intensity for the input commodity [mass / energy] → [mass / activity units]
-        uq = (
+        uq: "pint.Quantity" = (
             registry.Quantity(1.0, u) * registry(EI_TEMP.get((species, c), "0 g / J"))
         ).to(units_out)
 

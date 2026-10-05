@@ -31,7 +31,7 @@ METADATA = [
 
 # Conversion factors used in the water module
 
-MONTHLY_CONVERSION = (
+MONTHLY_CONVERSION: float = (
     (30 * registry.day / registry.month).to_base_units().magnitude
 )  # MCM/day to MCM/month
 # Convert USD/(m³/day) to USD/MCM: m³/day * 365 days/year / 1e6 m³/MCM

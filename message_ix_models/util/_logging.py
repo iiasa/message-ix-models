@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 _HANDLER: dict[str, logging.Handler] = dict()
 
 # For mark_time()
-_TIMES = []
+_TIMES: list[float] = []
 
 
 class Formatter(logging.Formatter):

@@ -24,7 +24,7 @@ Configuration:
 from pathlib import Path
 
 import ixmp  # type: ignore
-import message_ix  # type: ignore
+import message_ix
 import pandas as pd
 from message_data.tools.post_processing import (
     iamc_report_hackathon as legacy_report,  # type: ignore
@@ -87,7 +87,7 @@ with scen.transact("Additional constraints added"):
     scen.add_par("bound_activity_up", bound_activity_up)
 
 # Specify cplex solver options
-message_ix.models.DEFAULT_CPLEX_OPTIONS = {
+message_ix.common.DEFAULT_CPLEX_OPTIONS = {
     "advind": 0,
     "lpmethod": 4,
     "threads": 4,
