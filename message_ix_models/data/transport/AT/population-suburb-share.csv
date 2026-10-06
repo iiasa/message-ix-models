@@ -1,0 +1,12 @@
+# Share of MSA population that is suburban
+#
+# - Values are filled forward by year.
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+#
+node,    year, value
+Austria, 2010, 0.1

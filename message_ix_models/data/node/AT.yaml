@@ -1,0 +1,10 @@
+# Codes for the "node" dimension of the MESSAGE-AT model
+
+World:
+  name: World
+  description: MESSAGE-AT regions
+
+Austria:
+  name: Austria
+  parent: World
+  child: [AUT]

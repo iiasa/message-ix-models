@@ -1,0 +1,14 @@
+# Fixed activity of non-LDV technologies.
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,     technology,    year, value
+Austria,  conm_ar,       2020, 0.01
+Austria,  f road electr, 2020, 0.01
+Austria,  FCg_bus,       2020, 0.159
+Austria,  FR_FCg,        2020, 0.159
+Austria,  FR_ICG,        2020, 0.159
+Austria,  ICG_bus,       2020, 0.159
