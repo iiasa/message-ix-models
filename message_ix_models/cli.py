@@ -169,6 +169,7 @@ submodules = [
     "message_ix_models.project.circeular.cli",
     "message_ix_models.project.edits.cli",
     "message_ix_models.project.navigate.cli",
+    "message_ix_models.project.sparccle.cli",
     "message_ix_models.project.ssp.cli",
     "message_ix_models.report.cli",
     "message_ix_models.testing.cli",

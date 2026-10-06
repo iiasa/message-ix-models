@@ -122,6 +122,8 @@ Next release
   and adjust existing tests.
 - New utility :func:`.import_from_fqn` (:pull:`486`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
+- New :mod:`.tools.impacts` library and :mod:`.project.sparccle` consumer
+  for SPARCCLE physical-impact scenarios (:pull:`479`).
 
 v2026.4.17
 ==========

@@ -78,6 +78,7 @@ report = ["plotnine", "xlsxwriter"]
 tests = [
   "message-ix[tests]",
   "message_ix_models[bilateralize,buildings,material,report,transport]",
+  "netCDF4",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
@@ -202,3 +203,11 @@ mccabe.max-complexity = 11
 packages = ["message_ix_models"]
 
 [tool.setuptools_scm]
+
+[dependency-groups]
+dev = [
+    "netcdf4>=1.7.3",
+    "plotnine>=0.15.3",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+]

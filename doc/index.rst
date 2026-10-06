@@ -103,6 +103,7 @@ Other submodules are documented on their respective pages:
    api/tools
    api/tools-bilateralize
    api/tools-costs
+   api/tools-impacts
    api/tools-messagev
    api/data-sources
    api/workflow
@@ -117,6 +118,7 @@ Other submodules are documented on their respective pages:
    :caption: Model variants
 
    buildings/index
+   impacts/index
    material/index
    transport/index
    water/index

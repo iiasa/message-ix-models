@@ -21,9 +21,46 @@ if TYPE_CHECKING:
 __all__ = [
     "compare",
     "describe",
+    "frame_to_iamc",
     "iamc_like_data_for_query",
     "to_quantity",
 ]
+
+
+def frame_to_iamc(
+    df: pd.DataFrame,
+    variable: str,
+    unit: str,
+    *,
+    region_col: str = "region",
+) -> pd.DataFrame:
+    """Return *df* in IAMC long form with ``variable`` and ``unit`` attached.
+
+    Parameters
+    ----------
+    df
+        Long-form frame with columns ``[region_col, "year", "value"]``.
+        Other columns are ignored.
+    variable
+        IAMC variable name (e.g. ``"Input|Climate|Cooling|..."``).
+    unit
+        Unit string (e.g. ``"GWa"``, ``"dimensionless"``).
+    region_col
+        Source column to use as ``region``. Default ``"region"``;
+        pass ``"node"`` when the frame uses scenario node labels.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns ``["region", "variable", "unit", "year", "value"]``.
+    """
+    out = df[[region_col, "year", "value"]].copy()
+    if region_col != "region":
+        out = out.rename(columns={region_col: "region"})
+    out["year"] = out["year"].astype(int)
+    out["variable"] = variable
+    out["unit"] = unit
+    return out[["region", "variable", "unit", "year", "value"]]
 
 
 # TODO Reduce complexity from 12 to <=11
