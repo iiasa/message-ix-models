@@ -1,7 +1,7 @@
 .. _message:
 
-Energy (|MESSAGE|)
-******************
+Energy (|MESSAGEix|)
+********************
 
 MESSAGE (short for Model for Energy Supply Strategy Alternatives and their General Environmental impact) is a generalized optimization
 (specifically, linear programming, or LP)

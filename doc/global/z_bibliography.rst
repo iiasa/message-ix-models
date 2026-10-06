@@ -3,6 +3,6 @@
    Bibliography
    ************
 
-.. bibliography:: /main.bib
+.. bibliography::
    :style: plain
    :cited:
