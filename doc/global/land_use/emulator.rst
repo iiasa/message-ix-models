@@ -3,8 +3,15 @@
 Land-Use Emulator
 =================
 
-The land-use emulator integrates a set of land-use scenarios into MESSAGEix energy system model.
-These land-use scenarios are developed by an economic land-use model `GLOBIOM <https://iiasa.github.io/GLOBIOM/>`_, which can assess competition for land-use between agriculture, bioenergy, and forestry. The land-use scenarios represent a two dimensional scenario matrix (so called `Lookup-Table <https://github.com/iiasa/GLOBIOM-G4M_LookupTable>`_) combining different carbon and biomass price trajectories which allows to represent biomass supply curves conditional on different carbon prices as well as marginal abatement cost curves conditional on different biomass prices for the land-use sector in MESSAGEix.
+The land-use emulator integrates a set of land-use scenarios into |name|.
+These land-use scenarios are developed by an economic land-use model `GLOBIOM <https://iiasa.github.io/GLOBIOM/>`_,
+which can assess competition for land-use between agriculture, bioenergy, and forestry.
+The land-use scenarios represent a two dimensional scenario matrix
+(so called `Lookup-Table <https://github.com/iiasa/GLOBIOM-G4M_LookupTable>`_)
+combining different carbon and biomass price trajectories
+which allows to represent biomass supply curves conditional on different carbon prices
+as well as marginal abatement cost curves conditional on different biomass prices
+for the land-use sector in |name|.
 This linkage between an energy model, here MESSAGEix, and a land-use model is important to explore the potential of bioenergy and the implications of using biomass for energy generation on emissions, the cost of the system, and related land-use implications.
 In MESSAGEix formulation, there is a dedicated set of :ref:`land use equations <message-ix:section_landuse_emulator>`, to establish this linkage as follows.
 Each land-use scenario represents a distinct land-use development pathway for a given biomass potential and carbon price.
@@ -22,8 +29,14 @@ For example, the matrix depicted below (:numref:`fig-Land-Use_Pathway_Scenario_M
 
    Land-Use Scenario Matrix.
 
-In their entirety, the combination of these distinct land-use pathways provide MESSAGEix with a range of biomass potentials available for energy generation at different costs, so called BIO-categories, along with the associated land-use related emissions (CO2, CH4 and N2O).
-The different carbon prices provide MESSAGEix with options for mitigating land-use related GHG emissions, referred to as GHG-categories.
+In their entirety,
+the combination of these distinct land-use pathways provide |name| with a range of biomass potentials
+available for energy generation at different costs,
+so called BIO-categories,
+along with the associated land-use related emissions (CO2, CH4 and N2O).
+The different carbon prices provide |name| with options
+for mitigating land-use related GHG emissions,
+referred to as GHG-categories.
 The combination of land-use pathways can therefore be depicted as a trade-off surface, illustrated for SSP2 (Fricko et al., 2017 :cite:`fricko_marker_2017`) in the figure below (:numref:`fig-CD_Links_SSP2_v2_baseline_Global_LanduseSurface`).
 The figure depicts global biomass potentials and respective GHG emissions at different carbon prices cumulated from 2010 to 2100.
 
@@ -34,9 +47,14 @@ The figure depicts global biomass potentials and respective GHG emissions at dif
 
    Land-Use Pathway Trade-Off Surface for SSP2.
 
-From the trade-off surface it possible to deduct that for a MESSAGEix scenario without climate policy, land-use pathways of the lower BIO-categories and lowest GHG-categories will be used.
+From the trade-off surface it possible to deduct
+that for a |name| scenario without climate policy,
+land-use pathways of the lower BIO-categories and lowest GHG-categories will be used.
 The energy system will therefore only use biomass for energy production to the extent that it is economically viable without mitigating emissions.
-When climate policy scenarios are run in MESSAGEix, the land-use pathways will be chosen such that the optimal balance between the land-use related emission and biomass use in the energy system is obtained.
+When climate policy scenarios are run in |name|,
+the land-use pathways will be chosen
+such that the optimal balance between the land-use related emission
+and biomass use in the energy system is obtained.
 In addition to serving as a commodity from which energy can be generated, biomass can also be used to obtain negative emissions via BECCS.
 
 Adaptation of the Reference-Energy-System (RES)
@@ -44,7 +62,9 @@ Adaptation of the Reference-Energy-System (RES)
 
 Prior to the use of the land-use emulator, biomass supply-curves were used to inform the energy system of the biomass availability.
 The emulator replaces supply-curves, by incorporating all the land-use scenarios in MESSAGEix, therefore the choice of which land-use pathway(s) becomes part of the entire optimization problem.
-Conceptually, each land-use scenario is incorporated similarly to any other technology in MESSAGEix, each providing biomass at a given price and corresponding GHG-emissions.
+Conceptually,
+each land-use scenario is incorporated similarly to any other technology in |name|,
+each providing biomass at a given price and corresponding GHG-emissions.
 The incorporation of the land-use emulator requires two changes to the RES to be undertaken.
 On the on hand, an additional level/commodity has been introduced to link the land-use pathways with the energy system, while land-use emissions are accounted for in the emissions equation (:ref:`emissions equations in MESSAGEix <message-ix:section_emission>`).
 
@@ -60,11 +80,19 @@ Bioenergy can therefore be used for use in power generation or liquefaction or g
 The only exception is made for non-commercial biomass (fuel wood).
 Non-commercial biomass supply and demand have been aligned between the two models.
 These are derived based on population and GDP projections for each of the SSP storyline projections (Riahi et al., 2017 :cite:`riahi_chapter_2012`, Pachauri et al., 2017 :cite:`pachauri_2013_access`).
-In MESSAGEix, non-commercial biomass is explicitly modeled as a demand category (see :ref:`demand` for further details).
+In |name|,
+non-commercial biomass is explicitly modeled as a demand category
+(see :ref:`demand` for further details).
 The reduction of non-commercial biomass demand therefore is not possible in the global energy model, without the use of an additional addon module specifically developed to address this issue (Poblete et al., 2018 :cite:`poblete_2018_fuelchoice`, Poblete et al., :cite:`poblete_2021_access`).
 The reason for this is the fact that non-commercial biomass is not a traded commodity and therefore its use us not determined as a function of cost.
 
-Note, that because each of the land-use pathways has been calculated accounting for mitigation of all GHGs, MESSAGEix scenarios aiming to only reduce a single green-house-gas for example, will either need to account for the fact that a price on CH4 for example will equally result in reductions of CO2 and N2O in the land-use sector.
+Note that,
+because each of the land-use pathways has been calculated
+accounting for mitigation of all GHGs,
+|name| scenarios aiming to only reduce a single greenhouse-gas
+(for example, CH₄)
+will either need to account for the fact that a price on CH₄
+will equally result in reductions of CO₂ and N₂O in the land-use sector.
 Equally, other land-use policies, such as the limitation of deforestation, can be implemented, but will most likely include other land-use related trends, which are artifacts as opposed to results of the policy, due to the limitations of using an emulator, and therefore a limited solution space.
 The land-use pathways are meant to represent the broad, as opposed to a specific policy landscape, consistent with SSP storylines (Popp et al., 2017 :cite:`popp_2017_SSPlanduse`).
 For some larger projects or studies, matrixes, i.e. input data sets from GLOBIOM, can be tailored to allow the analysis of specific policies in MESSAGE.
@@ -80,7 +108,10 @@ This also applies to the mitigation dimension, i.e., to the GHG categories.
    :label: Land constraint equation
 
 In order to correctly represent the transitional dynamics between land-use pathways, such as the rate at which changes in land-use can occur, e.g. the conversion from land-type A to land-type B, additional constraints are required as the underlying dependencies between these land-use pathways are only represented in the full fletched GLOBIOM model.
-Based on rates derived from GLOBIOM, for each of MESSAGEix model regions, the upscaling of plantation forest area is limited using :ref:`dynamic constraints on land-use <message-ix:equation_dynamic_land_scen_constraint_up>`.
+Based on rates derived from GLOBIOM,
+for each of the |name| model regions,
+the upscaling of plantation forest area is limited
+using :ref:`dynamic constraints on land-use <message-ix:equation_dynamic_land_scen_constraint_up>`.
 The total area of plantation forest in a given region and time-period is determined, by summing up the shares of area (Mha) for other land types (crop-, grass- and other natural land) in the previous time-period in that region (:eq:`Dynamic land conversion constraint`).
 Therefore, the bigger area for the three land types is available, the bigger plantation forest area can be expanded in the following time-period.
 This growth constraint is applied for each land-use pathway individually.
@@ -160,7 +191,11 @@ Slight numerical `non-convexities` in input data, i.e. numerical inconsistencies
 Land-use pathways, cumulatively (across time) depict consistent behavior i.e. as carbon prices increase, the cumulative emissions decrease within a single biomass potential category (see :numref:`fig-CD_Links_SSP2_v2_baseline_Global_LanduseSurface`).
 Yet for the same carbon price across multiple biomass potential categories, inconsistencies may occur, for example as a result of data scaling or aggregation.
 Without a transitional constraint between pathways, the optimal least-cost solution could be to switch between two land-use pathways for only a single timestep, introducing artifacts in the model result (e.g. unreasonable price inconsistencies).
-The carbon price categories have been chosen to span a broad range of mitigation options (see :numref:`fig-Land-Use_Pathway_Scenario_Matrix`), with stepped carbon price growth that best reflect increases in global mitigation efforts, while at the same time ensuring that inclusion of the land-use emulator in MESSAGEix, does not result in too long solving times.
+The carbon price categories have been chosen to span a broad range of mitigation options
+(see :numref:`fig-Land-Use_Pathway_Scenario_Matrix`),
+with stepped carbon price growth that best reflect increases in global mitigation efforts,
+while at the same time ensuring that inclusion of the land-use emulator in |name|,
+does not result in too long solving times.
 The transitional constraints between pathways further contribute to smoothing the step wise increases between the carbon price categories.
 The transition rate has been set, so that land-use pathways can be phased out at a rate of 5% annually.
 This value was derived based on a sensitivity analysis, showing that this factor best matched the transition results of the full fletched GLOBIOM model.
@@ -193,7 +228,9 @@ This can be generalized as follows:
 
 where :math:`b` represents the biomass-potential category, and :math:`g` represents the carbon-price category.
 
-The fact that biomass is the only land-use related commodity which MESSAGEix accounts for when optimizing, also means that all the costs associated with the mitigation of land-use related emissions are therefore perceived as being part of the biomass-price.
+The fact that biomass is the only land-use related commodity which |name| accounts for when optimizing,
+also means that all the costs associated with the mitigation of land-use related emissions
+are therefore perceived as being part of the biomass-price.
 This is a drawback of the approach, but nevertheless provides a full representation of the land-use scenario specific costs.
 
 Results and validation
