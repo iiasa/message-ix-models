@@ -7,6 +7,82 @@ The primary drivers of future energy demand in |name| are projections of total p
 denoted as GDP (PPP).
 In addition to total population, the urban/rural split of population is relevant for the `MESSAGEix-Access <http://www.iiasa.ac.at/web/home/research/researchPrograms/Energy/MESSAGE-Access.en.html>`_ version of the model which distinguishes rural and urban population with different household incomes in developing country regions.
 
-Understanding how population and economic growth develops in the SSPs gives a first layer of understanding of the multiple mitigation and adaptation challenges. Population growth evolves in response to how fertility, mortality, migration, and education of various social strata are assumed to change over time. In SSP2, global population peaks at 9.4 billion people around 2070, and slowly declines thereafter (KC and Lutz, 2015 :cite:`kc_human_2014`). Gross Domestic Product (GDP) follows regional historical trends (Dellink et al., 2015 :cite:`dellink_long-term_2015`). In SSP2, average income grows by a factor of six and reaches about 60,000 USD/capita by the end of the century (all GDP/capita figures use USD2005 and purchasing-power-parity – PPP). The SSP2 GDP projection is situated in-between the estimates for SSP1 and SSP3, which reach global average income levels of 82,000 USD2005 and 22,000 USD2005, respectively, by the end of the century. SSP2 depicts a future of global progress where developing countries achieve significant economic growth. Today, average per capita income in the global North is about five times higher than in the global South. In SSP2, developing countries reach today’s average income levels of the OECD between 2060 and 2090, depending on the region. However, modest improvements of educational attainment levels result in declines in education-specific fertility rates, leading to incomplete economic convergence across different world regions. This is particularly an issue for Africa. Overall, both the population and GDP developments in SSP2 (Fricko et al., 2017 :cite:`fricko_marker_2017`) are designed to be situated in the middle of the road between SSP1 and SSP3, see KC and Lutz (2015) :cite:`kc_human_2014` and Dellink et al (2015) :cite:`dellink_long-term_2015` for details.
+Understanding how population and economic growth develops in the SSPs gives a first layer of understanding of the multiple mitigation and adaptation challenges.
+Population growth evolves in response to how fertility, mortality, migration, and education of various social strata are assumed to change over time.
+The driver projections were first released in 2013
+and have been updated for the ScenarioMIP-CMIP7 quantification
+(Dellink et al., in preparation :cite:`dellink_ssp_gdp_update`,
+KC et al., in preparation :cite:`kc_ssp_population_update`).
+Observed population growth to 2025 ran ahead of what the earlier SSP2 projection assumed
+and now tracks the 2013 SSP3 trajectory more closely (:numref:`fig-ssp-drivers-world`).
 
-The full quantitative data set of demographic and economic projections for the SSPs can be found in an online database (`SSP database <https://tntcat.iiasa.ac.at/SspDb/dsd?Action=htmlpage&page=welcome>`_).
+.. _fig-ssp-drivers-world:
+.. figure:: /_static/ssp_drivers_world.png
+
+   Global SSP drivers.
+   Comparison at the global level between the 2025 drivers (solid lines)
+   and the 2013 drivers (dotted lines) across the five SSP narratives,
+   for population in billion persons (a),
+   GDP (PPP) in trillion 2005 international dollars (b),
+   and per capita income in thousand international dollars per person (c).
+
+The largest change in population is in SSP4,
+which grows by 2.6 billion people from 9.3 billion to almost 12 billion.
+SSP2 gains 0.9 billion people and reaches almost 10 billion by 2100,
+having peaked around 2070 and declined slowly thereafter.
+SSP1 and SSP5 both reach approximately 8.1 billion people,
+increases of 1.2 and 0.76 billion respectively.
+Outside SSP3 these increases sit mainly in the global South
+while the global North declines slightly (:numref:`fig-ssp-drivers-south`, :numref:`fig-ssp-drivers-north`).
+In SSP3 the pattern reverses,
+with the global North gaining 0.47 billion people and the South losing 0.1 billion.
+
+Gross Domestic Product (GDP) follows regional historical trends.
+Global GDP in 2100 is higher than in the 2013 release in every narrative except SSP5.
+The increase is largest in SSP4, which reaches 482 trillion dollars,
+just over 130 trillion more than the 2013 variant.
+SSP2 rises slightly to 560 trillion dollars, almost exactly the SSP1 value.
+SSP3 reaches around 310 trillion dollars, an increase of 32 trillion.
+SSP5 is the only narrative in which GDP falls,
+by almost 95 trillion dollars, to 920 trillion dollars in 2100.
+All GDP figures are at purchasing power parity in 2005 international dollars.
+
+Per capita income stays close to the 2013 values in most narratives.
+SSP1 and SSP5 are the exceptions,
+where higher population growth concentrated in the global South lowers it,
+and the timing of income convergence shifts with it.
+In SSP5 the global South reaches the current income level of the global North
+around 2058, eighteen years later than in the 2013 release,
+and in SSP1 the same delay is six years.
+In SSP4 the South now reaches that level by 2100, which it did not in the 2013 setup,
+leaving SSP3 as the only narrative in which it does not.
+
+The 2025 GDP projections are published in constant 2017 PPP dollars
+and are rebased to 2005 international dollars for use in |name|,
+using a single time-invariant conversion factor per country supplied with the data.
+Where a country lacks a factor, the mean factor of its model region is applied.
+
+.. _fig-ssp-drivers-south:
+.. figure:: /_static/ssp_drivers_south.png
+
+   Global South SSP drivers.
+   Comparison for the global South between the 2025 drivers (solid lines)
+   and the 2013 drivers (dotted lines) across the five SSP narratives,
+   for population in billion persons (a),
+   GDP (PPP) in trillion 2005 international dollars (b),
+   and per capita income in thousand international dollars per person (c).
+
+.. _fig-ssp-drivers-north:
+.. figure:: /_static/ssp_drivers_north.png
+
+   Global North SSP drivers.
+   Comparison for the global North between the 2025 drivers (solid lines)
+   and the 2013 drivers (dotted lines) across the five SSP narratives,
+   for population in billion persons (a),
+   GDP (PPP) in trillion 2005 international dollars (b),
+   and per capita income in thousand international dollars per person (c).
+
+The full quantitative data set of demographic and economic projections for the SSPs,
+covering both the 2013 release and the current one,
+can be found in an online database
+(`SSP database <https://ssp.apps.ece.iiasa.ac.at/>`_).
