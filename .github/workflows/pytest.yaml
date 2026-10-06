@@ -229,6 +229,8 @@ jobs:
             # ixmp.util.ixmp4 contains compatibility code that only
             # works with pandas < 3.
             (version == V("3.11"), "pandas < 3"),
+            # Work around https://github.com/iiasa/ixmp4/issues/272
+            (version == v_main, "sqlalchemy < 2.1"),
         ):
             value += f' "{dependency}"' if condition else ""
  
