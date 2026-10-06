@@ -1,0 +1,133 @@
+Node1,Port1,Node2,Port2,Distance_km
+R12_AFR,Bonny Terminal (Nigeria),R12_RCPA,Dung Quat Terminal (Vietnam),16759.81
+R12_AFR,Bonny Terminal (Nigeria),R12_CHN,Qingdao (China),19435.94
+R12_AFR,Bonny Terminal (Nigeria),R12_EEU,Port of Constanta (Romania),10230.91
+R12_AFR,Bonny Terminal (Nigeria),R12_FSU,Port of Primorsk (Russia),10758.8
+R12_AFR,Bonny Terminal (Nigeria),R12_LAM,TEBIG (Brazil),7344.08
+R12_AFR,Bonny Terminal (Nigeria),R12_MEA,Ras Tanura (Saudi Arabia),14021.95
+R12_AFR,Bonny Terminal (Nigeria),R12_NAM,Port of Corpus Christi (USA),12132.08
+R12_AFR,Bonny Terminal (Nigeria),R12_PAO,Chiba Port (Japan),20339.79
+R12_AFR,Bonny Terminal (Nigeria),R12_PAS,Singapore,15072.69
+R12_AFR,Bonny Terminal (Nigeria),R12_SAS,Jamnagar (India),13633.81
+R12_AFR,Bonny Terminal (Nigeria),R12_WEU,Port of Rotterdam (Netherlands),8539.77
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_CHN,Qingdao (China),3071.45
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_EEU,Port of Constanta (Romania),13217.7
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_FSU,Port of Primorsk (Russia),18714.25
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_LAM,TEBIG (Brazil),18529.21
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_MEA,Ras Tanura (Saudi Arabia),8947.71
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_NAM,Port of Corpus Christi (USA),21273.46
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_PAO,Chiba Port (Japan),4169.5
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_PAS,Singapore,2026.06
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_SAS,Jamnagar (India),7356.85
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_WEU,Port of Rotterdam (Netherlands),17512.5
+R12_CHN,Qingdao (China),R12_EEU,Port of Constanta (Romania),15899.15
+R12_CHN,Qingdao (China),R12_FSU,Port of Primorsk (Russia),16392.56
+R12_CHN,Qingdao (China),R12_LAM,TEBIG (Brazil),21205.35
+R12_CHN,Qingdao (China),R12_MEA,Ras Tanura (Saudi Arabia),11629.16
+R12_CHN,Qingdao (China),R12_NAM,Port of Corpus Christi (USA),18951.77
+R12_CHN,Qingdao (China),R12_PAO,Chiba Port (Japan),2290.61
+R12_CHN,Qingdao (China),R12_PAS,Singapore,4707.51
+R12_CHN,Qingdao (China),R12_SAS,Jamnagar (India),10038.3
+R12_CHN,Qingdao (China),R12_WEU,Port of Rotterdam (Netherlands),15354.0
+R12_EEU,Port of Constanta (Romania),R12_FSU,Port of Primorsk (Russia),8482.24
+R12_EEU,Port of Constanta (Romania),R12_LAM,TEBIG (Brazil),12029.53
+R12_EEU,Port of Constanta (Romania),R12_MEA,Ras Tanura (Saudi Arabia),7730.5
+R12_EEU,Port of Constanta (Romania),R12_NAM,Port of Corpus Christi (USA),12635.34
+R12_EEU,Port of Constanta (Romania),R12_PAO,Chiba Port (Japan),16873.6
+R12_EEU,Port of Constanta (Romania),R12_PAS,Singapore,11252.8
+R12_EEU,Port of Constanta (Romania),R12_SAS,Jamnagar (India),7519.38
+R12_EEU,Port of Constanta (Romania),R12_WEU,Port of Rotterdam (Netherlands),6263.21
+R12_FSU,Port of Primorsk (Russia),R12_LAM,TEBIG (Brazil),12447.9
+R12_FSU,Port of Primorsk (Russia),R12_MEA,Ras Tanura (Saudi Arabia),14244.33
+R12_FSU,Port of Primorsk (Russia),R12_NAM,Port of Corpus Christi (USA),11107.08
+R12_FSU,Port of Primorsk (Russia),R12_PAO,Chiba Port (Japan),14960.37
+R12_FSU,Port of Primorsk (Russia),R12_PAS,Singapore,17766.62
+R12_FSU,Port of Primorsk (Russia),R12_SAS,Jamnagar (India),14033.21
+R12_FSU,Port of Primorsk (Russia),R12_WEU,Port of Rotterdam (Netherlands),2313.17
+R12_LAM,TEBIG (Brazil),R12_MEA,Ras Tanura (Saudi Arabia),15791.35
+R12_LAM,TEBIG (Brazil),R12_NAM,Port of Corpus Christi (USA),10604.44
+R12_LAM,TEBIG (Brazil),R12_PAO,Chiba Port (Japan),21659.71
+R12_LAM,TEBIG (Brazil),R12_PAS,Singapore,16842.1
+R12_LAM,TEBIG (Brazil),R12_SAS,Jamnagar (India),15403.21
+R12_LAM,TEBIG (Brazil),R12_WEU,Port of Rotterdam (Netherlands),10228.87
+R12_MEA,Ras Tanura (Saudi Arabia),R12_NAM,Port of Corpus Christi (USA),18397.43
+R12_MEA,Ras Tanura (Saudi Arabia),R12_PAO,Chiba Port (Japan),12603.6
+R12_MEA,Ras Tanura (Saudi Arabia),R12_PAS,Singapore,6982.8
+R12_MEA,Ras Tanura (Saudi Arabia),R12_SAS,Jamnagar (India),2169.52
+R12_MEA,Ras Tanura (Saudi Arabia),R12_WEU,Port of Rotterdam (Netherlands),12025.3
+R12_NAM,Port of Corpus Christi (USA),R12_PAO,Chiba Port (Japan),17312.46
+R12_NAM,Port of Corpus Christi (USA),R12_PAS,Singapore,21919.72
+R12_NAM,Port of Corpus Christi (USA),R12_SAS,Jamnagar (India),18186.31
+R12_NAM,Port of Corpus Christi (USA),R12_WEU,Port of Rotterdam (Netherlands),9430.23
+R12_PAO,Chiba Port (Japan),R12_PAS,Singapore,5681.95
+R12_PAO,Chiba Port (Japan),R12_SAS,Jamnagar (India),11012.74
+R12_PAO,Chiba Port (Japan),R12_WEU,Port of Rotterdam (Netherlands),13921.82
+R12_PAS,Singapore,R12_SAS,Jamnagar (India),5391.94
+R12_PAS,Singapore,R12_WEU,Port of Rotterdam (Netherlands),15547.59
+R12_SAS,Jamnagar (India),R12_WEU,Port of Rotterdam (Netherlands),11814.18
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_AFR,Bonny Terminal (Nigeria),16759.81
+R12_CHN,Qingdao (China),R12_AFR,Bonny Terminal (Nigeria),19435.94
+R12_EEU,Port of Constanta (Romania),R12_AFR,Bonny Terminal (Nigeria),10230.91
+R12_FSU,Port of Primorsk (Russia),R12_AFR,Bonny Terminal (Nigeria),10758.8
+R12_LAM,TEBIG (Brazil),R12_AFR,Bonny Terminal (Nigeria),7344.08
+R12_MEA,Ras Tanura (Saudi Arabia),R12_AFR,Bonny Terminal (Nigeria),14021.95
+R12_NAM,Port of Corpus Christi (USA),R12_AFR,Bonny Terminal (Nigeria),12132.08
+R12_PAO,Chiba Port (Japan),R12_AFR,Bonny Terminal (Nigeria),20339.79
+R12_PAS,Singapore,R12_AFR,Bonny Terminal (Nigeria),15072.69
+R12_SAS,Jamnagar (India),R12_AFR,Bonny Terminal (Nigeria),13633.81
+R12_WEU,Port of Rotterdam (Netherlands),R12_AFR,Bonny Terminal (Nigeria),8539.77
+R12_CHN,Qingdao (China),R12_RCPA,Dung Quat Terminal (Vietnam),3071.45
+R12_EEU,Port of Constanta (Romania),R12_RCPA,Dung Quat Terminal (Vietnam),13217.7
+R12_FSU,Port of Primorsk (Russia),R12_RCPA,Dung Quat Terminal (Vietnam),18714.25
+R12_LAM,TEBIG (Brazil),R12_RCPA,Dung Quat Terminal (Vietnam),18529.21
+R12_MEA,Ras Tanura (Saudi Arabia),R12_RCPA,Dung Quat Terminal (Vietnam),8947.71
+R12_NAM,Port of Corpus Christi (USA),R12_RCPA,Dung Quat Terminal (Vietnam),21273.46
+R12_PAO,Chiba Port (Japan),R12_RCPA,Dung Quat Terminal (Vietnam),4169.5
+R12_PAS,Singapore,R12_RCPA,Dung Quat Terminal (Vietnam),2026.06
+R12_SAS,Jamnagar (India),R12_RCPA,Dung Quat Terminal (Vietnam),7356.85
+R12_WEU,Port of Rotterdam (Netherlands),R12_RCPA,Dung Quat Terminal (Vietnam),17512.5
+R12_EEU,Port of Constanta (Romania),R12_CHN,Qingdao (China),15899.15
+R12_FSU,Port of Primorsk (Russia),R12_CHN,Qingdao (China),16392.56
+R12_LAM,TEBIG (Brazil),R12_CHN,Qingdao (China),21205.35
+R12_MEA,Ras Tanura (Saudi Arabia),R12_CHN,Qingdao (China),11629.16
+R12_NAM,Port of Corpus Christi (USA),R12_CHN,Qingdao (China),18951.77
+R12_PAO,Chiba Port (Japan),R12_CHN,Qingdao (China),2290.61
+R12_PAS,Singapore,R12_CHN,Qingdao (China),4707.51
+R12_SAS,Jamnagar (India),R12_CHN,Qingdao (China),10038.3
+R12_WEU,Port of Rotterdam (Netherlands),R12_CHN,Qingdao (China),15354.0
+R12_FSU,Port of Primorsk (Russia),R12_EEU,Port of Constanta (Romania),8482.24
+R12_LAM,TEBIG (Brazil),R12_EEU,Port of Constanta (Romania),12029.53
+R12_MEA,Ras Tanura (Saudi Arabia),R12_EEU,Port of Constanta (Romania),7730.5
+R12_NAM,Port of Corpus Christi (USA),R12_EEU,Port of Constanta (Romania),12635.34
+R12_PAO,Chiba Port (Japan),R12_EEU,Port of Constanta (Romania),16873.6
+R12_PAS,Singapore,R12_EEU,Port of Constanta (Romania),11252.8
+R12_SAS,Jamnagar (India),R12_EEU,Port of Constanta (Romania),7519.38
+R12_WEU,Port of Rotterdam (Netherlands),R12_EEU,Port of Constanta (Romania),6263.21
+R12_LAM,TEBIG (Brazil),R12_FSU,Port of Primorsk (Russia),12447.9
+R12_MEA,Ras Tanura (Saudi Arabia),R12_FSU,Port of Primorsk (Russia),14244.33
+R12_NAM,Port of Corpus Christi (USA),R12_FSU,Port of Primorsk (Russia),11107.08
+R12_PAO,Chiba Port (Japan),R12_FSU,Port of Primorsk (Russia),14960.37
+R12_PAS,Singapore,R12_FSU,Port of Primorsk (Russia),17766.62
+R12_SAS,Jamnagar (India),R12_FSU,Port of Primorsk (Russia),14033.21
+R12_WEU,Port of Rotterdam (Netherlands),R12_FSU,Port of Primorsk (Russia),2313.17
+R12_MEA,Ras Tanura (Saudi Arabia),R12_LAM,TEBIG (Brazil),15791.35
+R12_NAM,Port of Corpus Christi (USA),R12_LAM,TEBIG (Brazil),10604.44
+R12_PAO,Chiba Port (Japan),R12_LAM,TEBIG (Brazil),21659.71
+R12_PAS,Singapore,R12_LAM,TEBIG (Brazil),16842.1
+R12_SAS,Jamnagar (India),R12_LAM,TEBIG (Brazil),15403.21
+R12_WEU,Port of Rotterdam (Netherlands),R12_LAM,TEBIG (Brazil),10228.87
+R12_NAM,Port of Corpus Christi (USA),R12_MEA,Ras Tanura (Saudi Arabia),18397.43
+R12_PAO,Chiba Port (Japan),R12_MEA,Ras Tanura (Saudi Arabia),12603.6
+R12_PAS,Singapore,R12_MEA,Ras Tanura (Saudi Arabia),6982.8
+R12_SAS,Jamnagar (India),R12_MEA,Ras Tanura (Saudi Arabia),2169.52
+R12_WEU,Port of Rotterdam (Netherlands),R12_MEA,Ras Tanura (Saudi Arabia),12025.3
+R12_PAO,Chiba Port (Japan),R12_NAM,Port of Corpus Christi (USA),17312.46
+R12_PAS,Singapore,R12_NAM,Port of Corpus Christi (USA),21919.72
+R12_SAS,Jamnagar (India),R12_NAM,Port of Corpus Christi (USA),18186.31
+R12_WEU,Port of Rotterdam (Netherlands),R12_NAM,Port of Corpus Christi (USA),9430.23
+R12_PAS,Singapore,R12_PAO,Chiba Port (Japan),5681.95
+R12_SAS,Jamnagar (India),R12_PAO,Chiba Port (Japan),11012.74
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAO,Chiba Port (Japan),13921.82
+R12_SAS,Jamnagar (India),R12_PAS,Singapore,5391.94
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAS,Singapore,15547.59
+R12_WEU,Port of Rotterdam (Netherlands),R12_SAS,Jamnagar (India),11814.18

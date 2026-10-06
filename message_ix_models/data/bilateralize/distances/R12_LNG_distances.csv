@@ -1,0 +1,133 @@
+Node1,Port1,Node2,Port2,Distance_km
+R12_AFR,Bonny Terminal (Nigeria),R12_RCPA,PV Gas Port (Vietnam),16313.22
+R12_AFR,Bonny Terminal (Nigeria),R12_CHN,Guangdong Dapeng (China),17482.84
+R12_AFR,Bonny Terminal (Nigeria),R12_EEU,Swinoujscie (Poland),9812.84
+R12_AFR,Bonny Terminal (Nigeria),R12_FSU,Sabetta/Yamal LNG (Russia),13117.95
+R12_AFR,Bonny Terminal (Nigeria),R12_LAM,Point Fortin (Trinidad and Tobago),8314.78
+R12_AFR,Bonny Terminal (Nigeria),R12_MEA,Ras Laffan (Qatar),13917.3
+R12_AFR,Bonny Terminal (Nigeria),R12_NAM,Sabine Pass (USA),11882.65
+R12_AFR,Bonny Terminal (Nigeria),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),20339.32
+R12_AFR,Bonny Terminal (Nigeria),R12_PAS,Bintulu LNG (Malaysia),15829.69
+R12_AFR,Bonny Terminal (Nigeria),R12_SAS,Dahej LNG Terminal (India),13556.59
+R12_AFR,Bonny Terminal (Nigeria),R12_WEU,Port of Rotterdam (Netherlands),8539.77
+R12_RCPA,PV Gas Port (Vietnam),R12_CHN,Guangdong Dapeng (China),1714.53
+R12_RCPA,PV Gas Port (Vietnam),R12_EEU,Swinoujscie (Poland),18061.19
+R12_RCPA,PV Gas Port (Vietnam),R12_FSU,Sabetta/Yamal LNG (Russia),14024.76
+R12_RCPA,PV Gas Port (Vietnam),R12_LAM,Point Fortin (Trinidad and Tobago),20663.49
+R12_RCPA,PV Gas Port (Vietnam),R12_MEA,Ras Laffan (Qatar),8118.68
+R12_RCPA,PV Gas Port (Vietnam),R12_NAM,Sabine Pass (USA),21740.0
+R12_RCPA,PV Gas Port (Vietnam),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),4770.53
+R12_RCPA,PV Gas Port (Vietnam),R12_PAS,Bintulu LNG (Malaysia),1952.85
+R12_RCPA,PV Gas Port (Vietnam),R12_SAS,Dahej LNG Terminal (India),6221.76
+R12_RCPA,PV Gas Port (Vietnam),R12_WEU,Port of Rotterdam (Netherlands),16788.12
+R12_CHN,Guangdong Dapeng (China),R12_EEU,Swinoujscie (Poland),16893.83
+R12_CHN,Guangdong Dapeng (China),R12_FSU,Sabetta/Yamal LNG (Russia),12548.81
+R12_CHN,Guangdong Dapeng (China),R12_LAM,Point Fortin (Trinidad and Tobago),19750.42
+R12_CHN,Guangdong Dapeng (China),R12_MEA,Ras Laffan (Qatar),9566.08
+R12_CHN,Guangdong Dapeng (China),R12_NAM,Sabine Pass (USA),20264.04
+R12_CHN,Guangdong Dapeng (China),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),3294.57
+R12_CHN,Guangdong Dapeng (China),R12_PAS,Bintulu LNG (Malaysia),2754.07
+R12_CHN,Guangdong Dapeng (China),R12_SAS,Dahej LNG Terminal (India),7669.17
+R12_CHN,Guangdong Dapeng (China),R12_WEU,Port of Rotterdam (Netherlands),16801.24
+R12_EEU,Swinoujscie (Poland),R12_FSU,Sabetta/Yamal LNG (Russia),4953.53
+R12_EEU,Swinoujscie (Poland),R12_LAM,Point Fortin (Trinidad and Tobago),8894.03
+R12_EEU,Swinoujscie (Poland),R12_MEA,Ras Laffan (Qatar),13193.72
+R12_EEU,Swinoujscie (Poland),R12_NAM,Sabine Pass (USA),9911.69
+R12_EEU,Swinoujscie (Poland),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),14013.95
+R12_EEU,Swinoujscie (Poland),R12_PAS,Bintulu LNG (Malaysia),18088.54
+R12_EEU,Swinoujscie (Poland),R12_SAS,Dahej LNG Terminal (India),13334.48
+R12_EEU,Swinoujscie (Poland),R12_WEU,Port of Rotterdam (Netherlands),1367.21
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_LAM,Point Fortin (Trinidad and Tobago),11542.03
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_MEA,Ras Laffan (Qatar),16520.97
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_NAM,Sabine Pass (USA),12218.24
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),9668.92
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_PAS,Bintulu LNG (Malaysia),15058.98
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_SAS,Dahej LNG Terminal (India),16661.72
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_WEU,Port of Rotterdam (Netherlands),4860.93
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_MEA,Ras Laffan (Qatar),15796.02
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_NAM,Sabine Pass (USA),4145.33
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),16663.41
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_PAS,Bintulu LNG (Malaysia),20690.84
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_SAS,Dahej LNG Terminal (India),15936.78
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_WEU,Port of Rotterdam (Netherlands),7620.95
+R12_MEA,Ras Laffan (Qatar),R12_NAM,Sabine Pass (USA),18043.35
+R12_MEA,Ras Laffan (Qatar),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),12498.48
+R12_MEA,Ras Laffan (Qatar),R12_PAS,Bintulu LNG (Malaysia),8146.02
+R12_MEA,Ras Laffan (Qatar),R12_SAS,Dahej LNG Terminal (India),2523.78
+R12_MEA,Ras Laffan (Qatar),R12_WEU,Port of Rotterdam (Netherlands),11920.65
+R12_NAM,Sabine Pass (USA),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),17177.02
+R12_NAM,Sabine Pass (USA),R12_PAS,Bintulu LNG (Malaysia),22365.63
+R12_NAM,Sabine Pass (USA),R12_SAS,Dahej LNG Terminal (India),18184.11
+R12_NAM,Sabine Pass (USA),R12_WEU,Port of Rotterdam (Netherlands),9180.8
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_PAS,Bintulu LNG (Malaysia),5610.55
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_SAS,Dahej LNG Terminal (India),10601.57
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_WEU,Port of Rotterdam (Netherlands),13921.35
+R12_PAS,Bintulu LNG (Malaysia),R12_SAS,Dahej LNG Terminal (India),6249.11
+R12_PAS,Bintulu LNG (Malaysia),R12_WEU,Port of Rotterdam (Netherlands),16815.47
+R12_SAS,Dahej LNG Terminal (India),R12_WEU,Port of Rotterdam (Netherlands),12061.41
+R12_RCPA,PV Gas Port (Vietnam),R12_AFR,Bonny Terminal (Nigeria),16313.22
+R12_CHN,Guangdong Dapeng (China),R12_AFR,Bonny Terminal (Nigeria),17482.84
+R12_EEU,Swinoujscie (Poland),R12_AFR,Bonny Terminal (Nigeria),9812.84
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_AFR,Bonny Terminal (Nigeria),13117.95
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_AFR,Bonny Terminal (Nigeria),8314.78
+R12_MEA,Ras Laffan (Qatar),R12_AFR,Bonny Terminal (Nigeria),13917.3
+R12_NAM,Sabine Pass (USA),R12_AFR,Bonny Terminal (Nigeria),11882.65
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_AFR,Bonny Terminal (Nigeria),20339.32
+R12_PAS,Bintulu LNG (Malaysia),R12_AFR,Bonny Terminal (Nigeria),15829.69
+R12_SAS,Dahej LNG Terminal (India),R12_AFR,Bonny Terminal (Nigeria),13556.59
+R12_WEU,Port of Rotterdam (Netherlands),R12_AFR,Bonny Terminal (Nigeria),8539.77
+R12_CHN,Guangdong Dapeng (China),R12_RCPA,PV Gas Port (Vietnam),1714.53
+R12_EEU,Swinoujscie (Poland),R12_RCPA,PV Gas Port (Vietnam),18061.19
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_RCPA,PV Gas Port (Vietnam),14024.76
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_RCPA,PV Gas Port (Vietnam),20663.49
+R12_MEA,Ras Laffan (Qatar),R12_RCPA,PV Gas Port (Vietnam),8118.68
+R12_NAM,Sabine Pass (USA),R12_RCPA,PV Gas Port (Vietnam),21740.0
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_RCPA,PV Gas Port (Vietnam),4770.53
+R12_PAS,Bintulu LNG (Malaysia),R12_RCPA,PV Gas Port (Vietnam),1952.85
+R12_SAS,Dahej LNG Terminal (India),R12_RCPA,PV Gas Port (Vietnam),6221.76
+R12_WEU,Port of Rotterdam (Netherlands),R12_RCPA,PV Gas Port (Vietnam),16788.12
+R12_EEU,Swinoujscie (Poland),R12_CHN,Guangdong Dapeng (China),16893.83
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_CHN,Guangdong Dapeng (China),12548.81
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_CHN,Guangdong Dapeng (China),19750.42
+R12_MEA,Ras Laffan (Qatar),R12_CHN,Guangdong Dapeng (China),9566.08
+R12_NAM,Sabine Pass (USA),R12_CHN,Guangdong Dapeng (China),20264.04
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_CHN,Guangdong Dapeng (China),3294.57
+R12_PAS,Bintulu LNG (Malaysia),R12_CHN,Guangdong Dapeng (China),2754.07
+R12_SAS,Dahej LNG Terminal (India),R12_CHN,Guangdong Dapeng (China),7669.17
+R12_WEU,Port of Rotterdam (Netherlands),R12_CHN,Guangdong Dapeng (China),16801.24
+R12_FSU,Sabetta/Yamal LNG (Russia),R12_EEU,Swinoujscie (Poland),4953.53
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_EEU,Swinoujscie (Poland),8894.03
+R12_MEA,Ras Laffan (Qatar),R12_EEU,Swinoujscie (Poland),13193.72
+R12_NAM,Sabine Pass (USA),R12_EEU,Swinoujscie (Poland),9911.69
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_EEU,Swinoujscie (Poland),14013.95
+R12_PAS,Bintulu LNG (Malaysia),R12_EEU,Swinoujscie (Poland),18088.54
+R12_SAS,Dahej LNG Terminal (India),R12_EEU,Swinoujscie (Poland),13334.48
+R12_WEU,Port of Rotterdam (Netherlands),R12_EEU,Swinoujscie (Poland),1367.21
+R12_LAM,Point Fortin (Trinidad and Tobago),R12_FSU,Sabetta/Yamal LNG (Russia),11542.03
+R12_MEA,Ras Laffan (Qatar),R12_FSU,Sabetta/Yamal LNG (Russia),16520.97
+R12_NAM,Sabine Pass (USA),R12_FSU,Sabetta/Yamal LNG (Russia),12218.24
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_FSU,Sabetta/Yamal LNG (Russia),9668.92
+R12_PAS,Bintulu LNG (Malaysia),R12_FSU,Sabetta/Yamal LNG (Russia),15058.98
+R12_SAS,Dahej LNG Terminal (India),R12_FSU,Sabetta/Yamal LNG (Russia),16661.72
+R12_WEU,Port of Rotterdam (Netherlands),R12_FSU,Sabetta/Yamal LNG (Russia),4860.93
+R12_MEA,Ras Laffan (Qatar),R12_LAM,Point Fortin (Trinidad and Tobago),15796.02
+R12_NAM,Sabine Pass (USA),R12_LAM,Point Fortin (Trinidad and Tobago),4145.33
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_LAM,Point Fortin (Trinidad and Tobago),16663.41
+R12_PAS,Bintulu LNG (Malaysia),R12_LAM,Point Fortin (Trinidad and Tobago),20690.84
+R12_SAS,Dahej LNG Terminal (India),R12_LAM,Point Fortin (Trinidad and Tobago),15936.78
+R12_WEU,Port of Rotterdam (Netherlands),R12_LAM,Point Fortin (Trinidad and Tobago),7620.95
+R12_NAM,Sabine Pass (USA),R12_MEA,Ras Laffan (Qatar),18043.35
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_MEA,Ras Laffan (Qatar),12498.48
+R12_PAS,Bintulu LNG (Malaysia),R12_MEA,Ras Laffan (Qatar),8146.02
+R12_SAS,Dahej LNG Terminal (India),R12_MEA,Ras Laffan (Qatar),2523.78
+R12_WEU,Port of Rotterdam (Netherlands),R12_MEA,Ras Laffan (Qatar),11920.65
+R12_PAO,Sodegaura LNG Termina- Chiba (Japan),R12_NAM,Sabine Pass (USA),17177.02
+R12_PAS,Bintulu LNG (Malaysia),R12_NAM,Sabine Pass (USA),22365.63
+R12_SAS,Dahej LNG Terminal (India),R12_NAM,Sabine Pass (USA),18184.11
+R12_WEU,Port of Rotterdam (Netherlands),R12_NAM,Sabine Pass (USA),9180.8
+R12_PAS,Bintulu LNG (Malaysia),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),5610.55
+R12_SAS,Dahej LNG Terminal (India),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),10601.57
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAO,Sodegaura LNG Termina- Chiba (Japan),13921.35
+R12_SAS,Dahej LNG Terminal (India),R12_PAS,Bintulu LNG (Malaysia),6249.11
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAS,Bintulu LNG (Malaysia),16815.47
+R12_WEU,Port of Rotterdam (Netherlands),R12_SAS,Dahej LNG Terminal (India),12061.41
