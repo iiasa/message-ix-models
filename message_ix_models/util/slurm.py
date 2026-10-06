@@ -34,7 +34,7 @@ In particular:
 See also:
 
 - `sbatch <https://slurm.schedmd.com/sbatch.html>`_ manual page.
-- :doc:`/howto/unicc`.
+- :doc:`/howto/slurm`.
 - :doc:`/distrib/`.
 """
 
@@ -117,7 +117,7 @@ class Template(list):
 
 
 #: Default template for :func:`cli`. Currently, the same as suggested by
-#: :doc:`/distrib/unicc`.
+#: :doc:`/howto/slurm`.
 DEFAULT = Template(
     "sbatch",
     "--time=1:00:00",
