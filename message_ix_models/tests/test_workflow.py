@@ -236,14 +236,14 @@ def test_make_click_command(
     # Add this into the hidden CLI test group
     with temporary_command(cli_test_group, cmd):
         # Invoke the command with various parameters
-        for params, output in (
+        for params, pattern in (
             (["--go", "B"], "Workflow continues with"),
-            (["B"], "Write workflow diagram to"),
+            (["B"], "(Write workflow diagram to|Graphviz executable.s. or Python)"),
         ):
             # Command runs and exits with 0
             result = mix_models_cli.assert_exit_0(["_test", "run"] + params)
             # Expected log messages or output were printed
-            assert output in result.output
+            assert re.search(pattern, result.output), pattern
 
         # Invalid usage
         for params, output in (
