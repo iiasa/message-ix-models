@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.14.1
+  rev: v2.4.0
   hooks:
   - id: mypy
     pass_filenames: false
@@ -13,8 +13,8 @@ repos:
     - types-PyYAML
     - types-tqdm
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.9.1
+  rev: v0.16.10
   hooks:
-  - id: ruff
+  - id: ruff-check
   - id: ruff-format
     args: [ --check ]

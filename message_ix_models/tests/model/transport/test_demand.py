@@ -13,6 +13,7 @@ from message_ix_models.model.transport import plot as plots
 from message_ix_models.model.workflow import STAGE
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.report import plot
+from message_ix_models.util.graphviz import HAS_GRAPHVIZ
 
 log = logging.getLogger(__name__)
 
@@ -116,7 +117,8 @@ def test_exo_report(test_context: Context, tmp_path: Path) -> None:
     # Graph structure can be visualized
     path = tmp_path / "demand-graph.pdf"
     log.info(f"Visualize compute graph at {path}")
-    c.visualize(path, key)
+    if HAS_GRAPHVIZ:
+        c.visualize(path, key)
 
     # Add all BUILD/single plots and necessary keys, e.g. 'scenario'
     plot.prepare_computer(c, plots, "demand plots", stage=STAGE.BUILD)

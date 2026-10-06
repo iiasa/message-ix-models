@@ -398,10 +398,15 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
         log.debug(f"…with package versions:\n{show_versions()}")
 
         if not go:
-            path = context.get_local_path(f"{slug}-workflow.svg")
-            log.info(f"Write workflow diagram to {path}")
-            # If target_step is given, show only this step
-            wf.visualize(path, key=target_step, rankdir="LR")
+            from message_ix_models.util.graphviz import HAS_GRAPHVIZ
+
+            if HAS_GRAPHVIZ:
+                path = context.get_local_path(f"{slug}-workflow.svg")
+                log.info(f"Write workflow diagram to {path}")
+                # If target_step is given, show only this step
+                wf.visualize(path, key=target_step, rankdir="LR")
+            else:
+                log.info("Graphviz executable(s) or Python package not available")
             return
 
         wf.run(target_step)

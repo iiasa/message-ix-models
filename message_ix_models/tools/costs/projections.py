@@ -598,10 +598,12 @@ def create_iamc_outputs(
     iamc_fix = (
         (
             msg_fix.assign(
-                Variable=lambda x: "OM Cost|Electricity|"
-                + x.technology
-                + "|Vintage="
-                + x.year_vtg.astype(str),
+                Variable=lambda x: (
+                    "OM Cost|Electricity|"
+                    + x.technology
+                    + "|Vintage="
+                    + x.year_vtg.astype(str)
+                ),
             )
             .rename(
                 columns={
