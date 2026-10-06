@@ -95,7 +95,7 @@ CO2 mitigation options in the energy system include technology and fuel shifts; 
      - steam methane reforming with CCS
      - 90%
 
-
+.. _emission_nonco2:
 
 Non-CO2 GHGs
 ~~~~~~~~~~~~
