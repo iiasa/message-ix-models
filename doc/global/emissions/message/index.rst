@@ -96,7 +96,6 @@ CO2 mitigation options in the energy system include technology and fuel shifts; 
      - 90%
 
 
-
 Non-CO2 GHGs
 ~~~~~~~~~~~~
 MESSAGE includes a representation of non-CO2 GHGs (CH4, N2O, HFCs, SF6, PFCs) mandated by the Kyoto Protocol (Rao and Riahi, 2006 :cite:`rao_role_2006`) with the exception of NF3. Included is a representation of emissions and mitigation options from both energy related processes as well as non-energy sources like municipal solid waste disposal and wastewater. CH4 and N2O emissions from land are taken care of by the link to GLOBIOM (see Section :ref:`emission_land`).
