@@ -3,7 +3,7 @@ What's new
 
 Next release
 ============
-
+- Ensure full IEA balances are imported in :mod:`message_ix_models.tools.bilateralize.historical_calibration` (:pull:`535`).
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
