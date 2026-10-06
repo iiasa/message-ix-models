@@ -43,6 +43,7 @@ lh2_shipped_trade:
   specify_network:
     False
   tracked_emissions: # List of tracked emission types
+  emission_factor:
   bunker_technology:
     lh2_tanker_lh2:
       lh2_tobunker
