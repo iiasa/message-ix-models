@@ -8,6 +8,26 @@ Next release
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
 - Add :class:`.model.water.Config` to collect water module settings (:pull:`509`).
+- Refresh :mod:`.model.water` input data and pre-processing (:pull:`513`).
+
+  - Refresh the R12 hydro availability, sectoral demand, drinking-water access rate and desalination input data.
+  - Replace the legacy R and Python pre-processing scripts with Python generators.
+  - Read sectoral demands and access rates keyed on the run's SSP,
+    and rename the urban and rural domestic technologies and data files to :py:`urban_domestic`.
+  - Source treatment and recycling rates from SSP2 for every SSP.
+  - Restrict the water RCP set to 2p6, 7p0 and 8p5, and change the default from :py:`"no_climate"` to :py:`"2p6"`.
+  - Exclude three basins that are entirely missing from the refreshed hydrological source.
+  - Drop the climate cooling-impact branch from the cooling-technology build.
+
+- Fix water-nexus supply constraints in :mod:`.model.water` (:pull:`522`).
+
+  - Default saline extraction capacity to zero where no desalination projection exists,
+    and clip desalination activity floors to that cap.
+  - Limit desalination new-capacity growth to 10% per year.
+  - Seed historical extraction activity by merit-order dispatch across the basin's supply sources.
+  - Cap renewable groundwater activity growth to match the dispatch seed.
+  - Price fossil groundwater at a 20% premium over renewable groundwater.
+
 - Add :doc:`/api/model-bmt` (:pull:`433`, :pull:`486`).
 - :doc:`/project/circeular`:
   Distinguish :class:`~.circeular.structure.CL_SCENARIO`
