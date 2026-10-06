@@ -76,7 +76,6 @@ class Node(object):
         setattr(self, name, node)
 
     def sum_sectors(self, mode="overwrite"):
-
         if len(self.children) == 0:
             return self.df  # bottom of recursion
 
