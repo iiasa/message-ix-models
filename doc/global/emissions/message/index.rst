@@ -1,7 +1,7 @@
 .. _emission_energy:
 
-Emission from energy (MESSAGE)
-------------------------------
+Emissions from energy (|MESSAGEix|)
+-----------------------------------
 
 Carbon-dioxide (CO2)
 ~~~~~~~~~~~~~~~~~~~~
@@ -95,22 +95,37 @@ CO2 mitigation options in the energy system include technology and fuel shifts; 
      - steam methane reforming with CCS
      - 90%
 
-.. _emission_nonco2:
+.. _emission_energy_nonco2:
 
 Non-CO2 GHGs
 ~~~~~~~~~~~~
-MESSAGE includes a representation of non-CO2 GHGs (CH4, N2O, HFCs, SF6, PFCs) mandated by the Kyoto Protocol (Rao and Riahi, 2006 :cite:`rao_role_2006`) with the exception of NF3. Included is a representation of emissions and mitigation options from both energy related processes as well as non-energy sources like municipal solid waste disposal and wastewater. CH4 and N2O emissions from land are taken care of by the link to GLOBIOM (see Section :ref:`emission_land`).
 
-.. _gains:
+CH4 and N2O emissions from the energy system, industry, product use, waste and wastewater
+are represented through implied emission factors and abatement technologies derived from GAINS,
+so that they are part of the optimization
+(see :ref:`emission_nonco2`).
+CH4 and N2O emissions from agriculture and land use come from GLOBIOM
+(see :ref:`emission_land`).
+
+F-gases are represented directly in |MESSAGEix|.
+HFC emissions from refrigeration and air-conditioning, foams, aerosols, solvents and fire extinguishers
+are linked to drivers such as population,
+residential and commercial energy demand and transport demand,
+with historical intensities based on EPA (2013) :cite:`environmental_protection_agency_epa_global_2013`.
+SF6 emissions from electrical equipment and magnesium production
+are linked to electricity transmission and distribution and to transport demand.
+A small set of abatement options,
+such as refrigerant recovery, leak repair and replacement with alternative substances,
+is available, with potentials bounded by technical feasibility
+(Rao and Riahi, 2006 :cite:`rao_role_2006`).
+
+.. _emission_energy_airpollution:
 
 Air pollution
 ~~~~~~~~~~~~~
-Air pollution implications are derived with the help of the GAINS (Greenhouse gas-Air pollution INteractions and Synergies) model. GAINS allows for the development of cost-effective emission control strategies to
-meet environmental objectives on climate, human health and ecosystem impacts until 2030 (Amann et al., 2011 :cite:`amann_cost-effective_2011`). These impacts are considered in a multi-pollutant context,
-quantifying the contributions of sulfur dioxide (SO2), nitrogen oxides (NOx), ammonia (NH3), non-methane volatile organic compounds (VOC), and primary emissions of particulate matter (PM), including fine
-and coarse PM as well as carbonaceous particles (BC, OC). As a stand-alone model, it also tracks emissions of six greenhouse gases of the Kyoto basket with exception of NF3. The GAINS model has global
-coverage and holds essential information about key sources of emissions, environmental policies, and further mitigation opportunities for about 170 country-regions. The model relies on exogenous projections
-of energy use, industrial production, and agricultural activity for which it distinguishes all key emission sources and several hundred control measures. GAINS can develop finely resolved mid-term air pollutant
-emission trajectories with different levels of mitigation ambition (Cofala et al., 2007 :cite:`cofala_scenarios_2007`; Amann et al., 2013 :cite:`amann_regional_2013`). The results of such scenarios are used as
-input to global IAM frameworks to characterize air pollution trajectories associated with various long-term energy developments
-(see further for example Riahi et al., 2012 :cite:`riahi_chapter_2012`; Rao et al., 2013 :cite:`rao_better_2013`; Fricko et al., 2017 :cite:`fricko_marker_2017`).
+
+Emissions of sulfur dioxide (SO2), nitrogen oxides (NOx), ammonia (NH3),
+non-methane volatile organic compounds (VOC), black carbon (BC) and organic carbon (OC)
+are calculated in GAINS after the scenario is solved,
+from the scenario activity translated to GAINS resolution
+(see :ref:`policy_overview` and :ref:`gains_airpollution`).
