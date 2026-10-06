@@ -58,117 +58,42 @@ Water withdrawal and consumption intensities for power plant cooling technologie
 * Ambient conditions (temperature, humidity)
 * Water temperature limits for discharge
 
-Representative water intensities are provided in :ref:`water-demand` and vary by plant type and cooling technology.
-
 Cooling Technology Options
 ---------------------------
 
-Three main cooling technology categories are represented in MESSAGEix-Nexus, each with distinct characteristics regarding water use, energy penalties, and costs.
+Three cooling technology categories are represented, plus a seawater variant for coastal plants. They differ in how much water they withdraw, how much they consume, and what they cost in lost generation.
 
-Once-Through Cooling
-^^^^^^^^^^^^^^^^^^^^
+.. list-table:: Cooling technology characteristics
+   :widths: 22 20 20 20 18
+   :header-rows: 1
 
-Once-through (open-loop) cooling draws water from a surface water body, passes it through the condenser to absorb waste heat, and returns the warmed water to the source.
+   * - Technology
+     - Water withdrawal
+     - Water consumption
+     - Efficiency penalty
+     - Capital cost
+   * - Once-through
+     - Very high
+     - Low
+     - Negligible
+     - Lowest
+   * - Recirculating (wet tower)
+     - Low
+     - High
+     - Small
+     - Moderate
+   * - Dry (air) cooling
+     - Negligible
+     - Negligible
+     - Large, rises with ambient temperature
+     - Highest
+   * - Once-through, seawater
+     - Very high (saline)
+     - Low
+     - Negligible
+     - Low
 
-**Characteristics**:
-
-* **Very high water withdrawal**: 100-200 m³/MWh depending on plant type
-* **Low water consumption**: 1-2 m³/MWh (only evaporation from source due to heating)
-* **Minimal energy penalty**: Small pumping requirement (<0.3% of generation)
-* **Low capital cost**: Simplest cooling system
-* **Requires large water body**: River, lake, or ocean with adequate flow
-* **Thermal pollution**: Discharged water is 8-15°C warmer than intake
-
-**Advantages**:
-
-* Lowest cost option
-* Minimal parasitic energy loss
-* Simple operation and maintenance
-
-**Disadvantages**:
-
-* Very high water withdrawal (though mostly returned)
-* Thermal pollution impacts aquatic ecosystems
-* Restricted by environmental regulations in many regions
-* Requires proximity to large, reliable water source
-* Vulnerable to water temperature constraints during heat waves
-
-**Availability**:
-
-* Primarily for coastal plants (seawater cooling)
-* Large rivers with high minimum flows
-* Great Lakes and similar large water bodies
-* Increasingly restricted by environmental regulations (EU, USA)
-
-Recirculating (Wet Tower) Cooling
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Recirculating cooling uses a closed-loop system where water circulates between the condenser and a cooling tower. Heat is dissipated by evaporation in the cooling tower.
-
-**Characteristics**:
-
-* **Low water withdrawal**: 2-4 m³/MWh (to replace evaporation and blowdown)
-* **Moderate-high water consumption**: 2-4 m³/MWh (mostly evaporation)
-* **Small energy penalty**: 1-2% of generation (pumps, fans)
-* **Moderate capital cost**: Cooling tower construction
-* **Independent of large water bodies**: Can be located anywhere with adequate water supply
-* **Minimal thermal pollution**: Water recirculates; only blowdown is discharged
-
-**Advantages**:
-
-* Much lower withdrawal than once-through
-* Can be sited inland without large water body
-* Minimal thermal discharge to environment
-* Widely accepted technology
-
-**Disadvantages**:
-
-* Moderate-high water consumption (comparable to or higher than once-through)
-* Energy penalty reduces net generation
-* Higher capital and operating costs than once-through
-* Visible water vapor plumes
-* Still vulnerable to water scarcity during droughts
-
-**Availability**:
-
-* Standard technology for inland plants
-* Can be retrofitted to existing once-through plants
-* Suitable for most locations with adequate water supply
-
-Dry (Air) Cooling
-^^^^^^^^^^^^^^^^^
-
-Dry cooling uses air instead of water to dissipate heat, eliminating water consumption. Heat is transferred via air-cooled condensers or air-cooled heat exchangers.
-
-**Characteristics**:
-
-* **Minimal water withdrawal**: 0.05-0.15 m³/MWh (only for auxiliary systems)
-* **Minimal water consumption**: 0.05-0.15 m³/MWh (>95% reduction vs. wet cooling)
-* **Significant energy penalty**: 3-8% of generation depending on climate
-* **High capital cost**: Large air-cooled condenser surface area
-* **Climate-dependent performance**: Efficiency loss greater in hot climates
-* **No thermal water pollution**: All heat dissipated to atmosphere
-
-**Advantages**:
-
-* Eliminates water use for cooling (~95-99% reduction)
-* Enables plant siting in water-scarce regions
-* No thermal water pollution
-* No water availability risk to plant operations
-
-**Disadvantages**:
-
-* Significant efficiency penalty (especially in hot weather)
-* Much higher capital cost (2-3× cooling system cost)
-* Larger physical footprint
-* Performance degradation during heat waves (when power demand peaks)
-* Higher operating costs due to energy penalty
-
-**Availability**:
-
-* Increasingly used in water-scarce regions
-* Required in some jurisdictions with limited water
-* Growing market share for new plants in arid regions
+Once-through cooling returns most of what it withdraws to the source, warmer; recirculating cooling withdraws far less but evaporates most of it; dry cooling removes the water constraint at the cost of generation. Seawater cooling draws on a separate saline supply and is available only to coastal plants, so it sidesteps freshwater scarcity entirely.
 
 Implementation in MESSAGEix-Nexus
 ----------------------------------
@@ -265,79 +190,9 @@ The optimal choice depends on:
 
 Example: In a water-scarce basin, if groundwater costs 0.20 USD/m³ and a gas combined cycle plant requires 2.5 m³/MWh with wet cooling, the water cost is 0.50 USD/MWh. Dry cooling eliminates this water cost but has a ~4% efficiency penalty. At gas prices of 5 USD/GJ and 6,000 MJ/MWh heat rate, the efficiency penalty costs ~1.20 USD/MWh. If capital cost differential is small, wet cooling remains attractive despite water costs.
 
+.. _cooling-climate-placeholder:
+
 Climate Change Amplification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. note:: **Placeholder — to be completed.**
-   Earlier versions of the module adjusted the cooling technology capacity
-   factor by a climate- and region-dependent impact factor, so that warming
-   degraded cooling performance directly. That representation has been removed
-   from the build pending its replacement, and the cooling technology
-   parameterisation is currently independent of the climate forcing scenario.
-
-   Climate change still reaches cooling indirectly, through basin water
-   availability: a drier basin raises the cost of the water that wet cooling
-   needs, which shifts the technology choice. The direct temperature effect on
-   plant and cooling system performance is not currently represented.
-
-   This section should describe the replacement representation once it lands.
-
-Regional Patterns
-^^^^^^^^^^^^^^^^^
-
-Cooling technology evolution varies by region:
-
-**Water-Abundant Regions** (Northern Europe, Canada, parts of South America):
-
-* Continued use of once-through cooling where environmentally acceptable
-* Recirculating cooling as standard inland
-* Limited dry cooling adoption
-
-**Water-Stressed Regions** (Middle East, North Africa, Central Asia, Australia):
-
-* Rapid shift to dry cooling for new thermal plants
-* Reduced overall thermal generation share
-* Increased solar PV and wind (no cooling water requirements)
-
-**Developing Regions** (South Asia, Southeast Asia, Sub-Saharan Africa):
-
-* Initial expansion with recirculating cooling (standard technology)
-* Potential shift to dry cooling if water scarcity intensifies
-* Competition between energy access and water access goals
-
-**Transition Regions** (China, India, Western USA):
-
-* Mix of technologies depending on local water availability
-* Retrofits of once-through to recirculating
-* New plants increasingly using dry cooling in water-scarce areas
-
-Scenario Results
-----------------
-
-.. note:: **Placeholder — to be completed.**
-   This section should summarise cooling technology results from the current
-   model version: the evolution of the once-through, recirculating and dry
-   cooling shares across SSPs and forcing scenarios, how mitigation changes
-   cooling water demand as thermal generation declines, and how SDG6 water
-   access constraints interact with cooling technology choice. The figures
-   previously given here described an earlier model version and have been
-   removed rather than carried forward unverified.
-
-Key Insights
-------------
-
-The cooling technology representation in MESSAGEix-Nexus provides several key insights:
-
-1. **Water availability is an important constraint** on energy system development in water-scarce regions, affecting technology choice and generation dispatch.
-
-2. **Endogenous cooling technology choice** enables the model to find cost-effective adaptation strategies to water scarcity, including shifts to dry cooling and alternative generation technologies.
-
-3. **Water availability links the water and energy systems**, so climate-driven changes in basin hydrology propagate into energy system technology choice.
-
-4. **Mitigation reduces nexus stress**: Climate mitigation scenarios reduce cooling water demand by phasing out thermal generation, providing a co-benefit for water resources.
-
-5. **SDG interactions are complex**: Achieving universal water access can constrain energy system choices in water-scarce regions, requiring careful planning and investment.
-
-6. **Regional heterogeneity matters**: Global average trends obscure important regional dynamics where water-energy constraints are binding.
-
-The implementation demonstrates the value of integrated water-energy modeling for understanding nexus interactions, identifying vulnerabilities, and evaluating policy and technology options.
+.. note:: **Placeholder.** Cooling technology performance is currently independent of the climate forcing scenario; the earlier climate impact factor on the capacity factor has been removed pending its replacement. Climate change still reaches cooling indirectly, through basin water availability.

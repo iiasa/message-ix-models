@@ -106,28 +106,26 @@ MESSAGEix-Nexus captures multiple nexus interactions:
 
 * Cooling water requirements for thermal power plants (see :doc:`cooling` for detailed cooling technology representation)
 * Water consumption in fuel extraction (coal mining, unconventional oil and gas)
-* Hydropower production from surface water resources
 * Energy requirements for water supply (pumping, treatment, desalination)
 
 **Water → Energy**:
 
 * Water availability constraints on thermal power plant siting and operation
 * Cooling technology choices driven by water scarcity
-* Hydropower generation governed by river flows and reservoir storage
+* Hydropower generation governed by river flows and reservoir storage (not default)
 * Groundwater pumping costs dependent on aquifer depth
 
 **Land → Water** (via GLOBIOM linkage):
 
 * Irrigation water demands for crop production
-* Land use change impacts on runoff and water availability
+* Land use change impacts on runoff and water availability (not default)
 * Water allocation between agriculture and other sectors
 
 **Climate → Water-Energy-Land**:
 
 * Temperature and precipitation changes affecting water availability
-* Extreme events (droughts, floods) impacting all sectors
 * Climate-driven changes in cooling water requirements and efficiency
-* Shifts in crop water demands and irrigation needs
+* Shifts in crop water demands and irrigation needs (depending on the GLOBIOM matrix)
 
 Climate Change Impacts
 ======================
@@ -147,7 +145,7 @@ The nexus module incorporates climate change impacts on both water availability 
    The earlier representation of climate impacts on power plant performance
    (a climate-dependent adjustment to the cooling technology capacity factor)
    has been removed from the build pending its replacement.
-   This section should describe the replacement representation once it lands.
+   This section link to the new section on climate impacts once it lands.
 
 **Adaptation Measures**: The model can endogenously select adaptation measures such as:
 
@@ -155,7 +153,6 @@ The nexus module incorporates climate change impacts on both water availability 
 * Investment in desalination and water reuse
 * Changes in electricity generation technology mix
 
-For comprehensive discussion of climate change impacts on the water-energy nexus, see :doc:`climate_impacts`.
 
 Sustainable Development Goals
 ==============================
@@ -168,12 +165,35 @@ The nexus module includes optional constraints to represent progress toward wate
 * Wastewater treatment coverage requirements
 * Water use efficiency improvements
 
-**SDG 7**: Affordable and clean energy
-
-* Energy access targets requiring water for cooling and hydropower
-* Trade-offs between water and energy access in water-scarce regions
-
 Implementation constraints enforce minimum investment in water supply infrastructure to achieve specified access targets in each region and time period, creating additional water demand and infrastructure requirements that compete with energy sector water use.
+
+Scenario Assumptions by SSP
+============================
+
+Several inputs are differentiated by Shared Socioeconomic Pathway. Sectoral water demands, drinking-water access rates and desalination capacity projections are each read from SSP-specific data files, so the scenario chosen sets the demand trajectory the water system must meet and the infrastructure it starts from.
+
+In addition, the module applies **SSP-dependent upper bounds on the cooling technology mix**, reflecting how strictly each pathway is assumed to regulate thermal discharge and how readily it adopts water-saving cooling. The bounds are set separately for a Global North group (WEU, EEU, FSU, NAM, PAO) and a Global South group (LAM, SAS, AFR, CPA, CHN, RCPA, MEA, PAS), and cap the share of generation that may use once-through freshwater cooling and, in some pathways, dry cooling.
+
+.. list-table:: Cooling technology constraints by scenario
+   :widths: 18 82
+   :header-rows: 1
+
+   * - Scenario
+     - Assumption
+   * - SSP1
+     - Once-through freshwater cooling effectively phased out in the Global North and tightly limited in the Global South. No constraint on dry cooling.
+   * - SSP2
+     - Moderate limit on once-through cooling and a ceiling on dry cooling, applied equally to both region groups.
+   * - SSP3
+     - Once-through cooling effectively phased out worldwide, with a ceiling on dry cooling. Note that this is as restrictive as the sustainability pathway, which may not match the intent of a regional-rivalry narrative.
+   * - SSP4
+     - Once-through cooling effectively phased out in the Global North but permitted at a moderate share in the Global South, reflecting divergent regulation. Ceiling on dry cooling in both.
+   * - SSP5
+     - No constraints on the cooling technology mix; the choice is left entirely to costs and water availability.
+   * - LED
+     - Same assumptions as SSP1.
+
+The numerical values are held in :file:`data/water/ssp.yaml` and applied as upper bounds on cooling technology shares.
 
 Detailed Documentation
 =======================
@@ -183,7 +203,6 @@ For detailed technical documentation of the MESSAGEix-Nexus module components, p
 * :doc:`supply` - Water resources and supply technologies (surface water, groundwater, desalination, wastewater reuse)
 * :doc:`demand` - Sectoral water demands (energy, municipal, industrial, agricultural) and allocation
 * :doc:`cooling` - Power plant cooling technologies and water-energy tradeoffs
-* :doc:`climate_impacts` - Climate change impacts on water availability and energy systems
 
 .. toctree::
    :maxdepth: 2
@@ -192,10 +211,9 @@ For detailed technical documentation of the MESSAGEix-Nexus module components, p
    supply
    demand
    cooling
-   climate_impacts
 
-Reference
-=========
+References
+==========
 
 The MESSAGEix-Nexus module is described in detail in:
 

@@ -47,7 +47,7 @@ Municipal demand covers residential, commercial and public sector water use in u
 Data Source
 ^^^^^^^^^^^
 
-Unlike energy sector water use, municipal and industrial demands are **exogenous inputs**, not quantities derived inside the model. Basin-level withdrawal projections are taken from Khan et al. (2022) and supplied per SSP for three sectors:
+Unlike energy sector water use, municipal and industrial demands are **exogenous inputs**, not quantities derived inside the model. Basin-level withdrawal projections are taken from Khan et al., 2023 :cite:`khan_2023_sectoral_water` and supplied per SSP for three sectors:
 
 * Urban domestic withdrawal
 * Rural domestic withdrawal
@@ -94,131 +94,9 @@ GLOBIOM provides basin-scale irrigation demand to MESSAGEix-Nexus, which must be
 * Constraining irrigated area expansion
 * Incentivizing efficiency improvements
 
-Seasonal Patterns
-^^^^^^^^^^^^^^^^^
-
-Irrigation demand varies seasonally based on:
-
-* **Crop calendars**: Planting and growing season timing
-* **Evapotranspiration**: Peak during warm, dry periods
-* **Monsoon patterns**: Low irrigation during rainy seasons
-
-Example monthly demand pattern (Northern India):
-
-* **January-March**: High (wheat, vegetables)
-* **April-June**: Very high (summer crops, pre-monsoon)
-* **July-September**: Low (monsoon period)
-* **October-December**: Moderate (post-monsoon crops)
-
-Seasonal variability creates critical periods when irrigation competes strongly with other demands and water availability is lowest (Awais et al., 2024 :cite:`awais_2024_nexus`).
-
-Irrigation Technologies
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Irrigation efficiency depends on the delivery and application technology, rising from flood and furrow irrigation through sprinkler systems to drip and micro-irrigation. Higher efficiency technologies cost more per hectare but reduce the water required for the same crop production, and can enable irrigated area to expand in water-constrained basins.
-
-Climate Change Impacts
-^^^^^^^^^^^^^^^^^^^^^^
-
-Climate change affects irrigation demand through:
-
-* **Evapotranspiration changes**: Generally increases with temperature
-* **Precipitation changes**: Regional increases or decreases affect irrigation needs
-* **Crop calendar shifts**: Earlier springs, longer growing seasons
-* **CO₂ fertilization**: Higher CO₂ can reduce crop water requirements
-
-In most regions, climate change increases net irrigation demand despite CO₂ effects (Awais et al., 2024 :cite:`awais_2024_nexus`).
-
 Sectoral Competition and Allocation
 ------------------------------------
 
 When water is scarce, the model allocates it across competing sectors as part of the same least-cost optimisation that solves the energy system. There is no separate allocation rule and no exogenous ranking of sectors by economic value: water goes to the use where displacing it would be most expensive for the system as a whole, given the alternatives available in that basin.
 
 What differs between sectors is how costly it is to go without, and how quickly they can adjust.
-
-Infrastructure and Flexibility
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Existing infrastructure creates rigidities:
-
-* Power plants require cooling or must reduce generation
-* Urban populations require minimum municipal supply
-* Agricultural demands are flexible (can fallow fields, deficit irrigate)
-
-The model accounts for costs of:
-
-* Not meeting demand (scarcity costs, value of lost load for electricity)
-* Adjusting to constraints (switching technologies, deficit irrigation)
-
-Temporal Flexibility
-^^^^^^^^^^^^^^^^^^^^
-
-Some demands are temporally flexible:
-
-* **Irrigation**: Can shift timing within crop growth period
-* **Industrial**: Some processes can shift to wet season
-* **Energy**: Flexible generation can be scheduled to water availability
-* **Municipal**: Relatively inflexible, requires continuous supply
-
-Storage (reservoirs, aquifer storage) provides temporal flexibility to match seasonal supply and demand.
-
-Regional Differences
-^^^^^^^^^^^^^^^^^^^^
-
-Water scarcity and sectoral competition vary greatly by region:
-
-* **Arid regions** (Middle East, North Africa, Central Asia): Scarcity is norm, high competition
-* **Monsoon regions** (South Asia, Southeast Asia): Seasonal scarcity, competition in dry season
-* **Temperate regions** (Europe, North America): Generally abundant, localized scarcity
-* **Tropical regions** (Sub-Saharan Africa, Latin America): Variable, infrastructure-limited
-
-Scenarios with stringent climate change and rapid development can increase water scarcity and sectoral competition significantly (Awais et al., 2024 :cite:`awais_2024_nexus`).
-
-Demand Projections
-------------------
-
-Future water demand depends on scenario assumptions:
-
-Shared Socioeconomic Pathways (SSPs)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Different SSPs imply different demand trajectories:
-
-* **SSP1 (Sustainability)**: 
-
-  * Lower population growth
-  * High efficiency and water productivity
-  * Strong environmental regulations
-  * Lowest demand growth
-
-* **SSP2 (Middle-of-the-road)**:
-
-  * Medium population and economic growth
-  * Moderate efficiency improvements
-  * Continued irrigation expansion
-  * Medium demand growth
-
-* **SSP3 (Regional rivalry)**:
-
-  * High population growth in developing regions
-  * Slow efficiency improvements
-  * Irrigation expansion constrained by water scarcity
-  * Highest demand growth but supply-limited
-
-* **SSP5 (Fossil-fueled development)**:
-
-  * Rapid economic growth and urbanization
-  * High energy demands = high cooling water demand
-  * Efficient water use in high-income regions
-  * High total demand but technology-enabled supply
-
-Climate Change Impacts
-^^^^^^^^^^^^^^^^^^^^^^
-
-Climate change affects demands through:
-
-* **Temperature**: Higher cooling demands (energy, buildings)
-* **Precipitation**: Changed irrigation requirements
-* **Extremes**: Droughts increase marginal value of water
-
-Demands are read for the SSP of the run, and water availability for the selected climate forcing scenario, so a scenario combines both drivers. The available forcing scenarios are listed in :doc:`climate_impacts`.

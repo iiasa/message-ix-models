@@ -66,55 +66,49 @@ where :math:`SW_{extract,b,t}` is extractable surface water in basin :math:`b` a
 
 Environmental flows are calculated using the Variable Monthly Flow (VMF) method (Pastor et al., 2014 :cite:`pastor_2014_efr`), which sets minimum flows as a percentage of mean monthly natural flow, with higher percentages for low-flow months to protect aquatic ecosystems. Typical EFR values range from 20-40% of mean annual flow depending on the basin and flow regime.
 
-Surface Water Extraction Technologies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Water Supply Portfolio
+-----------------------
+
+The model endogenously selects the portfolio of water supply technologies in each basin, subject to:
+
+* Resource availability at the selected reliability level
+* Technology costs and energy requirements
+* The groundwater sustainability share constraint
+* Desalination capacity bounds and growth limits
+* A 2% per year limit on growth in surface water and renewable groundwater activity
+
+Surface and Groundwater Extraction Technologies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Surface water extraction is represented through technology archetypes with associated costs and infrastructure requirements:
 
 * **River/lake extraction**: Direct abstraction with intake structures, screening, and pumping
-* **Large-scale reservoir storage**: Represented through hydropower technologies in MESSAGE
-
-Extraction is parameterised with investment and fixed costs, and with an electricity input representing the energy needed to abstract and convey water. Growth in surface water extraction activity is limited to 2% per year, so the supply mix cannot restructure instantaneously.
-
-Groundwater
------------
-
-Groundwater provides a critical buffer against surface water variability and is explicitly represented in MESSAGEix-Nexus with depth-dependent extraction costs and sustainability constraints.
-
-Groundwater Resources
-^^^^^^^^^^^^^^^^^^^^^^
-
-Groundwater resources are characterized by:
-
 * **Renewable groundwater**: Annual recharge from precipitation infiltration and river seepage
 * **Non-renewable (fossil) groundwater**: Deep aquifers with negligible recharge on human timescales
-* **Groundwater storage**: Cumulative volume in aquifers (not fully represented in current implementation)
 
+Extraction is parameterised with investment and fixed costs, and with an electricity input representing the energy needed to abstract and convey water. 
+Groundwater provides a critical buffer against surface water variability and is explicitly represented in MESSAGEix-Nexus with depth-dependent extraction costs and sustainability constraints.
 Renewable groundwater recharge is derived from the same CWatM simulations as surface water, which represent infiltration, percolation and recharge processes, and is supplied per basin on the same five-yearly grid.
-
-Groundwater Extraction
-^^^^^^^^^^^^^^^^^^^^^^
 
 Groundwater extraction costs depend on:
 
 1. **Aquifer depth**: Pumping costs increase with depth (energy requirements)
 2. **Extraction rate**: Higher rates require more/deeper wells
-3. **Water quality**: Treatment requirements for brackish or contaminated groundwater
 
 Groundwater extraction is parameterised per basin from a harmonised table of pumping energy intensities, which reflect basin-specific water table depth, plus a uniform adder representing the energy needed to lift and convey the extracted water. This electricity input creates the water-energy feedback loop: deeper aquifers draw more electricity per unit of water, which in turn adds to the load the energy system must serve.
 
-Growth in renewable groundwater extraction activity is limited to 2% per year, matching the constraint on surface water.
+Growth in surface water andrenewable groundwater extraction activity is limited to 2% per year, matching the constraint on surface water.
 
 Groundwater Sustainability Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Sustainable use is enforced through a **share constraint** rather than a cumulative volume balance. In each basin and period, renewable groundwater must supply at least its recharge-implied share of total renewable availability:
+Sustainable use is enforced through a **share constraint** rather than a cumulative volume balance: in each basin and period, renewable groundwater must supply at least its recharge-implied share of total renewable availability.
 
 :math:`share_{GW,b,t} \geq \dfrac{GW_{recharge,b,t}}{SW_{available,b,t} + GW_{recharge,b,t}} \cdot 0.95`
 
-The 0.95 factor leaves headroom against numerical error in the optimisation. The same expression is used both for this in-horizon constraint and for the historical calibration described below, so the two cannot drift apart.
+The 0.95 factor leaves headroom against numerical error, and the same expression anchors the historical calibration.
 
-Fossil (non-renewable) groundwater is represented as a separate extraction technology acting as a **residual backstop**: it is available when renewable sources cannot meet demand, and is priced at a 20% premium over renewable groundwater on investment cost and pumping electricity, with the same 20-year technical lifetime. It is therefore unattractive relative to renewable sources, but not prohibited outright. Basins that draw on this backstop correspond to regions of known aquifer depletion, such as the Indus-Ganges basin, the North China Plain, the Arabian Peninsula and the High Plains Aquifer.
+Fossil (non-renewable) groundwater is a separate extraction technology acting as a **residual backstop**, priced at a 20% premium over renewable groundwater on investment cost and pumping electricity with the same 20-year lifetime — unattractive relative to renewable sources, but not prohibited outright.
 
 Desalination
 ------------
@@ -135,12 +129,11 @@ Both draw on a shared saline water extraction technology, so their combined acti
 Capacity and Projections
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Historical desalination capacity and its future projection are supplied as exogenous basin-level data, downscaled from country-level sources:
+Historical desalination capacity and its future potential are supplied as exogenous basin-level data, downscaled from the country-level projections of Andrijevic et al., 2026 :cite:`andrijevic_2026_desalination`:
 
 * **Projections are keyed on the SSP**, not on the climate forcing scenario. Source projections exist for SSP1, SSP3 and SSP5 only; SSP2 uses the SSP1 projection and SSP4 uses the SSP3 projection.
 * **Basins with no projection have zero capacity.** An absent basin-year entry is treated as a hard zero on saline water extraction rather than leaving extraction unconstrained.
 * **Historical capacity sets an activity floor** in the early model periods. Where the membrane and distillation floors together would exceed the shared saline extraction cap, both are scaled down proportionally so the two are consistent.
-* **New capacity growth is limited to 10% per year**, which smooths the vintage-replacement sawtooth that otherwise appears in basin-level desalination capacity.
 
 Beyond these bounds, capacity expansion is endogenous and responds to water scarcity, the cost and availability of alternative sources, energy prices, and climate impacts on conventional supply.
 
@@ -160,24 +153,11 @@ Return flows from municipal and industrial use are tracked explicitly. The fract
 * Rural treatment rate
 * Urban recycling rate
 
-These rates are not differentiated across SSPs — every SSP reads the SSP2 values. Treatment requires energy and capital, so higher treatment and recycling ambition raises both the cost of the water system and its electricity demand.
+These rates are not differentiated across SSPs — every SSP reads the SSP2 values. Treatment requires energy and capital, so higher treatment and recycling ambition raises both the cost of the water system and its electricity demand. Energy consumption rates for the treatment and recycling technologies are taken from Magni et al., 2025 :cite:`magni_2025_treatment_energy`.
 
 The economic attractiveness of reuse depends on the cost of alternative water sources in the same basin, the stringency of the assumed treatment requirement, and the proximity of return flows to the demands that could use them.
-
-Water Supply Portfolio
------------------------
-
-The model endogenously selects the portfolio of water supply technologies in each basin, subject to:
-
-* Resource availability at the selected reliability level
-* Technology costs and energy requirements
-* The groundwater sustainability share constraint
-* Desalination capacity bounds and growth limits
-* A 2% per year limit on growth in surface water and renewable groundwater activity
 
 Historical Calibration
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The starting point of the portfolio is not left to the optimisation. Historical extraction activity is seeded by a **merit-order dispatch**: historical sectoral and irrigation demand in each basin is met from the available sources — surface water, renewable groundwater and fossil groundwater — in order of operating cost, subject to historical basin capacity and to the same groundwater share floor that applies in the model horizon. This anchors the base-year supply mix to something defensible and prevents the first model period from restructuring the water system implausibly fast.
-
-Because fossil groundwater is now priced as a residual backstop rather than penalised outright, this calibration attributes more use to fossil groundwater than earlier versions of the model did — consistent with observed aquifer depletion in the basins concerned.
+The starting point of the portfolio is not left to the optimisation. Historical extraction activity is seeded by a **merit-order dispatch**: historical sectoral and irrigation demand in each basin is met from the available sources — surface water, renewable groundwater and fossil groundwater — in order of operating cost, subject to historical basin capacity and to the same groundwater share floor that applies in the model horizon. 
