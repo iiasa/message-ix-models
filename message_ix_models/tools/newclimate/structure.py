@@ -57,10 +57,12 @@ class HIGH_IMPACT(Enum):
     low_medium = auto()
     Unclear = auto()
 
-    #: NB both 'unclear' and 'Unclear' appear in the 2025 draft database as of
-    #: 2026-04-17.
-    unclear = auto()
     Unknown = auto()
+
+    #: NB lower-case variants of the above appear alongside them in the 2025 database.
+    high = auto()
+    unclear = auto()
+    unknown = auto()
 
 
 class JURISDICTION(Enum):
@@ -69,6 +71,9 @@ class JURISDICTION(Enum):
     City = auto()
     Country = auto()
     Subnational_region = auto()
+
+    #: Appears from the 2025 database, for instance for the European Union.
+    Supranational_region = auto()
 
 
 class OBJECTIVE(Enum):
@@ -128,6 +133,7 @@ class SECTOR(Enum):
     Negative_emissions = auto()
     Nuclear = auto()
     Oil = auto()
+    Public_transport = auto()
     Rail = auto()
     Renewables = auto()
     Shipping = auto()
@@ -240,7 +246,7 @@ class NewClimatePolicy(Policy):
     #: Impact indicator value.
     impact_indicators_value: str
 
-    #: Instrument.
+    #: Instrument. MAY be empty, from the 2025 database.
     instrument: str
 
     #: Jurisdiction.
@@ -295,7 +301,7 @@ class NewClimatePolicy(Policy):
         self,
     ) -> None:
         # Check that certain fields are non-empty
-        for field_name in ("instrument", "name", "title"):
+        for field_name in ("name", "title"):
             if getattr(self, field_name) == "":
                 raise ValueError(f"{field_name}=''")
 
@@ -304,13 +310,15 @@ class NewClimatePolicy(Policy):
         for name, enum_type, container in self._enum_fields():
             value = getattr(self, name)
             if isinstance(value, str):
-                # Parse the value as a comma-separated list of elements
+                # Parse the value as a comma-separated list of elements. For a list
+                # field, an empty string gives an empty list rather than [""].
+                parts = [v.strip() for v in value.split(",")]
+                if container is not None:
+                    parts = list(filter(None, parts))
                 values: list[Enum | str] = []
-                for v in value.split(","):
+                for v in parts:
                     try:
-                        values.append(
-                            enum_type[pattern.sub("_", v.strip()) or "NOTSET"]
-                        )
+                        values.append(enum_type[pattern.sub("_", v) or "NOTSET"])
                     except KeyError:
                         log.warning(f"Not a member of {enum_type}: {v!r}")
                         values.append(v)
