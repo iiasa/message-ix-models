@@ -97,7 +97,7 @@ def water_ini(context: "Context", regions, time):
     # setting the time information in context
 
 
-_RCPS = ["no_climate", "6p0", "2p6", "7p0"]
+_RCPS = ["2p6", "7p0", "8p5"]
 _REL = ["low", "med", "high"]
 
 
@@ -105,10 +105,10 @@ _REL = ["low", "med", "high"]
 @click.pass_obj
 @click.option(
     "--rcps",
-    default="no_climate",
+    default="2p6",
     type=click.Choice(_RCPS),
     show_default=True,
-    help="Specifies the climate scenario used ['no_climate','6p0','2p6']",
+    help="Specifies the climate scenario used ['2p6','7p0','8p5']",
 )
 @click.option(
     "--rels",
@@ -189,7 +189,7 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
     regions : str (if not defined already in context.regions)
         Specifies what region definition is used ['R11','R12','ISO3']
     RCP : str
-        Specifies the climate scenario used ['no_climate','6p0','2p6']
+        Specifies the climate scenario used ['2p6','7p0','8p5']
     SDG : Str
         Defines if and what water SDG measures are activated
     REL: str
@@ -261,10 +261,10 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
 @scenario_param("--ssp")
 @click.option(
     "--rcps",
-    default="no_climate",
+    default="2p6",
     type=click.Choice(_RCPS),
     show_default=True,
-    help="Specifies the climate scenario used ['no_climate','6p0','2p6']",
+    help="Specifies the climate scenario used ['2p6','7p0','8p5']",
 )
 @click.option(
     "--rels",
@@ -299,7 +299,7 @@ def cooling(
     regions : str (if not defined already in context.regions)
         Specifies what region definition is used ['R11','R12','ISO3']
     RCP : str
-        Specifies the climate scenario used ['no_climate','6p0','2p6']
+        Specifies the climate scenario used ['2p6','7p0','8p5']
 
     """
     config = Config.from_context(context)

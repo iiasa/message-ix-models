@@ -25,14 +25,7 @@ def _get_test_node(regions: str) -> str:
 @pytest.mark.parametrize(
     "water_context",
     [
-        # Global R11 (has 6p0)
-        {
-            "regions": "R11",
-            "type_reg": "global",
-            "RCP": "no_climate",
-            "REL": "med",
-            "ssp": "SSP2",
-        },
+        # Global R11 (legacy RCP set, retained for R11 regression coverage)
         {
             "regions": "R11",
             "type_reg": "global",
@@ -40,14 +33,7 @@ def _get_test_node(regions: str) -> str:
             "REL": "med",
             "ssp": "SSP2",
         },
-        # Global R12 (no 6p0, use 7p0)
-        {
-            "regions": "R12",
-            "type_reg": "global",
-            "RCP": "no_climate",
-            "REL": "med",
-            "ssp": "SSP2",
-        },
+        # Global R12 (refreshed RCP set: 2p6 / 7p0 / 8p5)
         {
             "regions": "R12",
             "type_reg": "global",
