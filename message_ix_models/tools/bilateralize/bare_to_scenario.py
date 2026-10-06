@@ -394,7 +394,7 @@ def bare_to_scenario(
             for c in covered_tec
             if c not in ["crudeoil_piped", "foil_piped", "loil_piped"]
         ]:
-            add_tec = tec_config[tec][tec + "_trade"]["trade_technology"] + "_exp"
+            add_tec = tec_config[tec][tec + "_trade"]["trade_technology"]
             hist_tec[tec] = add_tec
 
         for tec in hist_tec.keys():
