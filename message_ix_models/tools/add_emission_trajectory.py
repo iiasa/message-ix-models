@@ -38,7 +38,7 @@ def main(
     """
 
     if remove_bounds_emission:
-        remove_emission_bounds(scen)
+        remove_emission_bounds(scen, remove_cumulative_only=True)
 
     with scen.transact("added emission trajectory"):
         for r in data.index.get_level_values(0).unique().tolist():
