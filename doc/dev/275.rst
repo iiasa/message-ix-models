@@ -1,0 +1,238 @@
+Summary for :issue:`275`
+************************
+
+See below the table for a key.
+The table currently includes:
+
+- All files in the message_single_country directory :file:`models/modules/`.
+
+.. todo:: Expand the table to include:
+
+   - All (groups of) files modified by commits on the SSP_Dev_2023 branch of message_single_country.
+   - All (groups of) files modified by commits on the ssp_dev branch of message_data.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - m_data
+     - …country
+     - …models
+     - Pick
+     - PR/issue
+
+   * - ``add_UE_share_constraints``
+     - ?
+     - :msc-to-migrate:`link <models/modules/add_UE_share_constraints.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``add_reliability_peak``
+     - ?
+     - :msc-to-migrate:`link <models/modules/add_reliability_peak.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``adjust_cf_to_history``
+     - ?
+     - :msc-to-migrate:`link <models/modules/adjust_cf_to_history.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``adjust_lifetime_to_history``
+     - ?
+     - :msc-to-migrate:`link <models/modules/adjust_lifetime_to_history.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``apply_LED_setup``
+     - ?
+     - :msc-to-migrate:`link <models/modules/apply_LED_setup.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``apply_ssp_vre``
+     - ?
+     - :msc-to-migrate:`link <models/modules/apply_ssp_vre.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_UE_gr_to_demand``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_UE_gr_to_demand.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_UE_share_constraints``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_UE_share_constraints.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_demand``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_demand.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_extraction``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_extraction.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_historical_capacity``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_historical_capacity.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_to_IEA_offline``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_to_IEA_offline.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``calibrate_vre``
+     - ?
+     - :msc-to-migrate:`link <models/modules/calibrate_vre.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``change_technology_lifetime``
+     - ?
+     - :msc-to-migrate:`link <models/modules/change_technology_lifetime.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``compile_IEA_data_offline``
+     - ?
+     - :msc-to-migrate:`link <models/modules/compile_IEA_data_offline.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``compile_IEA_data_offline_extraction``
+     - ?
+     - :msc-to-migrate:`link <models/modules/compile_IEA_data_offline_extraction.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``compile_capacity_data``
+     - ?
+     - :msc-to-migrate:`link <models/modules/compile_capacity_data.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``copy_parameter``
+     - ?
+     - :msc-to-migrate:`link <models/modules/copy_parameter.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``get_codes``
+     - ?
+     - :msc-to-migrate:`link <models/modules/get_codes.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``perform_vintage_check``
+     - ?
+     - :msc-to-migrate:`link <models/modules/perform_vintage_check.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``project_vre``
+     - ?
+     - :msc-to-migrate:`link <models/modules/project_vre.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``read_demand_downscaled``
+     - ?
+     - :msc-to-migrate:`link <models/modules/read_demand_downscaled.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``res_marg``
+     - :md-to-migrate:`link <message_data/scenario_generation/reserve_margin/res_marg.py>`
+     - :msc-to-migrate:`link <models/modules/res_marg.py>`
+     - None
+     - message_data
+     - :pull:`277`
+
+   * - ``rescale_demands``
+     - ?
+     - :msc-to-migrate:`link <models/modules/rescale_demands.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``update_gdp_pop``
+     - ?
+     - :msc-to-migrate:`link <models/modules/update_gdp_pop.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``update_rc_demand``
+     - ?
+     - :msc-to-migrate:`link <models/modules/update_rc_demand.py>`
+     - ?
+     - TODO
+     - ?
+
+   * - ``update_trp_demand``
+     - ?
+     - :msc-to-migrate:`link <models/modules/update_trp_demand.py>`
+     - ?
+     - TODO
+     - ?
+
+How to use
+==========
+
+- Keep the list in alphabetical order.
+- In each row, enter:
+
+  **Name**
+     A short name for the module, function, or collection of such.
+  **m_data**
+     Link to one code or data file on the ``ssp_dev`` branch of ``message_data``, if any.
+     If there are multiple files, choose one.
+  **…country**
+     Link to one code or data file on the ``SSP_Dev_2023`` branch of ``message_single_country``, if any.
+     If there are multiple files, choose one.
+     If the file is present in both message_data and message_single_country, these links should correspond in order to support diff of the two versions.
+  **…models**
+     Link to one code or data file on the ``main`` branch of ``message-ix-models``, for instance if the item has already been migrated as a dependency of other code.
+     If this migration has not happened yet, put "None".
+  **Pick**
+     Either "m_data", "m_single_country", or "m-ix-models", indicating which version of the code/data files will be preferred.
+  **PR/issue**
+     Link to, *at minimum*, a message-ix-models pull request that adds or updates the item, or an issue gathering more info than appears in the table.
+     Use the usual GitHub features to:
+
+     - Track the assignees, review assignments, status, checklist items, etc. associated with the PR.
+     - Cross-reference additional PRs that remove the corresponding files or code from message_data and/or message_single_country.
