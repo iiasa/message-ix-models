@@ -371,6 +371,7 @@ def load_and_solve(
     extra_parameter_updates: dict | None = None,
     gdx_location: str | None = None,
     MESSAGEix_GLOBIOM: bool = True,
+    mp: ixmp.Platform | None = None,
 ):
     """
     Clone and update scenario.
@@ -392,6 +393,8 @@ def load_and_solve(
         scenario: Scenario to update (if None, will clone from project yaml)
         additional_parameter_updates: Dictionary of additional parameter updates
         gdx_location: Location to save GDX file
+        mp: Platform holding the start scenario. If None, the default ixmp
+            platform (or `scenario.platform`, if given) is used.
         remove_pao_coal_constraint: Remove PAO coal and gas constraints
     """
     # Load config
@@ -403,7 +406,8 @@ def load_and_solve(
     log.info("Loading and solving scenario")
 
     # Load the scenario
-    mp = ixmp.Platform()
+    if mp is None:
+        mp = scenario.platform if scenario is not None else ixmp.Platform()
 
     if scenario is None:
         scen = load_and_clone(
