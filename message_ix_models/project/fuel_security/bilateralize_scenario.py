@@ -222,7 +222,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
     print("Solve scenario")
     out_scenario.solve(quiet = False,
                        model = 'MESSAGE',
-                       solve_options={"scaind": "-1", "solutiontype": 2},
+                       solve_options={"scaind": "-1"},
                        gams_args=["--foresight=15"])
 
     return out_scenario
