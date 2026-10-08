@@ -60,6 +60,7 @@ def _bilateralize(context, scenario):
         scenario=scenario,
         target_scenario=f"{scenario.scenario}_bilateral",
         history_scenario=history_scenario,
+        last_model_year=2070,
     )
 
 def _FSU_restriction(context, scenario, friction_endyear):

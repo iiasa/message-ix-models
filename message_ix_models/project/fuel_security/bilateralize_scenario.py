@@ -97,7 +97,7 @@ def add_missing_history(scenario, history_scenario, new_technologies):
 
 
 def bilateralize_scenario(project_name, config_name, scenario, target_scenario = None,
-                          history_scenario = None):
+                          history_scenario = None, last_model_year = None):
     """
     Bilateralize a given scenario
 
@@ -112,6 +112,9 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
         history_scenario: Solved bilateralized scenario used to fill historical
             periods after 2025 when `scenario` has a later first model year (see
             :func:`add_missing_history`). Required in that case.
+        last_model_year: If given, set as cat_year "lastmodelyear" so the myopic
+            solve loop stops after this period (later periods are still in the
+            foresight window of the last iteration, but are not solved on their own).
     """
     target_scenario = (target_scenario or f"{scenario.scenario}_bilateral").replace(
         "_DEFAULT", ""
@@ -208,10 +211,18 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                      trade_commodity_list = ['lightoil', 'fueloil'],
                      base_level = 'secondary')
 
+    if last_model_year is not None:
+        print(f"Set last model year to {last_model_year}")
+        with out_scenario.transact("set lastmodelyear"):
+            old = out_scenario.set("cat_year", filters={"type_year": "lastmodelyear"})
+            if len(old):
+                out_scenario.remove_set("cat_year", old)
+            out_scenario.add_set("cat_year", ["lastmodelyear", last_model_year])
+
     print("Solve scenario")
     out_scenario.solve(quiet = False,
                        model = 'MESSAGE',
-                       solve_options={"scaind":"-1"},
+                       solve_options={"scaind": "-1", "solutiontype": 2},
                        gams_args=["--foresight=15"])
 
     return out_scenario
