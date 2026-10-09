@@ -1,0 +1,17 @@
+,technology,mode
+0,meth_coal,feedstock
+1,meth_coal_ccs,feedstock
+2,meth_ng,feedstock
+3,meth_ng_ccs,feedstock
+4,meth_coal,fuel
+5,meth_coal_ccs,fuel
+6,meth_ng,fuel
+7,meth_ng_ccs,fuel
+8,meth_bal,feedstock
+9,meth_bal,fuel
+10,meth_exp,fuel
+11,meth_imp,fuel
+12,meth_trd,fuel
+13,meth_exp,feedstock
+14,meth_imp,feedstock
+15,meth_trd,feedstock
