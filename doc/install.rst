@@ -69,6 +69,9 @@ will install the dependencies in those two sets.
    Build these documentation pages.
 ``iea-web``
    For :mod:`.tools.iea.web`.
+``impacts``
+   For :doc:`global/impacts/index` and :mod:`.tools.impacts`;
+   includes :mod:`netCDF4`, needed to read the packaged RIME datasets.
 ``material``
    For :doc:`material/index`.
 ``migrate``
