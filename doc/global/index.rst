@@ -38,6 +38,7 @@ We thank Edward Byers, Jessica Jewell, Ruslana Palatnik, Narasimha D. Rao, and F
    water/index
    emissions/index
    climate/index
+   impacts/index
    annex/index
    further-reading
    z_bibliography
