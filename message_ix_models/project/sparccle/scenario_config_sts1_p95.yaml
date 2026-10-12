@@ -1,0 +1,73 @@
+# SPARCCLE STS1 configuration — double-p95 tail pairing on the annual pipeline
+#
+# Consumed by `message_ix_models.project.sparccle.workflow.generate` as:
+#
+#   mix-models sparccle run \
+#       --config <this file> \
+#       --magicc-root /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output \
+#       --magicc-model-suffix _p95 \
+#       --from " cooling$" \
+#       "all CI" --go
+#
+# Two axes distinguish this config from `scenario_config_p95.yaml`:
+#
+# 1. WARMING INPUT (p95, as in the p95 sibling): the filtered pdrive subtree
+#    `SSP_SSPX_v6.6_sp_p95/<scenario>/` carries only the K=10 `|run_*` rows
+#    nearest the 95th-percentile GMT rank, so the library's unchanged MC mean
+#    becomes a conditional expectation around the p95 warming trajectory.
+#
+# 2. IMPACT RESPONSE (p90): `cid.response_percentile: 90` selects the
+#    `{var}_p90` variables in the packaged RIME surfaces — a conditional
+#    percentile of the response population inside each GWL window, after
+#    curve-axis alignment. Not a quantile across GMT, and not a quantile
+#    across the collapsed per-GCM curves. Applies to both channels:
+#    buildings `EI_cool`/`EI_heat` and thermoelectric `capacity_factor`
+#    (wet and dry). The baseline-GWL lookup in the cooling degradation ratio
+#    uses the same percentile, so the ratio stays internally consistent.
+#
+# The ideal tail pairing for this deliverable is MAGICC p95 x impact p95;
+# p90 is the supported proxy, since p90 is the highest response percentile
+# the packaged surfaces carry (`_p10`/`_p50`/`_p90`).
+#
+# `--from " cooling$"` truncates the graph at the Phase-1 step so the existing,
+# verified-annual `<scenario>_cooling` v1 cells are loaded rather than rebuilt.
+# CI_p and CI_bp clone from them, so those bases stay immutable.
+#
+# CAVEAT (inherited from the p95 sibling): the K=10 window is a Monte Carlo
+# estimate of a conditional expectation, not a full ensemble or a
+# STITCHES-coherent sample. Non-linear-emulator warnings from `predict_rime`
+# are expected and accepted.
+
+platform_info:
+  name: ixmp_dev
+
+regions: R12
+
+# The two STS1 deliverable rows. Starters are solved-with-MACRO CI_95 rows on
+# ixmp_dev; `_PHY` is the prep clone. MAGICC paths are composed at invocation
+# from --magicc-root + --magicc-model-suffix.
+starters:
+  - model: SSP_SSP3_v6.6_sp
+    scenario: INDC2030i_600f_GDP_CI_95_ensemble_1_PHY
+    ssp: SSP3
+  - model: SSP_SSP1_v6.6_sp
+    scenario: INDC2030i_439f_GDP_CI_95_ensemble_1_PHY
+    ssp: SSP1
+
+# Phase-1 cooling-module build settings (passed to `mix-models water-ix cooling`).
+# Retained for completeness; unused when the graph is truncated at `cooling`.
+cooling:
+  rcps: no_climate
+  rels: low
+
+# Phase-2 CID settings
+cid:
+  # `n_runs: null` lets the K=10 p95 window through unchanged.
+  n_runs: null
+  # Earliest model year touched by cooling CID constraints and dry-cooling derating.
+  min_year: 2045
+  # Recorded in the target scenario names, so a build whose response
+  # percentile differs cannot overwrite one whose does not.
+  climate_label: c95
+  # Conditional response percentile inside each RIME GWL window; both channels.
+  response_percentile: 90

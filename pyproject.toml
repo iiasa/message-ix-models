@@ -69,6 +69,7 @@ docs = [
   "sphinxcontrib-bibtex",
 ]
 iea-web = ["dask[dataframe]"]
+impacts = ["netCDF4"]
 material = ["xlrd"]
 migrate = [
   "git-filter-repo",
@@ -77,7 +78,7 @@ migrate = [
 report = ["plotnine", "xlsxwriter"]
 tests = [
   "message-ix[tests]",
-  "message_ix_models[bilateralize,buildings,material,report,transport]",
+  "message_ix_models[bilateralize,buildings,impacts,material,report,transport]",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
