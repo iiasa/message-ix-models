@@ -37,6 +37,11 @@ log = logging.getLogger(__name__)
 # Single source of truth for the NGFS model name (config key and scenario target prefix)
 NGFS_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3"
 
+# Platform for all NGFS workflow scenario targets (load + clone destination).
+# - "ixmp-dev": shared Oracle platform
+# - "local": local HSQLDB (e.g. H:/script/ixmp/localdb/ngfs)
+NGFS_PLATFORM = "local"  # or "ixmp-dev"
+
 # Functions for individual workflow steps
 
 
@@ -1012,6 +1017,255 @@ def calibrate_macro(context, scenario):
     return scenario
 
 
+# Regional CO2 storage potential (MtC), used as resource_volume.
+# Same values as in project/ssp/script/scenarios/ccs_dac.py.
+R12_STORAGE = {
+    "R12_FSU": 83310.661,
+    "R12_LAM": 55868.988,
+    "R12_WEU": 11793.358,
+    "R12_EEU": 1808.370,
+    "R12_AFR": 61399.222,
+    "R12_MEA": 57369.171,
+    "R12_NAM": 58983.981,
+    "R12_SAS": 4765.219,
+    "R12_PAS": 21108.578,
+    "R12_PAO": 34233.825,
+    "R12_CHN": 15712.475,
+    "R12_RCPA": 3754.285,
+}
+
+# Alias kept for readability / external references.
+R12_potential = R12_STORAGE
+
+STORAGE_TECH = "co2_stor"
+STORAGE_COMM = "co2_stored"  # name of the resource
+STORAGE_GRADE = "a"
+
+# Fractional annual injection rate of remaining storage capacity
+# (MESSAGE resource_remaining). Select via ``variant``, or pass
+# ``remaining=`` to override.
+RESOURCE_REMAININGS = {
+    "default": 0.01,
+}
+
+
+def _resolve_storage_remaining(
+    variant: str, remaining: float | None
+) -> tuple[float, str]:
+    """Return ``(a, label)`` for the resource_remaining rate."""
+    if remaining is not None:
+        return remaining, f"remaining={remaining}"
+    try:
+        return RESOURCE_REMAININGS[variant], variant
+    except KeyError as exc:
+        raise KeyError(
+            f"Unknown storage remaining variant {variant!r}; "
+            f"known: {sorted(RESOURCE_REMAININGS)} "
+            f"or pass remaining=..."
+        ) from exc
+
+
+def _co2_stor_modes(scenario: message_ix.Scenario) -> list[str]:
+    """Modes present on ``co2_stor`` output, defaulting to M1–M3."""
+    modes = ["M1", "M2", "M3"]
+    output_modes = set(
+        scenario.par("output", {"technology": STORAGE_TECH})["mode"].unique().tolist()
+    )
+    present = [mode for mode in modes if mode in output_modes]
+    if set(present) != set(modes):
+        log.warning(
+            "Expected modes %s on %s, found %s; using intersection %s",
+            modes,
+            STORAGE_TECH,
+            sorted(output_modes),
+            present,
+        )
+    stor_modes = present if present else modes
+    if not output_modes:
+        log.warning("No output modes on %s; forcing %s", STORAGE_TECH, stor_modes)
+    return stor_modes
+
+
+def _remove_legacy_co2_storage_caps(scenario: message_ix.Scenario) -> None:
+    """Drop ``co2_storcumulative`` / ``co2_stor_glb`` inherited caps."""
+    existing_tech = set(scenario.set("technology").tolist())
+    existing_rel = set(scenario.set("relation").tolist())
+    # Match every co2_storcum_* relation actually present, rather than
+    # assuming the mode set aligns with co2_stor's modes.
+    storcum_rels = sorted(
+        relation for relation in existing_rel if relation.startswith("co2_storcum_")
+    )
+
+    if "co2_storcumulative" in existing_tech or storcum_rels:
+        with scenario.transact(
+            "remove old co2_storcumulative technology and relations"
+        ):
+            if "co2_storcumulative" in existing_tech:
+                scenario.remove_set("technology", "co2_storcumulative")
+                log.info("Removed technology co2_storcumulative")
+            for relation in storcum_rels:
+                scenario.remove_set("relation", relation)
+                log.info("Removed relation %s", relation)
+    else:
+        log.info("No co2_storcumulative technology/relations found to remove")
+
+    glb = scenario.par("bound_activity_up", {"technology": "co2_stor_glb"})
+    if not glb.empty:
+        with scenario.transact("remove inherited co2_stor_glb cap"):
+            scenario.remove_par("bound_activity_up", glb)
+        log.info("Removed %d inherited co2_stor_glb bound_activity_up rows", len(glb))
+
+
+def _add_storage_resource_params(
+    scenario: message_ix.Scenario,
+    *,
+    a: float,
+    label: str,
+    stor_modes: list[str],
+    storage_years: list[int],
+) -> None:
+    """Add resource_volume / remaining / cost and co2_stor input links."""
+    with scenario.transact(f"resource-remaining injection rate ({label}, a={a})"):
+        if STORAGE_COMM not in scenario.set("commodity").tolist():
+            scenario.add_set("commodity", STORAGE_COMM)
+        if STORAGE_GRADE not in scenario.set("grade").tolist():
+            scenario.add_set("grade", STORAGE_GRADE)
+
+        scenario.add_par(
+            "resource_volume",
+            pd.concat(
+                [
+                    make_df(
+                        "resource_volume",
+                        node=node,
+                        commodity=STORAGE_COMM,
+                        grade=STORAGE_GRADE,
+                        value=volume,
+                        unit="MtC",
+                    )
+                    for node, volume in R12_STORAGE.items()
+                ],
+                ignore_index=True,
+            ),
+        )
+        scenario.add_par(
+            "resource_remaining",
+            pd.concat(
+                [
+                    make_df(
+                        "resource_remaining",
+                        node=node,
+                        commodity=STORAGE_COMM,
+                        grade=STORAGE_GRADE,
+                        year=storage_years,
+                        value=a,
+                        unit="-",
+                    )
+                    for node in R12_STORAGE
+                ],
+                ignore_index=True,
+            ),
+        )
+        scenario.add_par(
+            "input",
+            pd.concat(
+                [
+                    make_df(
+                        "input",
+                        node_loc=node,
+                        technology=STORAGE_TECH,
+                        year_vtg=storage_years,
+                        year_act=storage_years,
+                        mode=mode,
+                        node_origin=node,
+                        commodity=STORAGE_COMM,
+                        level="resource",
+                        time="year",
+                        time_origin="year",
+                        value=1,
+                        unit="MtC",
+                    )
+                    for node in R12_STORAGE
+                    for mode in stor_modes
+                ],
+                ignore_index=True,
+            ),
+        )
+        scenario.add_par(
+            "resource_cost",
+            pd.concat(
+                [
+                    make_df(
+                        "resource_cost",
+                        node=node,
+                        commodity=STORAGE_COMM,
+                        grade=STORAGE_GRADE,
+                        year=storage_years,
+                        value=0.0,
+                        unit="-",
+                    )
+                    for node in R12_STORAGE
+                ],
+                ignore_index=True,
+            ),
+        )
+
+
+def apply_remaining_injection_rate(
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    variant: str = "default",
+    remaining: float | None = None,
+) -> message_ix.Scenario:
+    """Constrain CO2 storage as a depletable resource.
+
+    Replaces the older ``co2_storcumulative`` / ``co2_stor_glb`` caps with:
+
+    - ``resource_volume``: regional storage stock from :data:`R12_STORAGE`
+    - ``resource_remaining``: fractional injection rate ``a`` of remaining stock
+    - ``input`` on :data:`STORAGE_TECH` linking activity to that resource
+
+    Parameters
+    ----------
+    variant :
+        Key in :data:`RESOURCE_REMAININGS` used when *remaining* is omitted.
+    remaining :
+        Explicit fractional rate ``a``. Overrides *variant* when given.
+    """
+    a, label = _resolve_storage_remaining(variant, remaining)
+
+    scenario_nodes = set(scenario.set("node").tolist())
+    missing = [node for node in R12_STORAGE if node not in scenario_nodes]
+    if missing:
+        raise ValueError(f"Storage regions not in scenario nodes: {missing}")
+
+    storage_years = sorted(
+        year for year in scenario.set("year").tolist() if year > 2025
+    )
+    stor_modes = _co2_stor_modes(scenario)
+    _remove_legacy_co2_storage_caps(scenario)
+    _add_storage_resource_params(
+        scenario,
+        a=a,
+        label=label,
+        stor_modes=stor_modes,
+        storage_years=storage_years,
+    )
+
+    log.info(
+        "Applied CO2 storage resource remaining a=%s (%s) across %d regions, "
+        "%d periods, total stock=%.3e MtC",
+        a,
+        label,
+        len(R12_STORAGE),
+        len(storage_years),
+        sum(R12_STORAGE.values()),
+    )
+    scenario.set_as_default()
+    return scenario
+
+
 # NGFS P6 scenarios:
 _scen_all = [
     "h_ndc",  # c0 decision:use the "h_ndc_2035" as h_ndc
@@ -1063,7 +1317,8 @@ def generate(context: Context) -> Workflow:
     # YJ: nothing in this file reads context.bmt["model_name"] so all good
 
     # Full scenario target prefix (platform + model name)
-    model_name = f"ixmp://ixmp-dev/{NGFS_MODEL_NAME}"
+    model_name = f"ixmp://{NGFS_PLATFORM}/{NGFS_MODEL_NAME}"
+    # Upstream BMT input (always on ixmp-dev unless you also copy it locally)
     base_url = (
         "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC/"
         "baseline_DEFAULT_step_14b"
@@ -1369,10 +1624,28 @@ def generate(context: Context) -> Workflow:
     )
 
     # --- IAMC diagnostic scenarios ---
+    wf.add_step(
+        "baseline iamc anchored",
+        "baseline reported",
+        add_anchor,
+        target=f"{model_name}/baseline_anchored",
+        clone=dict(keep_solution=False),
+        stage="iamc_diag",
+    )
+    # CO2 storage as resource (resource_volume + resource_remaining).
+    # Pass remaining=... to override RESOURCE_REMAININGS["default"].
+    wf.add_step(
+        "baseline cdr adjusted",
+        "baseline iamc anchored",
+        apply_remaining_injection_rate,
+        target=f"{model_name}/baseline_cdr_adjusted",
+        clone=dict(keep_solution=False),
+        variant="default",
+    )
     for protocol_id in ("C400-lin", "C160-gr5", "C80-gr5", "C0to400-lin"):
         wf.add_step(
             f"{protocol_id} added",
-            "baseline reported",
+            "baseline cdr adjusted",
             add_iamc_diagnostic,
             target=f"{model_name}/{protocol_id}_plain",
             clone=dict(keep_solution=False),
