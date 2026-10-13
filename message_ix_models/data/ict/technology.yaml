@@ -1,0 +1,14 @@
+# Technologies in MESSAGEix ICT module.
+data_centre_elec:
+  name: Data centers
+  description: >-
+    Data Centre using electricity.
+  input: {commodity: electr}
+  report: Commercial|ICT|Data Centers
+
+tele_comm_elec:
+  name: Telecommunication infrastructure
+  description: >-
+    Represents electricity demand by telecommunication infrastructure.
+  input: {commodity: electr}
+  report: Commercial|ICT|Infrastructure
