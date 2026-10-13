@@ -55,6 +55,10 @@ def unsd_series() -> pd.Series:
         ("IMP", "C0110"): 1.0,  # Anthracite, part of B00_CL
         ("IMP", "C0220"): 2.0,  # Lignite, part of B00_CL
         ("IMP", "C0311"): 4.0,  # Coke oven coke: a coal product, B01_CP
+        ("IMP", "R5220B"): 0.5,  # Blended biodiesel: not an oil product, but B05_BW
+        ("IMP", "O4671XR5220B"): 9.0,  # Diesel without its blended part: B03_OP
+        ("FC_OTH_HH_E", "R5110-5150_W6000RI"): 7.0,  # Fuelwood, B05_BW
+        ("FC_OTH_HH_E", "R5300"): 1.0,  # Biogases, B05_BW
         ("EXP", "G3000"): 5.0,  # Natural gas exports: positive in Eurostat
         ("TI_EHG_E", "G3000"): 8.0,  # Natural gas into power plants: an input
         ("TO_EHG", "E7000"): 16.0,  # Electricity from all plants, including…
@@ -84,6 +88,12 @@ class TestESTAT_ENERGY_BALANCE_UNSD:
         )
         assert {"TO_EHG", "TI_EHG_E", "TO_EHG_PH"} == set(source.query_key["nrg_bal"])
 
+        # Biofuels and waste include the blended parts that oil products exclude
+        source = ESTAT_ENERGY_BALANCE_UNSD(n=N, product=("B05_BW",), flow=("B25_FEC",))
+        siec = set(source.query_key["siec"])
+        assert {"R5300", "R5220B", "W6210", "W6100_6220"} <= siec
+        assert "O4671XR5220B" not in siec
+
         # Empty options select every mapped label
         source = ESTAT_ENERGY_BALANCE_UNSD(n=N)
         assert "C0220" in source.query_key["siec"]
@@ -107,6 +117,9 @@ class TestESTAT_ENERGY_BALANCE_UNSD:
         assert {
             ("SRB", 2000, "B00_CL", "B02_03"): 3.0,
             ("SRB", 2000, "B01_CP", "B02_03"): 4.0,
+            ("SRB", 2000, "B03_OP", "B02_03"): 9.0,
+            ("SRB", 2000, "B05_BW", "B02_03"): 0.5,
+            ("SRB", 2000, "B05_BW", "B50_1231"): 8.0,
             ("SRB", 2000, "B04_NG", "B03_04"): -5.0,
             ("SRB", 2000, "B04_NG", "B11_088"): -8.0,
             ("SRB", 2000, "B07_EL", "B01_01"): 6.0,
@@ -118,7 +131,9 @@ class TestESTAT_ENERGY_BALANCE_UNSD:
         """Converted Eurostat data reproduce UNSD's own balance for the same country.
 
         Natural gas, electricity, and heat agree to within 0.1 % in every flow, which
-        checks the transformation, renewable, and pumped-storage conventions. For coal
+        checks the transformation, renewable, and pumped-storage conventions. Biofuels
+        and waste agree to within 0.4 % in every flow but electricity and heat plant
+        input, where UNSD's net figure differs by up to 3 % of 1700 TJ. For coal
         and oil the two services publish different values from the same national
         return—UNSD's are uniformly lower for lignite consumption, by 18–24 %, and for
         crude oil, by 4–7 %—so those products are held to looser tolerances. Flows of
@@ -154,7 +169,13 @@ class TestESTAT_ENERGY_BALANCE_UNSD:
         expected = expected[expected.abs() >= 1000]
         assert expected.index.isin(result.index).all()
 
-        tolerance = {"B04_NG": 1e-3, "B07_EL": 1e-3, "B08_HT": 1e-3, "B00_CL": 0.35}
+        tolerance = {
+            "B04_NG": 1e-3,
+            "B07_EL": 1e-3,
+            "B08_HT": 1e-3,
+            "B00_CL": 0.35,
+            "B05_BW": 0.05,
+        }
         for product, exp in expected.groupby(level=0):
             obs = result.reindex(exp.index)
             assert obs.to_dict() == pytest.approx(

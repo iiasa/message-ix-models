@@ -21,7 +21,13 @@ COUNTRY_CODE = {"EL": "GRC", "UK": "GBR", "XK": "XKX"}
 #: coal products in UNSD's vocabulary, so the Eurostat aggregate "C0000X0350-0370"
 #: (solid fossil fuels), which includes them, is not used; oil shale and peat count with
 #: primary coal. The oil-product members are non-overlapping and sum to Eurostat's
-#: "O4000XBIO" total less the primary oil members.
+#: "O4000XBIO" total less the primary oil members. Biofuels and waste are the members
+#: of Eurostat's "R5000_W6000" that have no parts here: primary solid biofuels, which
+#: include the renewable fraction of industrial waste; charcoal; liquid biofuels, pure
+#: and blended, with the blended parts that the oil products above exclude; other liquid
+#: biofuels; biogases; renewable municipal waste; and non-renewable waste, industrial
+#: and municipal. Their aggregates, such as "R5000" and the total "RA000", are
+#: not used.
 UNSD_PRODUCT: Mapping[str, tuple[str, ...]] = {
     "B00_CL": ("C0110", "C0121", "C0129", "C0210", "C0220", "P1100", "S2000"),
     "B01_CP": ("C0311", "C0312", "C0320", "C0330", "C0340", "C0350-0370", "P1200"),
@@ -46,6 +52,20 @@ UNSD_PRODUCT: Mapping[str, tuple[str, ...]] = {
         "O4699",
     ),
     "B04_NG": ("G3000",),
+    "B05_BW": (
+        "R5110-5150_W6000RI",
+        "R5160",
+        "R5210P",
+        "R5210B",
+        "R5220P",
+        "R5220B",
+        "R5230P",
+        "R5230B",
+        "R5290",
+        "R5300",
+        "W6210",
+        "W6100_6220",
+    ),
     "B07_EL": ("E7000",),
     "B08_HT": ("H8000",),
 }
