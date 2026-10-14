@@ -1006,6 +1006,8 @@ def run_sectoral_reporting(
     add_world: bool = True,
     add_global_aggregates: bool = False,
     add_net_trade: bool = False,
+    add_origin_estimates: bool = False,
+    origin_scenario: Optional[message_ix.Scenario] = None,
 ) -> pyam.IamDataFrame:
     """Run reporting across one or more ``data/<domain>/reporting`` directories.
 
@@ -1036,9 +1038,31 @@ def run_sectoral_reporting(
         so leave False for partial-domain runs. One-way door: because net trade
         runs after :func:`compute_global_aggregates`, the net variables can never
         be components of a global aggregate.
+    add_origin_estimates
+        Append proportional resource-origin estimates after net trade and before
+        World aggregation. Requires the full five-domain EFC run, global
+        aggregates, net trade, and its explicit ``origin_scenario`` for physical
+        coefficient checks. False for partial-domain callers.
+    origin_scenario
+        The already-open scenario used to build ``rep``; never opens a platform.
     """
     if domains is None:
         domains = ["hydrogen"]
+    if add_origin_estimates:
+        required = {"hydrogen", "power", "chemicals", "transport", "industry"}
+        if (
+            set(domains) != required
+            or len(domains) != len(required)
+            or not add_global_aggregates
+            or not add_net_trade
+            or origin_scenario is None
+        ):
+            raise ValueError("Origin estimates require the full EFC reporting contract")
+        if (origin_scenario.model, origin_scenario.scenario) != (model_name, scen_name):
+            raise ValueError("Origin physical scenario and reporter identity differ")
+        from .origin_physical import validate_origin_basis
+
+        validate_origin_basis(origin_scenario)
 
     # Historical keys are created once on the shared Reporter (idempotent).
     ensure_historical_keys(rep)
@@ -1066,6 +1090,12 @@ def run_sectoral_reporting(
     # rows are then summed to R12_GLB by the World step (World ~ -trade losses).
     if add_net_trade:
         py_df = compute_net_trade(py_df, load_net_trade_specs())
+
+    if add_origin_estimates:
+        from .origin import origin_estimates
+
+        estimates = origin_estimates(py_df.data)
+        py_df = pyam.concat([py_df, pyam.IamDataFrame(estimates)])
 
     # Sum regional nodes → R12_GLB only for variables without native GLB rows
     # (chemicals bunkers already report at R12_GLB).
