@@ -1,0 +1,55 @@
+# SPARCCLE adaptation scenarios, all cloned from the solved cooling + power-plant
+# CID scenario on its local HSQLDB platform (registered in $IXMP_DATA/config.json).
+# Build one with:  mix-models sparccle_adapt run --config <this file> KEY --go
+# Solve afterwards with ~/scripts/solve_local.py (see run_sparccle_adapt.sh).
+
+platform: sparccle_SSP_SSP2_v6.6_sp_NPiREF_GDP_CI_50_ensemble_2
+model: SSP_SSP2_v6.6_sp
+base: NPiREF_GDP_CI_50_ensemble_2_cooling_CI_p   # first model year 2035
+
+# "EU and NAM" once-through regulation: R12_EEU holds the EU's eastern members.
+regulation_nodes: [R12_WEU, R12_EEU, R12_NAM]
+
+technologies:
+  # cooling-type suffixes counted as once-through (US EPA 316(b) and EU IED
+  # BAT cover saline intakes too)
+  once_through: [ot_fresh, ot_saline]
+  # coal, gas and oil power plants, CCS variants included; heat plants (*_hpl) are not
+  thermal_no_new:
+    [coal_ppl, coal_ppl_u, coal_adv, coal_adv_ccs, igcc, igcc_ccs,
+     gas_cc, gas_cc_ccs, gas_ppl, gas_ct,
+     foil_ppl, loil_ppl, loil_cc, oil_ppl]
+  near_zero_growth: [bio_ppl, bio_istig, bio_istig_ccs, nuc_lc, nuc_hc]
+
+growth:
+  near_zero: 0.001   # growth_activity_up in full-effect years (seed initial_activity_up = 0)
+  ref_default: 0.05  # stands in for the base growth rate where the base has none; halved in the half-effect year
+
+scenarios:
+  BAU:
+    suffix: _BAU
+    ssp_cooling_shares: true   # SSP2 ssp.yaml: ot_fresh <= 0.3, air <= 0.5 of cooling activity, 2050 on
+  malad35:
+    suffix: _malad35
+    once_through_ban: regulation   # regulation_nodes only
+    full_from: 2035
+  # drop_decline_floor: remove growth_activity_lo / initial_activity_lo of the
+  # thermal_no_new plants from the first affected year. The base floors
+  # (-5 %/yr on gas_cc, coal_ppl, ... in some nodes) make a permanent new-capacity
+  # ban infeasible: the fleet retires, activity must hit zero, and the floor
+  # chains back to 2035 against historical activity.
+  adapt35:
+    suffix: _adapt35
+    once_through_ban: all
+    thermal_no_new: true
+    drop_decline_floor: true
+    near_zero_growth: true
+    full_from: 2035
+  adapt35h40:
+    suffix: _adapt35h40
+    once_through_ban: all
+    thermal_no_new: true
+    drop_decline_floor: true
+    near_zero_growth: true
+    half_in: 2035
+    full_from: 2040
