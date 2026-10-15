@@ -61,7 +61,9 @@ register each copy as its own platform (`ixmp platform add`).
 
 - `malad35` solves to the optimum but CPLEX may flag "optimal with unscaled
   infeasibilities" (1 row, ~1e-6), which ixmp rejects; `scaind=1
-  numericalemphasis=1` gives a clean optimum with the same objective.
+  numericalemphasis=1` gives a clean optimum with the same objective. `aironly35`
+  needed scaling off instead (`scaind=-1 numericalemphasis=1`). Pass either via
+  `SOLVE_OPTS` to `run_solve_local.sh`.
 - The split between air and closed-loop cooling is weakly determined (near-equal
   cost): the base solution has no air cooling, every re-solved clone has 7–13 %
   at the same objective. Compare once-through vs recirculating, not air vs wet.
