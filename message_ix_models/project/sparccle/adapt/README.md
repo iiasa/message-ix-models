@@ -11,6 +11,7 @@ HSQLDB platform; the build only adds constraints.
 | `malad35` | no new once-through cooling capacity (`*__ot_fresh`, `*__ot_saline`) in R12_WEU, R12_EEU, R12_NAM only (EU IED / US 316(b) regulation) | 2035 |
 | `adapt35` | no new once-through cooling anywhere; no new coal, gas, oil power-plant capacity (incl. CCS variants, not heat plants); near-zero activity growth for biomass and nuclear power; the base's activity-decline floors on the banned plants removed | 2035 |
 | `adapt35h40` | as `adapt35`, half effect in 2035 (new-capacity bound = ½ base `CAP_NEW`, growth rates halved), full from 2040 | 2035 / 2040 |
+| `aironly35` | power sector free; no new once-through *or* closed-loop cooling anywhere (`cooling_ban_types`), so new plants use dry cooling only; SSP share caps off (their air ≤ 50 % cap would contradict the rule) | 2035 |
 
 Technologies, nodes, growth rates and years live in `config.yaml`; the logic in
 `workflow.py` (pure functions `cooling_share_sets`, `no_new_capacity`,

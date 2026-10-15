@@ -23,7 +23,18 @@ COMBOS = pd.DataFrame(
 def test_load_config_packaged() -> None:
     config = load_config()
 
-    assert set(config["scenarios"]) == {"BAU", "malad35", "adapt35", "adapt35h40"}
+    assert set(config["scenarios"]) == {
+        "BAU",
+        "malad35",
+        "adapt35",
+        "adapt35h40",
+        "aironly35",
+    }
+    assert config["scenarios"]["aironly35"]["cooling_ban_types"] == [
+        "ot_fresh",
+        "ot_saline",
+        "cl_fresh",
+    ]
     assert config["scenarios"]["adapt35h40"]["half_in"] == 2035
     assert config["scenarios"]["malad35"]["suffix"] == "_malad35"
 

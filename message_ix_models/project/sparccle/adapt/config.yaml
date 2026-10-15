@@ -53,3 +53,10 @@ scenarios:
     near_zero_growth: true
     half_in: 2035
     full_from: 2040
+  # Power sector free (no plant bans, no SSP share caps: their air <= 0.5 cap would
+  # contradict the rule); new plants may only use dry cooling.
+  aironly35:
+    suffix: _aironly35
+    once_through_ban: all
+    cooling_ban_types: [ot_fresh, ot_saline, cl_fresh]
+    full_from: 2035

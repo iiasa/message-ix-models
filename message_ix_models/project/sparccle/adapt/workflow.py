@@ -283,8 +283,8 @@ def tech_nodes(
     return lifetime[["node_loc", "technology"]].drop_duplicates().reset_index(drop=True)
 
 
-def once_through_techs(scenario: "Scenario", suffixes: list[str]) -> list[str]:
-    """Cooling technologies of the once-through types in `suffixes`."""
+def cooling_techs(scenario: "Scenario", suffixes: list[str]) -> list[str]:
+    """Cooling technologies (``<plant>__<type>``) of the cooling types in `suffixes`."""
     ends = tuple(f"__{s}" for s in suffixes)
     return sorted(t for t in scenario.set("technology") if t.endswith(ends))
 
@@ -396,15 +396,17 @@ def apply(  # pragma: no cover
 
     ban = spec.get("once_through_ban")
     if ban:
+        # cooling types banned: once-through by default, or the scenario's own list
+        types = spec.get("cooling_ban_types", tech_cfg["once_through"])
         messages.append(
             _apply_no_new_capacity(
                 scenario,
-                once_through_techs(scenario, tech_cfg["once_through"]),
+                cooling_techs(scenario, types),
                 config["regulation_nodes"] if ban == "regulation" else None,
                 years_full,
                 half_year,
                 base,
-                f"once-through cooling ({ban})",
+                f"{'/'.join(types)} cooling ({ban})",
             )
         )
 
