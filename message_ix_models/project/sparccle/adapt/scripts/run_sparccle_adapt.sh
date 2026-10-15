@@ -27,7 +27,10 @@
 
 [ $# -ge 1 ] || { echo "at least one scenario key required"; exit 2; }
 
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# Under sbatch, BASH_SOURCE is SLURM's spool copy; recover the submitted path.
+SELF=${BASH_SOURCE[0]}
+[ -n "$SLURM_JOB_ID" ] && SELF=$(scontrol show job "$SLURM_JOB_ID" | sed -n 's/.*Command=\([^ ]*\).*/\1/p')
+SCRIPT_DIR=$(cd "$(dirname "$SELF")" && pwd)
 CFG=$SCRIPT_DIR/../config.yaml
 
 source /opt/apps/lmod/8.7/init/bash
