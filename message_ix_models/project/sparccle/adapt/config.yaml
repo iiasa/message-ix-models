@@ -60,3 +60,10 @@ scenarios:
     once_through_ban: all
     cooling_ban_types: [ot_fresh, ot_saline, cl_fresh]
     full_from: 2035
+  # Power sector free; no new freshwater cooling (once-through or closed-loop);
+  # seawater once-through and dry cooling remain available.
+  nofresh35:
+    suffix: _nofresh35
+    once_through_ban: all
+    cooling_ban_types: [ot_fresh, cl_fresh]
+    full_from: 2035

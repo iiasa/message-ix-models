@@ -29,10 +29,15 @@ def test_load_config_packaged() -> None:
         "adapt35",
         "adapt35h40",
         "aironly35",
+        "nofresh35",
     }
     assert config["scenarios"]["aironly35"]["cooling_ban_types"] == [
         "ot_fresh",
         "ot_saline",
+        "cl_fresh",
+    ]
+    assert config["scenarios"]["nofresh35"]["cooling_ban_types"] == [
+        "ot_fresh",
         "cl_fresh",
     ]
     assert config["scenarios"]["adapt35h40"]["half_in"] == 2035
