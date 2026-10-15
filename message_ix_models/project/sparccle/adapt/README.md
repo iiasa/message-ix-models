@@ -67,6 +67,13 @@ register each copy as its own platform (`ixmp platform add`).
 - The split between air and closed-loop cooling is weakly determined (near-equal
   cost): the base solution has no air cooling, every re-solved clone has 7–13 %
   at the same objective. Compare once-through vs recirculating, not air vs wet.
+- Seawater once-through cooling is capped by the water module, not by this
+  package: `extract_salinewater_cool` carries `bound_activity_up` =
+  `default_saline_bound` (10,000 MCM/yr, `data/water/ppl_cooling_config.yaml`) in
+  every region, and the cap binds in the base. `_add_saline_bounds` in
+  `water/data/water_for_ppl.py` compares historical activity (GWa) with that MCM
+  default, so the default always wins. A "no freshwater cooling" scenario
+  (`nofresh35`) is therefore dry cooling plus a fixed saline budget.
 - Decisions: "EU" = R12_WEU + R12_EEU; once-through includes saline intakes;
   `soft_activity_up` (3–5 %) is left, so frozen technologies can still creep at a
   cost; `growth_new_capacity_up` is untouched.
