@@ -42,6 +42,15 @@ NGFS_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3"
 # - "local": local HSQLDB (e.g. H:/script/ixmp/localdb/ngfs)
 NGFS_PLATFORM = "local"  # or "ixmp-dev"
 
+# Per-scenario platform overrides for IAMC diagnostic leaves (same model name).
+# Shared trunk steps still use NGFS_PLATFORM; these only affect the named targets.
+IAMC_DIAG_PLATFORM = {
+    "C400-lin": "local1",
+    "C80-gr5": "local1",
+    "C160-gr5": "local2",
+    "C0to400-lin": "local2",
+}
+
 # Functions for individual workflow steps
 
 
@@ -73,11 +82,19 @@ def _get_ngfs_config(context):
 
 
 def _ngfs_base_scenario_name(name: str) -> str:
-    """Keep the name before ``_EN…`` for :file:`config.yaml` keys.
+    """Map workflow scenario names to :file:`config.yaml` keys.
 
-    Examples: ``o_2c_EN1`` → ``o_2c``, ``o_2c_EN1_test`` → ``o_2c``.
+    Strips ``_EN…`` suffixes and ``_base`` / ``_base_*`` variation suffixes.
+
+    Examples:
+    ``o_2c_EN1`` → ``o_2c``,
+    ``o_2c_EN1_lowdem`` → ``o_2c``,
+    ``o_1p5c_base`` → ``o_1p5c``,
+    ``o_1p5c_base_lowdem`` → ``o_1p5c``.
     """
-    return re.sub(r"_EN\d+.*$", "", name)
+    name = re.sub(r"_EN\d+.*$", "", name)
+    name = re.sub(r"_base(?:_.*)?$", "", name)
+    return name
 
 
 def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
@@ -179,6 +196,9 @@ def make_scenario_runner(context):
     This function sets up the necessary context attributes and creates a ScenarioRunner
     instance that is used to build and run NGFS policy scenarios. It also pre-populates
     the policy_baseline scenario if it doesn't already exist.
+
+    The platform is taken from :data:`NGFS_PLATFORM` (via ``context.platform_info``),
+    not the ixmp default.
     """
     from message_data.model.scenario_runner import ScenarioRunner
 
@@ -187,6 +207,12 @@ def make_scenario_runner(context):
         biomass_trade = context.biomass_trade
     except AttributeError:
         biomass_trade = False
+
+    # Ensure ScenarioRunner / context.get_platform() use NGFS_PLATFORM, not default
+    context.platform_info["name"] = NGFS_PLATFORM
+    if getattr(context.core, "_mp", None) is not None:
+        # Drop a previously cached (possibly default) Platform
+        context.get_platform(reload=True)
 
     context.ssp = "SSP2"
     context.run_reporting_only = False
@@ -596,6 +622,8 @@ def add_iamc_diagnostic(
     )
 
     protocol_id = protocol_id or scenario.scenario.split("-SSP")[0]
+    # Stay on the same platform as `scenario` (NGFS_PLATFORM), never the default
+    context.platform_info["name"] = scenario.platform.name
     cp_scen = message_ix.Scenario(scenario.platform, scenario.model, cp_scenario)
 
     remove_emission_bounds(scenario, remove_all=True)
@@ -786,10 +814,10 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
 
     context.model.regions = identify_nodes(scenario)
 
-    # Get scenario name
-    scen = context.scenario_info.get("scenario", scenario.scenario)
-    if scen.endswith("_base"):
-        scen = scen[:-5]  # Remove "_base" suffix to get base scenario name
+    # Map e.g. o_1p5c_base / o_1p5c_base_lowdem → o_1p5c for config / Glasgow
+    scen = _ngfs_base_scenario_name(
+        context.scenario_info.get("scenario", scenario.scenario)
+    )
 
     # Get global_co2_bnd from config
     global_co2_bnd = _get_ngfs_config(context).get(scen, {}).get("global_co2_bnd")
@@ -855,6 +883,38 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     if glasgow_stage is None:
         raise ValueError(f"step_0: no Glasgow anchor stage for scenario '{scen}'")
     add_anchor(context, scenario, stage=glasgow_stage)
+
+    # o_1p5c experiment: run STURM/MIXB and load buildings demand (no solve)
+    if scen == "o_1p5c":
+        # call_sturm(context, scenario)
+        call_buildings_demand(context, scenario)
+
+    # o_1p5c experiment: Zero TCE / TCE_non-CO2 emission_factor on buildings techs
+    # if scen == "o_1p5c":
+    #     ef = scenario.par(
+    #         "emission_factor", filters={"emission": ["TCE", "TCE_non-CO2"]}
+    #     )
+    #     ef_zero = ef[
+    #         ef["technology"].str.contains("_comm_|_resid_", regex=True)
+    #     ].copy()
+    #     if not ef_zero.empty:
+    #         ef_zero["value"] = 0.0
+    #         with scenario.transact(
+    #             "Zero TCE/TCE_non-CO2 emission_factor for _comm_/_resid_ technologies"
+    #         ):
+    #             scenario.add_par("emission_factor", ef_zero)
+    #         log.info(
+    #             "Set TCE/TCE_non-CO2 emission_factor=0 for %d rows (%d technologies)",
+    #             len(ef_zero),
+    #             ef_zero["technology"].nunique(),
+    #         )
+
+    # o_1p5c experiment: CO2 storage as resource
+    # if scen == "o_1p5c":
+    #     apply_remaining_injection_rate(
+    #         context, scenario, variant="ngfs",
+    #         variant_after="ngfs_after", split_year=2055,
+    #     )
 
     scenario.set_as_default()
     return scenario
@@ -1044,9 +1104,7 @@ STORAGE_GRADE = "a"
 # Fractional annual injection rate of remaining storage capacity
 # (MESSAGE resource_remaining). Select via ``variant``, or pass
 # ``remaining=`` to override.
-RESOURCE_REMAININGS = {
-    "default": 0.01,
-}
+RESOURCE_REMAININGS = {"iam_diag": 0.01, "ngfs": 0.012, "ngfs_after": 0.009}
 
 
 def _resolve_storage_remaining(
@@ -1063,6 +1121,23 @@ def _resolve_storage_remaining(
             f"known: {sorted(RESOURCE_REMAININGS)} "
             f"or pass remaining=..."
         ) from exc
+
+
+def _remaining_by_year(
+    storage_years: list[int],
+    *,
+    a_before: float,
+    a_after: float | None,
+    split_year: int,
+) -> dict[int, float]:
+    """Map each storage year to its resource_remaining rate.
+
+    If *a_after* is ``None``, *a_before* is used for every year. Otherwise years
+    ``< split_year`` use *a_before* and years ``>= split_year`` use *a_after*.
+    """
+    if a_after is None:
+        return {year: a_before for year in storage_years}
+    return {year: a_before if year < split_year else a_after for year in storage_years}
 
 
 def _co2_stor_modes(scenario: message_ix.Scenario) -> list[str]:
@@ -1119,13 +1194,13 @@ def _remove_legacy_co2_storage_caps(scenario: message_ix.Scenario) -> None:
 def _add_storage_resource_params(
     scenario: message_ix.Scenario,
     *,
-    a: float,
+    remaining_by_year: dict[int, float],
     label: str,
     stor_modes: list[str],
-    storage_years: list[int],
 ) -> None:
     """Add resource_volume / remaining / cost and co2_stor input links."""
-    with scenario.transact(f"resource-remaining injection rate ({label}, a={a})"):
+    storage_years = sorted(remaining_by_year)
+    with scenario.transact(f"resource-remaining injection rate ({label})"):
         if STORAGE_COMM not in scenario.set("commodity").tolist():
             scenario.add_set("commodity", STORAGE_COMM)
         if STORAGE_GRADE not in scenario.set("grade").tolist():
@@ -1157,11 +1232,12 @@ def _add_storage_resource_params(
                         node=node,
                         commodity=STORAGE_COMM,
                         grade=STORAGE_GRADE,
-                        year=storage_years,
+                        year=year,
                         value=a,
                         unit="-",
                     )
                     for node in R12_STORAGE
+                    for year, a in remaining_by_year.items()
                 ],
                 ignore_index=True,
             ),
@@ -1215,8 +1291,12 @@ def apply_remaining_injection_rate(
     context: Context,
     scenario: message_ix.Scenario,
     *,
-    variant: str = "default",
+    variant: str = "ngfs",
     remaining: float | None = None,
+    variant_after: str | None = None,
+    remaining_after: float | None = None,
+    split_year: int = 2060,
+    first_year: int = 2030,
 ) -> message_ix.Scenario:
     """Constrain CO2 storage as a depletable resource.
 
@@ -1229,11 +1309,51 @@ def apply_remaining_injection_rate(
     Parameters
     ----------
     variant :
-        Key in :data:`RESOURCE_REMAININGS` used when *remaining* is omitted.
+        Key in :data:`RESOURCE_REMAININGS` for years before *split_year*
+        (or all years when no after-rate is given).
     remaining :
-        Explicit fractional rate ``a``. Overrides *variant* when given.
+        Explicit fractional rate ``a`` before *split_year*. Overrides *variant*.
+    variant_after :
+        Key in :data:`RESOURCE_REMAININGS` for years ``>= split_year``.
+        If omitted (and *remaining_after* is omitted), *variant* / *remaining*
+        apply to every year.
+    remaining_after :
+        Explicit fractional rate ``a`` for years ``>= split_year``.
+        Overrides *variant_after*.
+    split_year :
+        First year that uses the after-rate (default 2060).
+    first_year :
+        Only years ``> first_year`` receive the resource constraint
+        (default 2030 → constraint from 2035 on in 5-year steps).
+
+    Examples
+    --------
+    Single rate for all constrained years::
+
+        apply_remaining_injection_rate(context, scenario, variant="iam_diag")
+
+    ``ngfs`` before 2060, ``iam_diag`` from 2060::
+
+        apply_remaining_injection_rate(
+            context, scenario,
+            variant="ngfs",
+            variant_after="iam_diag",
+            split_year=2060,
+        )
     """
-    a, label = _resolve_storage_remaining(variant, remaining)
+    a_before, label_before = _resolve_storage_remaining(variant, remaining)
+    use_split = variant_after is not None or remaining_after is not None
+    if use_split:
+        after_variant = variant_after if variant_after is not None else variant
+        a_after, label_after = _resolve_storage_remaining(
+            after_variant, remaining_after
+        )
+        label = (
+            f"{label_before} (year<{split_year}), {label_after} (year>={split_year})"
+        )
+    else:
+        a_after = None
+        label = label_before
 
     scenario_nodes = set(scenario.set("node").tolist())
     missing = [node for node in R12_STORAGE if node not in scenario_nodes]
@@ -1241,22 +1361,27 @@ def apply_remaining_injection_rate(
         raise ValueError(f"Storage regions not in scenario nodes: {missing}")
 
     storage_years = sorted(
-        year for year in scenario.set("year").tolist() if year > 2025
+        year for year in scenario.set("year").tolist() if year > first_year
     )
+    remaining_by_year = _remaining_by_year(
+        storage_years,
+        a_before=a_before,
+        a_after=a_after,
+        split_year=split_year,
+    )
+
     stor_modes = _co2_stor_modes(scenario)
     _remove_legacy_co2_storage_caps(scenario)
     _add_storage_resource_params(
         scenario,
-        a=a,
+        remaining_by_year=remaining_by_year,
         label=label,
         stor_modes=stor_modes,
-        storage_years=storage_years,
     )
 
     log.info(
-        "Applied CO2 storage resource remaining a=%s (%s) across %d regions, "
+        "Applied CO2 storage resource remaining (%s) across %d regions, "
         "%d periods, total stock=%.3e MtC",
-        a,
         label,
         len(R12_STORAGE),
         len(storage_years),
@@ -1312,6 +1437,8 @@ def generate(context: Context) -> Workflow:
     context.ssp = "SSP2"
     context.model.regions = "R12"
     context.anchor_data_file = "20260918ngfs.csv"
+    # All NGFS targets / context.get_platform() use NGFS_PLATFORM (not ixmp default)
+    context.platform_info["name"] = NGFS_PLATFORM
     apply_bmt_config(context)
     # YJ: model name is defined there in the bmt config but fine
     # YJ: nothing in this file reads context.bmt["model_name"] so all good
@@ -1602,7 +1729,7 @@ def generate(context: Context) -> Workflow:
         "o_1p5c base built",
         "baseline reported",
         step_0,
-        target=f"{model_name}/o_1p5c_base",
+        target=f"{model_name}/o_1p5c_base_test_d",
         clone=dict(keep_solution=False),
     )
 
@@ -1633,21 +1760,23 @@ def generate(context: Context) -> Workflow:
         stage="iamc_diag",
     )
     # CO2 storage as resource (resource_volume + resource_remaining).
-    # Pass remaining=... to override RESOURCE_REMAININGS["default"].
+    # Optional split: variant_after=..., split_year=2060.
     wf.add_step(
         "baseline cdr adjusted",
         "baseline iamc anchored",
         apply_remaining_injection_rate,
         target=f"{model_name}/baseline_cdr_adjusted",
         clone=dict(keep_solution=False),
-        variant="default",
+        variant="iam_diag",
     )
     for protocol_id in ("C400-lin", "C160-gr5", "C80-gr5", "C0to400-lin"):
+        # Target URLs on scenario platform (truncate/load); no cross-platform clone.
+        diag_model = f"ixmp://{IAMC_DIAG_PLATFORM[protocol_id]}/{NGFS_MODEL_NAME}"
         wf.add_step(
             f"{protocol_id} added",
             "baseline cdr adjusted",
             add_iamc_diagnostic,
-            target=f"{model_name}/{protocol_id}_plain",
+            target=f"{diag_model}/{protocol_id}_plain",
             clone=dict(keep_solution=False),
             protocol_id=protocol_id,
             cp_scenario="baseline_DEFAULT",
@@ -1667,7 +1796,7 @@ def generate(context: Context) -> Workflow:
             f"{protocol_id} solved",
             f"{protocol_id} mixb called",
             iterate_mixB,
-            target=f"{model_name}/{protocol_id}",
+            target=f"{diag_model}/{protocol_id}",
             clone=dict(keep_solution=False),
         )
         wf.add_step(
@@ -1682,7 +1811,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN1",
             f"{scen} base built",
             step_1_and_solve,
-            target=f"{model_name}/{scen}_EN1",
+            target=f"{model_name}/{scen}_EN1_test_d",
             clone=dict(keep_solution=False),
         )
 
@@ -1690,7 +1819,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN2",
             f"{scen} EN1",
             step_2_and_solve,
-            target=f"{model_name}/{scen}_EN2",
+            target=f"{model_name}/{scen}_EN2_test_d",
             # Must have solution to retrieve emission trajectories.
             clone=dict(keep_solution=True),
         )
@@ -1705,7 +1834,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN3",
             f"{scen} EN2",
             step_3_and_solve,
-            target=f"{model_name}/{scen}_EN3",
+            target=f"{model_name}/{scen}_EN3_test_d",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
@@ -1720,7 +1849,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN4",
             f"{scen} EN3",
             step_4_and_solve,
-            target=f"{model_name}/{scen}_EN4",
+            target=f"{model_name}/{scen}_EN4_test_d",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
@@ -1750,7 +1879,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} solved",
             f"{scen} anchor mixb called",
             iterate_mixB,
-            target=f"{model_name}/{scen}",
+            target=f"{model_name}/{scen}_test_d",
             clone=dict(keep_solution=False),
         )
 

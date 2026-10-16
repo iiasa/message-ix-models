@@ -754,6 +754,7 @@ def add_anchor(
     anchor_tax_emission(df_anchor, scenario)
     anchor_growth_land_scen(df_anchor, scenario)
 
+    scenario.set_as_default() # YJ: do I need this?
     return scenario
 
 
