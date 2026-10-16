@@ -67,7 +67,9 @@ SF_ACC_POLICY_IDS = [
 ]
 log = logging.getLogger(__name__)
 
-# EFC ixmp model name (single source of truth for cloned scenario targets).
+# EFC ixmp platform and model name
+# Can rename for your local ixmp platform. 
+EFC_PLATFORM_NAME = "local_efc"
 EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
 
 
@@ -75,6 +77,7 @@ def configure_context(context: Context) -> None:
     """Configure *context* for every EFC workflow and reporting entry point."""
     context.ssp = "SSP2"
     context.model.regions = "R12"
+    context.platform_info.setdefault("name", EFC_PLATFORM_NAME)
 
     from message_ix_models.model.bmt.config import apply_bmt_config
 
@@ -484,7 +487,7 @@ def generate(context: Context) -> Workflow:
     wf = Workflow(context)
     configure_context(context)
 
-    # EFC workflow: clone the parent scenario on ixmp-dev into the EFC model name.
+    # EFC workflow: clone the parent scenario on specific ixmp platform.
     #
     # The parent is the MT chain rebuilt on 2026-08-18 from the step_14b shipping
     # patch, which restores loil_bunker's input/output (deleted upstream in model
@@ -502,12 +505,18 @@ def generate(context: Context) -> Workflow:
     #
     # apply_bmt_config() above is not a Buildings build step either — it is a
     # Context configurator required for transport reporting.
-    model_name = "ixmp://ixmp-dev/" + EFC_MODEL_NAME
-    url = model_name + "/"
-    base_url = (
-        "ixmp://ixmp-dev/MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
-        "/baseline_MT_calibrated#1"
-    )
+    #
+    # Platform is named explicitly (not the process default): open/clone the parent
+    # onto EFC_PLATFORM_NAME before running, e.g.
+    #   import ixmp; mp = ixmp.Platform(EFC_PLATFORM_NAME)
+    url_prefix = f"ixmp://{EFC_PLATFORM_NAME}/{EFC_MODEL_NAME}"
+    url = url_prefix + "/"
+    base_url = f"{url_prefix}/baseline_MT"
+
+    # which is a clone from 
+    # MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3/baseline_MT#13
+    # that starts from OF v6.6 step14 with the loil bunker fix by LC, 
+    # then the lastest transport build by 2026-10-16. 
 
     # Common keyword argument for cloning (without solution; smaller DB writes)
     c = dict(keep_solution=False)
