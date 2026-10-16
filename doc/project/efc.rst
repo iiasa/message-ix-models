@@ -81,3 +81,40 @@ Branch
 ------
 Development branch for EFC 2025 work (to be added)
 
+
+EFC resource-origin estimates
+=============================
+
+The full EFC report appends ``Estimate|Origin|<carrier>|<kind>|<use>|<producer>``
+rows for hydrogen, methanol and ammonia. These are proportional accounting
+estimates, not traced molecules, bilateral supplier provenance, or certificates.
+Existing legacy and Genno rows are unchanged by the allocation calculation.
+Partial-domain reporting does not opt into origin accounting.
+
+Canonical regional production shares allocate gross exports and the existing
+regional bunker assignment. Global production shares, excluding duplicate World
+rows, allocate imports. Route net trade is signed exports minus imports minus
+bunkers. Domestic consuming-technology shares normalize production minus allocated
+exports plus allocated imports on the audited carrier basis; bunkers are not
+subtracted again. Methanol fuel/feedstock production is intentionally pooled.
+Positive use with an unusable or negative route pool fails rather than selecting
+a fallback origin. Unsupported whole leaf-years contribute structural zeros only
+to arithmetic; observed consumer coordinates are retained.
+
+Captive refinery hydrogen (``catalytic_reforming_ref`` to ``hydro_cracking_ref``)
+is separate from merchant hydrogen. Coefficient guards validate carrier bridges
+against inspected model input/output coordinates. Reported bunker inputs already
+include their loss coefficients; those losses are not applied twice.
+
+``Estimate|Origin|Non-Additive|Methanol|HVC via MTO|<producer>`` is a separate
+downstream view. It weights ethylene/propylene consumed by ``production_HVC`` by
+each olefin pool's MTO production fraction, then attributes only that portion to
+methanol origins. BTX has no MTO contribution. Do not add this view to direct
+``MTO_petro`` methanol use or infer plastics/textiles applications from it.
+
+Verification uses separate checked copies of one immutable solved seed. It
+compares every pre-existing persisted coordinate/value and workbook value
+exactly, validates new route totals, and re-reports only the new clone in another
+process to check repeatability. Numerical roundoff bounds apply only to new
+arithmetic identities, including gross operands for near-cancelling net trade.
+Customer methodological review remains required before release.

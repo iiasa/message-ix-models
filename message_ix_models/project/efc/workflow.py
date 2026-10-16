@@ -239,6 +239,8 @@ def report(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
             domains=["hydrogen", "power", "chemicals", "transport", "industry"],
             add_global_aggregates=True,
             add_net_trade=True,
+            add_origin_estimates=True,
+            origin_scenario=scenario,
         )
         try:
             scenario.check_out(timeseries_only=True)
