@@ -17,7 +17,7 @@ from message_ix import Scenario
 
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import workflow as model_workflow
-from message_ix_models.util import HAS_MESSAGE_DATA, broadcast, identify_nodes
+from message_ix_models.util import broadcast, identify_nodes
 from message_ix_models.workflow import Workflow
 from message_ix_models.tools import remove_emission_bounds, add_emission_trajectory
 
@@ -27,13 +27,6 @@ if TYPE_CHECKING:
     class CommonArgs(TypedDict):
         relation_name: str
         reg: str
-
-
-if HAS_MESSAGE_DATA:
-    # NB This module has not been migrated from message_data.projects.engage.
-    from message_data.projects.engage.scenario_runner import ScenarioRunner
-else:
-    ScenarioRunner = type("ScenarioRunner", (), {})
 
 
 log = logging.getLogger(__name__)
@@ -261,16 +254,12 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     """Step 2 of the ENGAGE climate policy workflow."""
     from message_ix_models.tools import add_emission_trajectory
 
-    # Retrieve a pandas.DataFrame with the CO2 emissions trajectory
-    #
-    # NB this method:
-    # - does not use any class or context attributes, so it can be called on any
-    #   instance of ScenarioRunner.
-    #   TODO separate the method from the class as a stand-alone function
-    # - does not require legacy reporting output; only the variable "EMISS", i.e.
-    #   `scenario` must have solution data.
-    sr = ScenarioRunner(context)
-    df = sr.retr_CO2_trajectory(scenario)
+    # Retrieve a pandas.DataFrame with the CO2 emissions trajectory.
+    # Uses the local helper (same logic as ScenarioRunner.retr_CO2_trajectory)
+    # so this module does not import message_data (and its import-time Platform()).
+    # World-only matches the former ScenarioRunner default (regional_emission_bound=False).
+    # Does not require legacy reporting output; only EMISS / solution data.
+    df = retr_CO2_trajectory(scenario, regional_emission_bound=False)
     log.info(
         f"Retrieved CO₂ emission trajectory from {scenario.model}/{scenario.scenario}"
     )
