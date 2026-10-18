@@ -296,27 +296,8 @@ def generic_flow(
     return scenario
 
 
-def calibrate_base(
-    context: Context, scenario: message_ix.Scenario
-) -> message_ix.Scenario:
-    scenario = freeze_truck_history(context, scenario)
-    scenario = aas_coal_growth_near_term(context, scenario)
-    return scenario
-
-
 def placeholder(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Placeholder function that does nothing, just for building workflow."""
-    return scenario
-
-
-def add_anchors(
-    context: Context,
-    scenario: message_ix.Scenario,
-    policy_ids: list[str] | None = None,
-) -> message_ix.Scenario:
-    """Add current-policy (CPOL) anchors to the scenario."""
-    context.anchor_data_file = "20260828efc_current_policy.csv"
-    add_anchor(context, scenario, policy_ids=policy_ids)
     return scenario
 
 
@@ -486,6 +467,7 @@ _scen_all = [
 def generate(context: Context) -> Workflow:
     wf = Workflow(context)
     configure_context(context)
+    context.anchor_data_file = "20260828efc_current_policy.csv"
 
     # EFC workflow: clone the parent scenario on specific ixmp platform.
     #
@@ -529,19 +511,22 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=True),
     )
     name = wf.add_step("base reported", name, report)
+    # YJ: updates in transport module after August 2026 not included, 
+    # i.e., the report of transport non-CO2 emissions
     name = wf.add_step(
         "base calibrated",
         name,
-        calibrate_base,
+        add_anchor,
         target=f"{url}base_calibrated",
         clone=c,
+        stage="_base",
     )
     name = wf.add_step(
         "hydrogen added",
         name,
         build_hydrogen,
-        target=f"{url}baseline_20260827",
-        # target=f"{url}chn_base",
+        # target=f"{url}baseline_20261018",
+        target=f"{url}chn_base",
         clone=c,
     )
     name = wf.add_step("baseline solved", name, solve)
@@ -555,7 +540,7 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step(
         "cpol added",
         "baseline reported",
-        add_anchors,
+        add_anchor,
         policy_ids=SF_POLICY_IDS,
         target=f"{url}chn_base_sf_policy",
         clone=c,
@@ -581,7 +566,7 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step(
         "1p5c_sf added",
         "1p5c solved",
-        add_anchors,
+        add_anchor,
         target=f"{url}chn_nz2060_sf_policy",
         policy_ids=SF_POLICY_IDS,
         clone=dict(keep_solution=False),
@@ -592,7 +577,7 @@ def generate(context: Context) -> Workflow:
     name = wf.add_step(
         "1p5c_sf_acc added",
         "1p5c solved",
-        add_anchors,
+        add_anchor,
         target=f"{url}chn_acc_nz2060_sf_policy",
         policy_ids=SF_ACC_POLICY_IDS,
         clone=dict(keep_solution=False),
