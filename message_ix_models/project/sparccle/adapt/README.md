@@ -12,6 +12,9 @@ HSQLDB platform; the build only adds constraints.
 | `adapt35` | no new once-through cooling anywhere; no new coal, gas, oil power-plant capacity (incl. CCS variants, not heat plants); near-zero activity growth for biomass and nuclear power; the base's activity-decline floors on the banned plants removed | 2035 |
 | `adapt35h40` | as `adapt35`, half effect in 2035 (new-capacity bound = ½ base `CAP_NEW`, growth rates halved), full from 2040 | 2035 / 2040 |
 | `aironly35` | power sector free; no new once-through *or* closed-loop cooling anywhere (`cooling_ban_types`), so new plants use dry cooling only; SSP share caps off (their air ≤ 50 % cap would contradict the rule) | 2035 |
+| `nofresh35` | power sector free; no new *freshwater* cooling (once-through or closed-loop); seawater once-through and dry cooling stay available; SSP share caps off | 2035 |
+| `salhist` | the water module's seawater cap (10,000 MCM/yr in every region) replaced by the historical peak saline withdrawal × 1.2 (`saline_hist_bound`, see below) | all years |
+| `nofresh35sh` | `nofresh35` plus `salhist` | 2035 |
 
 Technologies, nodes, growth rates and years live in `config.yaml`; the logic in
 `workflow.py` (pure functions `cooling_share_sets`, `no_new_capacity`,
@@ -68,12 +71,17 @@ register each copy as its own platform (`ixmp platform add`).
   cost): the base solution has no air cooling, every re-solved clone has 7–13 %
   at the same objective. Compare once-through vs recirculating, not air vs wet.
 - Seawater once-through cooling is capped by the water module, not by this
-  package: `extract_salinewater_cool` carries `bound_activity_up` =
-  `default_saline_bound` (10,000 MCM/yr, `data/water/ppl_cooling_config.yaml`) in
-  every region, and the cap binds in the base. `_add_saline_bounds` in
-  `water/data/water_for_ppl.py` compares historical activity (GWa) with that MCM
-  default, so the default always wins. A "no freshwater cooling" scenario
-  (`nofresh35`) is therefore dry cooling plus a fixed saline budget.
+  package: `extract_salinewater_cool` carries `bound_activity_up` from
+  `_add_saline_bounds` in `water/data/water_for_ppl.py`. When the base was built
+  that function compared historical activity (GWa of rejected heat) with the
+  `default_saline_bound` of 10,000 MCM/yr, so the default won in every region and
+  binds in the base from 2035, below the 2030 withdrawal in seven regions (CHN
+  85,000 MCM, PAS 30,000, NAM 25,000, PAO 21,000, WEU 17,000, MEA 16,000, SAS
+  15,000). The function now converts history to MCM via the `saline_ppl` input
+  and bounds at the historical peak × `capacity_flexibility_factor`; `salhist`
+  and `nofresh35sh` apply that corrected bound on clones of the old base
+  (`saline_hist_bound`), so the base itself need not be rebuilt. `nofresh35` is
+  dry cooling plus the old fixed saline budget.
 - Decisions: "EU" = R12_WEU + R12_EEU; once-through includes saline intakes;
   `soft_activity_up` (3–5 %) is left, so frozen technologies can still creep at a
   cost; `growth_new_capacity_up` is untouched.

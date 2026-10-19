@@ -30,7 +30,14 @@ def test_load_config_packaged() -> None:
         "adapt35h40",
         "aironly35",
         "nofresh35",
+        "salhist",
+        "nofresh35sh",
     }
+    assert config["scenarios"]["salhist"]["saline_hist_bound"] is True
+    assert config["scenarios"]["nofresh35sh"]["cooling_ban_types"] == [
+        "ot_fresh",
+        "cl_fresh",
+    ]
     assert config["scenarios"]["aironly35"]["cooling_ban_types"] == [
         "ot_fresh",
         "ot_saline",

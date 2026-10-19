@@ -67,3 +67,17 @@ scenarios:
     once_through_ban: all
     cooling_ban_types: [ot_fresh, cl_fresh]
     full_from: 2035
+  # Seawater cap from history: bound_activity_up on extract_salinewater_cool =
+  # historical peak saline withdrawal (hist ot_saline activity x input MCM/GWa)
+  # x the water module's capacity_flexibility_factor, instead of the 10,000 MCM
+  # fallback the module applied everywhere (it compared GWa with MCM).
+  salhist:
+    suffix: _salhist
+    saline_hist_bound: true
+  # nofresh35 with the historical seawater cap
+  nofresh35sh:
+    suffix: _nofresh35sh
+    once_through_ban: all
+    cooling_ban_types: [ot_fresh, cl_fresh]
+    full_from: 2035
+    saline_hist_bound: true

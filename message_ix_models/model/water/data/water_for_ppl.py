@@ -532,42 +532,67 @@ def _make_ssp_share_constraints(context: "Context") -> pd.DataFrame:
     return pd.concat(results) if results else pd.DataFrame()
 
 
+def saline_bound_from_history(
+    hist_act: pd.DataFrame,
+    saline_input: pd.DataFrame,
+    years: list[int],
+    flex: float,
+    default: float,
+) -> pd.DataFrame:
+    """``bound_activity_up`` rows for ``extract_salinewater_cool``, in MCM.
+
+    `hist_act` is ``historical_activity`` of the ``*__ot_saline`` cooling
+    technologies (GWa of rejected heat) and `saline_input` their ``input`` of
+    ``saline_ppl`` (MCM/GWa). Their product is the historical seawater
+    withdrawal; the bound is the peak over the historical years times `flex`.
+    Nodes without saline history get `default`.
+    """
+    coef = (
+        saline_input.groupby(["node_loc", "technology"])["value"]
+        .mean()
+        .rename("coef")
+        .reset_index()
+    )
+    hist = hist_act.merge(coef, on=["node_loc", "technology"], how="inner")
+    hist["mcm"] = hist["value"] * hist["coef"]
+    peak = hist.groupby(["node_loc", "year_act"])["mcm"].sum().groupby("node_loc").max()
+
+    nodes = sorted(set(hist_act["node_loc"]) | set(saline_input["node_loc"]))
+    bound = pd.Series(default, index=nodes)
+    bound.loc[peak.index] = (flex * peak).where(peak > 0, default)
+    return make_df(
+        "bound_activity_up",
+        technology="extract_salinewater_cool",
+        node_loc=bound.index,
+        mode="M1",
+        time="year",
+        value=bound.values,
+        unit="MCM",
+    ).pipe(broadcast, year_act=years)
+
+
 def _add_saline_bounds(results: dict, info) -> None:
-    """Add bound_activity_up for saline water extraction."""
+    """Add bound_activity_up for saline water extraction from its history."""
     if "historical_activity" not in results:
         return
 
     hist_act = results["historical_activity"]
-    is_saline = hist_act["technology"].str.endswith("__ot_saline", na=False)
-    saline_hist = hist_act[is_saline]
+    saline_hist = hist_act[hist_act["technology"].str.endswith("__ot_saline", na=False)]
     if saline_hist.empty:
         return
+    saline_input = results["input"][results["input"]["commodity"] == "saline_ppl"]
 
-    last_year = saline_hist["year_act"].max()
-    last_yr_hist = saline_hist[saline_hist["year_act"] == last_year]
-    regional = last_yr_hist.groupby("node_loc")["value"].sum()
-
-    default_bound = CONFIG["default_saline_bound"]
-    bounds = []
-    for region, val in regional.items():
-        bound_val = max(val, default_bound) if val > 0 else default_bound
-        bounds.append({"node_loc": region, "value": bound_val})
-
-    if bounds:
-        bound_df = make_df(
-            "bound_activity_up",
-            technology="extract_salinewater_cool",
-            node_loc=[b["node_loc"] for b in bounds],
-            mode="M1",
-            time="year",
-            value=[b["value"] for b in bounds],
-            unit="MCM",
-        ).pipe(broadcast, year_act=info.Y)
-
-        results["bound_activity_up"] = pd.concat(
-            [results.get("bound_activity_up", pd.DataFrame()), bound_df],
-            ignore_index=True,
-        )
+    bound_df = saline_bound_from_history(
+        saline_hist,
+        saline_input,
+        info.Y,
+        CONFIG["capacity_flexibility_factor"],
+        CONFIG["default_saline_bound"],
+    )
+    results["bound_activity_up"] = pd.concat(
+        [results.get("bound_activity_up", pd.DataFrame()), bound_df],
+        ignore_index=True,
+    )
 
 
 def _add_nexus_params(

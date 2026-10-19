@@ -35,7 +35,8 @@ min_share_value: 0.0001             # Minimum share to avoid zero
 capacity_flexibility_factor: 1.2    # Multiplier on historical capacity
 
 # Bounds
-default_saline_bound: 10000.0  # MCM fallback when no historical saline activity
+default_saline_bound: 10000.0  # MCM, nodes without saline cooling history only;
+  # elsewhere the bound is the historical peak withdrawal x capacity_flexibility_factor
 
 # Share constraint parameters
 share_constraint_start_year: 2050
