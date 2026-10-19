@@ -44,7 +44,7 @@
 
 # X-axis range: [min, max], or null for the full data range. 2110 is an
 # end-of-horizon artifact and is deliberately cut off.
-x_axis_range: [2010, 2100]
+x_axis_range: [2020, 2100]
 
 # Main (large left) plot region; the R12_ prefix is normalized away.
 main_region: R12_GLB
@@ -161,7 +161,7 @@ colors:
   "out|meth_ind_fs|methanol": "#BCA8D2"
 
   # out|power|h2 turbine electricity (group 8)
-  "out|Power|h2_ct|electricity": "#80B1D3"
+  # "out|Power|h2_ct|electricity": "#80B1D3"
 
   # in|meth_h2 detail|energy inputs by CO2 source (group 16)
   "in|Industry|Chemicals|meth_h2|BIC_CO2|hydrogen": "#BEBADA"
@@ -402,7 +402,6 @@ groups:
   - out|fueloil_NH3|NH3
   - out|fueloil_NH3_ccs|NH3
   - out|electr_NH3|NH3
-  - out|residual_NH3|NH3
 
 - title: "out|ethanol production|by technology (EJ)"
   aggregate_by: dim_t
@@ -414,7 +413,7 @@ groups:
 
 # 3-segment names: dim_m = product. Leaf routes only; the
 # out|Chemicals|production_HVC|HVC aggregate is excluded (double count).
-- title: "out|olefins & BTX|by product (Mt)"
+- title: "out|Olefins & BTX|by product (Mt)"
   aggregate_by: dim_m
   variables:
   - out|steam_cracker_petro|ethylene
@@ -426,20 +425,20 @@ groups:
 
 # Distribution-stage outputs. The GWa->Mt bridge for chemicals sits at the
 # t_d technologies, so there is no per-route Mt methanol series upstream.
-- title: "out|distribution|energy stage (EJ)"
-  variables:
-  - out|Chemicals|meth_t_d|methanol fuel
-  - out|Chemicals|eth_t_d|ethanol
+# - title: "out|distribution|energy stage (EJ)"
+#   variables:
+#   - out|Chemicals|meth_t_d|methanol fuel
+#   - out|Chemicals|eth_t_d|ethanol
 
-- title: "out|distribution|material stage (Mt)"
-  variables:
-  - out|Chemicals|meth_t_d|methanol feedstock material
-  - out|meth_ind_fs|methanol
+# - title: "out|distribution|material stage (Mt)"
+#   variables:
+#   - out|Chemicals|meth_t_d|methanol feedstock material
+#   - out|meth_ind_fs|methanol
 
 # Single series: electricity from hydrogen turbines.
-- title: "out|power|h2 turbine electricity (EJ)"
-  variables:
-  - out|Power|h2_ct|electricity
+# - title: "out|power|h2 turbine electricity (EJ)"
+#   variables:
+#   - out|Power|h2_ct|electricity
 
 # =========================================================================
 # Consumption (in|) by sector. These groups also assign each variable its
@@ -549,11 +548,10 @@ groups:
   - in|Power|h2_ct|hydrogen
 
 # 5-segment names: dim_l = commodity. Includes the mode-aggregated
-# in|Industry|Chemicals|meth_h2|hydrogen leaf; the per-CO2-source splits live
-# in their own group below and must never be stacked together with this one.
-# Known asymmetry: meth_h2 electricity has no mode-aggregated leaf, so it
-# appears only in the detail group.
-- title: "in|chemicals methanol producers|by commodity (EJ)"
+# meth_h2|hydrogen and meth_h2|electr leaves (from
+# methanol_flow_in_energy_aggregates.yaml). Per-mode splits must never be
+# stacked together with these totals (double-count).
+- title: "in|chemicals methanol|by commodity (EJ)"
   dim_s: chemicals
   aggregate_by: dim_l
   variables:
@@ -564,25 +562,44 @@ groups:
   - in|Industry|Chemicals|meth_coal_ccs|coal
   - in|Industry|Chemicals|meth_bio|biomass
   - in|Industry|Chemicals|meth_bio_ccs|biomass
+  - in|Industry|Chemicals|meth_h2|electr
+
+# Merchant meth_h2 inputs (hydrogen + electr) stacked with captive transient
+# H2 embedded in fossil/bio methanol routes. All source series are EJ/yr;
+# scale_factor converts to Mt H2 at H2 LHV 120 MJ/kg (plot-only; IAMC unchanged).
+# Note: electr is energy-equivalent Mt H2, not physical hydrogen mass.
+- title: "in|chemicals methanol|by commodity (Mt H2)"
+  plot_unit: "Mt H2"
+  scale_factor: 0.0083333  
+  variables:
   - in|Industry|Chemicals|meth_h2|hydrogen
+  - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/ CCS
 
 # meth_h2 detail: 6/7-segment names carrying the CO2-source mode
 # (BIC/DAC/FIC x feedstock/fuel). Mixed segment shapes -> per-variable layers.
-- title: "in|meth_h2 detail|energy inputs by CO2 source (EJ)"
-  dim_s: chemicals
-  variables:
-  - in|Industry|Chemicals|meth_h2|BIC_CO2|hydrogen
-  - in|Industry|Chemicals|meth_h2|DAC_CO2|hydrogen
-  - in|Industry|Chemicals|meth_h2|FIC_CO2|hydrogen
-  - in|Industry|Chemicals|meth_h2|BIC_CO2|feedstock|electr
-  - in|Industry|Chemicals|meth_h2|BIC_CO2|fuel|electr
-  - in|Industry|Chemicals|meth_h2|DAC_CO2|feedstock|electr
-  - in|Industry|Chemicals|meth_h2|DAC_CO2|fuel|electr
-  - in|Industry|Chemicals|meth_h2|FIC_CO2|feedstock|electr
-  - in|Industry|Chemicals|meth_h2|FIC_CO2|fuel|electr
+# - title: "in|meth_h2 detail|energy inputs by CO2 source (EJ)"
+#   dim_s: chemicals
+#   variables:
+#   - in|Industry|Chemicals|meth_h2|BIC_CO2|hydrogen
+#   - in|Industry|Chemicals|meth_h2|DAC_CO2|hydrogen
+#   - in|Industry|Chemicals|meth_h2|FIC_CO2|hydrogen
+#   - in|Industry|Chemicals|meth_h2|BIC_CO2|feedstock|electr
+#   - in|Industry|Chemicals|meth_h2|BIC_CO2|fuel|electr
+#   - in|Industry|Chemicals|meth_h2|DAC_CO2|feedstock|electr
+#   - in|Industry|Chemicals|meth_h2|DAC_CO2|fuel|electr
+#   - in|Industry|Chemicals|meth_h2|FIC_CO2|feedstock|electr
+#   - in|Industry|Chemicals|meth_h2|FIC_CO2|fuel|electr
 
-- title: "in|meth_h2 detail|CO2 feed by source (Mt)"
+# All six leaves share dim_c = meth_h2 (and dim_s = chemicals), so
+# aggregate_by collapses BIC/DAC/FIC x feedstock/fuel into one total.
+- title: "in|chemicals methanol|by commodity (Mt CO2)"
   dim_s: chemicals
+  aggregate_by: dim_c
   variables:
   - in|Industry|Chemicals|meth_h2|BIC_CO2|feedstock|bic_co2
   - in|Industry|Chemicals|meth_h2|BIC_CO2|fuel|bic_co2
@@ -592,7 +609,7 @@ groups:
   - in|Industry|Chemicals|meth_h2|FIC_CO2|fuel|fic_co2
 
 # 5-segment names: dim_l = commodity.
-- title: "in|chemicals ammonia producers|by commodity (EJ)"
+- title: "in|chemicals ammonia|by commodity (EJ)"
   dim_s: chemicals
   aggregate_by: dim_l
   variables:
@@ -615,44 +632,29 @@ groups:
   - in|Industry|Chemicals|electr_NH3|electr
 
 # Mixed segment shapes (3/4/5) -> per-variable layers.
-- title: "in|chemicals HVC & other|energy inputs (EJ)"
+- title: "in|chemicals olefins & BTX|by commodity (EJ)"
   dim_s: chemicals
   variables:
-  - in|Industry|Chemicals|ethanol_to_ethylene_petro|ethanol
-  - in|Industry|Chemicals|ethanol_to_ethylene_petro|ht_heat
-  - in|Industry|Chemicals|gas_processing_petro|gas
-  - in|Industry|Chemicals|hp_elec_petro|electr
-  - in|Industry|Chemicals|CH2O_synth|electr
-  - in|Industry|Chemicals|liq_bio|biomass
-  - in|Industry|Chemicals|liq_bio_ccs|biomass
-  - in|Chemicals|CH2O_to_resin|electr
-  - in|Chemicals|CH2O_to_resin|ht_heat
-  - in|Chemicals|eth_i|ethanol
   - in|MTO_petro|electr
   - in|MTO_petro|ht_heat
+  - in|Industry|Chemicals|ethanol_to_ethylene_petro|ht_heat
   - in|steam_cracker_petro|electr
   - in|steam_cracker_petro|ht_heat
 
-# 3-segment names: dim_m = feedstock.
-- title: "in|steam cracker|feedstocks (Mt)"
+- title: "in|chemicals olefins & BTX|by commodity (Mt)"
   dim_s: chemicals
-  aggregate_by: dim_m
   variables:
+  - in|MTO_petro|methanol
+  - in|Industry|Chemicals|ethanol_to_ethylene_petro|ethanol
   - in|steam_cracker_petro|atm_gasoil
   - in|steam_cracker_petro|vacuum_gasoil
   - in|steam_cracker_petro|naphtha
   - in|steam_cracker_petro|ethane
   - in|steam_cracker_petro|propane
 
-# Material feeds into downstream chemicals (Mt). The 3-segment
-# in|MTO_petro|methanol twin of the 5-segment MTO leaf is excluded as a
-# duplicate name for the same flow.
-- title: "in|chemicals|material feed (Mt)"
+- title: "in|chemicals formaldehyde, HVC, fertilizers, and other chemicals|material feed (Mt)"
   dim_s: chemicals
   variables:
-  - in|Industry|Chemicals|NH3_to_N_fertil|NH3
-  - in|Chemicals|residual_NH3|ammonia
-  - in|Industry|Chemicals|MTO_petro|methanol
   - in|Industry|Chemicals|CH2O_synth|methanol
   - in|Chemicals|meth_ind_fs|methanol feedstock material
   - in|Chemicals|CH2O_to_resin|formaldehyde
@@ -660,6 +662,31 @@ groups:
   - in|Chemicals|production_HVC|ethylene
   - in|Industry|Chemicals|production_HVC|propylene
   - in|Chemicals|production_HVC|BTX
+
+# 3-segment names: dim_m = feedstock.
+# - title: "in|steam cracker|feedstocks (Mt)"
+#   dim_s: chemicals
+#   aggregate_by: dim_m
+#   variables:
+#   - in|steam_cracker_petro|atm_gasoil
+#   - in|steam_cracker_petro|vacuum_gasoil
+#   - in|steam_cracker_petro|naphtha
+#   - in|steam_cracker_petro|ethane
+#   - in|steam_cracker_petro|propane
+
+# Material feeds into downstream chemicals (Mt). The 3-segment
+# in|MTO_petro|methanol twin of the 5-segment MTO leaf is excluded as a
+# duplicate name for the same flow.
+# - title: "in|chemicals|material feed (Mt)"
+#   dim_s: chemicals
+#   variables:
+#   - in|Industry|Chemicals|CH2O_synth|methanol
+#   - in|Chemicals|meth_ind_fs|methanol feedstock material
+#   - in|Chemicals|CH2O_to_resin|formaldehyde
+#   - in|Chemicals|CH2O_to_resin|BTX
+#   - in|Chemicals|production_HVC|ethylene
+#   - in|Industry|Chemicals|production_HVC|propylene
+#   - in|Chemicals|production_HVC|BTX
 
 # 5-segment names ("Iron and Steel" is one segment): dim_l = commodity.
 - title: "in|iron & steel|by commodity (EJ)"
@@ -684,7 +711,7 @@ groups:
 # 5-segment names: dim_l = commodity. Furnaces, industrial fuel cells and
 # specific demands across aluminum / cement / petro / refining / resins /
 # steel applications.
-- title: "in|industry other|by commodity (EJ)"
+- title: "in|industry heat|by commodity (EJ)"
   dim_s: industry_other
   aggregate_by: dim_l
   variables:
@@ -754,41 +781,42 @@ groups:
   - in|Industry|Refining|hydro_cracking_ref|ht_heat
 
 # Hydrogen liquefaction feeding the LH2 shipping chain.
-- title: "in|LH2 liquefaction|hydrogen (EJ)"
-  dim_s: lh2_supply
-  variables:
-  - in|Industry|Chemicals|h2_liq|hydrogen
+# - title: "in|LH2 liquefaction|hydrogen (EJ)"
+#   dim_s: lh2_supply
+#   variables:
+#   - in|Industry|Chemicals|h2_liq|hydrogen
 
-- title: "in|other demand|ethanol (EJ)"
-  dim_s: other_demand
-  variables:
-  - in|eth_rc|ethanol
+# - title: "in|other demand|ethanol (EJ)"
+#   dim_s: other_demand
+#   variables:
+#   - in|eth_rc|ethanol
+#   - in|eth_i|ethanol
 
 # Hydrogen production inputs (3-segment names: dim_t = technology).
-- title: "in|hydrogen production|inputs by technology (EJ)"
-  aggregate_by: dim_t
-  variables:
-  - in|h2_smr|gas
-  - in|h2_smr_ccs|gas
-  - in|h2_smr_ccs|electricity
-  - in|h2_coal|coal
-  - in|h2_coal_ccs|coal
-  - in|h2_bio|biomass
-  - in|h2_bio_ccs|biomass
-  - in|h2_elec_alk|electricity
-  - in|h2_elec_pem|electricity
-  - in|h2_elec_soe|electr
-  - in|h2_elec_soe|ht_heat
-  - in|h2_pyro_elec|electricity
-  - in|h2_pyro_elec|gas
+# - title: "in|hydrogen production|inputs by technology (EJ)"
+#   aggregate_by: dim_t
+#   variables:
+#   - in|h2_smr|gas
+#   - in|h2_smr_ccs|gas
+#   - in|h2_smr_ccs|electricity
+#   - in|h2_coal|coal
+#   - in|h2_coal_ccs|coal
+#   - in|h2_bio|biomass
+#   - in|h2_bio_ccs|biomass
+#   - in|h2_elec_alk|electricity
+#   - in|h2_elec_pem|electricity
+#   - in|h2_elec_soe|electr
+#   - in|h2_elec_soe|ht_heat
+#   - in|h2_pyro_elec|electricity
+#   - in|h2_pyro_elec|gas
 
 # Ethanol production inputs.
-- title: "in|ethanol production|inputs by technology (EJ)"
-  aggregate_by: dim_t
-  variables:
-  - in|eth_bio|biomass
-  - in|eth_bio_ccs|biomass
-  - in|eth_bio_ccs|electr
+# - title: "in|ethanol production|inputs by technology (EJ)"
+#   aggregate_by: dim_t
+#   variables:
+#   - in|eth_bio|biomass
+#   - in|eth_bio_ccs|biomass
+#   - in|eth_bio_ccs|electr
 
 # =========================================================================
 # Cross-sector figures: where does each carrier go? Layers are the dim_s
@@ -796,8 +824,14 @@ groups:
 # variable listed here must already appear in a tagged group.
 # =========================================================================
 
-- title: "in|sector|hydrogen (EJ)"
+# Merchant H2 uses + captive Transient H2 (already EJ H2). Plot-only rescale
+# to Mt H2 at LHV 120 MJ/kg. Transient leaves have no upstream dim_s tag;
+# vet_ribbon.R maps Secondary Energy|Hydrogen|Transient|{Methanol,Ammonia}|*
+# to chemicals so aggregate_by: dim_s still stacks them.
+- title: "in|sector|hydrogen (Mt)"
   aggregate_by: dim_s
+  plot_unit: "Mt"
+  scale_factor: 0.008333333333333333  # 1/120
   variables:
   - in|Shipping|LH2_bunker|hydrogen
   - in|Transportation|Aviation|conh_ar|hydrogen
@@ -806,7 +840,22 @@ groups:
   - in|Transportation|Truck|FR_FCH|hydrogen
   - in|Power|h2_ct|hydrogen
   - in|Industry|Chemicals|meth_h2|hydrogen
-  - in|Industry|Chemicals|h2_liq|hydrogen
+  - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Gas w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Gas w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Coal w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Coal w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Biomass w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Biomass w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Oil w/o CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Oil w/ CCS
+  - Secondary Energy|Hydrogen|Transient|Ammonia|Electricity
+  # - in|Industry|Chemicals|h2_liq|hydrogen
   - in|Industry|Iron and Steel|dri_h2_steel|hydrogen
   - in|Industry|Other|furnace_h2_aluminum|hydrogen
   - in|Industry|Other|furnace_h2_cement|hydrogen
@@ -825,8 +874,32 @@ groups:
 
 # Energy-basis methanol only; the Mt feeds (MTO, CH2O_synth, meth_ind_fs)
 # are excluded here because they are on the material unit basis.
-- title: "in|sector|methanol (EJ)"
+# - title: "in|sector|methanol (EJ)"
+#   aggregate_by: dim_s
+#   variables:
+#   - in|Shipping|meth_bunker|methanol
+#   - in|Transportation|Aviation|conm_ar|methanol
+#   - in|Transportation|Light-Duty Vehicle|IAHm_ptrp|methanol
+#   - in|Transportation|Light-Duty Vehicle|ICAm_ptrp|methanol
+#   - in|Transportation|Bus|FCm_bus|methanol
+#   - in|Transportation|Truck|f road methanol|methanol
+#   - in|Industry|Other|furnace_methanol_aluminum|methanol
+#   - in|Industry|Other|furnace_methanol_cement|methanol
+#   - in|Industry|Other|furnace_methanol_petro|methanol
+#   - in|Industry|Other|furnace_methanol_refining|methanol
+#   - in|Industry|Other|furnace_methanol_resins|methanol
+#   - in|Industry|Other|furnace_methanol_steel|methanol
+
+# Fuel methanol (EJ) converted to Mt at the meth_t_d bridge
+# (0.697615 GWa/Mt x 0.03154 EJ/GWa = 0.022003 EJ/Mt), then stacked with the
+# chemical feedstock Mt leaves. scale_from_unit limits the rescale to EJ rows.
+# MTO uses the 3-segment leaf (already dim_s: chemicals); the 5-segment twin
+# is the same flow and must not be added.
+- title: "in|sector|methanol (Mt)"
   aggregate_by: dim_s
+  plot_unit: "Mt"
+  scale_factor: 45.44809685  # 1 / (0.697615 * 0.03154)
+  scale_from_unit: "EJ"
   variables:
   - in|Shipping|meth_bunker|methanol
   - in|Transportation|Aviation|conm_ar|methanol
@@ -840,32 +913,37 @@ groups:
   - in|Industry|Other|furnace_methanol_refining|methanol
   - in|Industry|Other|furnace_methanol_resins|methanol
   - in|Industry|Other|furnace_methanol_steel|methanol
+  - in|MTO_petro|methanol
+  - in|Industry|Chemicals|CH2O_synth|methanol
+  - in|Chemicals|meth_ind_fs|methanol feedstock material
 
-- title: "in|sector|ethanol (EJ)"
-  aggregate_by: dim_s
-  variables:
-  - in|Shipping|eth_bunker|ethanol
-  - in|Transportation|Aviation|conE_ar|ethanol
-  - in|Transportation|Light-Duty Vehicle|IAHe_ptrp|ethanol
-  - in|Transportation|Light-Duty Vehicle|ICAe_ffv|ethanol
-  - in|Transportation|Bus|ICAe_bus|ethanol
-  - in|Transportation|Truck|FR_ICAe|ethanol
-  - in|Industry|Chemicals|ethanol_to_ethylene_petro|ethanol
-  - in|Industry|Other|furnace_ethanol_aluminum|ethanol
-  - in|Industry|Other|furnace_ethanol_cement|ethanol
-  - in|Industry|Other|furnace_ethanol_petro|ethanol
-  - in|Industry|Other|furnace_ethanol_refining|ethanol
-  - in|Industry|Other|furnace_ethanol_resins|ethanol
-  - in|Industry|Other|furnace_ethanol_steel|ethanol
-  - in|Industry|Other|sp_eth_I|ethanol
-  - in|Chemicals|eth_i|ethanol
-  - in|eth_rc|ethanol
+# - title: "in|sector|ethanol (EJ)"
+#   aggregate_by: dim_s
+#   variables:
+#   - in|Shipping|eth_bunker|ethanol
+#   - in|Transportation|Aviation|conE_ar|ethanol
+#   - in|Transportation|Light-Duty Vehicle|IAHe_ptrp|ethanol
+#   - in|Transportation|Light-Duty Vehicle|ICAe_ffv|ethanol
+#   - in|Transportation|Bus|ICAe_bus|ethanol
+#   - in|Transportation|Truck|FR_ICAe|ethanol
+#   - in|Industry|Chemicals|ethanol_to_ethylene_petro|ethanol
+#   - in|Industry|Other|furnace_ethanol_aluminum|ethanol
+#   - in|Industry|Other|furnace_ethanol_cement|ethanol
+#   - in|Industry|Other|furnace_ethanol_petro|ethanol
+#   - in|Industry|Other|furnace_ethanol_refining|ethanol
+#   - in|Industry|Other|furnace_ethanol_resins|ethanol
+#   - in|Industry|Other|furnace_ethanol_steel|ethanol
+#   - in|Industry|Other|sp_eth_I|ethanol
+#   - in|Chemicals|eth_i|ethanol
+#   - in|eth_rc|ethanol
 
 # Ammonia end-use (Mt basis): fertilizer + residual only. The energy-basis
 # NH3_bunker use sits in the shipping figure; no cross-sector ammonia figure
 # is possible on one unit basis.
-- title: "in|sector|ammonia end-use (Mt)"
-  aggregate_by: dim_s
+# dim_s on this group tags the leaves (no upstream chemicals material-feed
+# group is active). Both end-uses are chemicals, so the stack is one layer.
+- title: "in|sector|ammonia (Mt)"
+  dim_s: chemicals
   variables:
   - in|Industry|Chemicals|NH3_to_N_fertil|NH3
   - in|Chemicals|residual_NH3|ammonia
@@ -877,166 +955,166 @@ groups:
 # gross trade volume, not net -- read with care.
 # =========================================================================
 
-- title: "trade|energy carriers (EJ)"
-  variables:
-  - out|lh2_exp
-  - out|lh2_imp
-  - out|meth_exp
-  - out|meth_imp
-  - out|eth_exp
-  - out|eth_imp
+# - title: "trade|energy carriers (EJ)"
+#   variables:
+#   - out|lh2_exp
+#   - out|lh2_imp
+#   - out|meth_exp
+#   - out|meth_imp
+#   - out|eth_exp
+#   - out|eth_imp
 
-- title: "trade|materials (Mt)"
-  variables:
-  - out|export_NH3
-  - out|import_NH3
-  - out|Chemicals|export_petro|HVC
-  - out|Chemicals|import_petro|HVC
+# - title: "trade|materials (Mt)"
+#   variables:
+#   - out|export_NH3
+#   - out|import_NH3
+#   - out|Chemicals|export_petro|HVC
+#   - out|Chemicals|import_petro|HVC
 
 # =========================================================================
 # Curated IAMC variables (customer-facing names). Leaves only per group;
 # their parent aggregates are excluded to avoid double counting.
 # =========================================================================
 
-- title: "Secondary Energy|Hydrogen|by route (EJ)"
-  variables:
-  - Secondary Energy|Hydrogen|Gases|SMR w/o CCS
-  - Secondary Energy|Hydrogen|Gases|SMR w/ CCS
-  - Secondary Energy|Hydrogen|Gases|Pyrolysis
-  - Secondary Energy|Hydrogen|Coal|w/o CCS
-  - Secondary Energy|Hydrogen|Coal|w/ CCS
-  - Secondary Energy|Hydrogen|Biomass|w/o CCS
-  - Secondary Energy|Hydrogen|Biomass|w/ CCS
-  - Secondary Energy|Hydrogen|Electricity|Alkaline
-  - Secondary Energy|Hydrogen|Electricity|PEM
-  - Secondary Energy|Hydrogen|Electricity|SOE
+# - title: "Secondary Energy|Hydrogen|by route (EJ)"
+#   variables:
+#   - Secondary Energy|Hydrogen|Gases|SMR w/o CCS
+#   - Secondary Energy|Hydrogen|Gases|SMR w/ CCS
+#   - Secondary Energy|Hydrogen|Gases|Pyrolysis
+#   - Secondary Energy|Hydrogen|Coal|w/o CCS
+#   - Secondary Energy|Hydrogen|Coal|w/ CCS
+#   - Secondary Energy|Hydrogen|Biomass|w/o CCS
+#   - Secondary Energy|Hydrogen|Biomass|w/ CCS
+#   - Secondary Energy|Hydrogen|Electricity|Alkaline
+#   - Secondary Energy|Hydrogen|Electricity|PEM
+#   - Secondary Energy|Hydrogen|Electricity|SOE
 
 # Captive hydrogen embedded in ammonia/methanol catch-all technologies,
 # surfaced via stoichiometric factors (mass-basis ammonia bridged at
 # 117.9 MJ/kg H2; see the #483 unit fix).
-- title: "Secondary Energy|Hydrogen|Transient|by product & route (EJ)"
-  variables:
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Gas w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Gas w/ CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Coal w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Coal w/ CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Biomass w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Biomass w/ CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Oil w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Oil w/ CCS
-  - Secondary Energy|Hydrogen|Transient|Ammonia|Electricity
-  - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/ CCS
-  - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/ CCS
-  - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/o CCS
-  - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/ CCS
+# - title: "Secondary Energy|Hydrogen|Transient|by product & route (EJ)"
+#   variables:
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Gas w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Gas w/ CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Coal w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Coal w/ CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Biomass w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Biomass w/ CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Oil w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Oil w/ CCS
+#   - Secondary Energy|Hydrogen|Transient|Ammonia|Electricity
+#   - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Methanol|Gas w/ CCS
+#   - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Methanol|Coal w/ CCS
+#   - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/o CCS
+#   - Secondary Energy|Hydrogen|Transient|Methanol|Biomass w/ CCS
 
-- title: "Production|Chemicals|Ammonia|by route (Mt)"
-  variables:
-  - Production|Chemicals|Ammonia|Gases|w/o CCS
-  - Production|Chemicals|Ammonia|Gases|w/ CCS
-  - Production|Chemicals|Ammonia|Coal|w/o CCS
-  - Production|Chemicals|Ammonia|Coal|w/ CCS
-  - Production|Chemicals|Ammonia|Biomass|w/o CCS
-  - Production|Chemicals|Ammonia|Biomass|w/ CCS
-  - Production|Chemicals|Ammonia|Oil|w/o CCS
-  - Production|Chemicals|Ammonia|Oil|w/ CCS
-  - Production|Chemicals|Ammonia|Hydrogen
+# - title: "Production|Chemicals|Ammonia|by route (Mt)"
+#   variables:
+#   - Production|Chemicals|Ammonia|Gases|w/o CCS
+#   - Production|Chemicals|Ammonia|Gases|w/ CCS
+#   - Production|Chemicals|Ammonia|Coal|w/o CCS
+#   - Production|Chemicals|Ammonia|Coal|w/ CCS
+#   - Production|Chemicals|Ammonia|Biomass|w/o CCS
+#   - Production|Chemicals|Ammonia|Biomass|w/ CCS
+#   - Production|Chemicals|Ammonia|Oil|w/o CCS
+#   - Production|Chemicals|Ammonia|Oil|w/ CCS
+#   - Production|Chemicals|Ammonia|Hydrogen
 
-- title: "Production|Chemicals|Methanol|by route (Mt)"
-  variables:
-  - Production|Chemicals|Methanol|Gases|w/o CCS
-  - Production|Chemicals|Methanol|Gases|w/ CCS
-  - Production|Chemicals|Methanol|Coal|w/o CCS
-  - Production|Chemicals|Methanol|Coal|w/ CCS
-  - Production|Chemicals|Methanol|Biomass|w/o CCS
-  - Production|Chemicals|Methanol|Biomass|w/ CCS
-  - Production|Chemicals|Methanol|Hydrogen
+# - title: "Production|Chemicals|Methanol|by route (Mt)"
+#   variables:
+#   - Production|Chemicals|Methanol|Gases|w/o CCS
+#   - Production|Chemicals|Methanol|Gases|w/ CCS
+#   - Production|Chemicals|Methanol|Coal|w/o CCS
+#   - Production|Chemicals|Methanol|Coal|w/ CCS
+#   - Production|Chemicals|Methanol|Biomass|w/o CCS
+#   - Production|Chemicals|Methanol|Biomass|w/ CCS
+#   - Production|Chemicals|Methanol|Hydrogen
 
-- title: "Production|High-Value Chemicals|by product (Mt)"
-  variables:
-  - Production|Chemicals|High-Value Chemicals|Ethylene
-  - Production|Chemicals|High-Value Chemicals|Propylene
-  - Production|Chemicals|High-Value Chemicals|BTX
+# - title: "Production|High-Value Chemicals|by product (Mt)"
+#   variables:
+#   - Production|Chemicals|High-Value Chemicals|Ethylene
+#   - Production|Chemicals|High-Value Chemicals|Propylene
+#   - Production|Chemicals|High-Value Chemicals|BTX
 
-- title: "Production|Steel & Aluminium (Mt)"
-  variables:
-  - Production|Iron and Steel|Steel|Primary
-  - Production|Iron and Steel|Steel|Secondary
-  - Production|Non-Ferrous Metals|Aluminium|Primary
-  - Production|Non-Ferrous Metals|Aluminium|Secondary
+# - title: "Production|Steel & Aluminium (Mt)"
+#   variables:
+#   - Production|Iron and Steel|Steel|Primary
+#   - Production|Iron and Steel|Steel|Secondary
+#   - Production|Non-Ferrous Metals|Aluminium|Primary
+#   - Production|Non-Ferrous Metals|Aluminium|Secondary
 
 # Despite the hierarchical names, Clinker|Dry|CCS / Wet|CCS report SEPARATE
 # addon technologies (clinker_dry_ccs_cement / clinker_wet_ccs_cement), not
 # subsets of Clinker|Dry / Wet -- stacking all four is additive and correct.
-- title: "Production|Cement & Clinker (Mt)"
-  variables:
-  - Production|Non-Metallic Minerals|Cement|Ballmill
-  - Production|Non-Metallic Minerals|Cement|Vertical Mill
-  - Production|Non-Metallic Minerals|Clinker|Dry
-  - Production|Non-Metallic Minerals|Clinker|Wet
-  - Production|Non-Metallic Minerals|Clinker|Dry|CCS
-  - Production|Non-Metallic Minerals|Clinker|Wet|CCS
+# - title: "Production|Cement & Clinker (Mt)"
+#   variables:
+#   - Production|Non-Metallic Minerals|Cement|Ballmill
+#   - Production|Non-Metallic Minerals|Cement|Vertical Mill
+#   - Production|Non-Metallic Minerals|Clinker|Dry
+#   - Production|Non-Metallic Minerals|Clinker|Wet
+#   - Production|Non-Metallic Minerals|Clinker|Dry|CCS
+#   - Production|Non-Metallic Minerals|Clinker|Wet|CCS
 
-- title: "Production|LH2 & Nitrogen Fertilizer"
-  variables:
-  - Production|LH2|Liquefaction
-  - Production|Chemicals|Nitrogen Fertilizer
+# - title: "Production|LH2 & Nitrogen Fertilizer"
+#   variables:
+#   - Production|LH2|Liquefaction
+#   - Production|Chemicals|Nitrogen Fertilizer
 
-- title: "Final Energy|Bunkers|Shipping|by fuel (EJ)"
-  variables:
-  - Final Energy|Bunkers|Shipping|Liquids|Oil
-  - Final Energy|Bunkers|Shipping|Gases|Gas
-  - Final Energy|Bunkers|Shipping|Methanol
-  - Final Energy|Bunkers|Shipping|Ethanol
-  - Final Energy|Bunkers|Shipping|Ammonia
-  - Final Energy|Bunkers|Shipping|Hydrogen
+# - title: "Final Energy|Bunkers|Shipping|by fuel (EJ)"
+#   variables:
+#   - Final Energy|Bunkers|Shipping|Liquids|Oil
+#   - Final Energy|Bunkers|Shipping|Gases|Gas
+#   - Final Energy|Bunkers|Shipping|Methanol
+#   - Final Energy|Bunkers|Shipping|Ethanol
+#   - Final Energy|Bunkers|Shipping|Ammonia
+#   - Final Energy|Bunkers|Shipping|Hydrogen
 
-- title: "Final Energy|Transportation|Aviation|by fuel (EJ)"
-  variables:
-  - Final Energy|Transportation|Aviation|Liquids|Oil
-  - Final Energy|Transportation|Aviation|Ethanol
-  - Final Energy|Transportation|Aviation|Methanol
-  - Final Energy|Transportation|Aviation|Hydrogen
+# - title: "Final Energy|Transportation|Aviation|by fuel (EJ)"
+#   variables:
+#   - Final Energy|Transportation|Aviation|Liquids|Oil
+#   - Final Energy|Transportation|Aviation|Ethanol
+#   - Final Energy|Transportation|Aviation|Methanol
+#   - Final Energy|Transportation|Aviation|Hydrogen
 
 # NOT LANDED IN v7: these six road-transport carrier aggregates entered the
 # reporting config after the baseline v7 export was produced (guard commit,
 # 2026-08); they will appear from the next reporting run onward. Keep the
 # group -- vet_ribbon.R warns on missing variables and plots the rest.
-- title: "Final Energy|Road Transport|Gas & Hydrogen (EJ)"
-  variables:
-  - Final Energy|Transportation|Light-Duty Vehicle|Gases|Gas
-  - Final Energy|Transportation|Light-Duty Vehicle|Hydrogen
-  - Final Energy|Transportation|Bus|Gases|Gas
-  - Final Energy|Transportation|Bus|Hydrogen
-  - Final Energy|Transportation|Truck|Gases|Gas
-  - Final Energy|Transportation|Truck|Hydrogen
+# - title: "Final Energy|Road Transport|Gas & Hydrogen (EJ)"
+#   variables:
+#   - Final Energy|Transportation|Light-Duty Vehicle|Gases|Gas
+#   - Final Energy|Transportation|Light-Duty Vehicle|Hydrogen
+#   - Final Energy|Transportation|Bus|Gases|Gas
+#   - Final Energy|Transportation|Bus|Hydrogen
+#   - Final Energy|Transportation|Truck|Gases|Gas
+#   - Final Energy|Transportation|Truck|Hydrogen
 
-- title: "Final Energy|Industry|by carrier (EJ)"
-  variables:
-  - Final Energy|Industry|Solids
-  - Final Energy|Industry|Liquids
-  - Final Energy|Industry|Gases
-  - Final Energy|Industry|Electricity
-  - Final Energy|Industry|Heat
-  - Final Energy|Industry|Hydrogen
-  - Final Energy|Industry|Solar
+# - title: "Final Energy|Industry|by carrier (EJ)"
+#   variables:
+#   - Final Energy|Industry|Solids
+#   - Final Energy|Industry|Liquids
+#   - Final Energy|Industry|Gases
+#   - Final Energy|Industry|Electricity
+#   - Final Energy|Industry|Heat
+#   - Final Energy|Industry|Hydrogen
+#   - Final Energy|Industry|Solar
 
-- title: "Final Energy|Non-Energy Use|Chemicals|by family (EJ)"
-  variables:
-  - Final Energy|Non-Energy Use|Chemicals|Ammonia
-  - Final Energy|Non-Energy Use|Chemicals|Methanol
-  - Final Energy|Non-Energy Use|Chemicals|High-Value Chemicals
+# - title: "Final Energy|Non-Energy Use|Chemicals|by family (EJ)"
+#   variables:
+#   - Final Energy|Non-Energy Use|Chemicals|Ammonia
+#   - Final Energy|Non-Energy Use|Chemicals|Methanol
+#   - Final Energy|Non-Energy Use|Chemicals|High-Value Chemicals
 
-- title: "Emissions|CH4|industry (Mt CH4)"
-  variables:
-  - Emissions|CH4|Energy|Demand|Industry|Chemicals
-  - Emissions|CH4|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium
-  - Emissions|CH4|Energy|Demand|Industry|Non-Metallic Minerals|Cement
-  - Emissions|CH4|Industrial Processes|Chemicals
-  - Emissions|CH4|Industrial Processes|Iron and Steel
-  - Emissions|CH4|Industrial Processes|Non-Ferrous Metals|Aluminium
+# - title: "Emissions|CH4|industry (Mt CH4)"
+#   variables:
+#   - Emissions|CH4|Energy|Demand|Industry|Chemicals
+#   - Emissions|CH4|Energy|Demand|Industry|Non-Ferrous Metals|Aluminium
+#   - Emissions|CH4|Energy|Demand|Industry|Non-Metallic Minerals|Cement
+#   - Emissions|CH4|Industrial Processes|Chemicals
+#   - Emissions|CH4|Industrial Processes|Iron and Steel
+#   - Emissions|CH4|Industrial Processes|Non-Ferrous Metals|Aluminium
 
 # =========================================================================
 # Capacity by technology. CAP is total installed capacity (GW for hydrogen

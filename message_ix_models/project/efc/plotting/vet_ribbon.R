@@ -48,7 +48,18 @@ groups <- lapply(seq_along(var_config$groups), function(i) {
   agg <- if (is.null(g$aggregate_by) || g$aggregate_by == "") NA_character_ else g$aggregate_by
   # Optional service-demand sector tag applied to all variables in the group.
   dim_s <- if (is.null(g$dim_s) || g$dim_s == "") NA_character_ else g$dim_s
-  list(title = title, variables = vars, aggregate_by = agg, dim_s = dim_s)
+  # Optional plot-time value rescale (e.g. EJ -> Mt). Does not alter source
+  # IAMC values. scale_from_unit (optional regex) limits the rescale to rows
+  # whose Unit matches, so EJ fuel and Mt feedstock can share one stack.
+  scale_factor <- if (is.null(g$scale_factor) || is.na(g$scale_factor)) NA_real_ else as.numeric(g$scale_factor)
+  plot_unit <- if (is.null(g$plot_unit) || g$plot_unit == "") NA_character_ else as.character(g$plot_unit)
+  scale_from_unit <- if (is.null(g$scale_from_unit) || g$scale_from_unit == "") {
+    NA_character_
+  } else {
+    as.character(g$scale_from_unit)
+  }
+  list(title = title, variables = vars, aggregate_by = agg, dim_s = dim_s,
+       scale_factor = scale_factor, plot_unit = plot_unit, scale_from_unit = scale_from_unit)
 })
 cat("Loaded", length(groups), "variable group(s) from config\n")
 
@@ -59,6 +70,16 @@ for (g in groups) {
     for (v in g$variables) {
       if (!(v %in% names(var_dim_s))) var_dim_s[[v]] <- g$dim_s
     }
+  }
+}
+
+# Captive Transient H2 (Secondary Energy|Hydrogen|Transient|{Methanol,Ammonia}|*)
+# is not listed in an upstream dim_s-tagged group. Attribute it to chemicals so
+# cross-sector stacks that include those leaves stay complete.
+for (v in unique(unlist(lapply(groups, function(g) g$variables)))) {
+  if (!(v %in% names(var_dim_s)) &&
+      grepl("^Secondary Energy\\|Hydrogen\\|Transient\\|(Methanol|Ammonia)\\|", v)) {
+    var_dim_s[[v]] <- "chemicals"
   }
 }
 
@@ -355,7 +376,10 @@ plot_region_area <- function(df_region, fill_colors, fill_labels, year_breaks,
   # train an empty range and trip that on every such panel. Supply the same
   # limits explicitly, minus the warning; panels that do have data resolve to
   # exactly the same levels as before.
-  fill_limits <- function(x) intersect(x, c(names(fill_colors), NA)) %||% character()
+  fill_limits <- function(x) {
+    out <- intersect(x, c(names(fill_colors), NA))
+    if (is.null(out) || length(out) == 0) character() else out
+  }
 
   ggplot(df_region, aes(x = Year, y = Value, fill = Layer)) +
     geom_area(position = "stack", alpha = 0.9) +
@@ -417,7 +441,9 @@ prepare_group <- function(group) {
   material_levels <- c("final_material", "secondary_material", "primary_material")
   has_energy <- any(dim_l_levels %in% energy_levels)
   has_material <- any(dim_l_levels %in% material_levels)
-  if (length(units) >= 1) {
+  if (!is.na(group$plot_unit)) {
+    unit_str <- group$plot_unit
+  } else if (length(units) >= 1) {
     unit_str <- units[1]
   } else if (has_material && has_energy) {
     unit_str <- "Mix Mt"
@@ -427,6 +453,22 @@ prepare_group <- function(group) {
     unit_str <- "GWa"
   }
   unit_value <- if (unit_str != "") paste0(" (", unit_str, ")") else ""
+
+  # Plot-only rescale before aggregation so mixed-unit groups (EJ fuel + Mt
+  # feedstock) can share one stack. Optional scale_from_unit regex selects
+  # which rows are rescaled; others pass through. Unifying Unit to plot_unit
+  # afterwards keeps aggregate_by from splitting the same dim_s layer.
+  if (!is.na(group$scale_factor)) {
+    if (!is.na(group$scale_from_unit)) {
+      hit <- grepl(group$scale_from_unit, df_g$Unit, ignore.case = TRUE)
+      df_g$Value[hit] <- df_g$Value[hit] * group$scale_factor
+    } else {
+      df_g <- df_g %>% mutate(Value = Value * group$scale_factor)
+    }
+    if (!is.na(group$plot_unit)) {
+      df_g$Unit <- group$plot_unit
+    }
+  }
 
   if (!is.na(agg_dim)) {
     if (!agg_dim %in% names(df_g)) {
@@ -447,6 +489,7 @@ prepare_group <- function(group) {
     layer_labels <- setNames(sapply(layer_levels, short_label), layer_levels)
     legend_title <- "Variable"
   }
+
   df_g <- df_g %>% mutate(Layer = factor(Layer, levels = layer_levels))
 
   # Restrict to the configured x-axis range (so shared y-limits match the plot)
