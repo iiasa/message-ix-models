@@ -13,8 +13,8 @@ HSQLDB platform; the build only adds constraints.
 | `adapt35h40` | as `adapt35`, half effect in 2035 (new-capacity bound = ½ base `CAP_NEW`, growth rates halved), full from 2040 | 2035 / 2040 |
 | `aironly35` | power sector free; no new once-through *or* closed-loop cooling anywhere (`cooling_ban_types`), so new plants use dry cooling only; SSP share caps off (their air ≤ 50 % cap would contradict the rule) | 2035 |
 | `nofresh35` | power sector free; no new *freshwater* cooling (once-through or closed-loop); seawater once-through and dry cooling stay available; SSP share caps off | 2035 |
-| `salhist` | the water module's seawater cap (10,000 MCM/yr in every region) replaced by the historical peak saline withdrawal × 1.2 (`saline_hist_bound`, see below) | all years |
-| `nofresh35sh` | `nofresh35` plus `salhist` | 2035 |
+| `sh` | the water module's seawater cap (10,000 MCM/yr in every region) replaced by the last historical year's saline withdrawal, 1:1 (`saline_hist_bound`, see below); corrected base | all years |
+| `BAUsh`, `malad35sh`, `nofresh35sh`, `adapt35sh`, `adapt35h40sh` | the scenario of the same name on top of `sh` | as above |
 
 Technologies, nodes, growth rates and years live in `config.yaml`; the logic in
 `workflow.py` (pure functions `cooling_share_sets`, `no_new_capacity`,
@@ -78,9 +78,11 @@ register each copy as its own platform (`ixmp platform add`).
   binds in the base from 2035, below the 2030 withdrawal in seven regions (CHN
   85,000 MCM, PAS 30,000, NAM 25,000, PAO 21,000, WEU 17,000, MEA 16,000, SAS
   15,000). The function now converts history to MCM via the `saline_ppl` input
-  and bounds at the historical peak × `capacity_flexibility_factor`; `salhist`
-  and `nofresh35sh` apply that corrected bound on clones of the old base
-  (`saline_hist_bound`), so the base itself need not be rebuilt. `nofresh35` is
+  and bounds at the last historical year's withdrawal, one to one: no region
+  withdraws more seawater for cooling than it does today, while retired coastal
+  sites can be reused because the bound is on water, not on plants. The `sh`
+  family applies that corrected bound on clones of the old base
+  (`saline_hist_bound`), so the base itself need not be rebuilt; `nofresh35` is
   dry cooling plus the old fixed saline budget.
 - Decisions: "EU" = R12_WEU + R12_EEU; once-through includes saline intakes;
   `soft_activity_up` (3–5 %) is left, so frozen technologies can still creep at a

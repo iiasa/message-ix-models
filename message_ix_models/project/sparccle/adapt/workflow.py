@@ -20,12 +20,13 @@ on the local HSQLDB platform named in ``config.yaml``:
   year, where it contradicts historical activity (CPLEX presolve:
   ``ACTIVITY_CONSTRAINT_LO(R12_LAM,gas_cc,2035,year): 0 >= 28.1``).
 
-- ``salhist`` / ``nofresh35sh``: the water module's seawater cap on
+- ``sh`` family (``sh``, ``BAUsh``, ``malad35sh``, ``nofresh35sh``,
+  ``adapt35sh``, ``adapt35h40sh``): the water module's seawater cap on
   ``extract_salinewater_cool`` (the config fallback of 10,000 MCM/yr in every
   region; the module compared GWa with MCM, so history never won) replaced by
-  the historical peak withdrawal times the module's flexibility factor,
-  via :func:`.water_for_ppl.saline_bound_from_history`. ``nofresh35sh`` adds
-  the ``nofresh35`` cooling ban on top.
+  the last historical year's withdrawal, one to one, via
+  :func:`.water_for_ppl.saline_bound_from_history`. ``sh`` is the corrected
+  base; the others add the constraint set of the same-named scenario.
 
 "Half effect" in a year means ``bound_new_capacity_up`` at half of the base
 solution's ``CAP_NEW`` for that year, and growth rates halved (half of
@@ -384,20 +385,19 @@ def _apply_drop_decline_floor(  # pragma: no cover
 def _apply_saline_bound(
     scenario: "Scenario", years: list[int]
 ) -> str:  # pragma: no cover
-    """Replace the seawater cap with the historical peak withdrawal x flex."""
+    """Replace the seawater cap with the last historical year's withdrawal."""
     techs = cooling_techs(scenario, ["ot_saline"])
     hist = scenario.par("historical_activity", filters={"technology": techs})
     inp = scenario.par(
         "input", filters={"technology": techs, "commodity": ["saline_ppl"]}
     )
-    flex = WATER_CONFIG["capacity_flexibility_factor"]
     df = saline_bound_from_history(
-        hist, inp, years, flex, WATER_CONFIG["default_saline_bound"]
+        hist, inp, years, WATER_CONFIG["default_saline_bound"]
     )
     scenario.add_par("bound_activity_up", df)
     by_node = df[df["year_act"] == years[0]].set_index("node_loc")["value"]
     return (
-        f"saline bound = {flex} x historical peak withdrawal:"
+        f"saline bound = last historical year's withdrawal:"
         f" {by_node.round(0).astype(int).to_dict()} MCM"
     )
 

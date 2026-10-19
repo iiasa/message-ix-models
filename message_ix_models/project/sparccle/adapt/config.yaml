@@ -67,17 +67,43 @@ scenarios:
     once_through_ban: all
     cooling_ban_types: [ot_fresh, cl_fresh]
     full_from: 2035
-  # Seawater cap from history: bound_activity_up on extract_salinewater_cool =
-  # historical peak saline withdrawal (hist ot_saline activity x input MCM/GWa)
-  # x the water module's capacity_flexibility_factor, instead of the 10,000 MCM
-  # fallback the module applied everywhere (it compared GWa with MCM).
-  salhist:
-    suffix: _salhist
+  # sh family: seawater cap from history. bound_activity_up on
+  # extract_salinewater_cool = last historical year's saline withdrawal (hist
+  # ot_saline activity x input MCM/GWa), 1:1, instead of the 10,000 MCM fallback
+  # the water module applied everywhere (it compared GWa with MCM). `sh` is the
+  # corrected base; the others repeat the scenario of the same name on it.
+  sh:
+    suffix: _sh
     saline_hist_bound: true
-  # nofresh35 with the historical seawater cap
+  BAUsh:
+    suffix: _BAUsh
+    ssp_cooling_shares: true
+    saline_hist_bound: true
+  malad35sh:
+    suffix: _malad35sh
+    once_through_ban: regulation
+    full_from: 2035
+    saline_hist_bound: true
   nofresh35sh:
     suffix: _nofresh35sh
     once_through_ban: all
     cooling_ban_types: [ot_fresh, cl_fresh]
     full_from: 2035
+    saline_hist_bound: true
+  adapt35sh:
+    suffix: _adapt35sh
+    once_through_ban: all
+    thermal_no_new: true
+    drop_decline_floor: true
+    near_zero_growth: true
+    full_from: 2035
+    saline_hist_bound: true
+  adapt35h40sh:
+    suffix: _adapt35h40sh
+    once_through_ban: all
+    thermal_no_new: true
+    drop_decline_floor: true
+    near_zero_growth: true
+    half_in: 2035
+    full_from: 2040
     saline_hist_bound: true

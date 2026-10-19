@@ -36,7 +36,7 @@ capacity_flexibility_factor: 1.2    # Multiplier on historical capacity
 
 # Bounds
 default_saline_bound: 10000.0  # MCM, nodes without saline cooling history only;
-  # elsewhere the bound is the historical peak withdrawal x capacity_flexibility_factor
+  # elsewhere the bound is the last historical year's seawater withdrawal, 1:1
 
 # Share constraint parameters
 share_constraint_start_year: 2050

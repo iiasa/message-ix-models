@@ -536,7 +536,6 @@ def saline_bound_from_history(
     hist_act: pd.DataFrame,
     saline_input: pd.DataFrame,
     years: list[int],
-    flex: float,
     default: float,
 ) -> pd.DataFrame:
     """``bound_activity_up`` rows for ``extract_salinewater_cool``, in MCM.
@@ -544,7 +543,8 @@ def saline_bound_from_history(
     `hist_act` is ``historical_activity`` of the ``*__ot_saline`` cooling
     technologies (GWa of rejected heat) and `saline_input` their ``input`` of
     ``saline_ppl`` (MCM/GWa). Their product is the historical seawater
-    withdrawal; the bound is the peak over the historical years times `flex`.
+    withdrawal; the bound is its value in the last historical year, one to
+    one, so no region withdraws more seawater for cooling than it does today.
     Nodes without saline history get `default`.
     """
     coef = (
@@ -555,11 +555,12 @@ def saline_bound_from_history(
     )
     hist = hist_act.merge(coef, on=["node_loc", "technology"], how="inner")
     hist["mcm"] = hist["value"] * hist["coef"]
-    peak = hist.groupby(["node_loc", "year_act"])["mcm"].sum().groupby("node_loc").max()
+    by_year = hist.groupby(["node_loc", "year_act"])["mcm"].sum()
+    last = by_year.loc[:, by_year.index.get_level_values("year_act").max()]
 
     nodes = sorted(set(hist_act["node_loc"]) | set(saline_input["node_loc"]))
     bound = pd.Series(default, index=nodes)
-    bound.loc[peak.index] = (flex * peak).where(peak > 0, default)
+    bound.loc[last.index] = last.where(last > 0, default)
     return make_df(
         "bound_activity_up",
         technology="extract_salinewater_cool",
@@ -583,11 +584,7 @@ def _add_saline_bounds(results: dict, info) -> None:
     saline_input = results["input"][results["input"]["commodity"] == "saline_ppl"]
 
     bound_df = saline_bound_from_history(
-        saline_hist,
-        saline_input,
-        info.Y,
-        CONFIG["capacity_flexibility_factor"],
-        CONFIG["default_saline_bound"],
+        saline_hist, saline_input, info.Y, CONFIG["default_saline_bound"]
     )
     results["bound_activity_up"] = pd.concat(
         [results.get("bound_activity_up", pd.DataFrame()), bound_df],

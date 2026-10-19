@@ -225,14 +225,14 @@ def test_saline_bound_from_history() -> None:
         }
     )
 
-    df = saline_bound_from_history(hist, saline_input, [2035, 2040], 1.2, 10000.0)
+    df = saline_bound_from_history(hist, saline_input, [2035, 2040], 10000.0)
 
     assert set(df["technology"]) == {"extract_salinewater_cool"}
     assert set(df["year_act"]) == {2035, 2040}
     assert (df["unit"] == "MCM").all()
     b = df[df["year_act"] == 2035].set_index("node_loc")["value"]
-    # CHN: 2025 = 100 x 1000 = 100,000 beats 2030 = 80 x 1000 + 50 x 300 = 95,000
-    assert b["R12_CHN"] == pytest.approx(1.2 * 100_000)
+    # CHN: last year 2030 = 80 x 1000 + 50 x 300 = 95,000 (2025 = 100,000 ignored)
+    assert b["R12_CHN"] == pytest.approx(95_000)
     # EEU: zero history -> default; AFR: no history -> default
     assert b["R12_EEU"] == 10000.0
     assert b["R12_AFR"] == 10000.0

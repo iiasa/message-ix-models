@@ -30,10 +30,15 @@ def test_load_config_packaged() -> None:
         "adapt35h40",
         "aironly35",
         "nofresh35",
-        "salhist",
+        "sh",
+        "BAUsh",
+        "malad35sh",
         "nofresh35sh",
+        "adapt35sh",
+        "adapt35h40sh",
     }
-    assert config["scenarios"]["salhist"]["saline_hist_bound"] is True
+    assert config["scenarios"]["sh"] == {"suffix": "_sh", "saline_hist_bound": True}
+    assert config["scenarios"]["adapt35h40sh"]["half_in"] == 2035
     assert config["scenarios"]["nofresh35sh"]["cooling_ban_types"] == [
         "ot_fresh",
         "cl_fresh",
