@@ -145,3 +145,67 @@ def genno_generic(
         return pd.DataFrame(columns=_ID_COLUMNS)
 
     return pd.concat(dfs, ignore_index=True)
+
+
+# Captive H2: same stoich as data/hydrogen/reporting/h2_transient.yaml.
+# NH3 is Mt → GWa H2 (Mt→EJ bridge × 1.114 / GWa→EJ); methanol is GWa × 0.937.
+_CAPTIVE_NH3 = frozenset(
+    {
+        "biomass_NH3",
+        "biomass_NH3_ccs",
+        "coal_NH3",
+        "coal_NH3_ccs",
+        "electr_NH3",
+        "fueloil_NH3",
+        "fueloil_NH3_ccs",
+        "gas_NH3",
+        "gas_NH3_ccs",
+    }
+)
+_CAPTIVE_METH = frozenset(
+    {"meth_bio", "meth_bio_ccs", "meth_coal", "meth_coal_ccs", "meth_ng", "meth_ng_ccs"}
+)
+_CAPTIVE_NH3_FACTOR = 0.018789915 * 1.114 / 0.03154
+_CAPTIVE_METH_FACTOR = 0.937
+
+
+def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
+    """Append ``in|t|m|hydrogen|captive`` from NH3 / methanol ``out`` rows.
+
+    Captive H2 is not a model flow; it is product output × stoichiometric
+    factor (see ``h2_transient.yaml``). ``meth_h2`` is excluded (merchant H2).
+    """
+    if df.empty:
+        return df
+
+    parts = df["variable"].astype(str).str.split("|", expand=True)
+    if parts.shape[1] < 5:
+        return df
+
+    year_cols = [c for c in df.columns if c not in _ID_COLUMNS]
+    chunks: list[pd.DataFrame] = []
+
+    for techs, commodity, factor in (
+        (_CAPTIVE_NH3, "NH3", _CAPTIVE_NH3_FACTOR),
+        (_CAPTIVE_METH, "methanol", _CAPTIVE_METH_FACTOR),
+    ):
+        hit = (
+            (parts[0] == "out")
+            & parts[1].isin(techs)
+            & (parts[3] == commodity)
+        )
+        if not hit.any():
+            continue
+        block = df.loc[hit].copy()
+        block["variable"] = (
+            "in|" + parts.loc[hit, 1] + "|" + parts.loc[hit, 2] + "|hydrogen|captive"
+        )
+        block[year_cols] = block[year_cols].mul(factor)
+        chunks.append(block)
+
+    if not chunks:
+        return df
+
+    extra = pd.concat(chunks, ignore_index=True)
+    log.info("Appended %d captive-H2 row(s) (in|*|*|hydrogen|captive)", len(extra))
+    return pd.concat([df, extra], ignore_index=True)

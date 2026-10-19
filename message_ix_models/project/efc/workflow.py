@@ -270,12 +270,16 @@ def generic_flow(
 ) -> message_ix.Scenario:
     """Write generic reporting to a local Excel file.
 
-    in and out flows for all technologies are reported.
+    in and out flows for all technologies are reported, plus stoichiometric
+    ``in|{NH3,methanol tech}|*|hydrogen|captive`` rows.
     No unit column.
     """
     from message_ix.report import Reporter
 
-    from message_ix_models.project.efc.generic_report import genno_generic
+    from message_ix_models.project.efc.generic_report import (
+        append_captive_hydrogen,
+        genno_generic,
+    )
 
     rep = Reporter.from_scenario(scenario)
     df = genno_generic(
@@ -284,6 +288,7 @@ def generic_flow(
         scenario.scenario,
         firstmodelyear=scenario.firstmodelyear,
     )
+    df = append_captive_hydrogen(df)
 
     out_path = context.get_local_path(
         "efc",
@@ -531,11 +536,11 @@ def generate(context: Context) -> Workflow:
     )
     name = wf.add_step("baseline solved", name, solve)
     name = wf.add_step("baseline reported", name, report)
-    # name = wf.add_step(
-    #     "baseline generic reported",
-    #     "baseline solved",
-    #     generic_flow,
-    # )
+    name = wf.add_step(
+        "baseline generic reported",
+        "baseline solved",
+        generic_flow,
+    )
 
     name = wf.add_step(
         "cpol added",
@@ -557,11 +562,11 @@ def generate(context: Context) -> Workflow:
     )
     name = wf.add_step("1p5c solved", name, solve)
     name = wf.add_step("1p5c reported", "1p5c solved", report)
-    # name = wf.add_step(
-    #     "1p5c generic reported",
-    #     "1p5c solved",
-    #     generic_flow,
-    # )
+    name = wf.add_step(
+        "1p5c generic reported",
+        "1p5c solved",
+        generic_flow,
+    )
 
     name = wf.add_step(
         "1p5c_sf added",
