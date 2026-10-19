@@ -1,0 +1,632 @@
+# EFC ribbon-plot configuration for vet_ribbon_generic.R
+#
+# Targets the clean generic_flow Excel layout (see efc/generic_report.py):
+#   dim_head | dim_t | dim_m | dim_c | dim_l
+# e.g. in|meth_h2|feedstock_dac|dac_co2|final
+#
+# Sector hierarchy (Industry|Chemicals|...) is NOT in the variable name.
+# Tag sectors with group-level dim_s on every in| sector group that feeds an
+# aggregate_by: dim_s cross-sector figure (first-match-wins). out| production
+# groups do not need dim_s. Optional group-level dim_head (in|out) lets
+# variables be listed as t|m|c|l; the script prepends the head.
+#
+# A segment of "*" is a wildcard over that dimension (expanded against the
+# data). Use it for multi-mode techs (bunkers, meth_h2 CO2 modes, ...).
+#
+# Only in|/out| flows. 
+#
+# Values are model-native (energy GWa, material Mt). vet_ribbon_generic.R
+# fills Unit from dim_l. Energy groups below rescale GWa -> EJ (x0.03154)
+# at plot time; material / Mt H2 groups keep their own scale_factor.
+
+x_axis_range: [2020, 2100]
+main_region: R12_GLB
+
+near_term_fill:
+  from_scenario: baseline
+  to_scenario: 1p5c
+  years: [2020, 2025]
+
+colors:
+  # commodities
+  electr: "#80B1D3"
+  electricity: "#80B1D3"
+  ethanol: "#B3DE69"
+  hydrogen: "#BEBADA"
+  lh2: "#BEBADA"
+  gas: "#FDB462"
+  lightoil: "#FB8072"
+  methanol: "#6A3D9A"
+  biomass: "#CCEBC5"
+  coal: "#4D4D4D"
+  fueloil: "#E41A1C"
+  ammonia: "#FF7F00"
+  NH3: "#FF7F00"
+  LNG: "#8DD3C7"
+  ht_heat: "#FFED6F"
+  u5: "#FCCDE5"
+  charcoal: "#BC80BD"
+  co_gas: "#D9D9D9"
+  coke_iron: "#A65628"
+  pet_coke: "#7F4A1E"
+  bic_co2: "#8C564B"
+  dac_co2: "#56B4E9"
+  fic_co2: "#777777"
+  # meth_h2 / H2 CO2-source modes
+  feedstock_bic: "#8C564B"
+  fuel_bic: "#B4918A"
+  feedstock_dac: "#56B4E9"
+  fuel_dac: "#91CEF1"
+  feedstock_fic: "#777777"
+  fuel_fic: "#A7A7A7"
+  feedstock: "#999999"
+  fuel: "#CCCCCC"
+  # hydrogen production routes
+  h2_smr: "#999999"
+  h2_smr_ccs: "#0072B2"
+  h2_coal: "#333333"
+  h2_coal_ccs: "#536878"
+  h2_bio: "#8C564B"
+  h2_bio_ccs: "#1B7837"
+  h2_elec_alk: "#009E73"
+  h2_elec_pem: "#4CBB9D"
+  h2_elec_soe: "#006F50"
+  h2_pyro_elec: "#40B0A6"
+  catalytic_reforming_ref: "#88CCEE"
+  # methanol production routes
+  meth_ng: "#999999"
+  meth_ng_ccs: "#0072B2"
+  meth_coal: "#333333"
+  meth_coal_ccs: "#536878"
+  meth_bio: "#8C564B"
+  meth_bio_ccs: "#1B7837"
+  meth_h2: "#009E73"
+  # ammonia production routes
+  gas_NH3: "#999999"
+  gas_NH3_ccs: "#0072B2"
+  coal_NH3: "#333333"
+  coal_NH3_ccs: "#536878"
+  biomass_NH3: "#8C564B"
+  biomass_NH3_ccs: "#1B7837"
+  electr_NH3: "#009E73"
+  fueloil_NH3: "#E41A1C"
+  fueloil_NH3_ccs: "#FB6A4A"
+  h2_NH3: "#CC79A7"
+  residual_NH3: "#B3B3B3"
+  # ethanol / liquids
+  eth_bio: "#8C564B"
+  eth_bio_ccs: "#1B7837"
+  liq_bio: "#BA9A93"
+  liq_bio_ccs: "#76AE87"
+  # olefins
+  ethylene: "#E7298A"
+  propylene: "#E6AB02"
+  BTX: "#17BECF"
+  ethane: "#FDD0A2"
+  propane: "#FDAE6B"
+  naphtha: "#FD8D3C"
+  atm_gasoil: "#E6550D"
+  vacuum_gasoil: "#A63603"
+  # sectors (dim_s)
+  shipping: "#44AA99"
+  aviation: "#56B4E9"
+  ldv: "#F0E442"
+  bus: "#DDCC77"
+  truck: "#D55E00"
+  power: "#117733"
+  chemicals: "#CC79A7"
+  iron_steel: "#E69F00"
+  industry_other: "#999933"
+  refining: "#88CCEE"
+  lh2_supply: "#7570B3"
+  other_demand: "#332288"
+
+groups:
+
+# =========================================================================
+# Production (out|) by technology — aggregate_by dim_t
+# =========================================================================
+
+# Merchant H2 outs (GWa -> Mt H2 at LHV 120). Captive H2, if listed, is already
+# Mt H2 and is skipped by scale_from_unit.
+- title: "out|hydrogen production|by technology (Mt)"
+  aggregate_by: dim_t
+  plot_unit: "Mt H2"
+  scale_factor: 0.0002628333333333333
+  scale_from_unit: "GWa"
+  variables:
+  - out|h2_smr|*|hydrogen|*
+  - out|h2_smr_ccs|*|hydrogen|*
+  - out|h2_coal|*|hydrogen|*
+  - out|h2_coal_ccs|*|hydrogen|*
+  - out|h2_bio|*|hydrogen|*
+  - out|h2_bio_ccs|*|hydrogen|*
+  - out|h2_elec_alk|*|hydrogen|*
+  - out|h2_elec_pem|*|hydrogen|*
+  - out|h2_elec_soe|*|hydrogen|*
+  - out|h2_pyro_elec|*|hydrogen|*
+  - out|catalytic_reforming_ref|*|hydrogen|*
+
+# Fuel (primary, GWa) + feedstock (primary_material, Mt) in one stack.
+# scale_from_unit limits the meth_t_d bridge to GWa rows; Mt rows pass through.
+- title: "out|methanol production|by technology (Mt)"
+  aggregate_by: dim_t
+  plot_unit: "Mt methanol"
+  scale_factor: 1.43345  # 1 / 0.697615 GWa/Mt
+  scale_from_unit: "GWa"
+  variables:
+  - out|meth_ng|*|methanol|primary
+  - out|meth_ng_ccs|*|methanol|primary
+  - out|meth_coal|*|methanol|primary
+  - out|meth_coal_ccs|*|methanol|primary
+  - out|meth_bio|*|methanol|primary
+  - out|meth_bio_ccs|*|methanol|primary
+  - out|meth_h2|*|methanol|primary
+  - out|meth_ng|*|methanol|primary_material
+  - out|meth_ng_ccs|*|methanol|primary_material
+  - out|meth_coal|*|methanol|primary_material
+  - out|meth_coal_ccs|*|methanol|primary_material
+  - out|meth_bio|*|methanol|primary_material
+  - out|meth_bio_ccs|*|methanol|primary_material
+  - out|meth_h2|*|methanol|primary_material
+
+- title: "out|ammonia production|by technology (Mt)"
+  aggregate_by: dim_t
+  plot_unit: "Mt NH3"
+  variables:
+  - out|gas_NH3|*|NH3|*
+  - out|gas_NH3_ccs|*|NH3|*
+  - out|coal_NH3|*|NH3|*
+  - out|coal_NH3_ccs|*|NH3|*
+  - out|biomass_NH3|*|NH3|*
+  - out|biomass_NH3_ccs|*|NH3|*
+  - out|fueloil_NH3|*|NH3|*
+  - out|fueloil_NH3_ccs|*|NH3|*
+  - out|electr_NH3|*|NH3|*
+  # - out|h2_NH3|*|NH3|*
+
+- title: "out|ethanol production|by technology (EJ)"
+  aggregate_by: dim_t
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - out|eth_bio|*|ethanol|*
+  - out|eth_bio_ccs|*|ethanol|*
+  - out|liq_bio|*|ethanol|*
+  - out|liq_bio_ccs|*|ethanol|*
+
+- title: "out|olefins & BTX|by product (Mt)"
+  aggregate_by: dim_c
+  variables:
+  - out|steam_cracker_petro|*|ethylene|*
+  - out|steam_cracker_petro|*|propylene|*
+  - out|steam_cracker_petro|*|BTX|*
+  - out|MTO_petro|*|ethylene|*
+  - out|MTO_petro|*|propylene|*
+  - out|ethanol_to_ethylene_petro|*|ethylene|*
+
+# =========================================================================
+# Consumption (in|) by sector — dim_s to be aggregated later
+# Commodity stacks use aggregate_by: dim_c (always the commodity slot).
+# =========================================================================
+
+- title: "in|shipping|by commodity (EJ)"
+  dim_s: shipping
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|foil_bunker|*|fueloil|final
+  - in|foil_occ_bunker|*|fueloil|final
+  - in|LNG_bunker|*|LNG|final
+  - in|LNG_occ_bunker|*|LNG|final
+  - in|meth_bunker|*|methanol|final
+  - in|eth_bunker|*|ethanol|final
+  - in|NH3_bunker|*|NH3|final
+  - in|LH2_bunker|*|lh2|final
+
+- title: "in|aviation|by commodity (EJ)"
+  dim_s: aviation
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|con_ar|*|lightoil|final
+  - in|conh_ar|*|hydrogen|final
+  - in|conm_ar|*|methanol|final
+  - in|conE_ar|*|ethanol|final
+
+- title: "in|light-duty vehicles|by commodity (EJ)"
+  dim_s: ldv
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|ICE_conv|*|lightoil|final
+  - in|ICE_nga|*|gas|final
+  - in|ICH_chyb|*|lightoil|final
+  - in|IGH_ghyb|*|gas|final
+  - in|IAHe_ptrp|*|ethanol|final
+  - in|IAHm_ptrp|*|methanol|final
+  - in|ICAe_ffv|*|ethanol|final
+  - in|ICAm_ptrp|*|methanol|final
+  - in|ELC_100|*|electr|final
+  - in|PHEV_ptrp|*|electr|final
+  - in|PHEV_ptrp|*|lightoil|final
+  - in|HFC_ptrp|*|hydrogen|final
+
+- title: "in|bus|by commodity (EJ)"
+  dim_s: bus
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|ICE_H_bus|*|lightoil|final
+  - in|ICE_M_bus|*|lightoil|final
+  - in|ICH_bus|*|lightoil|final
+  - in|ICG_bus|*|gas|final
+  - in|ICAe_bus|*|ethanol|final
+  - in|FC_bus|*|hydrogen|final
+  - in|FCg_bus|*|gas|final
+  - in|FCm_bus|*|methanol|final
+  - in|Trolley_bus|*|electr|final
+  - in|PHEV_bus|*|electr|final
+  - in|PHEV_bus|*|lightoil|final
+
+- title: "in|truck|by commodity (EJ)"
+  dim_s: truck
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|FR_ICE_H|*|lightoil|final
+  - in|FR_ICE_M|*|lightoil|final
+  - in|FR_ICE_L|*|lightoil|final
+  - in|FR_ICH|*|lightoil|final
+  - in|FR_ICAe|*|ethanol|final
+  - in|FR_FCH|*|hydrogen|final
+  - in|f road electr|*|electr|final
+  - in|f road gas fc|*|gas|final
+  - in|f road gas ic|*|gas|final
+  - in|f road methanol|*|methanol|final
+
+- title: "in|power|by commodity (EJ)"
+  dim_s: power
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|coal_ppl|*|coal|*
+  - in|coal_ppl_u|*|coal|*
+  - in|coal_adv|*|coal|*
+  - in|coal_adv_ccs|*|coal|*
+  - in|igcc|*|coal|*
+  - in|igcc_ccs|*|coal|*
+  - in|syn_liq|*|coal|*
+  - in|syn_liq_ccs|*|coal|*
+  - in|gas_cc|*|gas|*
+  - in|gas_cc_ccs|*|gas|*
+  - in|gas_ct|*|gas|*
+  - in|gas_ppl|*|gas|*
+  - in|foil_ppl|*|fueloil|*
+  - in|loil_cc|*|lightoil|*
+  - in|loil_ppl|*|lightoil|*
+  - in|bio_istig|*|biomass|*
+  - in|bio_istig_ccs|*|biomass|*
+  - in|bio_ppl|*|biomass|*
+  - in|nuc_hc|*|u5|*
+  - in|nuc_lc|*|u5|*
+  - in|h2_ct|*|hydrogen|*
+
+# Methanol energy inputs. Mode wildcards cover feedstock/fuel and
+# feedstock_*/fuel_* CO2-source modes for meth_h2.
+- title: "in|methanol|by commodity (EJ)"
+  dim_s: methanol
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|meth_ng|*|gas|*
+  - in|meth_ng_ccs|*|gas|*
+  - in|meth_ng_ccs|*|electr|*
+  - in|meth_coal|*|coal|*
+  - in|meth_coal_ccs|*|coal|*
+  - in|meth_bio|*|biomass|*
+  - in|meth_bio_ccs|*|biomass|*
+  - in|meth_h2|*|electr|*
+
+# Merchant meth_h2 (GWa -> Mt H2) + methanol captive (already Mt H2 mass stoich).
+- title: "in|methanol|hydrogen (Mt)"
+  dim_s: methanol
+  plot_unit: "Mt H2"
+  scale_factor: 0.0002628333333333333
+  scale_from_unit: "GWa"
+  variables:
+  - in|meth_h2|*|hydrogen|*
+  - in|meth_ng|*|hydrogen|captive
+  - in|meth_ng_ccs|*|hydrogen|captive
+  - in|meth_coal|*|hydrogen|captive
+  - in|meth_coal_ccs|*|hydrogen|captive
+  - in|meth_bio|*|hydrogen|captive
+  - in|meth_bio_ccs|*|hydrogen|captive
+
+# Clean rename of the old 7-segment mess:
+#   in|Industry|Chemicals|meth_h2|DAC_CO2|feedstock|dac_co2
+# -> meth_h2|feedstock_dac|dac_co2|<level>  (dim_head added below)
+- title: "in|methanol|CO2 (Mt)"
+  dim_s: methanol
+  aggregate_by: dim_m
+  variables:
+  - in|meth_h2|*|bic_co2|*
+  - in|meth_h2|*|dac_co2|*
+  - in|meth_h2|*|fic_co2|*
+
+- title: "in|ammonia|by commodity (EJ)"
+  dim_s: ammonia
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|gas_NH3|*|gas|*
+  - in|gas_NH3|*|electr|*
+  - in|gas_NH3_ccs|*|gas|*
+  - in|gas_NH3_ccs|*|electr|*
+  - in|coal_NH3|*|coal|*
+  - in|coal_NH3|*|electr|*
+  - in|coal_NH3_ccs|*|coal|*
+  - in|coal_NH3_ccs|*|electr|*
+  - in|biomass_NH3|*|biomass|*
+  - in|biomass_NH3|*|electr|*
+  - in|biomass_NH3_ccs|*|biomass|*
+  - in|biomass_NH3_ccs|*|electr|*
+  - in|fueloil_NH3|*|fueloil|*
+  - in|fueloil_NH3|*|electr|*
+  - in|fueloil_NH3_ccs|*|fueloil|*
+  - in|fueloil_NH3_ccs|*|electr|*
+  - in|electr_NH3|*|electr|*
+  # - in|h2_NH3|*|hydrogen|*
+  # - in|h2_NH3|*|electr|*
+
+# Captive H2 in ammonia routes (already Mt H2 from append_captive_hydrogen).
+- title: "in|ammonia|hydrogen (Mt)"
+  dim_s: ammonia
+  aggregate_by: dim_c
+  plot_unit: "Mt H2"
+  variables:
+  - in|gas_NH3|*|hydrogen|captive
+  - in|gas_NH3_ccs|*|hydrogen|captive
+  - in|coal_NH3|*|hydrogen|captive
+  - in|coal_NH3_ccs|*|hydrogen|captive
+  - in|biomass_NH3|*|hydrogen|captive
+  - in|biomass_NH3_ccs|*|hydrogen|captive
+  - in|fueloil_NH3|*|hydrogen|captive
+  - in|fueloil_NH3_ccs|*|hydrogen|captive
+  - in|electr_NH3|*|hydrogen|captive
+
+- title: "in|olefins & BTX|by commodity (EJ)"
+  dim_s: olefins_btx
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|MTO_petro|*|electr|*
+  - in|MTO_petro|*|ht_heat|*
+  - in|ethanol_to_ethylene_petro|*|ht_heat|*
+  - in|steam_cracker_petro|*|electr|*
+  - in|steam_cracker_petro|*|ht_heat|*
+
+- title: "in|olefins & BTX|by commodity (Mt)"
+  dim_s: olefins_btx
+  aggregate_by: dim_c
+  variables:
+  - in|MTO_petro|*|methanol|*
+  - in|ethanol_to_ethylene_petro|*|ethanol|*
+  - in|steam_cracker_petro|*|atm_gasoil|*
+  - in|steam_cracker_petro|*|vacuum_gasoil|*
+  - in|steam_cracker_petro|*|naphtha|*
+  - in|steam_cracker_petro|*|ethane|*
+  - in|steam_cracker_petro|*|propane|*
+
+- title: "in|chemicals formaldehyde, HVC, fertilizers|by commodity (Mt)"
+  dim_s: plastics_resins
+  aggregate_by: dim_c
+  variables:
+  - in|CH2O_synth|*|methanol|*
+  - in|meth_ind_fs|*|methanol|*
+  - in|CH2O_to_resin|*|formaldehyde|*
+  - in|CH2O_to_resin|*|BTX|*
+  - in|production_HVC|*|ethylene|*
+  - in|production_HVC|*|propylene|*
+  - in|production_HVC|*|BTX|*
+  - in|NH3_to_N_fertil|*|NH3|*
+  - in|residual_NH3|*|NH3|*
+
+- title: "in|iron & steel|by commodity (EJ)"
+  dim_s: iron
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|bf_steel|*|coal|final
+  - in|bf_steel|*|coke_iron|final
+  - in|bf_steel|*|co_gas|final
+  - in|bf_steel|*|charcoal|final
+  - in|bf_steel|*|electr|final
+  - in|bf_ccs_steel|*|electr|final
+  - in|bf_biomass_steel|*|charcoal|final
+  - in|bf_biomass_steel|*|electr|final
+  - in|dri_coal_steel|*|coal|final
+  - in|dri_coal_steel|*|electr|final
+  - in|dri_gas_steel|*|gas|final
+  - in|dri_gas_steel|*|electr|final
+  - in|dri_gas_ccs_steel|*|electr|final
+  - in|dri_h2_steel|*|hydrogen|final
+
+- title: "in|industry other|by commodity (EJ)"
+  dim_s: industry_other
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|furnace_biomass_aluminum|*|biomass|final
+  - in|furnace_biomass_cement|*|biomass|final
+  - in|furnace_biomass_petro|*|biomass|final
+  - in|furnace_biomass_refining|*|biomass|final
+  - in|furnace_coal_aluminum|*|coal|final
+  - in|furnace_coal_cement|*|coal|final
+  - in|furnace_coal_petro|*|coal|final
+  - in|furnace_coal_refining|*|coal|final
+  - in|furnace_coke_petro|*|pet_coke|final
+  - in|furnace_coke_refining|*|pet_coke|final
+  - in|furnace_elec_aluminum|*|electr|final
+  - in|furnace_elec_cement|*|electr|final
+  - in|furnace_elec_petro|*|electr|final
+  - in|furnace_elec_refining|*|electr|final
+  - in|furnace_ethanol_aluminum|*|ethanol|final
+  - in|furnace_ethanol_cement|*|ethanol|final
+  - in|furnace_ethanol_petro|*|ethanol|final
+  - in|furnace_ethanol_refining|*|ethanol|final
+  - in|furnace_ethanol_resins|*|ethanol|final
+  - in|furnace_ethanol_steel|*|ethanol|final
+  - in|furnace_foil_aluminum|*|fueloil|final
+  - in|furnace_foil_cement|*|fueloil|final
+  - in|furnace_foil_petro|*|fueloil|final
+  - in|furnace_foil_refining|*|fueloil|final
+  - in|furnace_gas_aluminum|*|gas|final
+  - in|furnace_gas_cement|*|gas|final
+  - in|furnace_gas_petro|*|gas|final
+  - in|furnace_gas_refining|*|gas|final
+  - in|furnace_h2_aluminum|*|hydrogen|final
+  - in|furnace_h2_cement|*|hydrogen|final
+  - in|furnace_h2_petro|*|hydrogen|final
+  - in|furnace_h2_refining|*|hydrogen|final
+  - in|furnace_h2_resins|*|hydrogen|final
+  - in|furnace_h2_steel|*|hydrogen|final
+  - in|furnace_loil_aluminum|*|lightoil|final
+  - in|furnace_loil_cement|*|lightoil|final
+  - in|furnace_loil_petro|*|lightoil|final
+  - in|furnace_loil_refining|*|lightoil|final
+  - in|furnace_methanol_aluminum|*|methanol|final
+  - in|furnace_methanol_cement|*|methanol|final
+  - in|furnace_methanol_petro|*|methanol|final
+  - in|furnace_methanol_refining|*|methanol|final
+  - in|furnace_methanol_resins|*|methanol|final
+  - in|furnace_methanol_steel|*|methanol|final
+  - in|fc_h2_aluminum|*|hydrogen|final
+  - in|fc_h2_petro|*|hydrogen|final
+  - in|fc_h2_refining|*|hydrogen|final
+  - in|fc_h2_resins|*|hydrogen|final
+  - in|fc_h2_steel|*|hydrogen|final
+  - in|h2_i|*|hydrogen|final
+  - in|h2_fc_I|*|hydrogen|final
+  - in|sp_eth_I|*|ethanol|final
+
+- title: "in|refining|by commodity (EJ)"
+  dim_s: refining
+  aggregate_by: dim_c
+  plot_unit: "EJ"
+  scale_factor: 0.03154  # GWa -> EJ
+  scale_from_unit: "GWa"
+  variables:
+  - in|catalytic_cracking_ref|*|atm_gasoil|*
+  - in|catalytic_cracking_ref|*|vacuum_gasoil|*
+  - in|catalytic_cracking_ref|*|ht_heat|*
+  - in|hydro_cracking_ref|*|vacuum_gasoil|*
+  - in|hydro_cracking_ref|*|hydrogen|*
+  - in|hydro_cracking_ref|*|ht_heat|*
+
+# =========================================================================
+# Cross-sector: layers are dim_s tags from the sector groups above
+# (first-match-wins). Every variable must already be tagged upstream, 
+# otherwise it drops out of the stack.
+# =========================================================================
+
+# Merchant H2 (GWa -> Mt H2 at LHV 120) + captive H2 already in Mt H2
+# (mass stoich from append_captive_hydrogen; scale_from_unit skips Mt rows).
+- title: "in|sector|hydrogen (Mt)"
+  aggregate_by: dim_s
+  plot_unit: "Mt H2"
+  scale_factor: 0.0002628333333333333
+  scale_from_unit: "GWa"
+  variables:
+  - in|LH2_bunker|*|lh2|final
+  - in|conh_ar|*|hydrogen|final
+  - in|HFC_ptrp|*|hydrogen|final
+  - in|FC_bus|*|hydrogen|final
+  - in|FR_FCH|*|hydrogen|final
+  - in|h2_ct|*|hydrogen|*
+  - in|meth_h2|*|hydrogen|*
+  - in|gas_NH3|*|hydrogen|captive
+  - in|gas_NH3_ccs|*|hydrogen|captive
+  - in|coal_NH3|*|hydrogen|captive
+  - in|coal_NH3_ccs|*|hydrogen|captive
+  - in|biomass_NH3|*|hydrogen|captive
+  - in|biomass_NH3_ccs|*|hydrogen|captive
+  - in|fueloil_NH3|*|hydrogen|captive
+  - in|fueloil_NH3_ccs|*|hydrogen|captive
+  - in|electr_NH3|*|hydrogen|captive
+  # - in|h2_NH3|*|hydrogen|*
+  - in|meth_ng|*|hydrogen|captive
+  - in|meth_ng_ccs|*|hydrogen|captive
+  - in|meth_coal|*|hydrogen|captive
+  - in|meth_coal_ccs|*|hydrogen|captive
+  - in|meth_bio|*|hydrogen|captive
+  - in|meth_bio_ccs|*|hydrogen|captive
+  - in|dri_h2_steel|*|hydrogen|final
+  - in|furnace_h2_aluminum|*|hydrogen|final
+  - in|furnace_h2_cement|*|hydrogen|final
+  - in|furnace_h2_petro|*|hydrogen|final
+  - in|furnace_h2_refining|*|hydrogen|final
+  - in|furnace_h2_resins|*|hydrogen|final
+  - in|furnace_h2_steel|*|hydrogen|final
+  - in|fc_h2_aluminum|*|hydrogen|final
+  - in|fc_h2_petro|*|hydrogen|final
+  - in|fc_h2_refining|*|hydrogen|final
+  - in|fc_h2_resins|*|hydrogen|final
+  - in|fc_h2_steel|*|hydrogen|final
+  - in|h2_i|*|hydrogen|final
+  - in|h2_fc_I|*|hydrogen|final
+  - in|hydro_cracking_ref|*|hydrogen|*
+
+# Fuel methanol (GWa) -> Mt via meth_t_d bridge 0.697615 GWa/Mt, then stack
+# with material feedstock Mt leaves. scale_from_unit limits rescale to GWa.
+- title: "in|sector|methanol (Mt)"
+  aggregate_by: dim_s
+  plot_unit: "Mt methanol"
+  scale_factor: 1.43345  # 1 / 0.697615
+  scale_from_unit: "GWa"
+  variables:
+  - in|meth_bunker|*|methanol|final
+  - in|conm_ar|*|methanol|final
+  - in|IAHm_ptrp|*|methanol|final
+  - in|ICAm_ptrp|*|methanol|final
+  - in|FCm_bus|*|methanol|final
+  - in|f road methanol|*|methanol|final
+  - in|furnace_methanol_aluminum|*|methanol|final
+  - in|furnace_methanol_cement|*|methanol|final
+  - in|furnace_methanol_petro|*|methanol|final
+  - in|furnace_methanol_refining|*|methanol|final
+  - in|furnace_methanol_resins|*|methanol|final
+  - in|furnace_methanol_steel|*|methanol|final
+  - in|MTO_petro|*|methanol|*
+  - in|CH2O_synth|*|methanol|*
+  - in|meth_ind_fs|*|methanol|*
+
+# No need to aggregate for now
+# Later to fertilizer and power. 
+- title: "in|sector|ammonia (Mt)"
+  variables:
+  - in|NH3_to_N_fertil|*|NH3|*
+  - in|residual_NH3|*|NH3|*

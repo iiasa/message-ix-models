@@ -147,8 +147,11 @@ def genno_generic(
     return pd.concat(dfs, ignore_index=True)
 
 
-# Captive H2: same stoich as data/hydrogen/reporting/h2_transient.yaml.
-# NH3 is Mt → GWa H2 (Mt→EJ bridge × 1.114 / GWa→EJ); methanol is GWa × 0.937.
+# Captive H2 on a mass basis (Mt H2). meth_h2 omitted (merchant H2).
+# - NH3: 0.178 t H2 / t NH3
+# - methanol: 0.189 t H2 / t methanol; fuel GWa bridged at meth_t_d
+# TODO: YJ, recalibrate after checking CHN 2020 benchmark
+#   0.697615 GWa/Mt before applying 0.189
 _CAPTIVE_NH3 = frozenset(
     {
         "biomass_NH3",
@@ -165,15 +168,15 @@ _CAPTIVE_NH3 = frozenset(
 _CAPTIVE_METH = frozenset(
     {"meth_bio", "meth_bio_ccs", "meth_coal", "meth_coal_ccs", "meth_ng", "meth_ng_ccs"}
 )
-_CAPTIVE_NH3_FACTOR = 0.018789915 * 1.114 / 0.03154
-_CAPTIVE_METH_FACTOR = 0.937
+_CAPTIVE_NH3_MT_H2 = 0.178
+_CAPTIVE_METH_MT_H2 = 0.189
+_CAPTIVE_METH_GWA_TO_MT_H2 = (1.0 / 0.697615) * _CAPTIVE_METH_MT_H2
 
 
 def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
     """Append ``in|t|m|hydrogen|captive`` from NH3 / methanol ``out`` rows.
 
-    Captive H2 is not a model flow; it is product output × stoichiometric
-    factor (see ``h2_transient.yaml``). ``meth_h2`` is excluded (merchant H2).
+    Values are Mt H2 (mass stoich). ``meth_h2`` is excluded (merchant H2).
     """
     if df.empty:
         return df
@@ -185,14 +188,19 @@ def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
     year_cols = [c for c in df.columns if c not in _ID_COLUMNS]
     chunks: list[pd.DataFrame] = []
 
-    for techs, commodity, factor in (
-        (_CAPTIVE_NH3, "NH3", _CAPTIVE_NH3_FACTOR),
-        (_CAPTIVE_METH, "methanol", _CAPTIVE_METH_FACTOR),
-    ):
+    # level-specific factors so GWa fuel and Mt feedstock both land in Mt H2
+    specs: list[tuple[frozenset[str], str, frozenset[str], float]] = [
+        (_CAPTIVE_NH3, "NH3", frozenset({"secondary_material"}), _CAPTIVE_NH3_MT_H2),
+        (_CAPTIVE_METH, "methanol", frozenset({"primary_material"}), _CAPTIVE_METH_MT_H2),
+        (_CAPTIVE_METH, "methanol", frozenset({"primary"}), _CAPTIVE_METH_GWA_TO_MT_H2),
+    ]
+
+    for techs, commodity, levels, factor in specs:
         hit = (
             (parts[0] == "out")
             & parts[1].isin(techs)
             & (parts[3] == commodity)
+            & parts[4].isin(levels)
         )
         if not hit.any():
             continue
@@ -207,5 +215,7 @@ def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
         return df
 
     extra = pd.concat(chunks, ignore_index=True)
-    log.info("Appended %d captive-H2 row(s) (in|*|*|hydrogen|captive)", len(extra))
+    log.info(
+        "Appended %d captive-H2 row(s) (in|*|*|hydrogen|captive, Mt H2)", len(extra)
+    )
     return pd.concat([df, extra], ignore_index=True)
