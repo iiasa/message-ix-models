@@ -20,7 +20,7 @@
 # at plot time; material / Mt H2 groups keep their own scale_factor.
 
 x_axis_range: [2020, 2100]
-main_region: R12_GLB
+main_region: R12_CHN
 
 near_term_fill:
   from_scenario: baseline
