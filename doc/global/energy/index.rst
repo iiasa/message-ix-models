@@ -24,19 +24,41 @@ industrial production processes,
 and transportation.
 
 
-|name| links |MESSAGEix| to GLOBIOM
-(GLObal BIOsphere Model, cf. Section :ref:`globiom`)
-to consistently assess the implications of utilizing bioenergy of different types
-and to integrate the GHG emissions from energy and land use;
-and to the aggregated macro-economic model MACRO (cf. Section :ref:`macro`)
-to assess economic implications and to capture economic feedbacks.
+|name| links |MESSAGEix| to three further models.
+
+* GLOBIOM (GLObal BIOsphere Management Model, cf. Section :ref:`globiom`)
+  to consistently assess the implications of utilizing bioenergy of different types
+  and to integrate the GHG emissions from energy and land use.
+* GAINS (Greenhouse gas-Air pollution INteractions and Synergies, cf. Section :ref:`gains`)
+  to represent non-CO2 greenhouse gases and air pollutants
+  at the resolution at which their sources, control options and legislation are assessed.
+* MACRO (cf. Section :ref:`macro`),
+  an aggregated macro-economic model,
+  to assess economic implications
+  and to capture the feedbacks between the energy system and the demand for energy services.
 
 |name| covers all greenhouse gas (GHG)-emitting sectors,
 including energy,
 industrial processes,
-and—through its linkage to GLOBIOM—agriculture and forestry.
-The emissions of the full basket of greenhouse gases including CO2, CH4, N2O and F-gases (CF4, C2F6, HFC125, HFC134a, HFC143a, HFC227ea, HFC245ca and SF6) as well as other radiatively
-active gases, such as NOx, volatile organic compounds (VOCs), CO, SO2, and BC/OC is represented in the model.
+and, through its linkage to GLOBIOM, agriculture and forestry.
+The full basket of greenhouse gases is represented,
+with each gas entering the model through the component that resolves its sources.
+CO2 and the F-gases
+(CF4, C2F6, HFC125, HFC134a, HFC143a, HFC227ea, HFC245ca and SF6)
+are accounted directly in |MESSAGEix|
+from the activity of its technologies.
+CH4 and N2O from the energy system, industrial processes, product use, waste and wastewater
+are accounted in |MESSAGEix| using implied emission factors derived from GAINS,
+together with the abatement options GAINS identifies for each source,
+which enter the optimization as explicit technologies with their own costs
+(cf. Section :ref:`gains`).
+CO2, CH4 and N2O from agriculture, forestry and land-use change
+come from GLOBIOM (cf. Section :ref:`globiom`).
+Other radiatively active gases and air pollutants,
+SO2, NOx, NH3, volatile organic compounds (VOCs), CO, and BC/OC,
+are calculated in GAINS once the energy and land-use solution is complete,
+from the scenario activity translated to the resolution of GAINS,
+and aggregated back to the regions of |name|.
 |name| is used in conjunction with MAGICC
 (Model for Greenhouse gas Induced Climate Change)
 version 7.6.0a3
@@ -45,10 +67,17 @@ to calculate atmospheric concentrations,
 radiative forcing,
 and annual-mean global surface air temperature increase.
 
-The model is designed to formulate and evaluate alternative energy supply strategies consonant with the user-defined constraints such as limits on new investment, fuel
-availability and trade, environmental regulations and policies as well as diffusion rates of new technologies. Environmental aspects can be analysed by accounting, and if necessary
-limiting, the amounts of pollutants emitted by various technologies at various steps in energy supplies. This helps to evaluate the impact of environmental regulations
-on energy system development.
+The model is designed to formulate and evaluate alternative energy supply strategies
+subject to user-defined constraints
+such as limits on capacity additions and activity,
+fuel availability and trade,
+environmental regulations and policies,
+and diffusion rates of new technologies.
+Environmental aspects can be analysed by accounting for the pollutants
+each technology emits at any step of the energy supply chain,
+and by limiting these emissions where required.
+This helps to evaluate the impact of environmental regulations
+on the development of the energy system.
 
 Its principal results comprise, among others, estimates of technology-specific multi-sector response strategies for specific climate stabilization targets. By doing so,
 the model identifies the least-cost portfolio of mitigation technologies. The choice of the individual mitigation options across gases and sectors is driven by the relative
@@ -56,21 +85,27 @@ economics of the abatement measures, assuming full temporal and spatial flexibil
 cheapest to implement).
 
 The Reference Energy System (RES) defines the full set of available energy conversion technologies
-(:numref:`fig-res`).
-In |MESSAGEix| terms, “energy conversion technology” refers to
+and the energy commodities that connect them.
+:numref:`fig-res` gives an illustrative overview of its structure,
+with technologies grouped by function at each step of the energy chain.
+Within |MESSAGEix|, the term “energy conversion technology” refers to
 all types of energy technologies,
 from resource extraction to transformation,
-transport,
+transportation,
 distribution of energy carriers,
 and end-use technologies.
 
 .. _fig-res:
 .. figure:: /_static/RES_overview.png
 
-   Reference Energy System (RES).
-   Schematic of the reference energy system,
-   showing how primary energy resources are converted
-   through secondary energy carriers to energy demands.
+   Illustrative overview of the Reference Energy System (RES) of |name|.
+   Columns follow the energy chain from resources to demand.
+   Blue boxes are energy commodities at the respective level,
+   green boxes are groups of technologies,
+   with the number of technologies in each group in parentheses.
+   Grey lines connect each group to the commodities
+   its technologies take as input or deliver as output.
+   Individual technologies and their connections are not shown.
 
 Because few conversion technologies convert resources directly into useful energy,
 the energy system in |name| is divided into 5 energy levels:
