@@ -54,7 +54,7 @@ def load_config(path: str | Path) -> dict:
         raise ValueError(f"Config missing required keys: {missing}")
 
     config = dict(raw)
-    config["cooling"] = {"rcps": "no_climate", "rels": "low", **raw["cooling"]}
+    config["cooling"] = {"rcps": "2p6", "rels": "low", **raw["cooling"]}
     config["cid"] = {
         "n_runs": None,
         "min_year": None,
@@ -234,7 +234,7 @@ def phase1_cooling(  # pragma: no cover
     *,
     ssp: str,
     regions: str = "R12",
-    rcps: str = "no_climate",
+    rcps: str = "2p6",
     rels: str = "low",
 ) -> "Scenario":
     """Build the cooling module on top of *scenario* via ``water-ix`` subprocess.

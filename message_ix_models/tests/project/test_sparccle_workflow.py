@@ -42,7 +42,7 @@ def test_load_config_fills_defaults(tmp_path: Path) -> None:
 
     config = load_config(path)
 
-    assert config["cooling"] == {"rcps": "no_climate", "rels": "low"}
+    assert config["cooling"] == {"rcps": "2p6", "rels": "low"}
     assert config["cid"] == {
         "n_runs": None,
         "min_year": None,
@@ -155,7 +155,7 @@ def _write_config(tmp_path: Path, magicc_dir: Path) -> str:
                         "magicc_output_dir": str(magicc_dir),
                     },
                 ],
-                "cooling": {"rcps": "no_climate", "rels": "low"},
+                "cooling": {"rcps": "2p6", "rels": "low"},
                 "cid": {"n_runs": None, "min_year": None},
             }
         )

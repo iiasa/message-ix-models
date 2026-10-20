@@ -57,7 +57,7 @@ starters:
 # Phase-1 cooling-module build settings (passed to `mix-models water-ix cooling`).
 # Retained for completeness; unused when the graph is truncated at `cooling`.
 cooling:
-  rcps: no_climate
+  rcps: 2p6
   rels: low
 
 # Phase-2 CID settings
