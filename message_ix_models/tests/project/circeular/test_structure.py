@@ -15,7 +15,7 @@ class TestCL_SCENARIO:
         # An expected item is in the code list
         item = result["N"]
         # A short fragment is in the item URN
-        assert "Code=IIASA_ECE:CL_SCENARIO_CIRCEULAR(1.0.0).N" in item.urn
+        assert "Code=IIASA_ECE:CL_SCENARIO_CIRCEULAR(1.0.0).N" in (item.urn or "")
 
 
 class TestCL_SCENARIO_TRANSPORT:

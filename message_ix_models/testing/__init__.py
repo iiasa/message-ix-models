@@ -100,6 +100,10 @@ MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
         "xfail", reason="No input data/config for {0}", raises=lambda args: args[1]
     ),
     "non_public_data": MarkFactory("xfail", reason="Requires non-public data ({0})"),
+    "xfail_old_ixmp4": pytest.mark.xfail(
+        condition=find_spec("ixmp4") is not None and version("ixmp4") < "0.16",
+        reason="Fails with ixmp4 older than the latest minor version",
+    ),
     # References to GitHub issues and PRs in the same repository
     "gh_375": pytest.mark.flaky(
         reruns=3,
@@ -112,17 +116,6 @@ MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
         reason="Temporary, for https://github.com/iiasa/message-ix-models/pull/471",
     ),
     # References to issues and PRs in other packages' repositories
-    "ixmp_595": pytest.mark.xfail(
-        condition=version("ixmp") > "3.11.0"
-        and find_spec("ixmp4") is not None
-        and version("ixmp4") >= "0.11.0",
-        reason="https://github.com/iiasa/ixmp#595",
-        # raises=ixmp4.core.exceptions.RunLockRequired,
-    ),
-    "ixmp_600": pytest.mark.xfail(
-        condition=version("ixmp") == "3.11.0" and find_spec("ixmp4") is not None,
-        reason="https://github.com/iiasa/ixmp/issues/600",
-    ),
     "message_ix_cap_comm": pytest.mark.xfail(
         Version(version("message_ix")) < Version("3.12"),
         reason="Requires MESSAGE cap-comm parameters, only available in message-ix "

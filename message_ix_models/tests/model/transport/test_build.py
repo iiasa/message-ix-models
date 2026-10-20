@@ -45,7 +45,7 @@ def N_node(request: "pytest.FixtureRequest") -> int:
 
 @pytest.fixture(scope="session")
 def scenario_code() -> Iterator["Code"]:
-    return CL_SCENARIO.get()["SSP2"]
+    yield CL_SCENARIO.get()["SSP2"]
 
 
 @mark.ci_linux_only
