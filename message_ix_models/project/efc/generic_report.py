@@ -148,10 +148,11 @@ def genno_generic(
 
 
 # Captive H2 on a mass basis (Mt H2). meth_h2 omitted (merchant H2).
-# - NH3: 0.178 t H2 / t NH3
-# - methanol: 0.189 t H2 / t methanol; fuel GWa bridged at meth_t_d
-# TODO: YJ, recalibrate after checking CHN 2020 benchmark
-#   0.697615 GWa/Mt before applying 0.189
+# Calibrated to 2020 CHN benchmark (39 Mt H2 production, of which 12.48 Mt
+# for methanol and 10.53 Mt for ammonia):
+# - NH3: 0.171 t H2 / t NH3
+# - methanol: 0.242 t H2 / t methanol; fuel GWa bridged at meth_t_d
+#   0.697615 GWa/Mt before applying 0.242
 _CAPTIVE_NH3 = frozenset(
     {
         "biomass_NH3",
@@ -168,8 +169,8 @@ _CAPTIVE_NH3 = frozenset(
 _CAPTIVE_METH = frozenset(
     {"meth_bio", "meth_bio_ccs", "meth_coal", "meth_coal_ccs", "meth_ng", "meth_ng_ccs"}
 )
-_CAPTIVE_NH3_MT_H2 = 0.178
-_CAPTIVE_METH_MT_H2 = 0.189
+_CAPTIVE_NH3_MT_H2 = 0.171
+_CAPTIVE_METH_MT_H2 = 0.242
 _CAPTIVE_METH_GWA_TO_MT_H2 = (1.0 / 0.697615) * _CAPTIVE_METH_MT_H2
 
 
