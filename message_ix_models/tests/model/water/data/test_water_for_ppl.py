@@ -6,6 +6,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.water.data.water_for_ppl import (
     cool_tech,
     non_cooling_tec,
+    saline_bound_from_history,
 )
 from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
@@ -179,3 +180,45 @@ def test_non_cooling_tec(water_context, water_scenario, assert_message_params):
             "year_act",
         ]
     )
+
+
+def test_saline_bound_from_history() -> None:
+    hist = pd.DataFrame(
+        {
+            "node_loc": ["R12_CHN"] * 3 + ["R12_EEU"],
+            "technology": ["coal_ppl__ot_saline"] * 2
+            + ["gas_cc__ot_saline", "gas_cc__ot_saline"],
+            "year_act": [2025, 2030, 2030, 2030],
+            "value": [100.0, 80.0, 50.0, 0.0],
+            "unit": "GWa",
+        }
+    )
+    saline_input = pd.DataFrame(
+        {
+            "node_loc": ["R12_CHN", "R12_CHN", "R12_CHN", "R12_EEU", "R12_AFR"],
+            "technology": [
+                "coal_ppl__ot_saline",
+                "coal_ppl__ot_saline",
+                "gas_cc__ot_saline",
+                "gas_cc__ot_saline",
+                "gas_cc__ot_saline",
+            ],
+            "year_vtg": [2020, 2030, 2030, 2030, 2030],
+            "year_act": [2030, 2030, 2030, 2030, 2030],
+            "commodity": "saline_ppl",
+            "value": [900.0, 1100.0, 300.0, 300.0, 300.0],
+            "unit": "MCM/GWa",
+        }
+    )
+
+    df = saline_bound_from_history(hist, saline_input, [2035, 2040], 10000.0)
+
+    assert set(df["technology"]) == {"extract_salinewater_cool"}
+    assert set(df["year_act"]) == {2035, 2040}
+    assert (df["unit"] == "MCM").all()
+    b = df[df["year_act"] == 2035].set_index("node_loc")["value"]
+    # CHN: last year 2030 = 80 x 1000 + 50 x 300 = 95,000 (2025 = 100,000 ignored)
+    assert b["R12_CHN"] == pytest.approx(95_000)
+    # EEU: zero history -> default; AFR: no history -> default
+    assert b["R12_EEU"] == 10000.0
+    assert b["R12_AFR"] == 10000.0

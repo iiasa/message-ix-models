@@ -28,6 +28,12 @@ Next release
   - Cap renewable groundwater activity growth to match the dispatch seed.
   - Price fossil groundwater at a 20% premium over renewable groundwater.
 
+- Fix the seawater cooling cap in :mod:`.model.water`.
+  :py:`_add_saline_bounds` compared historical cooling activity (GWa) with the MCM fallback,
+  so the 10,000 MCM/yr default bound applied in every region.
+  New :func:`.saline_bound_from_history` converts the history to MCM via the ``saline_ppl`` input
+  and bounds :py:`extract_salinewater_cool` at the last historical year's withdrawal.
+
 - Add :doc:`/api/model-bmt` (:pull:`433`, :pull:`486`).
 - :doc:`/project/circeular`:
   Distinguish :class:`~.circeular.structure.CL_SCENARIO`
