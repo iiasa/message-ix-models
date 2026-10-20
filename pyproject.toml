@@ -75,6 +75,7 @@ migrate = [
   "GitPython",
 ]
 report = ["plotnine", "xlsxwriter"]
+slurm = ["Jinja2"]
 tests = [
   "message-ix[tests]",
   "message_ix_models[bilateralize,buildings,material,report,transport]",
