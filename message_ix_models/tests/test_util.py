@@ -4,6 +4,7 @@ import logging
 import re
 from pathlib import Path
 
+import ixmp
 import numpy as np
 import pandas as pd
 import pytest
@@ -282,10 +283,9 @@ def test_make_source_tech0():
         make_source_tech(info, _MST_COMMON, **values)
 
 
-@pytest.mark.ixmp_595
-@pytest.mark.ixmp_600
-def test_make_source_tech1(test_mp):
-    """Test make_source_tech() with a Scenario object as input."""
+@pytest.mark.xfail_old_ixmp4
+def test_make_source_tech1(test_mp: ixmp.Platform) -> None:
+    """Test :func:`make_source_tech` with a |Scenario| as input."""
     s = Scenario(test_mp, model="model", scenario="scenario", version="new")
     s.add_set("node", ["World", "node0", "node1"])
     s.add_set("technology", ["t"])
