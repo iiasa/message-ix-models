@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     import pint
     from genno import Computer, Key
     from sdmx.message import StructureMessage
-    from sdmx.model.common import Item
+    from sdmx.model.common import Item, MaintainableArtefact
 
     from message_ix_models.types import KeyLike
 
@@ -942,6 +942,7 @@ def read(urn: str, base_dir: "PathLike | None" = None):
     except IndexError:
         raise FileNotFoundError(f"'*{urn}*.xml', '*{urn.upper()}*.xml' or similar")
 
+    cls: type["MaintainableArtefact"]
     for _, cls in msg.iter_collections():
         try:
             return next(iter(msg.objects(cls).values()))

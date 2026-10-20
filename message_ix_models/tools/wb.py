@@ -9,16 +9,16 @@ from typing import TYPE_CHECKING, cast
 import pandas as pd
 
 if TYPE_CHECKING:
-    import sdmx.model.common
     from sdmx.message import StructureMessage
+    from sdmx.model.common import Code, Codelist
 
 log = logging.getLogger(__name__)
 
 
 # FIXME Reduce complexity from 12 → ≤11
 def assign_income_groups(  # noqa: C901
-    cl_node: "sdmx.model.common.Codelist",
-    cl_income_group: "sdmx.model.common.Codelist",
+    cl_node: "Codelist",
+    cl_income_group: "Codelist",
     method: str = "population",
     replace: dict[str, str] | None = None,
 ) -> None:
@@ -64,7 +64,7 @@ def assign_income_groups(  # noqa: C901
 
     if method == "count":
 
-        def get_weight(code: "sdmx.model.common.Code") -> float:
+        def get_weight(code: "Code") -> float:
             """Weight of the country `code` in aggregation."""
             return 1.0
 
@@ -83,7 +83,7 @@ def assign_income_groups(  # noqa: C901
         # REF_AREA.
         df = sdmx.to_pandas(dm.data[0])
 
-        def get_weight(code: "sdmx.model.common.Code") -> float:
+        def get_weight(code: "Code") -> float:
             """Return a weight for the country `code`: its total population."""
             try:
                 return df[code.id].item()
@@ -145,7 +145,7 @@ def assign_income_groups(  # noqa: C901
     )
 
 
-def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
+def fetch_codelist(id: str) -> "Codelist":
     """Retrieve code lists related to the WB World Development Indicators.
 
     In principle this could be done with :py:`sdmx.Client("WB_WDI").codelist(id)`, but
@@ -165,11 +165,11 @@ def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
     # Read the retrieved SDMX StructureMessage and extract the code list
     sm = cast("StructureMessage", sdmx.read_sdmx(file, format="xml"))
 
-    return sm.codelist[id]
+    return cast("Codelist", sm.codelist[id])
 
 
 @lru_cache()
-def get_income_group_codelist() -> "sdmx.model.common.Codelist":
+def get_income_group_codelist() -> "Codelist":
     """Return a :class:`.Codelist` with World Bank income group information.
 
     The returned code list is a modified version of the one with URN
@@ -305,8 +305,8 @@ def make_map(
 
     result = dict()
     for key, value in source.items():
-        key = cl[key].urn if expand_key_urn else key
-        value = cl[value].urn if expand_value_urn else value
+        key = (cl[key].urn or "") if expand_key_urn else key
+        value = (cl[value].urn or "") if expand_value_urn else value
         result[key] = value
 
     return result
