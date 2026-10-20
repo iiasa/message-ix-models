@@ -221,7 +221,6 @@ jobs:
     - name: Install packages and dependencies
       # By default, install:
       # - ixmp, message_ix: from GitHub branches/tags per matrix.version.upstream (above)
-      # - dask: work around https://github.com/khaeru/genno/issues/171
       # - other dependencies: from PyPI.
       #
       # To test against unreleased code (on `main`, or other branches for open PRs),
@@ -229,7 +228,6 @@ jobs:
       run: |
         uv pip install --upgrade \
           ${{ steps.extra.outputs.dependencies }} \
-          "dask < 2025.4.0" \
           "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.version.upstream }}" \
           "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.version.upstream }}" \
           "message-ix-buildings @ git+https://github.com/iiasa/message-ix-buildings@main" \
