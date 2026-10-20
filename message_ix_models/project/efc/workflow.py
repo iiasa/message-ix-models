@@ -1,7 +1,7 @@
 # The workflow mainly contains the steps to build EFC scenarios,
 # as well as the steps to apply climate target settings. See efc-workflow.svg.
 # Example cli command:
-# mix-models efc run --from="base" "cpol reported" --dry-run
+# mix-models efc run --from="base" "baseline_sf reported" --dry-run
 
 import logging
 from typing import TYPE_CHECKING
@@ -458,13 +458,13 @@ def solve(
     return scenario
 
 
-# EFC scenarios:
+# EFC scenarios (ixmp scenario names / clone targets).
 _scen_all = [
-    "chn_base",
-    "chn_base_sf_policy",
+    "chn_baseline",
+    "chn_baseline_sf",
     "chn_nz2060",
-    "chn_nz2060_sf_policy",
-    "chn_acc_nz2060_sf_policy",
+    "chn_nz2060_sf",
+    "chn_nz2060_acc_sf",
 ]
 
 
@@ -527,67 +527,52 @@ def generate(context: Context) -> Workflow:
         stage="_base",
     )
     name = wf.add_step(
-        "hydrogen added",
+        "baseline added",
         name,
         build_hydrogen,
-        # target=f"{url}baseline_20261018",
-        target=f"{url}chn_base",
+        target=f"{url}chn_baseline",
         clone=c,
-    )
-    name = wf.add_step("baseline solved", name, solve)
-    name = wf.add_step("baseline reported", name, report)
-    name = wf.add_step(
-        "baseline generic reported",
-        "baseline solved",
-        generic_flow,
     )
 
     name = wf.add_step(
-        "cpol added",
-        "baseline reported",
+        "baseline_sf added",
+        "baseline added",
         add_anchor,
-        policy_ids=SF_POLICY_IDS,
-        target=f"{url}chn_base_sf_policy",
+        stage="cpol",
+        target=f"{url}chn_baseline_sf",
         clone=c,
     )
-    name = wf.add_step("cpol solved", name, solve)
-    name = wf.add_step("cpol reported", name, report)
 
     name = wf.add_step(
-        "1p5c added",
-        "cpol reported",
+        "nz2060 added",
+        "baseline added",
         add_1p5c,
         target=f"{url}chn_nz2060",
+        clone=dict(keep_solution=False),
+    )
+
+    name = wf.add_step(
+        "nz2060_sf added",
+        "baseline_sf added",
+        add_1p5c,
+        target=f"{url}chn_nz2060_sf",
         clone=dict(keep_solution=False, shift_first_model_year=2030),
     )
-    name = wf.add_step("1p5c solved", name, solve)
-    name = wf.add_step("1p5c reported", "1p5c solved", report)
-    name = wf.add_step(
-        "1p5c generic reported",
-        "1p5c solved",
-        generic_flow,
-    )
 
     name = wf.add_step(
-        "1p5c_sf added",
-        "1p5c solved",
+        "nz2060_acc_sf added",
+        "nz2060_sf added",
         add_anchor,
-        target=f"{url}chn_nz2060_sf_policy",
-        policy_ids=SF_POLICY_IDS,
+        target=f"{url}chn_nz2060_acc_sf",
+        stage="acc",
         clone=dict(keep_solution=False),
     )
-    name = wf.add_step("1p5c_sf solved", name, solve)
-    name = wf.add_step("1p5c_sf reported", name, report)
 
-    name = wf.add_step(
-        "1p5c_sf_acc added",
-        "1p5c solved",
-        add_anchor,
-        target=f"{url}chn_acc_nz2060_sf_policy",
-        policy_ids=SF_ACC_POLICY_IDS,
-        clone=dict(keep_solution=False),
-    )
-    name = wf.add_step("1p5c_sf_acc solved", name, solve)
-    name = wf.add_step("1p5c_sf_acc reported", name, report)
+    # Then "{step} added" → solved → reported / generic reported
+    for scen in _scen_all:
+        step = scen.removeprefix("chn_")
+        wf.add_step(f"{step} solved", f"{step} added", solve)
+        wf.add_step(f"{step} reported", f"{step} solved", report)
+        wf.add_step(f"{step} generic reported", f"{step} solved", generic_flow)
 
     return wf
