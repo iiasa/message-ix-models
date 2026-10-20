@@ -2,7 +2,19 @@
 
 Modeling policies
 =================
-The global energy model distinguishes between twelve global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes.
+The global energy model distinguishes between twelve global regions (cf. Section :ref:`spatial`).
+It is nevertheless important to represent national policies at a lower geographical resolution,
+in order to adequately account for future changes in the scenario development process.
+Generally, three types of national policies are represented:
+
+* policies currently in force,
+* Nationally Determined Contributions (NDCs), and
+* Net-Zero targets.
+
+Although most of these policies are climate or emission-reduction targets,
+they enter |name| as model constraints,
+bounds on emissions that cover the energy and land-use systems alike,
+and share constraints on the energy system.
 
 From national targets to regional constraints
 ----------------------------------------------
@@ -69,10 +81,18 @@ quantity. Implemented separately, such targets would not act cumulatively at the
 regional level and the region would underachieve them. Each region therefore
 converts all of its national targets to one dominant type, chosen as the type
 used by the largest country by energy share or by the majority of countries in
-that region. Nine conversions are defined between the five share types, each with
-a direct-equivalent and a substitution-accounting variant. Converting a renewable
-share of primary energy into a renewable share of electricity generation, for
-example, is
+that region. Five share types are distinguished:
+
+* renewable share of primary energy (:math:`RePe`),
+* non-fossil share of primary energy (:math:`NFPe`),
+* renewable share of electricity generation (:math:`ReEg`),
+* non-fossil share of electricity generation (:math:`NFEg`), and
+* renewable share of final energy (:math:`ReFe`).
+
+Nine conversions are defined between them,
+each with a direct-equivalent and a substitution-accounting variant.
+Converting a renewable share of primary energy
+into a renewable share of electricity generation, for example, is
 
 .. math:: NewTshr_{iso,TY} = \frac{Tshr_{iso,TY} \cdot \frac{ReEg_{iso,RY}}{RePe_{iso,RY}} \cdot TotPe_{iso,RY}}{TotEg_{iso,RY}}
 
