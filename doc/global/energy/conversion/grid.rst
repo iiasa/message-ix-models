@@ -12,11 +12,27 @@ Energy transport and distribution infrastructure is included in |MESSAGEix| at a
 * district heat
 * natural gas
 * hydrogen
+* liquid hydrogen
 
-For all solid (coal, biomass) and liquid energy carriers (oil products, biofuels, fossil synfuels) a simpler approach is taken and only transmission and distribution losses and costs
+For all other energy carriers, solid (coal, biomass) and liquid (oil products, biofuels, synthetic fuels), a simpler approach is taken and only transmission and distribution losses and costs
 are taken into account.
 
-Inter-regional energy transmission infrastructure, such as natural gas pipelines and high voltage electricity grids, are also represented between geographically adjacent regions. Solid and liquid fuel trade is, similar to the transmission and distribution within regions, modeled by taking into account distribution losses and costs. A special case are gases that can be traded in liquified form, i.e. liquified natural gas (LNG) and liquid hydrogen, where liquefaction and re-gasification infrastructure is explicitly represented in addition to the actual transport process.
+Trade between regions takes two forms.
+Natural gas pipelines and high-voltage electricity interconnections
+link neighbouring regions directly.
+All other traded energy carriers,
+crude oil, oil products, coal, biomass, ethanol,
+liquefied natural gas (LNG) and liquid hydrogen,
+are shipped through a global market
+in which exports from any region supply imports to any other.
+As for transmission and distribution within regions,
+only the transport losses and costs of shipping are taken into account.
+For the two liquefied gases,
+liquefaction in the exporting region and regasification in the importing region
+are represented as explicit technologies in addition to the transport itself.
+Ammonia is traded as a chemical commodity within MESSAGEix-Materials
+and used as a shipping fuel,
+and is not represented as a carrier for hydrogen trade.
 
 .. _syst_integration:
 
@@ -32,8 +48,14 @@ which applies the two concepts to wind and solar PV alike
 and adds a third, the curtailment of variable generation at high penetration.
 Wind and solar generation is assigned to penetration bins,
 defined by the share of electricity demand that the respective technology supplies.
-In SSP2 the second, third and fourth bin begin at about 6%, 17% and 29% of electricity demand.
-Each bin carries its own coefficients for the three constraints.
+In SSP2 the second, third and fourth bin begin at about 6%, 17% and 28% of electricity demand.
+Each successive bin represents the growing integration effort at higher penetration.
+Generation in a higher bin contributes less firm capacity to the reserve margin,
+requires more flexible generation from the rest of the system,
+is curtailed to a larger extent,
+and carries a variable cost that represents the cost of the integration measures.
+The bin structure and the coefficients of each bin
+follow the reduced-form analysis of Johnson et al. (2016 :cite:`johnson_vre_2016`).
 
 Toward meeting the firm capacity requirement, conventional generating technologies contribute their nameplate generation capacity while variable renewables contribute a capacity value that declines as the market share of the technology increases. This reflects the fact that wind and solar generators do not always generate when needed, and that their output is generally self-correlated. In order to adjust wind capacity values for different levels of penetration, it was necessary to introduce a stepwise-linear supply curve for wind power (shown in the :numref:`fig-windcap` below). Each bin covers a range of wind penetration levels as fraction of load and has discrete coefficients for the two constraints. The bins are predefined, and therefore are not able to allow, for example, resource diversification to increase capacity value at a given level of wind penetration.
 
@@ -92,25 +114,36 @@ with the wind and solar PV coefficients differentiated by penetration bin follow
    | Gas combustion turbine; electricity storage                            | +1.0                      |
    +------------------------------------------------------------------------+---------------------------+
 
+The coefficients enter one constraint per region and year,
+
+.. math:: \sum_{t} f_{t} \cdot ACT_{t} \geq 0
+
+where :math:`f_t` is the flexibility coefficient of technology :math:`t`
+and :math:`ACT_t` its generation,
+with electricity demand entering as the transmission and distribution technology
+and its negative coefficient.
+The flexible generation supplied by technologies with positive coefficients
+must therefore at least balance the flexible generation
+required by load and by the technologies with negative coefficients.
+
 Thus, a technology like a natural gas combustion turbine, used almost exclusively for ancillary services, has a flexibility coefficient of 1, while a coal plant, which provides mostly bulk power but can supply some ancillary services, has a small, positive coefficient. Electric storage systems (e.g., pumped hydropower, compressed air storage, flow batteries) and flexible demand-side technologies like hydrogen-production contribute as well. Meanwhile, wind power and solar PV, which require additional system flexibility to smooth out fluctuations, have negative flexibility coefficients.
 
 Across the narratives, the integration constraints are differentiated in three ways,
 summarised in :numref:`tab-vre-integration`.
-First, the cost of the integration measures,
-which enters as a variable cost of the higher penetration bins,
-is scaled relative to SSP2: to 0.67 in SSP1, 1.33 in SSP4 and 2.0 in SSP3 and SSP5.
-Second, the penetration thresholds that define the bins are shifted.
-In SSP1 the bins begin at 25%, 40% and 50% of electricity demand and in LED at 20%, 35% and 45%,
-so that the integration effects set in later,
-against 7%, 17% and 27% in SSP3, SSP4 and SSP5.
+First, the variable cost of the higher penetration bins,
+introduced above as the cost of the integration measures,
+is scaled relative to SSP2,
+lower in SSP1 and higher in SSP3, SSP4 and SSP5
+(:numref:`tab-vre-integration`).
+Second, the penetration thresholds that define the bins are shifted,
+later in SSP1 and LED, so that the integration effects set in at higher shares,
+and slightly earlier in SSP3, SSP4 and SSP5.
 Third, the flexibility requirement and the capacity value of wind and solar are adjusted.
 SSP1 assumes battery storage deployed alongside solar PV and greater flexibility from electric vehicles,
-which lowers the flexibility requirement of solar PV to 0.16 to 0.40
-and raises its capacity value to 0.95, 0.65 and 0.35 in the first three bins,
+which lowers the flexibility requirement of solar PV and raises its capacity value,
 while wind keeps the SSP2 values.
-LED lowers the flexibility requirement of both wind and solar PV to 0.10 to 0.25
-and raises their capacity value to 0.9, 0.8, 0.7 and 0.6.
-SSP5 raises the flexibility requirement of both to 0.30 to 0.60.
+LED lowers the flexibility requirement and raises the capacity value of both wind and solar PV.
+SSP5 raises the flexibility requirement of both.
 The SSP2 values apply in every narrative up to 2025
 and converge linearly to the narrative-specific values by 2040.
 The penetration thresholds also vary slightly by region,
@@ -138,7 +171,7 @@ with a regional factor between 0.93 and 1.1 that converges to 0.93 by 2100.
      - solar PV 0.95 / 0.65 / 0.35 / 0, wind as SSP2
    * - SSP2
      - 1.0
-     - 6 / 17 / 29%
+     - 6 / 17 / 28%
      - 0.20 / 0.30 / 0.40 / 0.50
      - 0.9 / 0.6 / 0.3 / 0
    * - SSP3
