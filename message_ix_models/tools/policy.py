@@ -649,23 +649,33 @@ def _apply_speed_arrival(
                     growth_ref, speed, step
                 )
 
-
-# YJ: hmm maybe not only the target year but by default all years onward?
+# YJ: allowed window for depth-arrival. 
+# Now the difficult part is whether we get starting values of year_act, 
+# if so, re-design is needed but more dynamics can be allowed. 
 def _apply_arrival_depth(
     df_update: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
 ) -> None:
-    """Set value to depth_converted at ``year_act`` for matching node."""
-    cols = ["year_act", "depth_converted"]
+    """Set value to depth_converted for every year in ``[year_act, arrival]``.
+    """
+    cols = ["year_act", "arrival", "depth_converted"]
     if "node" in df_loop.columns:
         cols = [*cols, "node"]
     for _, r in df_loop.loc[df_loop["arrival"].notna(), cols].iterrows():
-        if pd.isna(r["year_act"]) or pd.isna(r["depth_converted"]):
+        if (
+            pd.isna(r["year_act"])
+            or pd.isna(r["arrival"])
+            or pd.isna(r["depth_converted"])
+        ):
+            continue
+        start_year = int(r["year_act"])
+        end_year = int(r["arrival"])
+        if end_year < start_year:
             continue
         target_node = _row_node(r)
-        target_year = int(r["year_act"])
-        idx = _year_act_num(df_update) == target_year
+        years = _year_act_num(df_update)
+        idx = (years >= start_year) & (years <= end_year)
         if target_node is not None:
             idx = idx & (df_update[node_col].astype(str) == target_node)
         df_update.loc[idx, "value"] = float(r["depth_converted"])
