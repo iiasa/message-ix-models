@@ -4,13 +4,27 @@ set -e
 date
 
 # Paths
-HHOME=/hdrive/u045/{username}
-VENV=$SLURM_TMPDIR/venv/3.13
-SHARED_SCRATCH=/sharedscratch
-REPORT_DIR=/pdrive/projects/ene.model3/MESSAGEix-Transport
 
-# Work around an issue in pint
+# User's home directory (network drive)
+# NB this is different from $HOME on the worker node
+HHOME=/hdrive/u045/{{ username }}
+
+# Python virtual environment
+VENV=$SLURM_TMPDIR/venv/{{ python_version }}
+
+# UnICC shared scratch (local disk)
+SHARED_SCRATCH=/sharedscratch
+
+# Directory to copy reporting output
+# # Projects drive
+# REPORT_DIR=/pdrive/projects/ene.model3/MESSAGEix-Transport
+# User's home directory
+REPORT_DIR=$HHOME/MESSAGEix-Transport
+
+# Cache for iam-units, to work around an issue in pint
 export IAM_UNITS_CACHE=$SLURM_TMPDIR/cache/iam-units
+
+# Paths on the worker node
 export IXMP_DATA=$SLURM_TMPDIR/ixmp
 export MESSAGE_LOCAL_DATA=$SLURM_TMPDIR/message-local-data
 export MESSAGE_MODELS_CACHE=$SHARED_SCRATCH/cache/message-ix-models
@@ -25,21 +39,46 @@ module load gams git git-lfs Java
 # git-lfs: install global configuration
 git lfs install
 
-# ssh: add host keys for gitlab.iiasa.ac.at
-ssh-keyscan -p 2222 gitlab.iiasa.ac.at | tee -a ~/.ssh/known_hosts
-ssh-keygen -Hf ~/.ssh/known_hosts
+{% if source == "gitlab" %}
 
-# uv: use UV from personal home directory
-UV=$HHOME/.local/bin/uv
+# ssh: add host keys for gitlab.iiasa.ac.at
+mkdir -p $HOME/.ssh
+ssh-keyscan -p 2222 gitlab.iiasa.ac.at | tee -a $HOME/.ssh/known_hosts
+ssh-keygen -Hf $HOME/.ssh/known_hosts
+
+# URL for 'git clone' of message-static-data
+STATIC_DATA_URL="ssh://git@gitlab.iiasa.ac.at:2222/ece/message-static-data.git"
+
+# URL for 'pip install' of message-ix-models
+MESSAGE_MODELS_URL="git+https://gitlab.iiasa.ac.at/ece/message-ix-models.git@{{ branch }}"
+
+{% elif source == "github" %}
+
+STATIC_DATA_URL="ssh://git@github.com/iiasa/message-static-data.git"
+
+MESSAGE_MODELS_URL="git+https://github.com/iiasa/message-ix-models.git@{{ branch }}"
+
+{% endif %}
+
+# uv: use a version installed in shared scratch
+UV_UNMANAGED_INSTALL=$SHARED_SCRATCH/local/bin
+UV=$UV_UNMANAGED_INSTALL/uv
+
 # Store cache in the shared-scratch disk mounted on runners
-export UV_CACHE_DIR=$SHARED_SCRATCH/uv-cache
-# Shared-scratch and the job work directory are on different filesystems; silence an uv
-# warning about this
+export UV_CACHE_DIR=$SHARED_SCRATCH/uv-cache/$USER
+
+# Shared-scratch and the job work directory are on different filesystems.
+# Silence an uv warning about this.
 export UV_LINK_MODE=copy
+
+if [ ! -x $UV ]; then
+  # Install
+  curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL=$UV_UNMANAGED_INSTALL sh
+fi
 
 # Clone message-static-data to shared scratch
 # rm -rf $STATIC_DATA
-[ -d $STATIC_DATA ] || GIT_CLONE_PROTECTION_ACTIVE=false git clone ssh://git@gitlab.iiasa.ac.at:2222/ece/message-static-data.git $STATIC_DATA
+[ -d $STATIC_DATA ] || GIT_CLONE_PROTECTION_ACTIVE=false git clone $STATIC_DATA_URL $STATIC_DATA
 date
 
 # Symlink message-static-data into local data
@@ -47,21 +86,21 @@ mkdir -p $MESSAGE_LOCAL_DATA
 cp -frsv $STATIC_DATA/* $MESSAGE_LOCAL_DATA/
 date
 
-# - Create and activate a virtual environment.
-# - Use the system Python. TODO Use Python 3.14
-$UV --verbose venv --python=3.13 $VENV
+# Create and activate a virtual environment.
+$UV --verbose venv --python={{ python_version }} $VENV
 . $VENV/bin/activate
 date
 
 # Install
-# - message-ix-models from IIASA GitLab.
+# - ixmp, message_ix: from GitHub, for PostgreSQL support
+#   not in the latest release v3.11.0.
 # - message-ix-buildings from GitHub (not on PyPI).
-# - message-ix and other dependencies from PyPI.
-# - dask to work around https://github.com/khaeru/genno/issues/171
+# - message-ix-models from either IIASA GitLab or GitHub.
 $UV pip install \
-  "dask < 2025.4.0" \
+  "ixmp @ git+https://github.com/iiasa/ixmp.git" \
+  "message_ix @ git+https://github.com/iiasa/message_ix.git" \
   "message-ix-buildings @ git+https://github.com/iiasa/message-ix-buildings.git" \
-  "message-ix-models[buildings,tests,transport] @ git+https://gitlab.iiasa.ac.at/ece/message-ix-models.git@transport/2025-w44"
+  "message-ix-models[buildings,tests,transport] @ $MESSAGE_MODELS_URL"
 date
 
 # Show what was installed
@@ -77,12 +116,25 @@ mkdir -p $MESSAGE_MODELS_CACHE
 
 # Run the workflow
 date
-mix-models --platform=ixmp-dev transport run \
-  --base=auto --fast --nodes=R12 --model-extra=dev \
-  {mix_models_args} \
-  --go
+mix-models \
+  --platform={{ platform_src }} \
+  transport run \
+  --platform-dest={{ platform_dest }} \
+  --base=auto --fast --nodes={{ nodes }} --model-extra={{ model_extra }} \
+  {# Format args one-by-one #}
+  {% for arg in mix_models_args %}
+    {% if arg.startswith("--") %}{# An option, maybe ending with ="" #}
+  {{ arg }}{% if arg.endswith("=") %}""{% endif %}
+      {% if not loop.last %} \
+      {% endif %}
+    {% else %}{# A parameter → re-add quotation marks #}
+  "{{ arg }}"{% if not loop.last %} \
+             {% endif %}
+    {% endif %}
+  {% endfor +%}
 date
 
 # Transfer files from worker to shared/permanent disk
+mkdir -p $REPORT_DIR
 cp -rv $MESSAGE_LOCAL_DATA/report $MESSAGE_LOCAL_DATA/transport $REPORT_DIR/
 date
