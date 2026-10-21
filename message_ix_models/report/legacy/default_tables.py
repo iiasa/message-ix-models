@@ -2035,7 +2035,7 @@ def retr_othemi(var, units):
             lu_out_filter={
                 "level": ["land_use_reporting"],
                 "commodity": [
-                    "Emissions|CH4|AFOLU|Agriculture|Livestock|" "Enteric Fermentation"
+                    "Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation"
                 ],
             }
         )
@@ -2044,7 +2044,7 @@ def retr_othemi(var, units):
             lu_out_filter={
                 "level": ["land_use_reporting"],
                 "commodity": [
-                    "Emissions|CH4|AFOLU|Agriculture|Livestock|" "Manure Management"
+                    "Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management"
                 ],
             }
         )
@@ -2132,7 +2132,7 @@ def retr_othemi(var, units):
             lu_out_filter={
                 "level": ["land_use_reporting"],
                 "commodity": [
-                    "Emissions|N2O|AFOLU|Agriculture|" "Livestock|Manure Management"
+                    "Emissions|N2O|AFOLU|Agriculture|Livestock|Manure Management"
                 ],
             }
         )
@@ -5866,21 +5866,21 @@ def retr_pe(units, method=None):
         vars["Biomass|1st Generation"] = pp.land_out(
             lu_out_filter={
                 "level": ["land_use_reporting"],
-                "commodity": ["Primary Energy|Biomass|" "1st Generation"],
+                "commodity": ["Primary Energy|Biomass|1st Generation"],
             }
         )
 
         vars["Biomass|1st Generation|Biodiesel"] = pp.land_out(
             lu_out_filter={
                 "level": ["land_use_reporting"],
-                "commodity": ["Primary Energy|Biomass|" "1st Generation|Biodiesel"],
+                "commodity": ["Primary Energy|Biomass|1st Generation|Biodiesel"],
             }
         )
 
         vars["Biomass|1st Generation|Bioethanol"] = pp.land_out(
             lu_out_filter={
                 "level": ["land_use_reporting"],
-                "commodity": ["Primary Energy|Biomass|" "1st Generation|Bioethanol"],
+                "commodity": ["Primary Energy|Biomass|1st Generation|Bioethanol"],
             }
         )
 
