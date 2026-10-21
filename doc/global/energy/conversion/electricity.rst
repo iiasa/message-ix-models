@@ -205,7 +205,7 @@ After 2025, the reference region's costs fall from their base-year value
 along an exponential path in the spirit of Moore's law (Moore, 1998 :cite:`moore_cramming_1998`).
 How far they fall depends on the technology and the narrative.
 Each technology is assigned a total cost reduction relative to its base-year cost,
-which is reached in 2150, beyond the model horizon,
+which is reached in 2150, beyond the model horizon.
 The decline is steepest in the first decades, so most of the reduction is realised by 2100.
 The size of this reduction is first specified qualitatively for each technology,
 in six steps from very low to very high,
