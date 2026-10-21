@@ -112,6 +112,7 @@ def full_broadcast(
 ) -> dict:
     """
     Full broadcast function
+
     Args:
         data_dict: Dictionary of parameter dataframes
         tec: Technology name
@@ -264,6 +265,24 @@ def calibrate_historical_shipping(
     project_name: str | None = None,
     config_name: str | None = None,
 ):
+    """
+    Calibrate historical new capacity for maritime shipping.
+
+    Builds historical new-capacity dataframes for each maritime shipping technology
+    (crude oil, LH2, LNG, ethanol, fuel oil, light oil) and adds them to `trade_dict`
+    for technologies in `covered_tec`, then restricts historical activity and new
+    capacity to technologies present in each trade technology's `input`.
+
+    Args:
+        config: Base config dictionary (must include a `shipping_fuels` key)
+        trade_dict: Dictionary of parameter dataframes, as produced by
+            `build_parameter_sheets`
+        covered_tec: Trade technologies covered by the current project config
+        project_name: Name of the project (e.g., 'newpathways')
+        config_name: Name of the config file (e.g., 'config.yaml')
+    Returns:
+        trade_dict: Updated dictionary of parameter dataframes
+    """
     # Historical new capacity for maritime shipping
     shipping_fuel_dict = config["shipping_fuels"]
     # TODO: Add coal
@@ -311,7 +330,8 @@ def calibrate_historical_shipping(
         "loil_shipped": hist_oil,
     }
     for tec in nc_dict.keys():
-        trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
+        if tec in covered_tec:
+            trade_dict[tec]["flow"]["historical_new_capacity"] = nc_dict[tec]
 
     # Historical activity should only be added for technologies in input
     for tec in covered_tec:
@@ -394,7 +414,7 @@ def bare_to_scenario(
             for c in covered_tec
             if c not in ["crudeoil_piped", "foil_piped", "loil_piped"]
         ]:
-            add_tec = tec_config[tec][tec + "_trade"]["trade_technology"] + "_exp"
+            add_tec = tec_config[tec][tec + "_trade"]["trade_technology"]
             hist_tec[tec] = add_tec
 
         for tec in hist_tec.keys():
