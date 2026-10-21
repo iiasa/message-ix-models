@@ -25,8 +25,14 @@ from message_ix_models.util.importlib import MessageDataFinder
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 from message_ix_models.workflow import Workflow
 
-# Expose utility classes
-__all__ = ["Config", "Context", "ScenarioInfo", "Spec", "Workflow"]
+# Export utility classes
+__all__ = [
+    "Config",
+    "Context",
+    "ScenarioInfo",
+    "Spec",
+    "Workflow",
+]
 
 try:
     __version__ = version(__name__)

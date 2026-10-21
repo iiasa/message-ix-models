@@ -29,7 +29,7 @@ def get_basin_sizes(basin: pd.DataFrame, node: str) -> Sequence[pd.Series | Lite
     return_tuple: tuple[pd.Series | Literal[0], pd.Series | Literal[0]] = (
         sizes_dev,
         sizes_ind,
-    )  # type: ignore # Somehow, mypy is unable to recognize the proper type without forcing it
+    )
     return return_tuple
 
 

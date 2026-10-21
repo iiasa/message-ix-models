@@ -34,44 +34,32 @@ log = logging.getLogger(__name__)
 # and .cache_skip that update the contents.
 COMPUTER = Computer()
 
-# Show genno how to hash function arguments seen in message_ix_models
 
-
-def _quantity(o: "AnyQuantity") -> tuple:
+# Upstream
+# TODO Remove type exclusion once Encoder.register is typed
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
+def _quantity(o: AnyQuantity) -> tuple:
     """Encode :class:`genno.Quantity` `o` for cache key construction."""
     return tuple(o.to_series().to_dict())
 
 
-try:
-    genno.caching.Encoder.register(AnyQuantity)(_quantity)
-except TypeError:
-    # In Python <= 3.10, functools.singledispatch() does not support typing.Union
-    # Register each of the Quantity classes separately
-    from genno.core.attrseries import AttrSeries
-    from genno.core.sparsedataarray import SparseDataArray
-
-    genno.caching.Encoder.register(AttrSeries)(_quantity)
-    genno.caching.Encoder.register(SparseDataArray)(_quantity)
-
-
-# Upstream
-@genno.caching.Encoder.register
-def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
+def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact) -> str:
     return str(o)
 
 
-@genno.caching.Encoder.register
-def _sdmx_internationalstring(o: sdmx.model.InternationalString):
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
+def _sdmx_internationalstring(o: sdmx.model.InternationalString) -> tuple:
     return tuple(o.localizations)
 
 
 # First-party
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _context(o: Context):
     return o.asdict()
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _dataclass(o: object):
     return (
         asdict(o)
@@ -80,14 +68,12 @@ def _dataclass(o: object):
     )
 
 
-@genno.caching.Encoder.register(slice)
-@genno.caching.Encoder.register(Enum)
-@genno.caching.Encoder.register(FunctionType)
-def _repr_only(o):
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
+def _repr_only(o: slice | Enum | FunctionType) -> str:
     return repr(o)
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _si(o: ScenarioInfo):
     return dict(o.set)
 

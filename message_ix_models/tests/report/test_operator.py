@@ -299,7 +299,7 @@ def test_remove_zeros() -> None:
     # Number of data points removed
     assert 1 == len(data1) - len(result1)
     # Data points removed are for years < `year` argument
-    assert 0 == len(result1.as_pandas().query("variable == 'v1' and year == 2019"))  # type: ignore [arg-type]
+    assert 0 == len(result1.as_pandas().query("variable == 'v1' and year == 2019"))
 
 
 @pytest.mark.xfail(reason="Incomplete")

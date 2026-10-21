@@ -197,7 +197,7 @@ def test_ldv_constraint_data(test_context, dummy_LDV, regions, years):
     )
 
     # Method runs without error
-    data = ldv.constraint_data(ctx)  # type: ignore [attr-defined]
+    data = ldv.constraint_data(ctx)
 
     # Data are returned for the following parameters
     assert {

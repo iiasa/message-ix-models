@@ -151,11 +151,12 @@ def bound_activity_lo(c: Computer) -> None:
         # Extract MESSAGEix-Transport configuration
         cfg: "Config" = config["transport"]
 
+        # TODO Remove this if Config.minimum_activity is no longer used
         # Construct a set of all (node, technology, commodity) to constrain
         rows: list[list] = []
         cols = ["n", "t", "c", "value"]
         for (n, modes, c), value in cfg.minimum_activity.items():
-            for m in ["2W", "BUS", "F ROAD"] if modes == "ROAD" else ["RAIL"]:
+            for m in ["2W", "BUS", "F ROAD"] if modes == "ROAD" else ["RAIL"]:  # type: ignore [comparison-overlap]
                 m_idx = technologies.index(m)
                 rows.extend([n, t, c, value] for t in techs_for(technologies[m_idx], c))
 

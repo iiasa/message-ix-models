@@ -19,7 +19,8 @@ if TYPE_CHECKING:
     from pathlib import Path
     from re import Pattern
 
-    from genno.types import AnyQuantity, Key
+    from genno import Key
+    from genno.types import AnyQuantity
     from pandas import DataFrame
 
 log = logging.getLogger(__name__)

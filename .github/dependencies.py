@@ -15,9 +15,10 @@ except InvalidVersion:
 
 result = "dependencies="
 for condition, dependency in (
-    # Upstream versions < 3.9.0 use hook arguments
-    # removed in pytest 8.1.0 (#155) and 9.0.0
-    (version < V("3.9"), "pytest < 8.1"),
+    # Upstream versions 3.8.z and earlier use:
+    # 1. Hook arguments removed in pytest 8.1.0 (#155) and 9.0.0.
+    # 2. pd.DataFrame.to_excel(…) with positional arguments, removed in pandas 3.y.
+    (version < V("3.9"), 'pandas < 3" "pytest < 8.1'),
     # https://github.com/iiasa/message-ix-models/issues/366
     (V("3.8") < version < V("3.11"), "ixmp4 < 0.11"),
     # ixmp.util.ixmp4 contains compatibility code that only

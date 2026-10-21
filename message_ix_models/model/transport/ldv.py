@@ -10,9 +10,9 @@ from genno import Computer, Key, Keys
 from message_ix import make_df
 from sdmx.model.common import Code
 
+from message_ix_models import ScenarioInfo
 from message_ix_models.model import disutility
 from message_ix_models.util import (
-    ScenarioInfo,
     broadcast,
     convert_units,
     make_matched_dfs,

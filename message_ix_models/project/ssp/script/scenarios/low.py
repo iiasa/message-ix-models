@@ -9,8 +9,8 @@ Originally added via :pull:`235`, cherry-picked and merged in :pull:`340`.
    - Add documentation.
 """
 
-import ixmp  # type: ignore
-import message_ix  # type: ignore
+import ixmp
+import message_ix
 
 from message_ix_models.project.ssp.script.util.functions import (
     add_balance_equality,

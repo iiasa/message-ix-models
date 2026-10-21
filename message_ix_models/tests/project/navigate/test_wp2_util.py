@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pytest
 from message_ix import make_df
 
-from message_ix_models import testing
+from message_ix_models import ScenarioInfo, testing
 from message_ix_models.project.navigate.wp2.util import (
     TECHS,
     add_CCS_constraint,
@@ -11,7 +11,7 @@ from message_ix_models.project.navigate.wp2.util import (
     add_LED_setup,
     limit_h2,
 )
-from message_ix_models.util import ScenarioInfo, broadcast
+from message_ix_models.util import broadcast
 
 if TYPE_CHECKING:
     from pytest import FixtureRequest
