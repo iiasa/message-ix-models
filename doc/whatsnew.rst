@@ -25,7 +25,7 @@ Next release
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
 - Improve :func:`~.report.report` output when :attr:`.Config.verbose` is :py:`True`
   (:pull:`497`).
-- Improve :doc:`/buildings/index` (:pull:`433`, :pull:`486`):
+- Improve :doc:`/buildings/index` (:pull:`433`, :pull:`479`, :pull:`486`):
 
   - Expand docstring of :func:`.buildings.build_and_solve`.
   - New submodules :mod:`.buildings.workflow` and
@@ -44,6 +44,8 @@ Next release
     :attr:`~.buildings.Config.sturm_input_dir`.
   - Add :class:`sturm.METHOD <.buildings.sturm.METHOD>` enumeration.
   - New :func:`_sturm_rscript_B` to call updated versions of MESSAGEix-Buildings.
+  - Add :mod:`.buildings.impacts` to compute climate-impact buildings demand (:pull:`479`).
+  - Add :mod:`.buildings.space_split` to split space conditioning out of ``rc_spec`` and ``rc_therm`` onto the non-MACRO demands ``space_cooling`` and ``space_heating`` (:pull:`479`).
 
 - Improve :doc:`/transport/index` (:pull:`497`, except where noted):
 
@@ -95,10 +97,19 @@ Next release
   - New :mod:`genno` operator :func:`~.operator.yv_ya_banded`.
   - Handle |yV| dimension in :func:`.sales_fraction_annual`.
 
-- Improve :doc:`/water/index` (:pull:`510`).
+- Improve :doc:`/water/index` (:pull:`479`, :pull:`510`):
 
   - Retire urban/rural unconnected water technologies.
   - Disable CPLEX scaling in water-ix solves.
+  - Add :mod:`.water.data.cooling_impacts` to apply climate impacts to thermoelectric cooling (:pull:`479`).
+  - Use :func:`.extract_region_code` in water code (:pull:`479`).
+
+- Add physical climate-impact support for SPARCCLE (:pull:`479`):
+
+  - Add :mod:`.tools.impacts` to predict regional impacts from global mean temperature using RIME emulators.
+  - Add :func:`.tools.iamc.frame_to_iamc` and :func:`.util.node.extract_region_code`.
+  - Add :mod:`.project.sparccle` and :program:`mix-models sparccle run` to apply buildings and cooling impacts to starter scenarios.
+  - Add the ``impacts`` extra, which provides :mod:`netCDF4` for reading the packaged RIME datasets (:program:`pip install message-ix-models[impacts]`).
 
 - New reporting operators
   :func:`~.operator.full` (:pull:`497`) and

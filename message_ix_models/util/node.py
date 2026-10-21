@@ -1,6 +1,7 @@
 """Utilities for nodes."""
 
 import logging
+import re
 from collections.abc import Sequence
 
 from message_ix import Scenario
@@ -145,6 +146,26 @@ def identify_nodes(scenario: Scenario) -> str:
     else:
         log.info(f"Identified node codelist {repr(id)}")
         return id
+
+
+def extract_region_code(node: str) -> str:
+    """Extract short region code from a MESSAGE node name.
+
+    Strips the ``R{n}_`` prefix (e.g. ``R11_``, ``R12_``, ``R14_``) if present;
+    returns the string unchanged for any other format.
+
+    Parameters
+    ----------
+    node
+        MESSAGE node name (e.g. ``"R12_AFR"``, ``"R11_WEU"``) or a short code
+        that needs no stripping (e.g. ``"AFR"``).
+
+    Returns
+    -------
+    str
+        Short code (e.g. ``"AFR"``).
+    """
+    return re.sub(r"^R\d+_", "", node)
 
 
 def nodes_ex_world(nodes: Sequence[str | Code]) -> list[str | Code]:

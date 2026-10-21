@@ -1,0 +1,68 @@
+# SPARCCLE Scenario Configuration — p95 envelope sibling of scenario_config.yaml
+#
+# Consumed by `message_ix_models.project.sparccle.workflow.generate` when
+# invoked as:
+#
+#   mix-models sparccle run \
+#       --config <this file> \
+#       --magicc-root /pdrive/projects/watxene/IMPACTS/sparrcle/magicc_output \
+#       --magicc-model-suffix _p95 \
+#       "all CI" --go
+#
+# Conditions the CID layer on a K-run window around the 95th-percentile rank
+# of the MAGICC GSAT ensemble (ranked by mean GMT over 2050–2100). The
+# library's MAGICC reducer is unchanged; the filtered sibling pdrive subtree
+# (`SSP_SSPX_v6.6_sp_p95/<scenario>/`) carries only the K=10 `|run_*` rows
+# nearest the p95 rank. `load_magicc_gmt` picks them all up;
+# `predict_rime`'s MC mean across those runs is a conditional expectation of
+# CID around the p95 warming trajectory.
+#
+# A naive single-synthetic-row p95 envelope was tried first and rejected
+# by `predict_rime`'s linearity guard — for non-linear emulators
+# (EI_cool, EI_heat) f(E[GMT]) is not a reliable substitute for E[f(GMT)].
+# Multi-run input avoids that bias while keeping the window narrow enough
+# that the conditional mean is close to the impact at the p95 trajectory.
+#
+# CAVEAT: the K=10 window is a Monte Carlo estimate of a conditional
+# expectation, not a full ensemble or STITCHES-coherent sample. The library
+# emits "MC mean is approximate" warnings for non-linear emulators —
+# expected, and accepted for this delivery. Percentile-coherent sampling
+# (e.g. STITCHES) would be the principled answer.
+
+platform_info:
+  name: ixmp_dev
+
+regions: R12
+
+# p95 starters: SSP3 only. SSP1/SSP2 rows extend this list once their CI_95
+# starters exist on ixmp_dev.
+# MAGICC paths come from --magicc-root + --magicc-model-suffix at invocation.
+starters:
+  - model: SSP_SSP3_v6.6_sp
+    scenario: NPiREF_GDP_CI_95_ensemble_2_PHY
+    ssp: SSP3
+  - model: SSP_SSP3_v6.6_sp
+    scenario: INDC2030i_800f_GDP_CI_95_ensemble_1_PHY
+    ssp: SSP3
+  - model: SSP_SSP3_v6.6_sp
+    scenario: INDC2030i_520f_GDP_CI_95_ensemble_1_PHY
+    ssp: SSP3
+  - model: SSP_SSP3_v6.6_sp
+    scenario: INDC2030i_600f_GDP_CI_95_ensemble_1_PHY
+    ssp: SSP3
+
+# Phase-1 cooling-module build settings (passed to `mix-models water-ix cooling`)
+cooling:
+  rcps: no_climate
+  rels: low
+
+# Phase-2 CID settings
+cid:
+  # `n_runs: null` lets the K=10 window through unchanged; truncating below
+  # K would drop the conditional sample MC needs.
+  n_runs: null
+  # Earliest model year touched by cooling CID constraints and dry-cooling derating.
+  min_year: 2045
+  # Recorded in the target scenario names, so a build whose response
+  # percentile differs cannot overwrite one whose does not.
+  climate_label: c95
