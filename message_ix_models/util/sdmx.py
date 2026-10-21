@@ -6,10 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, fields
 from datetime import datetime
-from enum import Enum, Flag, auto
-
-# TODO Remove when Python 3.10 is no longer supported
-from enum import EnumMeta as EnumType
+from enum import Enum, EnumType, Flag, auto
 from functools import cache
 from importlib.metadata import version
 from itertools import chain
@@ -407,6 +404,7 @@ class Dataflow:
         # template =
 
 
+# TODO When dropping support for Python 3.11, write StructureFactory[MaintainableT]
 class StructureFactory(ABC, Generic[MaintainableT]):
     """Class to generate an SDMX structural metadata artefact.
 
@@ -504,7 +502,7 @@ class StructureFactory(ABC, Generic[MaintainableT]):
 T = TypeVar("T", bound=Enum)
 
 
-# TODO Replace with URNLookupMixin[T] once Python 3.10 is no longer supported
+# TODO When dropping support for Python 3.11, write URNLookupMixin[T]
 class URNLookupMixin(Generic[T]):
     """:class:`.Enum` mix-in class for looking up members by URN/retrieving URNs."""
 
