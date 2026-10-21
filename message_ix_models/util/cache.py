@@ -36,29 +36,30 @@ COMPUTER = Computer()
 
 
 # Upstream
-@genno.caching.Encoder.register
+# TODO Remove type exclusion once Encoder.register is typed
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _quantity(o: AnyQuantity) -> tuple:
     """Encode :class:`genno.Quantity` `o` for cache key construction."""
     return tuple(o.to_series().to_dict())
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact) -> str:
     return str(o)
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _sdmx_internationalstring(o: sdmx.model.InternationalString) -> tuple:
     return tuple(o.localizations)
 
 
 # First-party
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _context(o: Context):
     return o.asdict()
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _dataclass(o: object):
     return (
         asdict(o)
@@ -67,12 +68,12 @@ def _dataclass(o: object):
     )
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _repr_only(o: slice | Enum | FunctionType) -> str:
     return repr(o)
 
 
-@genno.caching.Encoder.register
+@genno.caching.Encoder.register  # type: ignore [untyped-decorator]
 def _si(o: ScenarioInfo):
     return dict(o.set)
 

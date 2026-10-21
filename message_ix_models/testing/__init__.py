@@ -572,7 +572,7 @@ def export_test_data(context: Context):
     mark_time()
 
 
-def not_ci(reason=None, action="skip"):
+def not_ci(reason=None, action="skip") -> pytest.MarkDecorator:
     """Mark a test as xfail or skipif if on CI infrastructure.
 
     Checks the ``GITHUB_ACTIONS`` environment variable; returns a pytest mark.
