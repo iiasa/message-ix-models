@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Support the 2025 edition of the Climate Policy Database in :mod:`.tools.newclimate` (:pull:`560`).
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).
