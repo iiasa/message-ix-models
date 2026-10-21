@@ -1,0 +1,18 @@
+# Activity (driving distance) per light-duty vehicle
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Unit: kilometre / year
+#
+scenario, node,     year, value
+# *,      Austria,  2020, 11000  # TH low
+# *,      Austria,  2110, 11000  # TH low
+*,        Austria,  2020, 11700
+*,        Austria,  2110, 11700
+# *,      Austria,  2020, 12000  # TH high
+# *,      Austria,  2110, 12000  # TH high
+
+LED,      Austria,  2020, 11700
+LED,      Austria,  2050, 14087
+LED,      Austria,  2110, 14087

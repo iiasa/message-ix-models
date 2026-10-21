@@ -1,0 +1,14 @@
+# Technical lifetime (maximum age) of LDVs
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: year
+#
+scenario, node_loc, technology, year_vtg, value
+*,        Austria,  *,          1990,     20
+*,        Austria,  *,          2110,     20
+
+LED,      Austria,  *,          1990,     20
+LED,      Austria,  *,          2050,     19.55
+LED,      Austria,  *,          2110,     19.55
