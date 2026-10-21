@@ -1,0 +1,133 @@
+Node1,Port1,Node2,Port2,Distance_km
+R12_AFR,Port of Durban (South Africa),R12_RCPA,Dung Quat Terminal (Vietnam),10936.05
+R12_AFR,Port of Durban (South Africa),R12_CHN,Ningbo-Zhoushan (China),13028.35
+R12_AFR,Port of Durban (South Africa),R12_EEU,Port of Constanta (Romania),10509.43
+R12_AFR,Port of Durban (South Africa),R12_FSU,Port of Primorsk (Russia),15352.9
+R12_AFR,Port of Durban (South Africa),R12_LAM,Freeport (Bahamas),13962.57
+R12_AFR,Port of Durban (South Africa),R12_MEA,Fujairah (UAE),7283.38
+R12_AFR,Port of Durban (South Africa),R12_NAM,Houston Ship Channel (USA),15519.48
+R12_AFR,Port of Durban (South Africa),R12_PAO,Kawasaki-Yokohama (Japan),14481.46
+R12_AFR,Port of Durban (South Africa),R12_PAS,Singapore,9248.93
+R12_AFR,Port of Durban (South Africa),R12_SAS,Jamnagar (India),7579.46
+R12_AFR,Port of Durban (South Africa),R12_WEU,Port of Rotterdam (Netherlands),13133.87
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_CHN,Ningbo-Zhoushan (China),2487.63
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_EEU,Port of Constanta (Romania),13217.7
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_FSU,Port of Primorsk (Russia),18714.25
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_LAM,Freeport (Bahamas),20661.86
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_MEA,Fujairah (UAE),8263.5
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_NAM,Houston Ship Channel (USA),21209.7
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_PAO,Kawasaki-Yokohama (Japan),4065.67
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_PAS,Singapore,2026.06
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_SAS,Jamnagar (India),7356.85
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_WEU,Port of Rotterdam (Netherlands),17512.5
+R12_CHN,Ningbo-Zhoushan (China),R12_EEU,Port of Constanta (Romania),15315.33
+R12_CHN,Ningbo-Zhoushan (China),R12_FSU,Port of Primorsk (Russia),16522.75
+R12_CHN,Ningbo-Zhoushan (China),R12_LAM,Freeport (Bahamas),18470.36
+R12_CHN,Ningbo-Zhoushan (China),R12_MEA,Fujairah (UAE),10361.12
+R12_CHN,Ningbo-Zhoushan (China),R12_NAM,Houston Ship Channel (USA),19018.2
+R12_CHN,Ningbo-Zhoushan (China),R12_PAO,Kawasaki-Yokohama (Japan),2078.14
+R12_CHN,Ningbo-Zhoushan (China),R12_PAS,Singapore,4123.68
+R12_CHN,Ningbo-Zhoushan (China),R12_SAS,Jamnagar (India),9454.47
+R12_CHN,Ningbo-Zhoushan (China),R12_WEU,Port of Rotterdam (Netherlands),15484.2
+R12_EEU,Port of Constanta (Romania),R12_FSU,Port of Primorsk (Russia),8482.24
+R12_EEU,Port of Constanta (Romania),R12_LAM,Freeport (Bahamas),10647.54
+R12_EEU,Port of Constanta (Romania),R12_MEA,Fujairah (UAE),7046.29
+R12_EEU,Port of Constanta (Romania),R12_NAM,Houston Ship Channel (USA),12495.38
+R12_EEU,Port of Constanta (Romania),R12_PAO,Kawasaki-Yokohama (Japan),16839.03
+R12_EEU,Port of Constanta (Romania),R12_PAS,Singapore,11252.8
+R12_EEU,Port of Constanta (Romania),R12_SAS,Jamnagar (India),7519.38
+R12_EEU,Port of Constanta (Romania),R12_WEU,Port of Rotterdam (Netherlands),6263.21
+R12_FSU,Port of Primorsk (Russia),R12_LAM,Freeport (Bahamas),9177.82
+R12_FSU,Port of Primorsk (Russia),R12_MEA,Fujairah (UAE),13560.12
+R12_FSU,Port of Primorsk (Russia),R12_NAM,Houston Ship Channel (USA),10967.12
+R12_FSU,Port of Primorsk (Russia),R12_PAO,Kawasaki-Yokohama (Japan),15102.54
+R12_FSU,Port of Primorsk (Russia),R12_PAS,Singapore,17766.62
+R12_FSU,Port of Primorsk (Russia),R12_SAS,Jamnagar (India),14033.21
+R12_FSU,Port of Primorsk (Russia),R12_WEU,Port of Rotterdam (Netherlands),2313.17
+R12_LAM,Freeport (Bahamas),R12_MEA,Fujairah (UAE),15725.41
+R12_LAM,Freeport (Bahamas),R12_NAM,Houston Ship Channel (USA),1911.92
+R12_LAM,Freeport (Bahamas),R12_PAO,Kawasaki-Yokohama (Japan),16819.56
+R12_LAM,Freeport (Bahamas),R12_PAS,Singapore,19931.92
+R12_LAM,Freeport (Bahamas),R12_SAS,Jamnagar (India),16198.51
+R12_LAM,Freeport (Bahamas),R12_WEU,Port of Rotterdam (Netherlands),7433.93
+R12_MEA,Fujairah (UAE),R12_NAM,Houston Ship Channel (USA),17573.26
+R12_MEA,Fujairah (UAE),R12_PAO,Kawasaki-Yokohama (Japan),11884.82
+R12_MEA,Fujairah (UAE),R12_PAS,Singapore,6298.59
+R12_MEA,Fujairah (UAE),R12_SAS,Jamnagar (India),1485.31
+R12_MEA,Fujairah (UAE),R12_WEU,Port of Rotterdam (Netherlands),11341.09
+R12_NAM,Houston Ship Channel (USA),R12_PAO,Kawasaki-Yokohama (Japan),17367.4
+R12_NAM,Houston Ship Channel (USA),R12_PAS,Singapore,21779.76
+R12_NAM,Houston Ship Channel (USA),R12_SAS,Jamnagar (India),18046.35
+R12_NAM,Houston Ship Channel (USA),R12_WEU,Port of Rotterdam (Netherlands),9290.27
+R12_PAO,Kawasaki-Yokohama (Japan),R12_PAS,Singapore,5647.38
+R12_PAO,Kawasaki-Yokohama (Japan),R12_SAS,Jamnagar (India),10978.17
+R12_PAO,Kawasaki-Yokohama (Japan),R12_WEU,Port of Rotterdam (Netherlands),14063.98
+R12_PAS,Singapore,R12_SAS,Jamnagar (India),5391.94
+R12_PAS,Singapore,R12_WEU,Port of Rotterdam (Netherlands),15547.59
+R12_SAS,Jamnagar (India),R12_WEU,Port of Rotterdam (Netherlands),11814.18
+R12_RCPA,Dung Quat Terminal (Vietnam),R12_AFR,Port of Durban (South Africa),10936.05
+R12_CHN,Ningbo-Zhoushan (China),R12_AFR,Port of Durban (South Africa),13028.35
+R12_EEU,Port of Constanta (Romania),R12_AFR,Port of Durban (South Africa),10509.43
+R12_FSU,Port of Primorsk (Russia),R12_AFR,Port of Durban (South Africa),15352.9
+R12_LAM,Freeport (Bahamas),R12_AFR,Port of Durban (South Africa),13962.57
+R12_MEA,Fujairah (UAE),R12_AFR,Port of Durban (South Africa),7283.38
+R12_NAM,Houston Ship Channel (USA),R12_AFR,Port of Durban (South Africa),15519.48
+R12_PAO,Kawasaki-Yokohama (Japan),R12_AFR,Port of Durban (South Africa),14481.46
+R12_PAS,Singapore,R12_AFR,Port of Durban (South Africa),9248.93
+R12_SAS,Jamnagar (India),R12_AFR,Port of Durban (South Africa),7579.46
+R12_WEU,Port of Rotterdam (Netherlands),R12_AFR,Port of Durban (South Africa),13133.87
+R12_CHN,Ningbo-Zhoushan (China),R12_RCPA,Dung Quat Terminal (Vietnam),2487.63
+R12_EEU,Port of Constanta (Romania),R12_RCPA,Dung Quat Terminal (Vietnam),13217.7
+R12_FSU,Port of Primorsk (Russia),R12_RCPA,Dung Quat Terminal (Vietnam),18714.25
+R12_LAM,Freeport (Bahamas),R12_RCPA,Dung Quat Terminal (Vietnam),20661.86
+R12_MEA,Fujairah (UAE),R12_RCPA,Dung Quat Terminal (Vietnam),8263.5
+R12_NAM,Houston Ship Channel (USA),R12_RCPA,Dung Quat Terminal (Vietnam),21209.7
+R12_PAO,Kawasaki-Yokohama (Japan),R12_RCPA,Dung Quat Terminal (Vietnam),4065.67
+R12_PAS,Singapore,R12_RCPA,Dung Quat Terminal (Vietnam),2026.06
+R12_SAS,Jamnagar (India),R12_RCPA,Dung Quat Terminal (Vietnam),7356.85
+R12_WEU,Port of Rotterdam (Netherlands),R12_RCPA,Dung Quat Terminal (Vietnam),17512.5
+R12_EEU,Port of Constanta (Romania),R12_CHN,Ningbo-Zhoushan (China),15315.33
+R12_FSU,Port of Primorsk (Russia),R12_CHN,Ningbo-Zhoushan (China),16522.75
+R12_LAM,Freeport (Bahamas),R12_CHN,Ningbo-Zhoushan (China),18470.36
+R12_MEA,Fujairah (UAE),R12_CHN,Ningbo-Zhoushan (China),10361.12
+R12_NAM,Houston Ship Channel (USA),R12_CHN,Ningbo-Zhoushan (China),19018.2
+R12_PAO,Kawasaki-Yokohama (Japan),R12_CHN,Ningbo-Zhoushan (China),2078.14
+R12_PAS,Singapore,R12_CHN,Ningbo-Zhoushan (China),4123.68
+R12_SAS,Jamnagar (India),R12_CHN,Ningbo-Zhoushan (China),9454.47
+R12_WEU,Port of Rotterdam (Netherlands),R12_CHN,Ningbo-Zhoushan (China),15484.2
+R12_FSU,Port of Primorsk (Russia),R12_EEU,Port of Constanta (Romania),8482.24
+R12_LAM,Freeport (Bahamas),R12_EEU,Port of Constanta (Romania),10647.54
+R12_MEA,Fujairah (UAE),R12_EEU,Port of Constanta (Romania),7046.29
+R12_NAM,Houston Ship Channel (USA),R12_EEU,Port of Constanta (Romania),12495.38
+R12_PAO,Kawasaki-Yokohama (Japan),R12_EEU,Port of Constanta (Romania),16839.03
+R12_PAS,Singapore,R12_EEU,Port of Constanta (Romania),11252.8
+R12_SAS,Jamnagar (India),R12_EEU,Port of Constanta (Romania),7519.38
+R12_WEU,Port of Rotterdam (Netherlands),R12_EEU,Port of Constanta (Romania),6263.21
+R12_LAM,Freeport (Bahamas),R12_FSU,Port of Primorsk (Russia),9177.82
+R12_MEA,Fujairah (UAE),R12_FSU,Port of Primorsk (Russia),13560.12
+R12_NAM,Houston Ship Channel (USA),R12_FSU,Port of Primorsk (Russia),10967.12
+R12_PAO,Kawasaki-Yokohama (Japan),R12_FSU,Port of Primorsk (Russia),15102.54
+R12_PAS,Singapore,R12_FSU,Port of Primorsk (Russia),17766.62
+R12_SAS,Jamnagar (India),R12_FSU,Port of Primorsk (Russia),14033.21
+R12_WEU,Port of Rotterdam (Netherlands),R12_FSU,Port of Primorsk (Russia),2313.17
+R12_MEA,Fujairah (UAE),R12_LAM,Freeport (Bahamas),15725.41
+R12_NAM,Houston Ship Channel (USA),R12_LAM,Freeport (Bahamas),1911.92
+R12_PAO,Kawasaki-Yokohama (Japan),R12_LAM,Freeport (Bahamas),16819.56
+R12_PAS,Singapore,R12_LAM,Freeport (Bahamas),19931.92
+R12_SAS,Jamnagar (India),R12_LAM,Freeport (Bahamas),16198.51
+R12_WEU,Port of Rotterdam (Netherlands),R12_LAM,Freeport (Bahamas),7433.93
+R12_NAM,Houston Ship Channel (USA),R12_MEA,Fujairah (UAE),17573.26
+R12_PAO,Kawasaki-Yokohama (Japan),R12_MEA,Fujairah (UAE),11884.82
+R12_PAS,Singapore,R12_MEA,Fujairah (UAE),6298.59
+R12_SAS,Jamnagar (India),R12_MEA,Fujairah (UAE),1485.31
+R12_WEU,Port of Rotterdam (Netherlands),R12_MEA,Fujairah (UAE),11341.09
+R12_PAO,Kawasaki-Yokohama (Japan),R12_NAM,Houston Ship Channel (USA),17367.4
+R12_PAS,Singapore,R12_NAM,Houston Ship Channel (USA),21779.76
+R12_SAS,Jamnagar (India),R12_NAM,Houston Ship Channel (USA),18046.35
+R12_WEU,Port of Rotterdam (Netherlands),R12_NAM,Houston Ship Channel (USA),9290.27
+R12_PAS,Singapore,R12_PAO,Kawasaki-Yokohama (Japan),5647.38
+R12_SAS,Jamnagar (India),R12_PAO,Kawasaki-Yokohama (Japan),10978.17
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAO,Kawasaki-Yokohama (Japan),14063.98
+R12_SAS,Jamnagar (India),R12_PAS,Singapore,5391.94
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAS,Singapore,15547.59
+R12_WEU,Port of Rotterdam (Netherlands),R12_SAS,Jamnagar (India),11814.18

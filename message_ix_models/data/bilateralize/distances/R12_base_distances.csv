@@ -1,0 +1,133 @@
+Node1,Port1,Node2,Port2,Distance_km
+R12_AFR,Port of Durban (South Africa),R12_RCPA,Danang (Vietnam),10933.74
+R12_AFR,Port of Durban (South Africa),R12_CHN,Ningbo-Zhoushan (China),13028.35
+R12_AFR,Port of Durban (South Africa),R12_EEU,Port of Constanta (Romania),10509.43
+R12_AFR,Port of Durban (South Africa),R12_FSU,Vostochny/Nakhodka (Russia),14892.02
+R12_AFR,Port of Durban (South Africa),R12_LAM,Porta da Madeira (Brazil),9190.58
+R12_AFR,Port of Durban (South Africa),R12_MEA,Jeddah (Saudi Arabia),7394.28
+R12_AFR,Port of Durban (South Africa),R12_NAM,Port of South Louisiana (USA),15195.62
+R12_AFR,Port of Durban (South Africa),R12_PAO,Kimitsu (Japan),14514.64
+R12_AFR,Port of Durban (South Africa),R12_PAS,Tanjung Bara (Indonesia),10561.55
+R12_AFR,Port of Durban (South Africa),R12_SAS,Mundra Port (India),7545.0
+R12_AFR,Port of Durban (South Africa),R12_WEU,Port of Rotterdam (Netherlands),13133.87
+R12_RCPA,Danang (Vietnam),R12_CHN,Ningbo-Zhoushan (China),2485.32
+R12_RCPA,Danang (Vietnam),R12_EEU,Port of Constanta (Romania),13215.4
+R12_RCPA,Danang (Vietnam),R12_FSU,Vostochny/Nakhodka (Russia),4348.99
+R12_RCPA,Danang (Vietnam),R12_LAM,Porta da Madeira (Brazil),19702.6
+R12_RCPA,Danang (Vietnam),R12_MEA,Jeddah (Saudi Arabia),10100.25
+R12_RCPA,Danang (Vietnam),R12_NAM,Port of South Louisiana (USA),21045.85
+R12_RCPA,Danang (Vietnam),R12_PAO,Kimitsu (Japan),4165.81
+R12_RCPA,Danang (Vietnam),R12_PAS,Tanjung Bara (Indonesia),3206.09
+R12_RCPA,Danang (Vietnam),R12_SAS,Mundra Port (India),7320.09
+R12_RCPA,Danang (Vietnam),R12_WEU,Port of Rotterdam (Netherlands),17510.2
+R12_CHN,Ningbo-Zhoushan (China),R12_EEU,Port of Constanta (Romania),15315.33
+R12_CHN,Ningbo-Zhoushan (China),R12_FSU,Vostochny/Nakhodka (Russia),2159.79
+R12_CHN,Ningbo-Zhoushan (China),R12_LAM,Porta da Madeira (Brazil),20991.65
+R12_CHN,Ningbo-Zhoushan (China),R12_MEA,Jeddah (Saudi Arabia),12200.18
+R12_CHN,Ningbo-Zhoushan (China),R12_NAM,Port of South Louisiana (USA),18856.65
+R12_CHN,Ningbo-Zhoushan (China),R12_PAO,Kimitsu (Japan),2180.58
+R12_CHN,Ningbo-Zhoushan (China),R12_PAS,Tanjung Bara (Indonesia),3752.43
+R12_CHN,Ningbo-Zhoushan (China),R12_SAS,Mundra Port (India),9420.01
+R12_CHN,Ningbo-Zhoushan (China),R12_WEU,Port of Rotterdam (Netherlands),15484.2
+R12_EEU,Port of Constanta (Romania),R12_FSU,Vostochny/Nakhodka (Russia),17179.0
+R12_EEU,Port of Constanta (Romania),R12_LAM,Porta da Madeira (Brazil),9678.74
+R12_EEU,Port of Constanta (Romania),R12_MEA,Jeddah (Saudi Arabia),3284.44
+R12_EEU,Port of Constanta (Romania),R12_NAM,Port of South Louisiana (USA),12171.52
+R12_EEU,Port of Constanta (Romania),R12_PAO,Kimitsu (Japan),16872.21
+R12_EEU,Port of Constanta (Romania),R12_PAS,Tanjung Bara (Indonesia),13864.25
+R12_EEU,Port of Constanta (Romania),R12_SAS,Mundra Port (India),7484.93
+R12_EEU,Port of Constanta (Romania),R12_WEU,Port of Rotterdam (Netherlands),6263.21
+R12_FSU,Vostochny/Nakhodka (Russia),R12_LAM,Porta da Madeira (Brazil),19224.63
+R12_FSU,Vostochny/Nakhodka (Russia),R12_MEA,Jeddah (Saudi Arabia),14063.85
+R12_FSU,Vostochny/Nakhodka (Russia),R12_NAM,Port of South Louisiana (USA),17089.63
+R12_FSU,Vostochny/Nakhodka (Russia),R12_PAO,Kimitsu (Japan),1581.57
+R12_FSU,Vostochny/Nakhodka (Russia),R12_PAS,Tanjung Bara (Indonesia),5616.1
+R12_FSU,Vostochny/Nakhodka (Russia),R12_SAS,Mundra Port (India),11283.68
+R12_FSU,Vostochny/Nakhodka (Russia),R12_WEU,Port of Rotterdam (Netherlands),13659.32
+R12_LAM,Porta da Madeira (Brazil),R12_MEA,Jeddah (Saudi Arabia),10994.76
+R12_LAM,Porta da Madeira (Brazil),R12_NAM,Port of South Louisiana (USA),6489.52
+R12_LAM,Porta da Madeira (Brazil),R12_PAO,Kimitsu (Japan),19220.76
+R12_LAM,Porta da Madeira (Brazil),R12_PAS,Tanjung Bara (Indonesia),19330.4
+R12_LAM,Porta da Madeira (Brazil),R12_SAS,Mundra Port (India),15195.25
+R12_LAM,Porta da Madeira (Brazil),R12_WEU,Port of Rotterdam (Netherlands),7703.56
+R12_MEA,Jeddah (Saudi Arabia),R12_NAM,Port of South Louisiana (USA),13487.54
+R12_MEA,Jeddah (Saudi Arabia),R12_PAO,Kimitsu (Japan),13757.06
+R12_MEA,Jeddah (Saudi Arabia),R12_PAS,Tanjung Bara (Indonesia),10749.1
+R12_MEA,Jeddah (Saudi Arabia),R12_SAS,Mundra Port (India),4369.78
+R12_MEA,Jeddah (Saudi Arabia),R12_WEU,Port of Rotterdam (Netherlands),7579.23
+R12_NAM,Port of South Louisiana (USA),R12_PAO,Kimitsu (Japan),17085.76
+R12_NAM,Port of South Louisiana (USA),R12_PAS,Tanjung Bara (Indonesia),21189.16
+R12_NAM,Port of South Louisiana (USA),R12_SAS,Mundra Port (India),17688.04
+R12_NAM,Port of South Louisiana (USA),R12_WEU,Port of Rotterdam (Netherlands),8966.41
+R12_PAO,Kimitsu (Japan),R12_PAS,Tanjung Bara (Indonesia),4952.42
+R12_PAO,Kimitsu (Japan),R12_SAS,Mundra Port (India),10976.9
+R12_PAO,Kimitsu (Japan),R12_WEU,Port of Rotterdam (Netherlands),13920.43
+R12_PAS,Tanjung Bara (Indonesia),R12_SAS,Mundra Port (India),7968.93
+R12_PAS,Tanjung Bara (Indonesia),R12_WEU,Port of Rotterdam (Netherlands),18159.04
+R12_SAS,Mundra Port (India),R12_WEU,Port of Rotterdam (Netherlands),11779.72
+R12_RCPA,Danang (Vietnam),R12_AFR,Port of Durban (South Africa),10933.74
+R12_CHN,Ningbo-Zhoushan (China),R12_AFR,Port of Durban (South Africa),13028.35
+R12_EEU,Port of Constanta (Romania),R12_AFR,Port of Durban (South Africa),10509.43
+R12_FSU,Vostochny/Nakhodka (Russia),R12_AFR,Port of Durban (South Africa),14892.02
+R12_LAM,Porta da Madeira (Brazil),R12_AFR,Port of Durban (South Africa),9190.58
+R12_MEA,Jeddah (Saudi Arabia),R12_AFR,Port of Durban (South Africa),7394.28
+R12_NAM,Port of South Louisiana (USA),R12_AFR,Port of Durban (South Africa),15195.62
+R12_PAO,Kimitsu (Japan),R12_AFR,Port of Durban (South Africa),14514.64
+R12_PAS,Tanjung Bara (Indonesia),R12_AFR,Port of Durban (South Africa),10561.55
+R12_SAS,Mundra Port (India),R12_AFR,Port of Durban (South Africa),7545.0
+R12_WEU,Port of Rotterdam (Netherlands),R12_AFR,Port of Durban (South Africa),13133.87
+R12_CHN,Ningbo-Zhoushan (China),R12_RCPA,Danang (Vietnam),2485.32
+R12_EEU,Port of Constanta (Romania),R12_RCPA,Danang (Vietnam),13215.4
+R12_FSU,Vostochny/Nakhodka (Russia),R12_RCPA,Danang (Vietnam),4348.99
+R12_LAM,Porta da Madeira (Brazil),R12_RCPA,Danang (Vietnam),19702.6
+R12_MEA,Jeddah (Saudi Arabia),R12_RCPA,Danang (Vietnam),10100.25
+R12_NAM,Port of South Louisiana (USA),R12_RCPA,Danang (Vietnam),21045.85
+R12_PAO,Kimitsu (Japan),R12_RCPA,Danang (Vietnam),4165.81
+R12_PAS,Tanjung Bara (Indonesia),R12_RCPA,Danang (Vietnam),3206.09
+R12_SAS,Mundra Port (India),R12_RCPA,Danang (Vietnam),7320.09
+R12_WEU,Port of Rotterdam (Netherlands),R12_RCPA,Danang (Vietnam),17510.2
+R12_EEU,Port of Constanta (Romania),R12_CHN,Ningbo-Zhoushan (China),15315.33
+R12_FSU,Vostochny/Nakhodka (Russia),R12_CHN,Ningbo-Zhoushan (China),2159.79
+R12_LAM,Porta da Madeira (Brazil),R12_CHN,Ningbo-Zhoushan (China),20991.65
+R12_MEA,Jeddah (Saudi Arabia),R12_CHN,Ningbo-Zhoushan (China),12200.18
+R12_NAM,Port of South Louisiana (USA),R12_CHN,Ningbo-Zhoushan (China),18856.65
+R12_PAO,Kimitsu (Japan),R12_CHN,Ningbo-Zhoushan (China),2180.58
+R12_PAS,Tanjung Bara (Indonesia),R12_CHN,Ningbo-Zhoushan (China),3752.43
+R12_SAS,Mundra Port (India),R12_CHN,Ningbo-Zhoushan (China),9420.01
+R12_WEU,Port of Rotterdam (Netherlands),R12_CHN,Ningbo-Zhoushan (China),15484.2
+R12_FSU,Vostochny/Nakhodka (Russia),R12_EEU,Port of Constanta (Romania),17179.0
+R12_LAM,Porta da Madeira (Brazil),R12_EEU,Port of Constanta (Romania),9678.74
+R12_MEA,Jeddah (Saudi Arabia),R12_EEU,Port of Constanta (Romania),3284.44
+R12_NAM,Port of South Louisiana (USA),R12_EEU,Port of Constanta (Romania),12171.52
+R12_PAO,Kimitsu (Japan),R12_EEU,Port of Constanta (Romania),16872.21
+R12_PAS,Tanjung Bara (Indonesia),R12_EEU,Port of Constanta (Romania),13864.25
+R12_SAS,Mundra Port (India),R12_EEU,Port of Constanta (Romania),7484.93
+R12_WEU,Port of Rotterdam (Netherlands),R12_EEU,Port of Constanta (Romania),6263.21
+R12_LAM,Porta da Madeira (Brazil),R12_FSU,Vostochny/Nakhodka (Russia),19224.63
+R12_MEA,Jeddah (Saudi Arabia),R12_FSU,Vostochny/Nakhodka (Russia),14063.85
+R12_NAM,Port of South Louisiana (USA),R12_FSU,Vostochny/Nakhodka (Russia),17089.63
+R12_PAO,Kimitsu (Japan),R12_FSU,Vostochny/Nakhodka (Russia),1581.57
+R12_PAS,Tanjung Bara (Indonesia),R12_FSU,Vostochny/Nakhodka (Russia),5616.1
+R12_SAS,Mundra Port (India),R12_FSU,Vostochny/Nakhodka (Russia),11283.68
+R12_WEU,Port of Rotterdam (Netherlands),R12_FSU,Vostochny/Nakhodka (Russia),13659.32
+R12_MEA,Jeddah (Saudi Arabia),R12_LAM,Porta da Madeira (Brazil),10994.76
+R12_NAM,Port of South Louisiana (USA),R12_LAM,Porta da Madeira (Brazil),6489.52
+R12_PAO,Kimitsu (Japan),R12_LAM,Porta da Madeira (Brazil),19220.76
+R12_PAS,Tanjung Bara (Indonesia),R12_LAM,Porta da Madeira (Brazil),19330.4
+R12_SAS,Mundra Port (India),R12_LAM,Porta da Madeira (Brazil),15195.25
+R12_WEU,Port of Rotterdam (Netherlands),R12_LAM,Porta da Madeira (Brazil),7703.56
+R12_NAM,Port of South Louisiana (USA),R12_MEA,Jeddah (Saudi Arabia),13487.54
+R12_PAO,Kimitsu (Japan),R12_MEA,Jeddah (Saudi Arabia),13757.06
+R12_PAS,Tanjung Bara (Indonesia),R12_MEA,Jeddah (Saudi Arabia),10749.1
+R12_SAS,Mundra Port (India),R12_MEA,Jeddah (Saudi Arabia),4369.78
+R12_WEU,Port of Rotterdam (Netherlands),R12_MEA,Jeddah (Saudi Arabia),7579.23
+R12_PAO,Kimitsu (Japan),R12_NAM,Port of South Louisiana (USA),17085.76
+R12_PAS,Tanjung Bara (Indonesia),R12_NAM,Port of South Louisiana (USA),21189.16
+R12_SAS,Mundra Port (India),R12_NAM,Port of South Louisiana (USA),17688.04
+R12_WEU,Port of Rotterdam (Netherlands),R12_NAM,Port of South Louisiana (USA),8966.41
+R12_PAS,Tanjung Bara (Indonesia),R12_PAO,Kimitsu (Japan),4952.42
+R12_SAS,Mundra Port (India),R12_PAO,Kimitsu (Japan),10976.9
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAO,Kimitsu (Japan),13920.43
+R12_SAS,Mundra Port (India),R12_PAS,Tanjung Bara (Indonesia),7968.93
+R12_WEU,Port of Rotterdam (Netherlands),R12_PAS,Tanjung Bara (Indonesia),18159.04
+R12_WEU,Port of Rotterdam (Netherlands),R12_SAS,Mundra Port (India),11779.72
