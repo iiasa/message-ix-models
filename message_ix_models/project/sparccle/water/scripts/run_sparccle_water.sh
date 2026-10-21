@@ -44,14 +44,17 @@ cd "$HOME"
 
 SOURCE=$(grep -E "^source_platform:" "$CFG" | awk '{print $2}')
 LOCAL_DB=$(grep -E "^local_db:" "$CFG" | awk '{print $2}')
-read -r PLATFORM MODEL STARTER < <(mix-models sparccle_water names --config "$CFG" "$SSP" starter)
+# `names` prints one line; ixmp/Java logging may precede it, so keep the last line only
+read -r PLATFORM MODEL STARTER < <(mix-models sparccle_water names --config "$CFG" "$SSP" starter 2>/dev/null | tail -1)
 
+case "$MODEL" in SSP_*) ;; *) echo "!! could not parse names output: $PLATFORM $MODEL $STARTER"; exit 1;; esac
 echo "== $(date -u +%FT%TZ) localize $SOURCE/$MODEL/$STARTER -> $PLATFORM"
 srun python "$SCRIPT_DIR/localize_starter.py" "$SOURCE" "$MODEL" "$STARTER" "$LOCAL_DB" || exit 1
 
 status=0
 for KEY in "${KEYS[@]}"; do
-  read -r PLATFORM MODEL SCEN < <(mix-models sparccle_water names --config "$CFG" "$SSP" "$KEY")
+  read -r PLATFORM MODEL SCEN < <(mix-models sparccle_water names --config "$CFG" "$SSP" "$KEY" 2>/dev/null | tail -1)
+  case "$MODEL" in SSP_*) ;; *) echo "!! could not parse names output: $PLATFORM $MODEL $SCEN"; exit 1;; esac
   echo "== $(date -u +%FT%TZ) build $SSP $KEY -> $PLATFORM/$MODEL/$SCEN"
   if ! srun mix-models sparccle_water run --config "$CFG" "$SSP $KEY" --go; then
     echo "!! build failed: $SSP $KEY"; status=1; continue
