@@ -228,6 +228,114 @@ def validate_inputs(config: dict) -> None:
         )
 
 
+def local_platform_name(model: str, scenario: str) -> str:
+    """Name of the ixmp platform holding the local copy of one starter."""
+    return f"sparccle_{model}_{scenario}"
+
+
+def register_local_platform(name: str, path: Path) -> None:
+    """Register the HSQLDB platform `name` at `path` in the user's ixmp config.
+
+    The ``water-ix cooling`` subprocess resolves the platform by name through
+    the same config file, so the registration cannot stay in-process.
+    """
+    import ixmp
+
+    db = str(path / "db")
+    try:
+        _, info = ixmp.config.get_platform_info(name)
+        if info.get("path") == db:
+            return
+    except (KeyError, ValueError):
+        pass
+    path.mkdir(parents=True, exist_ok=True)
+    ixmp.config.add_platform(name, "jdbc", "hsqldb", db)
+    ixmp.config.save()
+
+
+def copy_platform_codelists(mp_src, mp) -> None:
+    """Register on `mp` the units and regions of `mp_src` it lacks.
+
+    Units and regions belong to the platform, not the scenario, so a clone
+    leaves them behind and the first timeseries upload then fails on an
+    unknown region or unit.
+    """
+    have_units = set(mp.units())
+    for unit in sorted(set(mp_src.units()) - have_units):
+        try:
+            mp.add_unit(unit, comment=f"copied from {mp_src.name}")
+        except RuntimeError as e:
+            # The source holds near-duplicates (e.g. trailing spaces) the DB treats as equal.
+            if "already exists" not in str(e):
+                raise
+
+    regions = mp_src.regions()
+    # Codes such as R12_AFR are synonyms (mapped_to set) of the long region names.
+    is_syn = regions["mapped_to"].notna()
+    src, synonyms = regions[~is_syn], regions[is_syn]
+    have = set(mp.regions()["region"])
+    todo = src[~src["region"].isin(have)]
+    # A region's parent must exist first; add level by level.
+    while not todo.empty:
+        ready = todo[todo["parent"].isin(have) | (todo["parent"] == todo["region"])]
+        if ready.empty:
+            log.warning("%d regions with unknown parents not copied", len(todo))
+            break
+        for r in ready.itertuples():
+            mp.add_region(r.region, r.hierarchy, r.parent)
+        have |= set(ready["region"])
+        todo = todo[~todo["region"].isin(have)]
+
+    have = set(mp.regions()["region"])
+    for r in synonyms[~synonyms["region"].isin(have)].itertuples():
+        if r.mapped_to in have:
+            mp.add_region_synonym(r.region, r.mapped_to)
+
+
+def localize(  # pragma: no cover
+    context: "Context",
+    scenario: "Scenario",
+    *,
+    platform_name: str,
+    path: Path,
+) -> "Scenario":
+    """Return the local copy of *scenario*, making it on first use.
+
+    The copy lives in the HSQLDB platform *platform_name* at *path*. The
+    shared platform *scenario* came from is closed afterwards and never
+    written, so parallel jobs on different starters never share a database
+    and a rerun finds the copy and clones it left behind.
+    """
+    import ixmp
+    from message_ix import Scenario
+
+    path = Path(path)
+    register_local_platform(platform_name, path)
+    mp = ixmp.Platform(name=platform_name)
+    mp_src = scenario.platform
+    copy_platform_codelists(mp_src, mp)
+
+    # Unfiltered listing: the JDBC backend raises on a filter naming an unknown model.
+    existing = mp.scenario_list(default=False)
+    is_copied = (
+        (existing["model"] == scenario.model)
+        & (existing["scenario"] == scenario.scenario)
+    ).any()
+    if is_copied:
+        log.info("Local copy of %s already in %s", scenario.url, path)
+    else:
+        log.info("Copying %s from %s to %s", scenario.url, mp_src.name, path)
+        # JDBC only clones across platforms with the solution attached.
+        scenario.clone(platform=mp, keep_solution=True).set_as_default()
+
+    mp_src.close_db()
+    # Later steps and their subprocesses must see the local platform, not the closed one.
+    context.platform_info.clear()
+    context.platform_info["name"] = platform_name
+    context.core._mp = mp
+    return Scenario(mp, scenario.model, scenario.scenario)
+
+
 def phase1_cooling(  # pragma: no cover
     context: "Context",
     scenario: "Scenario",
@@ -241,12 +349,17 @@ def phase1_cooling(  # pragma: no cover
 
     The subprocess reads ``scenario`` and produces ``{scenario}_cooling``
     in the same database. We then load and return it.
+
+    The database is closed while the subprocess runs: HSQLDB locks its files
+    per process, so a local platform held open here would refuse the child.
+    Harmless for a server platform.
     """
+    import ixmp
     from message_ix import Scenario
 
-    del context
-
-    url = f"ixmp://{scenario.platform.name}/{scenario.model}/{scenario.scenario}"
+    platform_name = scenario.platform.name
+    model, scenario_name = scenario.model, scenario.scenario
+    url = f"ixmp://{platform_name}/{model}/{scenario_name}"
     cmd = [
         "mix-models",
         "--url",
@@ -262,12 +375,16 @@ def phase1_cooling(  # pragma: no cover
         "--rels",
         rels,
     ]
+    scenario.platform.close_db()
+    del scenario
     log.info("→ %s", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
-    target_name = f"{scenario.scenario}_cooling"
-    log.info("Loading produced scenario %s/%s", scenario.model, target_name)
-    return Scenario(scenario.platform, scenario.model, target_name)
+    mp = ixmp.Platform(name=platform_name)
+    context.core._mp = mp
+    target_name = f"{scenario_name}_cooling"
+    log.info("Loading produced scenario %s/%s", model, target_name)
+    return Scenario(mp, model, target_name)
 
 
 def apply_buildings(  # pragma: no cover
@@ -396,6 +513,7 @@ def generate(
     magicc_root: str | Path | None = None,
     magicc_file: str | Path | None = None,
     magicc_model_suffix: str = "",
+    local_db: str | Path | None = None,
     **options,
 ) -> Workflow:
     """Build the SPARCCLE Phase-1 + Phase-2 workflow.
@@ -411,6 +529,13 @@ def generate(
         precedence rules. When neither ``magicc_root`` nor ``magicc_file``
         is given, the per-starter ``magicc_output_dir`` from the YAML is
         used.
+    local_db
+        Root directory for per-starter local HSQLDB platforms. When given,
+        each starter is copied from ``platform_info.name`` into
+        ``<local_db>/<model>/<scenario>/`` by a ``base`` step
+        (:func:`localize`) and every clone is written there; the shared
+        platform is only read. Without it, all steps run on
+        ``platform_info.name`` as before.
     options
         Reserved for forward-compatibility with extra CLI options;
         currently ignored.
@@ -439,7 +564,7 @@ def generate(
 
     wf = Workflow(context)
 
-    platform = config["platform_info"]["name"]
+    source_platform = config["platform_info"]["name"]
     regions = config["regions"]
     # apply_buildings and apply_cooling read context.model.regions, which
     # defaults to "R14"; bind it here so Phase-2 kernels match the yaml.
@@ -458,14 +583,37 @@ def generate(
 
         label = f"{ssp}/{scenario}"
         base_step = f"{label} base"
-        try:
-            wf.add_step(
-                base_step,
-                None,
-                target=f"ixmp://{platform}/{model}/{scenario}",
-            )
-        except KeyExistsError:
-            pass  # shared starter URL across SSPs
+        if local_db is None:
+            platform = source_platform
+            try:
+                wf.add_step(
+                    base_step,
+                    None,
+                    target=f"ixmp://{platform}/{model}/{scenario}",
+                )
+            except KeyExistsError:
+                pass  # shared starter URL across SSPs
+        else:
+            # Every clone of this starter goes to its own local database; the
+            # shared platform is only read, in the "source" step.
+            platform = local_platform_name(model, scenario)
+            source_step = f"{label} source"
+            try:
+                wf.add_step(
+                    source_step,
+                    None,
+                    target=f"ixmp://{source_platform}/{model}/{scenario}",
+                )
+                wf.add_step(
+                    base_step,
+                    source_step,
+                    localize,
+                    target=f"ixmp://{platform}/{model}/{scenario}",
+                    platform_name=platform,
+                    path=Path(local_db) / model / scenario,
+                )
+            except KeyExistsError:
+                pass  # shared starter URL across SSPs
 
         cooling_step = f"{label} cooling"
         wf.add_step(

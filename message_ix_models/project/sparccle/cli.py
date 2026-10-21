@@ -53,6 +53,16 @@ cli.add_command(
                     " --magicc-root (e.g. '_p95' for the p95 envelope tree)."
                 ),
             ),
+            click.Option(
+                ["--local-db", "local_db"],
+                type=click.Path(file_okay=False, path_type=Path),
+                default=None,
+                help=(
+                    "Root directory for per-starter local HSQLDB platforms."
+                    " Each starter is copied there from platform_info.name once"
+                    " and every clone is written locally."
+                ),
+            ),
         ],
     )
 )
