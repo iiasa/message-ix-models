@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 def make_spec() -> Spec:
-    """Return the structural :class:`Spec` for MESSAGEix-Transport.
+    """Return the structural :class:`Spec` for MESSAGEix ICT sector model.
 
     Configuration is loaded from :file:`…/ict/set.yaml` and
     :file:`…/ict/technology.yaml`.
@@ -34,6 +34,7 @@ def make_spec() -> Spec:
 
     # Merge contents of technology.yaml into set.yaml
     sets.update(tmp.pop("set"))
+    sets["technology"] = {}
     sets["technology"]["add"] = tmp.pop("technology")
 
     s = Spec()

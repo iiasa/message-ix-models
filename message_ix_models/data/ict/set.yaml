@@ -16,8 +16,3 @@ level:
 mode:
   require:
   - M1
-
-technology:
-  add:
-  - data_centre_elec
-  - tele_comm_elec
