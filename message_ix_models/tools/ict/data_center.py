@@ -55,7 +55,7 @@ def read_hist_data() -> pd.DataFrame:
     return pre_2030
 
 
-def get_cisco_region_mapping() -> dict[str, list[str]]:
+def get_cisco_region_mapping() -> dict[str, str]:
     """Read Cisco region-country mapping used in Fan et al. 2026."""
     sh_name = "4|Countries & Classification"
     reg_map = pd.concat(
@@ -83,11 +83,8 @@ def get_ignored_countries() -> list[str]:
     country.
     """
     sh_name = "4|Countries & Classification"
-    import time
 
-    s = time.time()
     wb = load_workbook(fetch())
-    print(f"Time to load workbook: {time.time() - s:.2f} seconds")
     ws = wb[sh_name]
 
     ignored = []
