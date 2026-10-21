@@ -10,6 +10,8 @@ from message_ix_models.util import load_package_data, package_data_path
 if TYPE_CHECKING:
     from message_ix import Scenario
 
+    from message_ix_models import Context
+
 log = logging.getLogger(__name__)
 
 
@@ -54,7 +56,7 @@ def make_spec() -> Spec:
     return s
 
 
-def build(context, scenario: "Scenario", ict_scenario: str) -> "Scenario":
+def build(context: "Context", scenario: "Scenario") -> "Scenario":
     """Build ICT model on `scenario`."""
     node_suffix = context.model.regions
 
@@ -63,8 +65,6 @@ def build(context, scenario: "Scenario", ict_scenario: str) -> "Scenario":
             "ICT module is currently only supporting models with MESSAGEix-GLOBIOM R12"
             "regions"
         )
-
-    context.model.ict_scenario = ict_scenario
 
     # Get the specification and apply to the base scenario
     spec = make_spec()

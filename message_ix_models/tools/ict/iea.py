@@ -288,7 +288,7 @@ def maybe_return_iso(x: str) -> str:
         return x
 
 
-def get_weo_iso_map() -> dict[str, list[str]]:
+def get_weo_iso_map() -> dict[str, str]:
     iea_weo_map_flat = {}
     iea_weo_map_child_regs = {
         k for k in iea_weo_map if k in [j for i in iea_weo_map.values() for j in i]
@@ -358,7 +358,9 @@ def read_2035_world_projections() -> pd.DataFrame:
 
         return body
 
-    df = format_table(df).melt(ignore_index=False, value_name="Value").set_index(
-        ["Year", "Scenario"], append=True
+    df = (
+        format_table(df)
+        .melt(ignore_index=False, value_name="Value")
+        .set_index(["Year", "Scenario"], append=True)
     )
     return df
