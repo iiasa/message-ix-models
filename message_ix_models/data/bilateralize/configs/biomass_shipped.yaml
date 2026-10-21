@@ -40,7 +40,8 @@ biomass_shipped_trade:
     - biomass_imp
   specify_network:
     False
-  tracked_emissions: # List of tracked emission types
+  tracked_emissions: # List of tracked emission types 
+  emission_factor:
   bunker_technology:
     energy_bulk_carrier_loil:
       loil_tobunker   
