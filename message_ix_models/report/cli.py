@@ -1,9 +1,13 @@
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 
 from message_ix_models.util.click import common_params
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +48,7 @@ def _modules_arg(context, param, value):
 )
 @click.argument("key", default="message::default")
 @click.pass_obj
-def cli(context, config_file, legacy, cli_output, key, **kwargs):
+def cli(context: "Context", /, config_file, legacy, cli_output, key, **kwargs) -> None:
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message::default', but may also be the
@@ -67,7 +71,7 @@ def cli(context, config_file, legacy, cli_output, key, **kwargs):
     from .config import Config
 
     # Update the reporting configuration from command-line parameters
-    context.report = Config(
+    context["report"] = Config(
         from_file=config_file, key=key, cli_output=cli_output, _legacy=legacy
     )
 

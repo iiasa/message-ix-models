@@ -19,7 +19,7 @@ def cli():
 @cli.command("gen-structures")
 @common_params("dry_run")
 @click.pass_obj
-def gen_structures(context, **kwargs):
+def gen_structures(context: "Context", /, **kwargs) -> None:
     """(Re)Generate the SSP data structures in SDMX."""
     from .structure import generate
 

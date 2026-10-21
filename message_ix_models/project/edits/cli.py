@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
+
 import click
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 @click.group("edits")
@@ -11,10 +16,10 @@ def cli():
 
 @cli.command("_debug")
 @click.pass_obj
-def debug(context, **kwargs):  # pragma: no cover
+def debug(context: "Context", /, **kwargs) -> None:  # pragma: no cover
     """Development/debugging code."""
     from . import gen_demand, pasta_native_to_sdmx  # noqa: F401
 
     # commented: Only needs to occur once, then cached
     # pasta_native_to_sdmx()
-    gen_demand()
+    gen_demand(context)

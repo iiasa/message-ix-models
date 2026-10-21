@@ -23,11 +23,11 @@ Configuration:
 
 from pathlib import Path
 
-import ixmp  # type: ignore
+import ixmp
 import message_ix
 import pandas as pd
 from message_data.tools.post_processing import (
-    iamc_report_hackathon as legacy_report,  # type: ignore
+    iamc_report_hackathon as legacy_report,
 )
 
 from message_ix_models.tools.inter_pipe import build, generate_bare_sheets

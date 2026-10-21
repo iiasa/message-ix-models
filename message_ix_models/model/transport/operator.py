@@ -343,8 +343,6 @@ EEI_TECH_MAP = {
 
 def distance_nonldv(context: "Context") -> "AnyQuantity":
     """Return annual travel distance per vehicle for non-LDV transport modes."""
-    # FIXME Remove this type exclusion; added only to merge #549
-    import message_ix_models.tools.iea.eei  # type: ignore  # noqa: F401
     from message_ix_models.tools import exo_data
 
     log.warning(
@@ -437,7 +435,7 @@ def extend_y(qty: "AnyQuantity", y: list[int], *, dim: str = "y") -> "AnyQuantit
     # - Forward-fill within existing y-coords of `qty`.
     # - Backward-fill within existing y-coords of `qty`
     # - Use MappingAdapter to do the rest.
-    return MappingAdapter({dim: y_map})(qty.ffill(dim).bfill(dim))  # type: ignore [attr-defined]
+    return MappingAdapter({dim: y_map})(qty.ffill(dim).bfill(dim))
 
 
 def factor_fv(n: list[str], y: list[int], config: dict) -> "AnyQuantity":
@@ -1229,7 +1227,7 @@ def write_sdmx_data(
 
     # Convert `qty` to DataMessage
     # FIXME Remove exclusion once upstream type hint is improved
-    dm = quantity_to_message(qty, structure=dfd.structure)  # type: ignore [arg-type]
+    dm = quantity_to_message(qty, structure=dfd.structure)
 
     # Identify the first/only data set in the message
     ds = dm.data[0]

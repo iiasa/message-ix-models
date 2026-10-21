@@ -2,7 +2,7 @@ import message_ix
 import pytest
 
 from message_ix_models import testing
-from message_ix_models.model.bare import Config
+from message_ix_models.model.config import Config
 
 #: Number of items in the respective YAML files.
 SET_SIZE = dict(

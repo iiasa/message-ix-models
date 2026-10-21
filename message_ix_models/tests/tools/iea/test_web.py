@@ -118,9 +118,9 @@ class TestTRANSFORM:
 
     def test_values(self) -> None:
         """Test ordinary behaviours of enum.Flag."""
-        TRANSFORM["A"] == TRANSFORM.A == 1
-        TRANSFORM["B"] == TRANSFORM.B == 2
-        TRANSFORM["C"] == TRANSFORM.C == 4
+        TRANSFORM["A"] == TRANSFORM.A == 1  # type: ignore [comparison-overlap]
+        TRANSFORM["B"] == TRANSFORM.B == 2  # type: ignore [comparison-overlap]
+        TRANSFORM["C"] == TRANSFORM.C == 4  # type: ignore [comparison-overlap]
 
         v1 = TRANSFORM.A | TRANSFORM.C
         assert TRANSFORM.A & v1

@@ -230,7 +230,7 @@ def pre_solve(scenario: Scenario, context, data):
 
     # Run ACCESS-E-USE
     if config.run_access:
-        from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
+        from E_USE_Model import Simulation_ACCESS_E_USE
 
         e_use = Simulation_ACCESS_E_USE.run_E_USE(
             scenario=config.ssp,

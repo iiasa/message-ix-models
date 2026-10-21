@@ -446,7 +446,7 @@ def get_rates_data(
     # Filter for scenario type. The CLI option `--sdgs` is a string ("baseline"
     # by default; "SDG" when SDG measures are active), but legacy callers pass
     # a bool. Treat truthy-non-"baseline" as SDG.
-    sdgs_active = sdgs is True or sdgs == "SDG"
+    sdgs_active = sdgs is True or sdgs == "SDG"  # type: ignore [comparison-overlap]
     scenario_type = "SDG" if sdgs_active else "baseline"
     df_rate = all_rates[all_rates.variable.str.contains(scenario_type)]
 

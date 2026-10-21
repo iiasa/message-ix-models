@@ -11,14 +11,15 @@ from . import data
 from .data import iter_files
 
 __all__ = [
+    "GDP",
     "agg",
     "c",
     "cg",
     "coord",
     "cost",
     "exo",
-    "fv_cny",
     "fv",
+    "fv_cny",
     "gdp_cap",
     "gdp_index",
     "gdp_ppp",
@@ -32,8 +33,8 @@ __all__ = [
     "pdt_cny",
     "pdt_ny",
     "pdt_nyt",
-    "pop_at",
     "pop",
+    "pop_at",
     "price",
     "sw",
     "t",
