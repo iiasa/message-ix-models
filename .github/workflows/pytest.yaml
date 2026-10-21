@@ -140,6 +140,9 @@ jobs:
         - { os: macos-15-intel, version: { upstream: v3.10.0 }}
         - { os: macos-15-intel, version: { upstream: v3.11.0 }}
         - { os: macos-15-intel, version: { upstream: main }}
+        # Temporary; see https://github.com/iiasa/message-ix-models/pull/574
+        # Pre-built wheels for JPype1 v1.7.1 are not available for Windows
+        - { os: windows-latest, version: { python: "3.15" }}
 
       fail-fast: false
 
