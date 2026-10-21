@@ -123,8 +123,12 @@ def build_avg_distribution(ctx: "Context") -> None:
 
 
 def build_weighted_distribution(ctx: "Context") -> pd.DataFrame:
-    low, high, central = read_2035_world_projections()
-    iea_index = (central - low) / (high - low)
+    iea_2035 = read_2035_world_projections().loc[
+        "Electricity consumption (TWh)", "Total", "2035"
+    ]
+    iea_index = (iea_2035.loc["Base"] - iea_2035.loc["Headwinds"]) / (
+        iea_2035.loc["Lift-Off"] - iea_2035.loc["Headwinds"]
+    )
     iea_index = min(1.0, max(0.0, iea_index))
     ctx.model.ict_scenario = "Low"
     low = gen_ict_demand(ctx)

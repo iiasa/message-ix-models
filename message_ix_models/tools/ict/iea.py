@@ -308,15 +308,57 @@ def get_weo_iso_map() -> dict[str, list[str]]:
     return iso_map_inv
 
 
-def read_2035_world_projections():
+def read_2035_world_projections() -> pd.DataFrame:
     p = fetch("iea-energy-ai-2025")
     df = camelot.read_pdf(p, pages="258", flavor="stream")[0].df
-    return (int(i.replace(" ", "")) for i in df.iloc[23, [11, 7, 5]].values)
 
+    def format_table(df: pd.DataFrame) -> pd.DataFrame:
+        # First two rows contain the column headers
+        header = df.iloc[1:3].copy()
+        body = df.iloc[3:].copy()
 
-def merge_regions(iso_map):
-    aggregates = {
-        "Europe": ["Europe", "Caspian"],
-        "Middle East and Africa": ["Middle East", "Africa"],
-    }
-    return
+        # Forward-fill scenario labels across columns
+        scenarios = header.iloc[0].replace("", pd.NA).ffill().fillna("Historical")
+        years = header.iloc[1].str.replace("*", "", regex=False)
+
+        # Assign two-level column labels
+        body.columns = pd.MultiIndex.from_arrays(
+            [scenarios, years], names=["Scenario", "Year"]
+        )
+
+        # First column contains row labels
+        labels = body.iloc[:, 0].fillna("").astype(str).str.strip()
+        values = body.iloc[:, 1:].replace("", pd.NA)
+
+        # Identify section headings: non-empty label, no data values
+        is_parent = values.isna().all(axis=1) & labels.ne("")
+
+        # Build hierarchical row index
+        parent = labels.where(is_parent).ffill()
+        child = labels.where(~is_parent)
+
+        # Convert data columns to numeric
+        body = (
+            body.iloc[:, 1:]
+            .apply(lambda x: x.str.replace(" ", ""))
+            .apply(pd.to_numeric, errors="coerce")
+        )
+
+        # Remove section headings and fully empty rows
+        keep = ~is_parent & body.notna().any(axis=1)
+        body = body.loc[keep]
+        parent = parent.loc[keep]
+        child = child.loc[keep]
+
+        # Assign hierarchical row index
+        body.index = pd.MultiIndex.from_arrays(
+            [parent, child],
+            names=["Variable", "Sector"],
+        )
+
+        return body
+
+    df = format_table(df).melt(ignore_index=False, value_name="Value").set_index(
+        ["Year", "Scenario"], append=True
+    )
+    return df
