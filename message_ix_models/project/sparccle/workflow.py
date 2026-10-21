@@ -265,7 +265,7 @@ def copy_platform_codelists(mp_src, mp) -> None:
         try:
             mp.add_unit(unit, comment=f"copied from {mp_src.name}")
         except RuntimeError as e:
-            # The source holds near-duplicates (e.g. trailing spaces) the DB treats as equal.
+            # The source holds near-duplicates (trailing spaces) the DB treats as equal.
             if "already exists" not in str(e):
                 raise
 
@@ -329,7 +329,7 @@ def localize(  # pragma: no cover
         scenario.clone(platform=mp, keep_solution=True).set_as_default()
 
     mp_src.close_db()
-    # Later steps and their subprocesses must see the local platform, not the closed one.
+    # Later steps and subprocesses must see the local platform, not the closed one.
     context.platform_info.clear()
     context.platform_info["name"] = platform_name
     context.core._mp = mp

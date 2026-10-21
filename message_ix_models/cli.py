@@ -171,6 +171,7 @@ submodules = [
     "message_ix_models.project.navigate.cli",
     "message_ix_models.project.sparccle.cli",
     "message_ix_models.project.sparccle.adapt.cli",
+    "message_ix_models.project.sparccle.water.cli",
     "message_ix_models.project.ssp.cli",
     "message_ix_models.report.cli",
     "message_ix_models.testing.cli",

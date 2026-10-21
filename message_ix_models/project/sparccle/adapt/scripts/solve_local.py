@@ -2,6 +2,7 @@
 
 Usage: python solve_local.py PLATFORM MODEL SCENARIO [--version N]
            [--model MESSAGE|MESSAGE-MACRO] [--solve-option KEY=VALUE ...]
+           [--if-unsolved]
 
 --solve-option adds or overrides CPLEX options (default lpmethod=4 threads=4), e.g.
 --solve-option scaind=1 --solve-option numericalemphasis=1 for "optimal with unscaled
@@ -24,6 +25,11 @@ p.add_argument("scenario")
 p.add_argument("--version", type=int, default=None)
 p.add_argument("--model", dest="gams_model", default="MESSAGE")
 p.add_argument("--solve-option", action="append", default=[], metavar="KEY=VALUE")
+p.add_argument(
+    "--if-unsolved",
+    action="store_true",
+    help="Do nothing when the scenario already has a solution.",
+)
 a = p.parse_args()
 
 solve_options = {"lpmethod": "4", "threads": "4"}
@@ -33,6 +39,9 @@ mp = ixmp.Platform(a.platform)
 try:
     scen = message_ix.Scenario(mp, a.model, a.scenario, version=a.version)
     log.info(f"Solving {scen.url} (has_solution={scen.has_solution()})")
+    if a.if_unsolved and scen.has_solution():
+        log.info("Already solved, --if-unsolved: nothing to do")
+        raise SystemExit(0)
     if scen.has_solution():
         scen.remove_solution()
     log.info(f"solve_options={solve_options}")

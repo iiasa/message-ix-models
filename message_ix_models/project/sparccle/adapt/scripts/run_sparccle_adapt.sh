@@ -20,7 +20,7 @@
 # Environment (override before sbatch):
 #   MSG_ENV      python venv with message_ix_models        (default ~/env/msg_pci)
 #   IXMP_DATA    ixmp config dir holding the platform      (default ~/.local/share/ixmp_pci)
-#   COOLING_OUT  output root for cooling_detail.py         (default ~/cooling_detail_out)
+#   COOLING_OUT  output root for cooling_detail.py         (default ~/sparccle/out/cooling_detail)
 #   SOLVE_OPTS   extra CPLEX options for solve_local.py, e.g.
 #                "--solve-option scaind=1 --solve-option numericalemphasis=1"
 # Logs go to %x_%J.out in the submission directory.
@@ -39,7 +39,7 @@ module load Java
 module load gams
 source "${MSG_ENV:-$HOME/env/msg_pci}/bin/activate"
 export IXMP_DATA="${IXMP_DATA:-$HOME/.local/share/ixmp_pci}"
-COOLING_OUT="${COOLING_OUT:-$HOME/cooling_detail_out}"
+COOLING_OUT="${COOLING_OUT:-$HOME/sparccle/out/cooling_detail}"
 cd "$HOME"
 
 PLATFORM=$(grep -E "^platform:" "$CFG" | awk '{print $2}')

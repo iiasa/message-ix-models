@@ -1,0 +1,70 @@
+# SPARCCLE water adaptation scenarios. Every scenario lives on the starter's
+# local HSQLDB platform (sparccle_<model>_<scenario>, made by
+# scripts/localize_starter.py from `source_platform`).
+#
+#   mix-models sparccle_water run --config <this file> "SSP2 base" --go     # steps: "<SSP> <key>"
+#   mix-models sparccle_water names SSP2 BAU        # -> platform model scenario
+#
+# Solving: `base` and `adapt` are solved by the `water-ix nexus` build itself;
+# `BAU` and `maladapt` by adapt/scripts/solve_local.py (see
+# scripts/run_sparccle_water.sh).
+
+source_platform: ixmp_dev
+local_db: ~/sparccle/db     # <local_db>/<model>/<scenario>/db
+regions: R12
+name: "CurrentPolicies_{ssp}_W_{key}"   # scenario name; {key} = the scenario's label or key
+
+# Water-module inputs of every nexus build: hydrology of RCP 7.0 (NPiREF), low
+# reliability tier.
+nexus:
+  rcps: 7p0
+  rels: low
+
+starters:
+  SSP2:
+    model: SSP_SSP2_v6.6_sp
+    scenario: NPiREF_GDP_CI_50_ensemble_2
+    renewable_growth: 0.02   # growth_activity_up on extract_surfacewater / extract_groundwater
+  SSP3:
+    model: SSP_SSP3_v6.6_sp
+    scenario: NPiREF_GDP_CI_50_ensemble_2
+    renewable_growth: 0.03
+
+# Levers. `build: nexus` scenarios are produced by `water-ix nexus` on the
+# starter (`sdgs` is passed through); `from:` scenarios are clones of another
+# scenario with constraints added. `eflow`, `renewable_growth` and `ban_mode`
+# can also follow a `build: nexus` scenario (applied in place after the build).
+#
+#   eflow            bound_activity_lo on return_flow = environmental flow (VMF,
+#                    capped at 70 % of availability), the same rows an SDG build
+#                    writes, here without the rest of the SDG package
+#   renewable_growth growth_activity_up of the renewable extractors set to the
+#                    starter's rate (#522 writes 0.02 in every build)
+#   ban_mode         bound_activity_up = 0 on every technology output in that
+#                    mode from the first model year (Mf = efficient distribution:
+#                    urban_t_d, rural_t_d, sewerage, recycle, discharge)
+#   sdgs: SDG        the water module's SDG package: Mf-only distribution with
+#                    mid-tier costs, treatment targets (urban 0.95, rural 0.8),
+#                    connection targets, SDG6 recycling, e-flow bounds
+scenarios:
+  base:
+    build: nexus
+    sdgs: baseline
+  BAU:
+    from: base
+    eflow: true
+    renewable_growth: true
+  maladapt:
+    from: base
+    eflow: true
+    renewable_growth: true
+    ban_mode: Mf
+  adapt:
+    label: "+adapt"   # step names cannot hold "+" (regex targets); the scenario name can
+    build: nexus
+    sdgs: SDG
+    renewable_growth: true
+
+# Not represented yet (see README): irrigation efficiency, desalination
+# prioritised over fossil groundwater (today the LP orders them by cost), a
+# calibrated 10 % loss reduction.
