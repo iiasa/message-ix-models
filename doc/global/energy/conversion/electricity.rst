@@ -4,11 +4,11 @@ Electricity
 ***********
 
 |MESSAGEix| covers a large number of electricity generation options utilizing a wide range of primary energy sources.
-For fossil-based electricity generation technologies, typically a number of different technology variants with different efficiencies, environmental characteristics and costs are represented
+For fossil-based electricity generation technologies, typically a number of different technology variants with different efficiencies, environmental characteristics and costs are represented.
 For example, in the case of coal,
 |MESSAGEix| distinguishes subcritical and supercritical pulverized coal (PC) power plants
-where the subcritical variant is available with and without flue gas desulpherization/denox
-and one internal gasification combined cycle (IGCC) power plant.
+where the subcritical variant is available with and without flue gas desulfurization and NOx removal (FGD/DeNOx)
+and one integrated gasification combined cycle (IGCC) power plant.
 The supercritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants (see :numref:`fig-elec-fossil-nuc`).
 :numref:`tab-elec` below shows the different power plant types represented in |MESSAGEix|.
 
@@ -16,6 +16,10 @@ The supercritical PC and IGCC plants are also available with carbon capture and 
 .. figure:: /_static/electricity_generation_fossil_nuclear.png
 
    Schematic diagram of the fossil and nuclear power plants represented in |MESSAGEix|.
+   FGD/DeNOx stands for flue gas desulfurization and NOx removal, CCS for carbon capture and storage,
+   IGCC for integrated gasification combined cycle, LWR for light water reactor (Gen II and Gen III+ are reactor generations),
+   FBR for fast breeder reactor and HTR for high temperature reactor.
+   w/ and w/o stand for with and without.
 
 Four different nuclear power plant types are represented in |MESSAGEix|,
 i.e. two light water reactor types,
@@ -197,12 +201,17 @@ specifically the narrative-aligned future improvements in investment and fixed o
 which are derived exogenously (see :ref:`techchange`).
 Base-year costs for all conversion technologies are based on a literature review
 collated for the North America region, the reference region.
-After 2025, the reference region's costs decline from their base-year value
-following a technology- and narrative-specific reduction rate,
-an exponential decline in the spirit of Moore's law (Moore, 1998 :cite:`moore_cramming_1998`),
-calibrated so that the long-run reduced value is reached in 2150, beyond the model horizon.
-Reduction rates are first specified qualitatively, from very low to very high,
-and aligned to reflect each SSP narrative consistently.
+After 2025, the reference region's costs fall from their base-year value
+along an exponential path in the spirit of Moore's law (Moore, 1998 :cite:`moore_cramming_1998`).
+How far they fall depends on the technology and the narrative.
+Each technology is assigned a total cost reduction relative to its base-year cost,
+which is reached in 2150, beyond the model horizon,
+The decline is steepest in the first decades, so most of the reduction is realised by 2100.
+The size of this reduction is first specified qualitatively for each technology,
+in six steps from very low to very high,
+and each SSP narrative is assigned the step that fits its storyline.
+For example, the investment cost of solar PV in North America falls by 90% by 2150 in SSP1,
+by 70% in SSP2 and by 50% in SSP3 (:numref:`fig-solar-pv-cost`, panel a).
 All other regions are tied to the reference region through cost ratios.
 Base-year ratios are derived from the World Energy Outlook (IEA, 2023 :cite:`iea_weo_2023`)
 and then evolve with regional economic development.
@@ -215,6 +224,18 @@ A safeguard prevents the regional cost ratios from drifting in the wrong directi
 for the few regions, such as Pacific OECD and Western Europe,
 that have a lower GDP per capita but higher base-year costs than North America
 (Fricko et al., 2026 :cite:`fricko_wu_2026`).
+
+Panel (b) of :numref:`fig-solar-pv-cost` shows the resulting regional cost ratios for solar PV in SSP2.
+
+.. _fig-solar-pv-cost:
+.. figure:: /_static/solar_pv_investment_costs.png
+   :width: 700px
+
+   Solar PV investment cost projections.
+   Panel (a) shows the investment cost (USD2005/kW) of utility-scale solar PV in North America
+   from 2025 to 2100 in SSP1, SSP2 and SSP3.
+   Panel (b) shows the solar PV investment cost of each of the twelve regions relative to North America
+   from 2025 to 2100 in SSP2, with North America as the horizontal line at 1.
 
 :numref:`fig-ther` shows the narrative-aligned investment cost developments for thermal power plants
 without CCS (panel (a)) and with CCS (panel (b)),
