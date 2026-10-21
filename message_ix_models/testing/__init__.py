@@ -1,13 +1,9 @@
 import logging
 import os
+import platform
 import re
 import shutil
-
-try:
-    from base64 import b32hexencode as b32encode
-except ImportError:
-    from base64 import b32encode
-import platform
+from base64 import b32hexencode
 from collections.abc import Generator
 from copy import deepcopy
 from importlib.metadata import version
@@ -641,7 +637,7 @@ def loaded_snapshot(
         new_name = request.node.name
     except AttributeError:
         # Generate a new scenario name with a random part
-        new_name = f"baseline {b32encode(randbytes(3)).decode().rstrip('=').lower()}"
+        new_name = f"baseline {b32hexencode(randbytes(3)).decode().rstrip('=').lower()}"
 
     log.info(f"Clone to '{model_name}/{new_name}'")
     yield base.clone(scenario=new_name, keep_solution=solved)
