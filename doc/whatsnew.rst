@@ -3,7 +3,9 @@ What's new
 
 Next release
 ============
-
+- Update bugs in fix_cost and var_cost in data prepartion for trade bilateralization in module :mod:`tools.bilateralize` (:pull:`552`)
+- Add default values for emission factors in module :mod:`tools.bilateralize` (:pull:`552`)
+- Ensure commodity-specific distances are translated through data prepartion in module :mod:`tools.bilateralize` (:pull:`552`)
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).

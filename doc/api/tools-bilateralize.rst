@@ -30,35 +30,26 @@ in MESSAGEix. It is located in the ``message-ix-models/tools/bilateralize`` dire
 
 The tool follows the following steps, which are also available in ``tool/bilateralize/workflow.py``:
 
-Step 1 | Edit (``tools/bilateralize/prepare_edit.py``)
+Step 0 | Calculate distances (``tools/bilateralize/calculate_distance.py``)
 ======================================================
 
-The first step is to generate empty (or default valued) parameters that are required for 
-bilateralization, specified by commodity. This step requires updates to a configuration file 
-(``config.yaml``) that should be housed in a project directory 
-(e.g., ``message-ix-models/projects/newpathways-trade/config.yaml``). A template configuration 
-file is provided at ``message-ix-models/data/bilateralize/configs/base_config.yaml``. 
+This step calculates distances between regions for a given commodity.
+These distances can be differentiated between maritime and pipeline routes, as well as by commodity.
 
-Once the configuration is updated, the user can run 
-``message_ix_models.tools.bilateralize.prepare_edit.generate_edit_files(log, project_name, config_name, message_regions)`` 
-to produce empty (or default valued) parameters as CSV files. 
-These CSV files will populate in ``message-ix-models/data/[your_trade_commodity]/edit_files``. 
+The user can call :func:`~.tools.bilateralize.calculate_distance.calculate_distance` to calculate distances.
 
-The tools may stop if the user specifies in their config that they want to specify a trade network 
-(i.e., specify which regions can trade with regions). In this case, a file called ``specify_trade_network.csv`` 
-will appear in ``message-ix-models/data/bilateralize/[your_trade_commodity]/speciy_network_[your_trade_commodity].csv``.
+Functions in this step (:mod:`~.tools.bilateralize.calculate_distance`):
 
-Additional functions used here include:
+.. currentmodule:: message_ix_models.tools.bilateralize.calculate_distance
 
-- ``message_ix_models.tools.bilateralize.calculate_distance()``: 
-  Calculates the great-circle distance between regions (TODO: update this to use explicit maritime routes)
-- ``message_ix_models.tools.bilateralize.historical_calibration.build_historical_price()``: 
-  Builds historical price dataframes
-- ``message_ix_models.tools.bilateralize.mariteam_calibration.calibrate_mariteam()``: 
-  Calibrates maritime shipping (flow technologies) using MariTEAM output.
-- ``message_ix_models.tools.bilateralize.pull_gem.import_gem()``: 
-  Imports pre-downloaded raw data from the Global Energy Monitor which is used to calibrate 
-  the flow technology piped oil and gas
+.. autosummary::
+
+   haversine_distance
+   calculate_port_distances
+   calculate_distance
+   calculate_pipeline_distances
+
+.. currentmodule:: message_ix_models.tools.bilateralize
 
   **This step is not necessary for the following commodities 
   (they are already defined in ``scenario_parameters.pkl`` in 
@@ -83,6 +74,57 @@ Additional functions used here include:
   - LNG (``LNG_shipped``)
   - Methanol (``meth_shipped``)
   - Piped gas (``gas_piped``)
+
+Step 1 | Edit (``tools/bilateralize/prepare_edit.py``)
+======================================================
+
+The first step is to generate empty (or default valued) parameters that are required for 
+bilateralization, specified by commodity. This step requires updates to a configuration file 
+(``config.yaml``) that should be housed in a project directory 
+(e.g., ``message-ix-models/projects/newpathways-trade/config.yaml``). A template configuration 
+file is provided at ``message-ix-models/data/bilateralize/configs/base_config.yaml``. 
+
+Once the configuration is updated, the user can run 
+``message_ix_models.tools.bilateralize.prepare_edit.generate_edit_files(log, project_name, config_name, message_regions)`` 
+to produce empty (or default valued) parameters as CSV files. 
+These CSV files will populate in ``message-ix-models/data/[your_trade_commodity]/edit_files``. 
+
+The tools may stop if the user specifies in their config that they want to specify a trade network 
+(i.e., specify which regions can trade with regions). In this case, a file called ``specify_trade_network.csv`` 
+will appear in ``message-ix-models/data/bilateralize/[your_trade_commodity]/speciy_network_[your_trade_commodity].csv``.
+
+Functions in this step (:mod:`~.tools.bilateralize.prepare_edit`):
+
+.. currentmodule:: message_ix_models.tools.bilateralize.prepare_edit
+
+.. autosummary::
+
+   folders_for_trade
+   define_networks
+   build_parameterdf
+   build_input
+   build_output
+   build_technical_lifetime
+   build_historical_activity
+   build_costs
+   build_capacity_factor
+   build_constraints
+   build_domestic_coalgas_relation
+   build_emission_factor
+   build_accounting_relations
+   build_flow_input
+   build_flow_output
+   build_flow_capacity_constraints
+   build_flow_FIcosts
+   build_flow_Vcosts
+   build_flow_capacity_factor
+   build_flow_technical_lifetime
+   flow_as_trade_input
+   export_edit_files
+   generate_edit_files
+   prepare_edit_files
+
+.. currentmodule:: message_ix_models.tools.bilateralize
 
 Step 2 | Bare (``tools/bilateralize/bare_to_scenario``)
 =======================================================
@@ -120,18 +162,33 @@ into a dictionary of parameter dataframes that will be used to build a scenario.
 Note that this function pulls from ``bare_files`` and not ``edit_files``, so the user should ensure that 
 the right files are transferred in the previous step.
 
-Additional functions here include:
+Step 3 | Calibrate historical activity, capacity, and prices (``tools/bilateralize/historical_calibration.py``)
+=====================================================================================================
 
-``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_flow(message_regions)``: 
-Builds new capacity dataframes for historical activity of flow technologies (e.g., pipelines)
+This step calibrates historical activity, capacity, and prices for the given commodity.
 
-``message_ix_models.tools.bilateralize.historical_calibration.build_hist_new_capacity_trade(message_regions)``: 
-Builds new capacity dataframes for historical activity of trade technologies (e.g., piped gas)
+Functions in this step (:mod:`~.tools.bilateralize.historical_calibration`):
 
-``message_ix_models.tools.bilateralize.historical_calibration.build_historical_activity(message_regions)``: 
-Builds historical activity dataframes
+.. currentmodule:: message_ix_models.tools.bilateralize.historical_calibration
 
-Step 3 | Build (``tools/bilateralize/load_and_solve.py``)
+.. autosummary::
+
+   setup_datapath
+   generate_cfdict
+   import_uncomtrade
+   convert_trade
+   import_iea_gas
+   import_iea_balances
+   check_iea_balances
+   reformat_to_parameter
+   build_historical_activity
+   build_hist_new_capacity_trade
+   build_historical_price
+   build_hist_new_capacity_flow
+
+.. currentmodule:: message_ix_models.tools.bilateralize
+
+Step 4 | Build (``tools/bilateralize/load_and_solve.py``)
 =========================================================
 
 This step builds a scenario. 
@@ -142,6 +199,27 @@ This will pull the base model/scenario, clone it, remove specified trade technol
 add them back as bilateralized versions, and export to a GDX file (if specifed- the default is to not export) 
 and/or solve the scenario (default is to solve). Note that exporting to GDX means that it is not stored in the ixmp database.
 This will also optionally solve the scenario.
+
+Functions in this step (:mod:`~.tools.bilateralize.load_and_solve`):
+
+.. currentmodule:: message_ix_models.tools.bilateralize.load_and_solve
+
+.. autosummary::
+
+   remove_trade_tech
+   add_trade_sets
+   add_trade_parameters
+   update_relation_parameters
+   update_bunker_fuels
+   update_additional_parameters
+   remove_pao_coal_constraint
+   ensure_balance_equality
+   save_to_gdx
+   solve_or_save
+   load_and_clone
+   load_and_solve
+
+.. currentmodule:: message_ix_models.tools.bilateralize
 
 Reporting
 =========
