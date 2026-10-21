@@ -18,14 +18,16 @@ from packaging.version import parse
 from ._logging import once
 
 if TYPE_CHECKING:
-    from typing import Protocol
+    from typing import Protocol, TypeVar
+
+    T = TypeVar("T")
 
     class Condition(Protocol):
         def __call__(self) -> str: ...
 
     class MinimumVersionDecorated(Protocol):
         def __call__(self, *args, **kwargs): ...
-        def minimum_version(self, to_wrap): ...
+        def minimum_version(self, to_wrap) -> Callable[[T], T]: ...
 
 
 class MessageDataFinder(MetaPathFinder):

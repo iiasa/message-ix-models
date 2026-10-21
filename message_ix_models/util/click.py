@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal, ParamSpec, TypeVar, cast
 
 import click
 import click.testing
@@ -23,10 +23,14 @@ from message_ix_models.model.structure import codelists
 from ._logging import preserve_log_level
 from .scenarioinfo import ScenarioInfo
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
 log = logging.getLogger(__name__)
 
 
-def common_params(param_names: str):
+def common_params(param_names: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Decorate a click.command with common parameters `param_names`.
 
     `param_names` must be a space-separated string of names appearing in :data:`PARAMS`,
@@ -45,7 +49,7 @@ def common_params(param_names: str):
 
     # Create the decorator
     # Simplified from click.decorators._param_memo
-    def decorator(f):
+    def decorator(f: Callable[P, R]) -> Callable[P, R]:
         # - Ensure f.__click_params__ exists
         # - Append each param given in `param_names`
         f.__dict__.setdefault("__click_params__", []).extend(
@@ -115,7 +119,7 @@ def scenario_param(
     *,
     values: list[str] | None = None,
     default: str | None = None,
-):
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Add an SSP or scenario option or argument to a :class:`click.Command`.
 
     The parameter uses :func:`.store_context` to store the given value (if any) on
@@ -187,7 +191,7 @@ def scenario_param(
             raise ValueError(f"{default=} given for {cls}")
 
     # Create the decorator
-    def decorator(f):
+    def decorator(f: Callable[P, R]) -> Callable[P, R]:
         # - Ensure f.__click_params__ exists
         # - Generate and append the parameter
         f.__dict__.setdefault("__click_params__", []).append(
