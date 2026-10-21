@@ -153,7 +153,7 @@ for member in STRINGENCY:
     if new_name.isdigit():
         # TODO Use the following line once Python 3.13 is the minimum supported version
         # member._add_alias_[new_name]
-        # For compatibility with Python 3.10–3.12
+        # For compatibility with Python 3.11–3.12
         STRINGENCY._member_map_[new_name] = member
 
 
