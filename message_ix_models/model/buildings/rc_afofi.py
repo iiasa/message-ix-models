@@ -80,7 +80,7 @@ def get_afofi_technology_shares(
         weight[t] = {"h2_fc_RC": 0.5}.get(t, 1.0)
 
     return (
-        c_shares.pipe(rename_dims, {"c": "t"})  # type: ignore [attr-defined]
+        c_shares.pipe(rename_dims, {"c": "t"})
         .pipe(aggregate, {"t": agg}, keep=False)
         .pipe(mul, Quantity(pd.Series(weight).rename_axis("t")))
     )

@@ -52,7 +52,7 @@ log = logging.getLogger(__name__)
 @click.option("--local-data", type=Path, help="Base path for local data.")
 @common_params("verbose")
 @click.pass_context
-def main(click_ctx, **kwargs):
+def main(click_ctx, /, **kwargs) -> None:
     # Start timer
     mark_time(quiet=True)
 

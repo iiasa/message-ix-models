@@ -416,7 +416,7 @@ class NewClimatePolicy(Policy):
         # Filter out empty strings
         new_data["geo"] = list(filter(None, geo))
 
-        return cls(**new_data)  # type: ignore
+        return cls(**new_data)
 
     @property
     def country(self) -> "Country":

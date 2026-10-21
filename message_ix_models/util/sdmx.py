@@ -626,7 +626,7 @@ def as_codes(  # noqa: C901
 
     if isinstance(data, list):
         # FIXME typing ignored temporarily for PR#9
-        data = dict(zip(data, data))  # type: ignore [arg-type]
+        data = dict(zip(data, data))
     elif not isinstance(data, Mapping):
         raise TypeError(data)
 

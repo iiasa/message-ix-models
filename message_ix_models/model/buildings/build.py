@@ -13,18 +13,9 @@ import message_ix
 import pandas as pd
 from genno import Quantity
 from genno.operator import mul, relabel, rename_dims
+from ixmp.report.operator import data_for_quantity
 from message_ix import make_df
-
-try:
-    from ixmp.report.operator import data_for_quantity
-    from message_ix.report.operator import as_message_df
-except ImportError:  # ixmp/message_ix v3.7.0
-    from ixmp.reporting.computations import (  # type: ignore [import-not-found,no-redef]
-        data_for_quantity,
-    )
-    from message_ix.reporting.computations import (  # type: ignore [import-not-found,no-redef]
-        as_message_df,
-    )
+from message_ix.report.operator import as_message_df
 from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import Context, ScenarioInfo, Spec
@@ -632,7 +623,7 @@ def prepare_data_A(
         # Convert back to a MESSAGE data frame
         dims = dict(commodity="c", node="n", level="l", year="y", time="h")
         # TODO Remove typing exclusion once message_ix is updated for genno 1.25
-        result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
+        result.update(as_message_df(tmp, "demand", dims, {}))
 
         # Copy technology parameter values from rc_spec and rc_therm to new afofi.
         # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
@@ -654,7 +645,7 @@ def prepare_data_A(
         merge_data(
             result,
             # TODO Remove exclusion once message-ix-models >2025.1.10 is released
-            scale_and_replace(  # type: ignore [arg-type]
+            scale_and_replace(
                 scenario, replace, t_shares, relations=relations, relax=0.05
             ),
         )
@@ -822,7 +813,7 @@ def prepare_data_B(  # noqa: C901
             log.info(f"  Commodity: {commodity} -> Tech: {tech_new}")
 
             # Modify data
-            for name, filters, extra in (  # type: ignore
+            for name, filters, extra in (
                 ("input", {}, {}),  # NB value=1.0 is done by adapt_emission_factors()
                 ("output", {}, dict(commodity=commodity, value=1.0)),
                 ("capacity_factor", {}, {}),
@@ -929,9 +920,7 @@ def prepare_data_B(  # noqa: C901
 
     merge_data(
         result,
-        scale_and_replace(  # type: ignore [arg-type]
-            scenario, replace, t_shares, relations=relations, relax=0.05
-        ),
+        scale_and_replace(scenario, replace, t_shares, relations=relations, relax=0.05),
     )
 
     # Step 4: build materials for new constructions and demolitions (part D)

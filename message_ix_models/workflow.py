@@ -345,7 +345,14 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     )
     @click.argument("target_step", metavar="TARGET", required=False)
     @click.pass_obj
-    def _func(context, go, truncate_step, target_step: str | None, **kwargs):
+    def _func(
+        context: "Context",
+        /,
+        go: bool,
+        truncate_step: str | None,
+        target_step: str | None,
+        **kwargs,
+    ):
         from message_ix_models.util import show_versions
         from message_ix_models.util.importlib import import_from_fqn
 
@@ -356,11 +363,8 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
         wf = callback(context, **kwargs)
 
         # Truncate the workflow
-        try:
+        if truncate_step is not None:
             expr = re.compile(truncate_step.replace("\\", ""))
-        except AttributeError:
-            pass  # truncate_step is None
-        else:
             N_truncate = 0
             for step in filter(expr.fullmatch, wf.keys()):
                 wf.truncate(step)

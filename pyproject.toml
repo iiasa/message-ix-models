@@ -121,6 +121,21 @@ files = [
   "doc",
   "message_ix_models",
 ]
+# strict = true  # As of 2026-10-21, causes ~2378 errors
+# The following are implied by strict in mypy 2.4.0
+# check_untyped_defs = true           # 100
+# disallow_any_generics = true        # 292
+# disallow_incomplete_defs = true     # 479
+disallow_subclassing_any = true
+# disallow_untyped_calls = true       # 724
+# disallow_untyped_decorators = true  #  43
+# disallow_untyped_defs = true        # 969
+extra_checks = true
+no_implicit_reexport = true
+strict_equality = true
+warn_redundant_casts = true
+# warn_return_any = true              #  89
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 module = [

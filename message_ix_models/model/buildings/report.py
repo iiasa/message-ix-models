@@ -18,11 +18,7 @@ from iam_units import registry
 
 from message_ix_models import Context, Spec
 from message_ix_models.report import iamc as add_iamc
-
-# TODO Remove type exclusion after release of message-ix-models >2025.1.10
-from message_ix_models.report.operator import (  # type: ignore [attr-defined]
-    nodes_world_agg,
-)
+from message_ix_models.report.operator import nodes_world_agg
 from message_ix_models.report.util import add_replacements
 
 from . import Config

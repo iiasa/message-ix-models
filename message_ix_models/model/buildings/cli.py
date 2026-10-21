@@ -1,5 +1,7 @@
 """Command-line interface for MESSAGEix-Buildings."""
 
+from typing import TYPE_CHECKING
+
 import click
 
 from message_ix_models.project.navigate.cli import _SCENARIO
@@ -7,6 +9,9 @@ from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
 from . import Config, build_and_solve, sturm
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 @click.group("buildings")
@@ -39,7 +44,7 @@ def cli(context):
     help="Method to invoke STURM.",
 )
 @click.pass_obj
-def build_and_solve_cmd(context, **kwargs):
+def build_and_solve_cmd(context: "Context", /, **kwargs) -> None:
     mark_time()
 
     # Handle CLI arguments

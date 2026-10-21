@@ -152,7 +152,7 @@ class ConfigHelper:
                 elif not isinstance(existing, type):
                     # https://github.com/python/mypy/issues/15843
                     # TODO Check that fix is available in mypy 1.7.x; remove
-                    value = replace(existing, **value)  # type: ignore [misc]
+                    value = replace(existing, **value)
             setattr(self, key, value)
 
     def replace(self, **kwargs):
