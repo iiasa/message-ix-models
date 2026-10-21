@@ -28,6 +28,9 @@ This documentation of MESSAGEix-Transport, its inputs, configuration, implementa
 
 - :doc:`input` (separate page)—line (1) in the diagram.
 - :ref:`transport-implementation` (below)—between lines (1) and (3) in the diagram.
+
+  - :doc:`ssp` (separate page)—SSP-specific inputs and data.
+
 - :doc:`output` (separate page)—between lines (3) and (4) in the diagram.
 
 .. toctree::
@@ -36,6 +39,7 @@ This documentation of MESSAGEix-Transport, its inputs, configuration, implementa
 
    input
    output
+   ssp
 
 Other topics covered on this page:
 
@@ -103,6 +107,33 @@ On other page(s): :doc:`disutility`.
 
 Usage
 =====
+
+via SLURM/:program:`sbatch`
+---------------------------
+
+A script like the following can be used
+to repeatedly invoke :program:`mix-models sbatch` with different jobs labels,
+corresponding to different labels `mix-models transport run`.
+This has the effect of starting multiple Slurm jobs, one per label:
+
+.. code-block:: shell
+
+   #!/bin/sh
+
+   while IFS=$'\n' read -r label; do
+     mix-models sbatch -m model.transport --remote --go \
+       -v username=kishimot \
+       -v J="'$label'" -- \
+       "--from='' '$label reported'"
+     # Pause so overlapping clone operations do not fail
+     sleep 90s
+   done << LABELS
+   SSP1
+   SSP2
+   SSP3
+   LABELS
+
+   exit 0
 
 Automated workflow
 ------------------
