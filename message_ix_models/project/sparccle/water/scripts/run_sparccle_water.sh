@@ -22,6 +22,9 @@
 #   MSG_ENV     python venv with message_ix_models   (default ~/env/msg_pci)
 #   IXMP_DATA   ixmp config dir holding the platforms (default ~/.local/share/ixmp_pci)
 #   SOLVE_OPTS  extra CPLEX options for solve_local.py (default "--solve-option scaind=-1")
+#   REBUILD=1   build and solve even when the scenario is already solved
+#   WATER_REPORT=0  skip the `water-ix report --water` step
+#   WATER_OUT   where the reporting CSVs are copied (default ~/sparccle/out/reports/water)
 # Logs go to %x_%J.out in the submission directory (use ~/sparccle/logs).
 
 [ $# -ge 1 ] || { echo "usage: $0 SSP [KEY ...]"; exit 2; }
@@ -40,6 +43,9 @@ module load Java
 module load gams
 source "${MSG_ENV:-$HOME/env/msg_pci}/bin/activate"
 export IXMP_DATA="${IXMP_DATA:-$HOME/.local/share/ixmp_pci}"
+WATER_OUT="${WATER_OUT:-$HOME/sparccle/out/reports/water}"
+REPORT_SRC=$SCRIPT_DIR/../../../../reporting_output   # where water.report writes
+REGIONS=$(grep -E "^regions:" "$CFG" | awk '{print $2}')
 cd "$HOME"
 
 SOURCE=$(grep -E "^source_platform:" "$CFG" | awk '{print $2}')
@@ -55,14 +61,27 @@ status=0
 for KEY in "${KEYS[@]}"; do
   read -r PLATFORM MODEL SCEN < <(mix-models sparccle_water names --config "$CFG" "$SSP" "$KEY" 2>/dev/null | tail -1)
   case "$MODEL" in SSP_*) ;; *) echo "!! could not parse names output: $PLATFORM $MODEL $SCEN"; exit 1;; esac
-  echo "== $(date -u +%FT%TZ) build $SSP $KEY -> $PLATFORM/$MODEL/$SCEN"
-  if ! srun mix-models sparccle_water run --config "$CFG" "$SSP $KEY" --go; then
-    echo "!! build failed: $SSP $KEY"; status=1; continue
+  STATE=$(mix-models sparccle_water status --config "$CFG" "$SSP" "$KEY" 2>/dev/null | tail -1)
+  if [ "$STATE" = "solved" ] && [ "${REBUILD:-0}" != "1" ]; then
+    echo "== $(date -u +%FT%TZ) $SSP $KEY already solved ($PLATFORM/$MODEL/$SCEN); skipping build"
+  else
+    echo "== $(date -u +%FT%TZ) build $SSP $KEY -> $PLATFORM/$MODEL/$SCEN (was: $STATE)"
+    if ! srun mix-models sparccle_water run --config "$CFG" "$SSP $KEY" --go; then
+      echo "!! build failed: $SSP $KEY"; status=1; continue
+    fi
+    echo "== $(date -u +%FT%TZ) solve $PLATFORM/$MODEL/$SCEN (if unsolved)"
+    # shellcheck disable=SC2086  # SOLVE_OPTS is a list of options on purpose
+    if ! srun python "$SOLVE" "$PLATFORM" "$MODEL" "$SCEN" --if-unsolved ${SOLVE_OPTS:---solve-option scaind=-1}; then
+      echo "!! solve failed: $SSP $KEY"; status=1; continue
+    fi
   fi
-  echo "== $(date -u +%FT%TZ) solve $PLATFORM/$MODEL/$SCEN (if unsolved)"
-  # shellcheck disable=SC2086  # SOLVE_OPTS is a list of options on purpose
-  if ! srun python "$SOLVE" "$PLATFORM" "$MODEL" "$SCEN" --if-unsolved ${SOLVE_OPTS:---solve-option scaind=-1}; then
-    echo "!! solve failed: $SSP $KEY"; status=1; continue
+  [ "${WATER_REPORT:-1}" = "0" ] && continue
+  echo "== $(date -u +%FT%TZ) report $PLATFORM/$MODEL/$SCEN"
+  if srun mix-models --url "ixmp://$PLATFORM/$MODEL/$SCEN" water-ix --regions "$REGIONS" --ssp "$SSP" report --water; then
+    mkdir -p "$WATER_OUT"
+    cp -v "$REPORT_SRC/${MODEL}_${SCEN}_nexus.csv" "$WATER_OUT/" || status=1
+  else
+    echo "!! report failed: $SSP $KEY"; status=1
   fi
 done
 echo "== $(date -u +%FT%TZ) done, status $status"

@@ -46,3 +46,19 @@ def names(config_path, ssp, key):
         else scenario_name(config, ssp, key)
     )
     click.echo(f"{platform_of(config, ssp)} {model} {scenario}")
+
+
+@cli.command("status", params=[CONFIG_OPTION])
+@click.argument("ssp")
+@click.argument("key")
+def status(config_path, ssp, key):
+    """Print missing / unsolved / solved for scenario KEY of starter SSP."""
+    from .workflow import load_config, platform_of, scenario_name, scenario_status
+
+    config = load_config(config_path)
+    model = config["starters"][ssp]["model"]
+    click.echo(
+        scenario_status(
+            platform_of(config, ssp), model, scenario_name(config, ssp, key)
+        )
+    )

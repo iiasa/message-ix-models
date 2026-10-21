@@ -43,6 +43,12 @@ starters:
 #   ban_mode         bound_activity_up = 0 on every technology output in that
 #                    mode from the first model year (Mf = efficient distribution:
 #                    urban_t_d, rural_t_d, sewerage, recycle, discharge)
+#   fossil_gw_var_cost
+#                    var_cost on extract_gw_fossil, USD/MCM in the model's cost
+#                    unit (= USD/m3). The base prices fossil groundwater at
+#                    ~0.03 USD/m3 (inv 0.065 over 20 y + electricity) against
+#                    ~0.34 for membrane desalination (inv 1.90 over 30 y, fix
+#                    0.155, electricity and heat), so 0.4 puts it after desalination.
 #   sdgs: SDG        the water module's SDG package: Mf-only distribution with
 #                    mid-tier costs, treatment targets (urban 0.95, rural 0.8),
 #                    connection targets, SDG6 recycling, e-flow bounds
@@ -54,6 +60,11 @@ scenarios:
     from: base
     eflow: true
     renewable_growth: true
+  BAUfg:
+    from: base
+    eflow: true
+    renewable_growth: true
+    fossil_gw_var_cost: 0.4
   maladapt:
     from: base
     eflow: true

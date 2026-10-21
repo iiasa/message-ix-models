@@ -6,6 +6,7 @@ import pytest
 from message_ix_models.project.sparccle.water.workflow import (
     LEVERS,
     RENEWABLE_EXTRACTION,
+    fossil_gw_cost_rows,
     growth_cap_rows,
     load_config,
     mode_ban_rows,
@@ -17,7 +18,8 @@ from message_ix_models.project.sparccle.water.workflow import (
 def test_load_config_packaged() -> None:
     config = load_config()
 
-    assert set(config["scenarios"]) == {"base", "BAU", "maladapt", "adapt"}
+    assert set(config["scenarios"]) == {"base", "BAU", "BAUfg", "maladapt", "adapt"}
+    assert config["scenarios"]["BAUfg"]["fossil_gw_var_cost"] == pytest.approx(0.4)
     assert set(config["starters"]) == {"SSP2", "SSP3"}
     assert config["nexus"] == {"rcps": "7p0", "rels": "low"}
     assert config["scenarios"]["base"] == {"build": "nexus", "sdgs": "baseline"}
@@ -28,7 +30,12 @@ def test_load_config_packaged() -> None:
     assert "~" not in config["local_db"]
     for spec in config["scenarios"].values():
         assert ("build" in spec) != ("from" in spec)
-    assert set(LEVERS) == {"eflow", "renewable_growth", "ban_mode"}
+    assert set(LEVERS) == {
+        "eflow",
+        "renewable_growth",
+        "ban_mode",
+        "fossil_gw_var_cost",
+    }
 
 
 def test_load_config_rejects_build_and_from(tmp_path) -> None:
@@ -89,6 +96,40 @@ def test_mode_ban_rows() -> None:
     assert set(df.columns) >= {
         "node_loc",
         "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    }
+
+
+def test_fossil_gw_cost_rows() -> None:
+    inp = pd.DataFrame(
+        {
+            "node_loc": ["B1", "B1", "B1", "B2"],
+            "technology": "extract_gw_fossil",
+            "year_vtg": [2030, 2030, 2035, 2035],
+            "year_act": [2035, 2040, 2035, 2035],
+            "mode": "M1",
+            "node_origin": "R12_X",
+            "commodity": "electr",
+            "level": "final",
+            "time": "year",
+            "time_origin": "year",
+            "value": [0.0001] * 4,
+            "unit": "GWa/MCM",
+        }
+    )
+
+    df = fossil_gw_cost_rows(inp, 0.4)
+
+    assert len(df) == 4
+    assert (df["value"] == 0.4).all() and (df["unit"] == "USD/MCM").all()
+    assert set(df.columns) == {
+        "node_loc",
+        "technology",
+        "year_vtg",
         "year_act",
         "mode",
         "time",

@@ -10,6 +10,8 @@ Per starter (SSP2, SSP3; ``config.yaml``), on its local HSQLDB platform:
   ``extract_groundwater``.
 - ``maladapt``: ``BAU`` plus no efficiency improvement in distribution: the
   efficient mode ``Mf`` of every distribution technology is bounded to zero.
+- ``BAUfg``: ``BAU`` plus a variable cost on fossil groundwater above the
+  levelised cost of membrane desalination, so desalination is used first.
 - ``adapt`` (scenario ``..._W_+adapt``): a second nexus build with the water
   module's SDG package (efficient distribution only, treatment and recycling
   targets, e-flow bounds), then the growth cap.
@@ -48,7 +50,7 @@ log = logging.getLogger(__name__)
 RENEWABLE_EXTRACTION = ["extract_surfacewater", "extract_groundwater"]
 
 #: Scenario keys that change an existing scenario rather than build one.
-LEVERS = ("eflow", "renewable_growth", "ban_mode")
+LEVERS = ("eflow", "renewable_growth", "ban_mode", "fossil_gw_var_cost")
 
 
 def load_config(path: str | Path | None = None) -> dict:
@@ -102,6 +104,33 @@ def mode_ban_rows(output: pd.DataFrame, mode: str, years: list[int]) -> pd.DataF
         value=0.0,
         unit="MCM/year",
     ).pipe(broadcast, year_act=years)
+
+
+def fossil_gw_cost_rows(inp: pd.DataFrame, value: float) -> pd.DataFrame:
+    """``var_cost`` rows at `value` for every (node, vintage, year, mode) of `inp`.
+
+    `inp` is the ``input`` of ``extract_gw_fossil``; its index columns give the
+    vintage/activity pairs the technology exists for.
+    """
+    cols = ["node_loc", "technology", "year_vtg", "year_act", "mode", "time"]
+    idx = inp[cols].drop_duplicates().reset_index(drop=True)
+    return make_df("var_cost", **idx, value=value, unit="USD/MCM")
+
+
+def scenario_status(platform: str, model: str, scenario: str) -> str:
+    """``"missing"``, ``"unsolved"`` or ``"solved"`` for the default version."""
+    import ixmp
+    from message_ix import Scenario
+
+    mp = ixmp.Platform(name=platform)
+    try:
+        existing = mp.scenario_list(default=True)
+        hit = (existing["model"] == model) & (existing["scenario"] == scenario)
+        if not hit.any():
+            return "missing"
+        return "solved" if Scenario(mp, model, scenario).has_solution() else "unsolved"
+    finally:
+        mp.close_db()
 
 
 def basins_of(scenario: "Scenario") -> set[str]:
@@ -190,6 +219,13 @@ def apply(  # pragma: no cover
         else:
             rows["growth_activity_up"] = growth_cap_rows(current, value)
             messages.append(f"renewable growth {value} ({len(current)} rows)")
+
+    cost = spec.get("fossil_gw_var_cost")
+    if cost is not None:
+        inp = scenario.par("input", filters={"technology": ["extract_gw_fossil"]})
+        df = fossil_gw_cost_rows(inp, float(cost))
+        rows["var_cost"] = df
+        messages.append(f"extract_gw_fossil var_cost {cost} USD/MCM ({len(df)} rows)")
 
     mode = spec.get("ban_mode")
     if mode:
