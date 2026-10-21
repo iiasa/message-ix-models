@@ -20,10 +20,16 @@ log = logging.getLogger(__name__)
 @common_params("regions")
 @scenario_param("--ssp", default="SSP2")
 @click.option("--time", help="Manually defined time")
+@click.option(
+    "--output-scenario",
+    default=None,
+    help="Exact name for the scenario `nexus` produces (default: <input>_nexus).",
+)
 @click.pass_obj
-def cli(context: "Context", regions, time):
+def cli(context: "Context", regions, time, output_scenario):
     """MESSAGEix-Water and Nexus variant."""
     water_ini(context, regions, time)
+    context["water output scenario"] = output_scenario
 
 
 def water_ini(context: "Context", regions, time):
@@ -214,7 +220,9 @@ def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error
-    output_scenario_name = context.output_scenario + "_nexus"
+    output_scenario_name = (
+        context.get("water output scenario") or context.output_scenario + "_nexus"
+    )
     output_model_name = context.output_model
 
     # Clone and build

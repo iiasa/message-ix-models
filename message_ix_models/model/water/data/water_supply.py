@@ -954,30 +954,13 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     return results
 
 
-def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
-    """Add environmental flows
-    This function bounds the available water and allocates the environmental
-    flows.Environmental flow bounds are calculated using Variable Monthly Flow
-    (VMF) method. The VMF method is applied to wet and dry seasonal runoff
-    values. These wet and dry seasonal values are then aggregated to annual
-    values.Environmental flows in the model will be incorporated as bounds on
-    'return_flow' technology. The lower bound on this technology will ensure
-    that certain amount of water remain
+def read_e_flow(context: "Context") -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Surface-water availability and environmental-flow requirement per basin.
 
-    Parameters
-    ----------
-    context : .Context
-
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-        Values are data frames ready for :meth:`~.Scenario.add_par`.
-        Years in the data include the model horizon indicated by
-        ``context["water build info"]``, plus the additional year 2010.
+    Returns the ``demand`` rows of surface water available in each basin and
+    the environmental flow (VMF method, GHM data for ``cfg.RCP``) as a long
+    frame with columns ``Region``, ``year``, ``time``, ``value`` (km3).
     """
-    # define an empty dictionary
-    results = {}
     cfg = Config.from_context(context)
 
     info = context["water build info"]
@@ -1056,34 +1039,68 @@ def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
         df_env = pd.concat([df_env, df_env2210])
         df_env = df_env[df_env["year"].isin(info.Y)]
 
-    # Return a processed dataframe for env flow calculations
+    return dmd_df, df_env
+
+
+def eflow_bound_rows(df_env: pd.DataFrame, dmd_df: pd.DataFrame) -> pd.DataFrame:
+    """``bound_activity_lo`` rows on ``return_flow`` from the environmental flow.
+
+    `df_env` and `dmd_df` are the two frames of :func:`read_e_flow`. The bound is
+    the environmental flow in MCM, never negative, from 2025 on, and never more
+    than 70 % of the basin's surface-water availability in that year and time.
+    """
+    eflow_df = make_df(
+        "bound_activity_lo",
+        node_loc="B" + df_env["Region"].astype(str),
+        technology="return_flow",
+        year_act=df_env["year"],
+        mode="M1",
+        time=df_env["time"],
+        value=df_env["value"].clip(lower=0) * KM3_TO_MCM,
+        unit="MCM/year",
+    )
+    eflow_df = eflow_df[eflow_df["year_act"] >= 2025]
+    cap = dmd_df.rename(columns={"node": "node_loc", "year": "year_act"})[
+        ["node_loc", "year_act", "time", "value"]
+    ].rename(columns={"value": "avail"})
+    eflow_df = eflow_df.merge(cap, on=["node_loc", "year_act", "time"], how="left")
+    eflow_df["value"] = np.minimum(
+        eflow_df["value"], 0.7 * eflow_df["avail"].fillna(np.inf)
+    )
+    return (
+        eflow_df.drop(columns="avail")
+        .sort_values(["node_loc", "year_act"])
+        .reset_index(drop=True)
+    )
+
+
+def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
+    """Add environmental flows
+    This function bounds the available water and allocates the environmental
+    flows.Environmental flow bounds are calculated using Variable Monthly Flow
+    (VMF) method. The VMF method is applied to wet and dry seasonal runoff
+    values. These wet and dry seasonal values are then aggregated to annual
+    values.Environmental flows in the model will be incorporated as bounds on
+    'return_flow' technology. The lower bound on this technology will ensure
+    that certain amount of water remain
+
+    Parameters
+    ----------
+    context : .Context
+
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        ``context["water build info"]``, plus the additional year 2010.
+    """
+    results = {}
+    cfg = Config.from_context(context)
+    dmd_df, df_env = read_e_flow(context)
+
     if cfg.SDG != "baseline":
-        # dataframe to put constraints on env flows
-        eflow_df = make_df(
-            "bound_activity_lo",
-            node_loc="B" + df_env["Region"].astype(str),
-            technology="return_flow",
-            year_act=df_env["year"],
-            mode="M1",
-            time=df_env["time"],
-            value=df_env["value"] * KM3_TO_MCM,
-            unit="MCM/year",
-        )
-
-        eflow_df["value"] = eflow_df["value"].apply(lambda x: x if x >= 0 else 0)
-        eflow_df = eflow_df[eflow_df["year_act"] >= 2025].reset_index(drop=True)
-
-        dmd_df.sort_values(by=["node", "year"], inplace=True)
-        dmd_df.reset_index(drop=True, inplace=True)
-        eflow_df.sort_values(by=["node_loc", "year_act"], inplace=True)
-        eflow_df.reset_index(drop=True, inplace=True)
-
-        eflow_df["value"] = np.where(
-            eflow_df["value"] >= 0.7 * dmd_df["value"],
-            0.7 * dmd_df["value"],
-            eflow_df["value"],
-        )
-
-        results["bound_activity_lo"] = eflow_df
+        results["bound_activity_lo"] = eflow_bound_rows(df_env, dmd_df)
 
     return results
