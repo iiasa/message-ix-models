@@ -211,6 +211,8 @@ def generate(
     from .config import CL_SCENARIO, Config
 
     # Handle CLI options
+    dest_platform = options.pop("platform_dest", "")
+    context.dest_platform = dict(name=dest_platform) if dest_platform else {}
     # TODO respect quiet
     options.pop("target_model_name", None)  # Stored on context.core.dest_scenario
     options.pop("target_scenario_name", None)  # Stored on context.core.dest_scenario
