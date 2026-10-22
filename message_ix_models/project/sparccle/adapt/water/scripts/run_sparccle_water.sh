@@ -10,7 +10,7 @@
 #
 # Usage: sbatch run_sparccle_water.sh SSP [KEY ...]
 #   SSP: a starter key of ../config.yaml (SSP2, SSP3)
-#   KEY: scenario keys of ../config.yaml; default: base BAU maladapt adapt
+#   KEY: scenario keys of ../config.yaml; default: base BAUfgd maladapt adapt
 #
 # Steps: copy the starter to its local HSQLDB platform (localize_starter.py,
 # no-op when present); per KEY, `mix-models sparccle_water run` builds the
@@ -29,7 +29,7 @@
 
 [ $# -ge 1 ] || { echo "usage: $0 SSP [KEY ...]"; exit 2; }
 SSP=$1; shift
-KEYS=("$@"); [ ${#KEYS[@]} -gt 0 ] || KEYS=(base BAU maladapt adapt)
+KEYS=("$@"); [ ${#KEYS[@]} -gt 0 ] || KEYS=(base BAUfgd maladapt adapt)
 
 SELF=${BASH_SOURCE[0]}
 [ -n "$SLURM_JOB_ID" ] && SELF=$(scontrol show job "$SLURM_JOB_ID" | sed -n 's/.*Command=\([^ ]*\).*/\1/p')

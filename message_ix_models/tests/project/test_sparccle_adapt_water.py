@@ -22,14 +22,11 @@ def test_load_config_packaged() -> None:
 
     assert set(config["scenarios"]) == {
         "base",
-        "BAU",
-        "BAUfg",
         "BAUfgd",
         "maladapt",
         "adapt",
     }
     assert config["scenarios"]["BAUfgd"]["desal_free"] is True
-    assert config["scenarios"]["BAUfg"]["fossil_gw_var_cost"] == pytest.approx(0.4)
     assert set(config["starters"]) == {"SSP2", "SSP3"}
     assert config["nexus"] == {"rcps": "7p0", "rels": "low"}
     assert config["scenarios"]["base"] == {"build": "nexus", "sdgs": "baseline"}
@@ -40,7 +37,7 @@ def test_load_config_packaged() -> None:
         assert config["scenarios"][key]["fossil_gw_var_cost"] == pytest.approx(0.4)
     assert config["scenarios"]["maladapt"]["desal_free"] is True
     assert "desal_free" not in config["scenarios"]["adapt"]
-    for key in ("BAU", "BAUfg", "BAUfgd", "maladapt"):
+    for key in ("BAUfgd", "maladapt"):
         assert config["scenarios"][key]["ban_mode"] == "Mf"
     assert "ban_mode" not in config["scenarios"]["adapt"]
     assert config["starters"]["SSP3"]["renewable_growth"] == pytest.approx(0.03)
@@ -67,7 +64,7 @@ def test_load_config_rejects_build_and_from(tmp_path) -> None:
 def test_names() -> None:
     config = load_config()
 
-    assert scenario_name(config, "SSP2", "BAU") == "CurrentPolicies_SSP2_W_BAU"
+    assert scenario_name(config, "SSP2", "BAUfgd") == "CurrentPolicies_SSP2_W_BAUfgd"
     assert scenario_name(config, "SSP3", "adapt") == "CurrentPolicies_SSP3_W_+adapt"
     assert platform_of(config, "SSP2") == (
         "sparccle_SSP_SSP2_v6.6_sp_NPiREF_GDP_CI_50_ensemble_2"

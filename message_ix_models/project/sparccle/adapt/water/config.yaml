@@ -3,10 +3,10 @@
 # scripts/localize_starter.py from `source_platform`).
 #
 #   mix-models sparccle_water run --config <this file> "SSP2 base" --go     # steps: "<SSP> <key>"
-#   mix-models sparccle_water names SSP2 BAU        # -> platform model scenario
+#   mix-models sparccle_water names SSP2 BAUfgd     # -> platform model scenario
 #
 # Solving: `base` and `adapt` are solved by the `water-ix nexus` build itself;
-# `BAU` and `maladapt` by ../scripts/solve_local.py (see
+# `BAUfgd` and `maladapt` by ../scripts/solve_local.py (see
 # scripts/run_sparccle_water.sh).
 
 source_platform: ixmp_dev
@@ -62,18 +62,8 @@ scenarios:
     build: nexus
     sdgs: baseline
   # Mf (efficient distribution: 10 % instead of 20 % losses, half the electricity,
-  # higher variable cost) is banned everywhere except +adapt (10-22).
-  BAU:
-    from: base
-    eflow: true
-    renewable_growth: true
-    ban_mode: Mf
-  BAUfg:
-    from: base
-    eflow: true
-    renewable_growth: true
-    fossil_gw_var_cost: 0.4
-    ban_mode: Mf
+  # higher variable cost) is banned everywhere except +adapt (10-22). BAUfgd is
+  # the BAU of record; the 10-21 BAU and BAUfg runs were stepping stones.
   BAUfgd:
     from: base
     eflow: true
