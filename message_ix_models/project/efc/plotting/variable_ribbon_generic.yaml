@@ -124,6 +124,20 @@ colors:
 groups:
 
 # =========================================================================
+# Temp
+# =========================================================================
+
+# agg_ref aggregates refinery products into lightoil + fueloil (both GWa).
+# Convert at ~42 GJ/t oil LHV: 1 Mt = 42/31.54 ≈ 1.3316 GWa.
+- title: "out|agg_ref|lightoil + fueloil (Mt)"
+  aggregate_by: dim_c
+  plot_unit: "Mt oil"
+  scale_factor: 0.7510  # 1 / (42 / 31.54) GWa/Mt
+  variables:
+  - out|agg_ref|*|lightoil|*
+  - out|agg_ref|*|fueloil|*
+
+# =========================================================================
 # Production (out|) by technology — aggregate_by dim_t
 # =========================================================================
 
@@ -147,13 +161,12 @@ groups:
   - out|h2_pyro_elec|*|hydrogen|*
   - out|catalytic_reforming_ref|*|hydrogen|*
 
-# Fuel (primary, GWa) + feedstock (primary_material, Mt) in one stack.
-# scale_from_unit limits the meth_t_d bridge to GWa rows; Mt rows pass through.
+# Producers: primary (fuel) AND primary_material (feedstock) are both GWa —
+# Mt only appears after meth_t_d. Scale both.
 - title: "out|methanol production|by technology (Mt)"
   aggregate_by: dim_t
   plot_unit: "Mt methanol"
   scale_factor: 1.43345  # 1 / 0.697615 GWa/Mt
-  scale_from_unit: "GWa"
   variables:
   - out|meth_ng|*|methanol|primary
   - out|meth_ng_ccs|*|methanol|primary
@@ -546,6 +559,13 @@ groups:
   - in|hydro_cracking_ref|*|vacuum_gasoil|*
   - in|hydro_cracking_ref|*|hydrogen|*
   - in|hydro_cracking_ref|*|ht_heat|*
+  - in|hydrotreating_ref|*|kerosene|*
+  - in|hydrotreating_ref|*|vacuum_gasoil|*
+  - in|hydrotreating_ref|*|naphtha|*
+  - in|hydrotreating_ref|*|vacuum_residue|*
+  - in|hydrotreating_ref|*|atm_gasoil|*
+  - in|hydrotreating_ref|*|diesel|*
+  - in|hydrotreating_ref|*|hydrogen|*
 
 # =========================================================================
 # Cross-sector: layers are dim_s tags from the sector groups above
