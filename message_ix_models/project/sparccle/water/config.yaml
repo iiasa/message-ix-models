@@ -49,6 +49,11 @@ starters:
 #                    ~0.03 USD/m3 (inv 0.065 over 20 y + electricity) against
 #                    ~0.34 for membrane desalination (inv 1.90 over 30 y, fix
 #                    0.155, electricity and heat), so 0.4 puts it after desalination.
+#   desal_free       copy the last historical desalination builds (2025) to the
+#                    period before the first model year (2030) and remove the
+#                    module's 10 %/yr growth_new_capacity_up on membrane and
+#                    distillation; without it the growth chain starts from zero
+#                    and no desalination plant can ever be built
 #   sdgs: SDG        the water module's SDG package: Mf-only distribution with
 #                    mid-tier costs, treatment targets (urban 0.95, rural 0.8),
 #                    connection targets, SDG6 recycling, e-flow bounds
@@ -65,6 +70,12 @@ scenarios:
     eflow: true
     renewable_growth: true
     fossil_gw_var_cost: 0.4
+  BAUfgd:
+    from: base
+    eflow: true
+    renewable_growth: true
+    fossil_gw_var_cost: 0.4
+    desal_free: true
   maladapt:
     from: base
     eflow: true

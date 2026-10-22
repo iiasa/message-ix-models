@@ -4,8 +4,10 @@ import pandas as pd
 import pytest
 
 from message_ix_models.project.sparccle.water.workflow import (
+    DESAL_PLANTS,
     LEVERS,
     RENEWABLE_EXTRACTION,
+    desal_seed_rows,
     fossil_gw_cost_rows,
     growth_cap_rows,
     load_config,
@@ -18,7 +20,15 @@ from message_ix_models.project.sparccle.water.workflow import (
 def test_load_config_packaged() -> None:
     config = load_config()
 
-    assert set(config["scenarios"]) == {"base", "BAU", "BAUfg", "maladapt", "adapt"}
+    assert set(config["scenarios"]) == {
+        "base",
+        "BAU",
+        "BAUfg",
+        "BAUfgd",
+        "maladapt",
+        "adapt",
+    }
+    assert config["scenarios"]["BAUfgd"]["desal_free"] is True
     assert config["scenarios"]["BAUfg"]["fossil_gw_var_cost"] == pytest.approx(0.4)
     assert set(config["starters"]) == {"SSP2", "SSP3"}
     assert config["nexus"] == {"rcps": "7p0", "rels": "low"}
@@ -35,7 +45,9 @@ def test_load_config_packaged() -> None:
         "renewable_growth",
         "ban_mode",
         "fossil_gw_var_cost",
+        "desal_free",
     }
+    assert DESAL_PLANTS == ["membrane", "distillation"]
 
 
 def test_load_config_rejects_build_and_from(tmp_path) -> None:
@@ -136,3 +148,22 @@ def test_fossil_gw_cost_rows() -> None:
         "value",
         "unit",
     }
+
+
+def test_desal_seed_rows() -> None:
+    hist = pd.DataFrame(
+        {
+            "node_loc": ["B1", "B1", "B2"],
+            "technology": ["membrane", "membrane", "distillation"],
+            "year_vtg": [2020, 2025, 2025],
+            "value": [1.0, 2.0, 3.0],
+            "unit": "MCM/year",
+        }
+    )
+
+    df = desal_seed_rows(hist, 2025, 2030)
+
+    assert len(df) == 2
+    assert set(df["year_vtg"]) == {2030}
+    assert sorted(df["value"]) == [2.0, 3.0]
+    assert list(df.columns) == list(hist.columns)

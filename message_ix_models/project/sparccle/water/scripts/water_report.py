@@ -51,16 +51,34 @@ def load(path: Path) -> pd.DataFrame:
     return df[keep].dropna(subset=["value"])
 
 
+COMPONENTS = {
+    "Water Withdrawal|Irrigation": [
+        "Water Withdrawal|Irrigation|Cereal",
+        "Water Withdrawal|Irrigation|Oil Crops",
+        "Water Withdrawal|Irrigation|Sugar Crops",
+    ],
+}
+
+
+def select(df: pd.DataFrame, variable: str) -> pd.DataFrame:
+    """Rows of `variable`, or of its components when the aggregate is not reported."""
+    sel = df[df["variable"] == variable]
+    if sel.empty and variable in COMPONENTS:
+        sel = df[df["variable"].isin(COMPONENTS[variable])]
+    return sel
+
+
 def world(df: pd.DataFrame, variable: str) -> pd.Series:
     """World value by year of `variable`; sum of R12 regions when World is absent."""
-    sel = df[df["variable"] == variable]
+    sel = select(df, variable)
     if (sel["region"] == "World").any():
         return sel[sel["region"] == "World"].groupby("year")["value"].sum()
     return sel[sel["region"].str.startswith("R12_")].groupby("year")["value"].sum()
 
 
 def by_region(df: pd.DataFrame, variable: str, year: int) -> pd.Series:
-    sel = df[(df["variable"] == variable) & (df["year"] == year)]
+    sel = select(df, variable)
+    sel = sel[sel["year"] == year]
     sel = sel[sel["region"].str.startswith("R12_")]
     return sel.groupby("region")["value"].sum()
 
@@ -77,8 +95,11 @@ def fig_sources(data: dict[str, pd.DataFrame], out: Path) -> Path:
         ax.set_xlabel("year")
         ax.grid(alpha=0.3)
     axes[0].set_ylabel("MCM/yr")
-    axes[-1].legend(loc="upper left", fontsize=8, frameon=False)
-    fig.tight_layout()
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(
+        handles, labels, loc="lower center", ncol=len(labels), fontsize=8, frameon=False
+    )
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
     path = out / "fig_sources.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)

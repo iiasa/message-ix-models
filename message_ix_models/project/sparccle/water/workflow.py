@@ -12,6 +12,11 @@ Per starter (SSP2, SSP3; ``config.yaml``), on its local HSQLDB platform:
   efficient mode ``Mf`` of every distribution technology is bounded to zero.
 - ``BAUfg``: ``BAU`` plus a variable cost on fossil groundwater above the
   levelised cost of membrane desalination, so desalination is used first.
+- ``BAUfgd``: ``BAUfg`` with desalination freed: the water module's
+  ``historical_new_capacity`` for ``membrane``/``distillation`` ends in 2025
+  while the first model year is 2035, so its 10 %/yr growth chain on new
+  capacity starts from zero; the 2025 builds are copied to 2030 and the growth
+  cap is removed.
 - ``adapt`` (scenario ``..._W_+adapt``): a second nexus build with the water
   module's SDG package (efficient distribution only, treatment and recycling
   targets, e-flow bounds), then the growth cap.
@@ -50,7 +55,10 @@ log = logging.getLogger(__name__)
 RENEWABLE_EXTRACTION = ["extract_surfacewater", "extract_groundwater"]
 
 #: Scenario keys that change an existing scenario rather than build one.
-LEVERS = ("eflow", "renewable_growth", "ban_mode", "fossil_gw_var_cost")
+LEVERS = ("eflow", "renewable_growth", "ban_mode", "fossil_gw_var_cost", "desal_free")
+
+#: Desalination plant technologies (growth-capped by the water module).
+DESAL_PLANTS = ["membrane", "distillation"]
 
 
 def load_config(path: str | Path | None = None) -> dict:
@@ -115,6 +123,13 @@ def fossil_gw_cost_rows(inp: pd.DataFrame, value: float) -> pd.DataFrame:
     cols = ["node_loc", "technology", "year_vtg", "year_act", "mode", "time"]
     idx = inp[cols].drop_duplicates().reset_index(drop=True)
     return make_df("var_cost", **idx, value=value, unit="USD/MCM")
+
+
+def desal_seed_rows(hist: pd.DataFrame, from_year: int, to_year: int) -> pd.DataFrame:
+    """`hist` (``historical_new_capacity``) rows of `from_year` copied to `to_year`."""
+    out = hist[hist["year_vtg"] == from_year].copy()
+    out["year_vtg"] = to_year
+    return out.reset_index(drop=True)
 
 
 def scenario_status(platform: str, model: str, scenario: str) -> str:
@@ -185,6 +200,88 @@ def build_nexus(  # pragma: no cover
     return Scenario(mp, model, new_name)
 
 
+class Changes:
+    """Parameter rows to add, rows to remove and log messages, gathered by levers."""
+
+    def __init__(self) -> None:
+        self.rows: dict[str, pd.DataFrame] = {}
+        self.removals: dict[str, pd.DataFrame] = {}
+        self.messages: list[str] = []
+
+    def __bool__(self) -> bool:
+        return bool(self.rows or self.removals)
+
+
+def _lever_eflow(  # pragma: no cover
+    ch: Changes, context: "Context", scenario: "Scenario", config: dict
+) -> None:
+    ctx = water_context(context, scenario, regions=config["regions"], **config["nexus"])
+    dmd_df, df_env = read_e_flow(ctx)
+    df = eflow_bound_rows(df_env, dmd_df)
+    ch.rows["bound_activity_lo"] = df
+    ch.messages.append(f"e-flow lower bounds on return_flow ({len(df)} rows)")
+
+
+def _lever_growth(
+    ch: Changes, scenario: "Scenario", value: float
+) -> None:  # pragma: no cover
+    current = scenario.par(
+        "growth_activity_up", filters={"technology": RENEWABLE_EXTRACTION}
+    )
+    if current.empty:
+        raise RuntimeError(
+            f"{scenario.url}: no growth_activity_up on {RENEWABLE_EXTRACTION}"
+        )
+    if (current["value"] == value).all():
+        ch.messages.append(f"renewable growth already {value}")
+    else:
+        ch.rows["growth_activity_up"] = growth_cap_rows(current, value)
+        ch.messages.append(f"renewable growth {value} ({len(current)} rows)")
+
+
+def _lever_fossil(
+    ch: Changes, scenario: "Scenario", cost: float
+) -> None:  # pragma: no cover
+    inp = scenario.par("input", filters={"technology": ["extract_gw_fossil"]})
+    df = fossil_gw_cost_rows(inp, cost)
+    ch.rows["var_cost"] = df
+    ch.messages.append(f"extract_gw_fossil var_cost {cost} USD/MCM ({len(df)} rows)")
+
+
+def _lever_desal(
+    ch: Changes, scenario: "Scenario", info: ScenarioInfo
+) -> None:  # pragma: no cover
+    # The module's historical_new_capacity ends in 2025 while the first model
+    # year is 2035, so the 10 %/yr growth chain on new desalination capacity
+    # starts from zero and no plant can ever be built. Seed the period before
+    # the first model year from the last historical one and drop the cap.
+    hist = scenario.par("historical_new_capacity", filters={"technology": DESAL_PLANTS})
+    last = int(hist["year_vtg"].max())
+    seed_year = max(y for y in info.set["year"] if y < info.y0)
+    n_seed = 0
+    if seed_year > last:
+        ch.rows["historical_new_capacity"] = desal_seed_rows(hist, last, seed_year)
+        n_seed = len(ch.rows["historical_new_capacity"])
+    growth = scenario.par(
+        "growth_new_capacity_up", filters={"technology": DESAL_PLANTS}
+    )
+    ch.removals["growth_new_capacity_up"] = growth
+    ch.messages.append(
+        f"desalination freed: {last}->{seed_year} historical builds copied"
+        f" ({n_seed} rows), growth_new_capacity_up removed ({len(growth)} rows)"
+    )
+
+
+def _lever_ban(
+    ch: Changes, scenario: "Scenario", mode: str, years: list[int]
+) -> None:  # pragma: no cover
+    output = scenario.par("output", filters={"mode": [mode]})
+    df = mode_ban_rows(output, mode, years)
+    ch.rows["bound_activity_up"] = df
+    techs = sorted(df["technology"].unique())
+    ch.messages.append(f"mode {mode} banned from {years[0]}: {', '.join(techs)}")
+
+
 def apply(  # pragma: no cover
     context: "Context", scenario: "Scenario", *, config: dict, key: str, ssp: str
 ) -> None:
@@ -193,56 +290,30 @@ def apply(  # pragma: no cover
     starter = config["starters"][ssp]
     info = ScenarioInfo(scenario)
     years = [y for y in info.Y if y >= spec.get("full_from", info.y0)]
-    rows: dict[str, pd.DataFrame] = {}
-    messages: list[str] = []
+    ch = Changes()
 
     if spec.get("eflow"):
-        ctx = water_context(
-            context, scenario, regions=config["regions"], **config["nexus"]
-        )
-        dmd_df, df_env = read_e_flow(ctx)
-        df = eflow_bound_rows(df_env, dmd_df)
-        rows["bound_activity_lo"] = df
-        messages.append(f"e-flow lower bounds on return_flow ({len(df)} rows)")
-
+        _lever_eflow(ch, context, scenario, config)
     if spec.get("renewable_growth"):
-        value = float(starter["renewable_growth"])
-        current = scenario.par(
-            "growth_activity_up", filters={"technology": RENEWABLE_EXTRACTION}
-        )
-        if current.empty:
-            raise RuntimeError(
-                f"{scenario.url}: no growth_activity_up on {RENEWABLE_EXTRACTION}"
-            )
-        if (current["value"] == value).all():
-            messages.append(f"renewable growth already {value}")
-        else:
-            rows["growth_activity_up"] = growth_cap_rows(current, value)
-            messages.append(f"renewable growth {value} ({len(current)} rows)")
+        _lever_growth(ch, scenario, float(starter["renewable_growth"]))
+    if spec.get("fossil_gw_var_cost") is not None:
+        _lever_fossil(ch, scenario, float(spec["fossil_gw_var_cost"]))
+    if spec.get("desal_free"):
+        _lever_desal(ch, scenario, info)
+    if spec.get("ban_mode"):
+        _lever_ban(ch, scenario, spec["ban_mode"], years)
 
-    cost = spec.get("fossil_gw_var_cost")
-    if cost is not None:
-        inp = scenario.par("input", filters={"technology": ["extract_gw_fossil"]})
-        df = fossil_gw_cost_rows(inp, float(cost))
-        rows["var_cost"] = df
-        messages.append(f"extract_gw_fossil var_cost {cost} USD/MCM ({len(df)} rows)")
-
-    mode = spec.get("ban_mode")
-    if mode:
-        output = scenario.par("output", filters={"mode": [mode]})
-        df = mode_ban_rows(output, mode, years)
-        rows["bound_activity_up"] = df
-        techs = sorted(df["technology"].unique())
-        messages.append(f"mode {mode} banned from {years[0]}: {', '.join(techs)}")
-
-    message = f"sparccle_water {ssp} {key}: " + "; ".join(messages)
-    if not rows:
+    message = f"sparccle_water {ssp} {key}: " + "; ".join(ch.messages)
+    if not ch:
         log.info("%s — nothing to change", message)
         return
     if scenario.has_solution():
         scenario.remove_solution()
     scenario.check_out()
-    for par, df in rows.items():
+    for par, df in ch.removals.items():
+        if not df.empty:
+            scenario.remove_par(par, df)
+    for par, df in ch.rows.items():
         scenario.add_par(par, df)
     log.info(message)
     scenario.commit(message)

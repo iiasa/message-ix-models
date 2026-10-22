@@ -11,6 +11,7 @@ every scenario lives there.
 | `base` | `CurrentPolicies_SSPx_W_base` | `water-ix nexus --sdgs baseline` on the starter (solved by the build) | none |
 | `BAU` | `CurrentPolicies_SSPx_W_BAU` | clone of `base` | environmental-flow lower bounds on `return_flow`; renewable-water growth cap 2 %/yr (SSP2) or 3 %/yr (SSP3) on `extract_surfacewater`, `extract_groundwater` |
 | `BAUfg` | `CurrentPolicies_SSPx_W_BAUfg` | clone of `base` | `BAU` levers; `var_cost` 0.4 USD/m³ on `extract_gw_fossil`, above levelised membrane desalination (~0.34), so desalination is used before fossil groundwater |
+| `BAUfgd` | `CurrentPolicies_SSPx_W_BAUfgd` | clone of `base` | `BAUfg` levers; desalination freed: 2025 `historical_new_capacity` of `membrane`/`distillation` copied to 2030, their 10 %/yr `growth_new_capacity_up` removed |
 | `maladapt` | `CurrentPolicies_SSPx_W_maladapt` | clone of `base` | `BAU` levers; efficient distribution mode `Mf` bounded to zero from the first model year |
 | `adapt` | `CurrentPolicies_SSPx_W_+adapt` | `water-ix nexus --sdgs SDG` on the starter, then the growth cap | SDG package: `Mf`-only distribution with mid-tier costs, treatment targets (urban 0.95, rural 0.8), connection targets, SDG6 recycling, e-flow bounds |
 
@@ -52,8 +53,14 @@ in `workflow.py` (pure functions `growth_cap_rows`, `mode_ban_rows` here,
   (1.90 investment over 30 years, 0.155 fixed, electricity and heat), so the
   backstop takes the gap and desalination stays at the historical plants.
   `BAUfg` tests the pricing answer; a cap at historical extraction is the
-  alternative. Desalination expansion is further limited by the module's
-  10 %/yr `growth_new_capacity_up` on `membrane`/`distillation` and by the
+  alternative. In `BAUfg` the marginal water price reaches 0.44 USD/m³ in every
+  basin, yet no desalination plant is built: the module's 10 %/yr
+  `growth_new_capacity_up` on `membrane`/`distillation` chains from
+  `historical_new_capacity`, which ends in 2025 while the first model year is
+  2035, so the 2030 anchor is zero and the chain never starts (`desal_free`
+  fixes this on a clone; to be reported upstream). `membrane` also takes
+  0.001 GWa/MCM of district heat (~0.2 USD/m³ at the model's heat price) although
+  reverse osmosis runs on electricity. Expansion is also bounded by the
   projected potential (`bound_total_capacity_up` on `extract_salinewater_basin`,
   from Marina Andrijevic's 2026 country projections, SSP1/3/5 modelled and the
   other SSPs assigned; see `data/pre_processing/generate_desalination.py`),
