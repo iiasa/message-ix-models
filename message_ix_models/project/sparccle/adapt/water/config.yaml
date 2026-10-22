@@ -76,16 +76,22 @@ scenarios:
     renewable_growth: true
     fossil_gw_var_cost: 0.4
     desal_free: true
+  # Final set (10-22): both carry the desalination fix and the fossil-groundwater
+  # price, so desalination is used before fossil groundwater as the narrative asks.
   maladapt:
     from: base
     eflow: true
     renewable_growth: true
-    ban_mode: Mf
+    fossil_gw_var_cost: 0.4
+    desal_free: true
+    ban_mode: Mf            # no efficiency improvement in distribution
   adapt:
     label: "+adapt"   # step names cannot hold "+" (regex targets); the scenario name can
     build: nexus
-    sdgs: SDG
+    sdgs: SDG         # efficient distribution only, treatment/recycling targets, e-flows
     renewable_growth: true
+    fossil_gw_var_cost: 0.4
+    desal_free: true
 
 # Not represented yet (see README): irrigation efficiency, desalination
 # prioritised over fossil groundwater (today the LP orders them by cost), a

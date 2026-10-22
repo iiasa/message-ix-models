@@ -36,6 +36,9 @@ def test_load_config_packaged() -> None:
     assert config["scenarios"]["adapt"]["sdgs"] == "SDG"
     assert config["scenarios"]["adapt"]["label"] == "+adapt"
     assert config["scenarios"]["maladapt"]["ban_mode"] == "Mf"
+    for key in ("maladapt", "adapt"):
+        assert config["scenarios"][key]["desal_free"] is True
+        assert config["scenarios"][key]["fossil_gw_var_cost"] == pytest.approx(0.4)
     assert config["starters"]["SSP3"]["renewable_growth"] == pytest.approx(0.03)
     assert "~" not in config["local_db"]
     for spec in config["scenarios"].values():

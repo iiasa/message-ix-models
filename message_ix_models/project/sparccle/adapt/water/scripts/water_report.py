@@ -1,17 +1,21 @@
 """Compare the water reporting of several scenarios: markdown report + figures.
 
 Usage:
-  python water_report.py --out DIR LABEL=<model>_<scenario>_nexus.csv [LABEL=... ...]
+  python water_report.py --out DIR [--name report_w] [--pdf] [--config config.yaml]
+      LABEL=<model>_<scenario>_nexus.csv [LABEL=... ...]
 
 The first file is the reference the others are compared with. Input files are
 the ``<model>_<scenario>_nexus.csv`` written by ``water-ix report --water``
-(IAMC long or wide format). Output: ``DIR/report.md`` and ``DIR/*.png``.
+(IAMC long or wide format). Output: ``DIR/<name>.md`` (+ ``.pdf``) and
+``DIR/*.png``. The scenario table comes from the package ``config.yaml``; the
+assumptions table from ASSUMPTIONS below (values read off the SSP2 base).
 """
 
 import argparse
 from pathlib import Path
 
 import matplotlib
+import yaml
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -55,6 +59,115 @@ SUPPLIES = {
     "wastewater reuse": ["Water Waste|Reuse"],
 }
 DEMAND_COLORS = ["#e6c9a8", "#c2a5cf", "#9ecae1", "#fdae6b"]
+
+#: Model assumptions shared by every scenario (values read off the SSP2 base).
+ASSUMPTIONS = [
+    (
+        "starters",
+        "SSP2 / SSP3 `NPiREF_GDP_CI_50_ensemble_2` (GDP climate impacts, "
+        "50th percentile), first model year 2035, R12 + 214 basins",
+    ),
+    (
+        "hydrology",
+        "RCP 7p0 (NPiREF), reliability tier `low`; availability and "
+        "e-flow from the #513 GHM refresh",
+    ),
+    (
+        "environmental flow",
+        "`bound_activity_lo` on `return_flow` = VMF e-flow, "
+        "never above 70 % of surface availability; off in `base`",
+    ),
+    (
+        "renewable extraction growth",
+        "`growth_activity_up` 2 %/yr (SSP2), 3 %/yr "
+        "(SSP3) on surface water and renewable groundwater",
+    ),
+    (
+        "fossil groundwater",
+        "backstop, no bound; investment 0.065 USD per m³/yr "
+        "(20 y), electricity 0.0001 GWa/MCM, ≈0.03 USD/m³; `var_cost` 0.4 USD/m³ "
+        "where priced",
+    ),
+    (
+        "desalination (membrane)",
+        "investment 1.90 USD per m³/yr (30 y), fixed "
+        "0.155, electricity 0.0003 and heat 0.001 GWa/MCM, ≈0.34 USD/m³ before heat; "
+        "distillation 1.55 / 1.65",
+    ),
+    (
+        "desalination potential",
+        "`bound_total_capacity_up` on seawater intake from "
+        "Marina Andrijevic's 2026 projections (SSP1/3/5 modelled; zero in 2110)",
+    ),
+    (
+        "desalination build limit",
+        "10 %/yr `growth_new_capacity_up` chained from "
+        "`historical_new_capacity` ending 2025 → zero anchor in 2030; removed and "
+        "re-seeded by `desal_free`",
+    ),
+    (
+        "wastewater reuse",
+        "`share_commodity_lo` `share_wat_recycle`: urban recycle "
+        "≥ 0.71 (2035) → 0.80 (2100, median basin) of treated urban wastewater; no "
+        "upper bound; recycle investment 1.35 USD per m³/yr, fixed 0.098",
+    ),
+    (
+        "distribution efficiency",
+        "modes `M1` (baseline losses) and `Mf` (efficient, "
+        "mid-tier costs) on urban/rural distribution; `Mf` banned in `maladapt`, "
+        "the only mode in the SDG build",
+    ),
+    (
+        "SDG package (`adapt`)",
+        "Mf-only distribution, treatment targets urban 0.95 / "
+        "rural 0.8, connection 0.99 / 0.8, recycling floor raised (untreated gap "
+        "halved after 2030/2040), e-flow bounds",
+    ),
+    ("solver", "CPLEX barrier (`lpmethod=4`, `scaind=-1`), message_ix PR #1023"),
+]
+LEVER_LABELS = {
+    "build": "build",
+    "from": "clone of",
+    "sdgs": "water SDG package",
+    "eflow": "environmental flows",
+    "renewable_growth": "renewable growth cap",
+    "fossil_gw_var_cost": "fossil GW var_cost (USD/m³)",
+    "desal_free": "desalination freed",
+    "ban_mode": "distribution mode banned",
+}
+
+
+def scenario_table(config: dict) -> str:
+    """Markdown table of the scenarios and levers in `config`."""
+    keys = ["key", "scenario", "build / clone of", "levers"]
+    rows = []
+    for key, spec in config["scenarios"].items():
+        name = config["name"].format(ssp="SSPx", key=spec.get("label", key))
+        base = (
+            f"nexus build, sdgs={spec['sdgs']}"
+            if "build" in spec
+            else f"clone of `{spec['from']}`"
+        )
+        levers = []
+        for k, v in spec.items():
+            if k in ("build", "from", "sdgs", "label"):
+                continue
+            levers.append(
+                LEVER_LABELS.get(k, k)
+                if v is True
+                else f"{LEVER_LABELS.get(k, k)} = {v}"
+            )
+        rows.append([f"`{key}`", f"`{name}`", base, "; ".join(levers) or "none"])
+    head = "| " + " | ".join(keys) + " |"
+    sep = "|" + "|".join("---" for _ in keys) + "|"
+    return "\n".join([head, sep, *("| " + " | ".join(r) + " |" for r in rows)])
+
+
+def assumptions_table() -> str:
+    head = "| assumption | value |\n|---|---|"
+    return "\n".join([head, *(f"| {k} | {v} |" for k, v in ASSUMPTIONS)])
+
+
 YEARS = [2035, 2050, 2070, 2100]
 COLORS = ["#4477aa", "#66ccee", "#ee6677", "#228833", "#ccbb44", "#aa3377", "#bbbbbb"]
 
@@ -294,7 +407,14 @@ def main() -> None:
     p.add_argument(
         "inputs", nargs="+", help="LABEL=path.csv; the first is the reference"
     )
-    p.add_argument("--pdf", action="store_true", help="also render report.pdf")
+    p.add_argument("--pdf", action="store_true", help="also render <name>.pdf")
+    p.add_argument("--name", default="report", help="output stem (default: report)")
+    p.add_argument(
+        "--config",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "config.yaml",
+        help="package config.yaml for the scenario table",
+    )
     a = p.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
 
@@ -314,6 +434,14 @@ def main() -> None:
         "",
         f"Reference: **{ref}**. Values are World totals in MCM/yr from "
         "`water-ix report --water` (`*_nexus.csv`).",
+        "",
+        "## Scenarios",
+        "",
+        scenario_table(yaml.safe_load(a.config.read_text(encoding="utf-8"))),
+        "",
+        "## Model assumptions",
+        "",
+        assumptions_table(),
         "",
         "## Supply by source",
         "",
@@ -360,7 +488,7 @@ def main() -> None:
         "",
         table_world(data, {v: v for v in OTHER}),
     ]
-    md = a.out / "report.md"
+    md = a.out / f"{a.name}.md"
     md.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(md)
     if a.pdf:
