@@ -103,7 +103,12 @@ def add_steps(wf: "Workflow", base: str, scenario_code: "Code") -> str:
 
     # Build MESSAGEix-Transport on the scenario
     name = wf.add_step(
-        f"{label} built", base, build.main, target=target_url, clone=True, config=config
+        f"{label} built",
+        base,
+        build.main,
+        target=target_url,
+        clone=dict(keep_solution=True),
+        config=config,
     )
 
     if config.policy:
