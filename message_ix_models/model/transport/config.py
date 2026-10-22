@@ -402,8 +402,13 @@ class Config(ConfigHelper):
             # TODO Check that this works if a version # is specified
             return f"{context.dest} {self.label or ''}".strip()
         else:
+            if context.core.dest_platform:
+                url = "ixmp://{name}/".format(**context.core.dest_platform)
+            else:
+                url = ""
+
             # Model name
-            model_name = (
+            url += (
                 "MESSAGEix-GLOBIOM 1.1-"
                 + ("MT" if "material" in self.modules else "T")
                 + f"-{context.model.regions} "
@@ -421,9 +426,9 @@ class Config(ConfigHelper):
                 )
             ).rstrip()
             # Strip leading "M ", which is reflected in `model_name`
-            scenario_name = re.sub("^M ", "", scenario_name)
+            url += "/" + re.sub("^M ", "", scenario_name)
 
-            return f"{model_name}/{scenario_name}"
+        return url
 
     def set_navigate_scenario(self, value: str | None) -> None:
         """Update :attr:`project` from a string representing a NAVIGATE scenario.
