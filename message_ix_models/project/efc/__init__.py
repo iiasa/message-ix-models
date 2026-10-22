@@ -26,6 +26,67 @@ _TRUCK_TECHNOLOGIES: tuple[str, ...] = (
 )
 
 
+def lock_agg_ref_chn_from_act(
+    scenario,
+    *,
+    technology: str = "agg_ref",
+    node_loc: str = "R12_CHN",
+):
+    """Lock *technology* activity in *node_loc* to solved ``ACT``.
+
+    Reads ``ACT``, removes the solution, then sets equal
+    ``bound_activity_lo`` / ``bound_activity_up``.
+    """
+    if not scenario.has_solution():
+        raise ValueError(
+            f"Cannot lock {technology} ACT: no solution on "
+            f"{scenario.model}/{scenario.scenario} "
+            "(clone this step with keep_solution=True)"
+        )
+
+    act = scenario.var(
+        "ACT",
+        filters={"technology": technology, "node_loc": node_loc},
+    )
+    if act.empty:
+        raise ValueError(
+            f"No ACT for {technology} in {node_loc} on "
+            f"{scenario.model}/{scenario.scenario}"
+        )
+
+    unit = "???"
+    for par_name in ("bound_activity_up", "bound_activity_lo", "output"):
+        sample = scenario.par(
+            par_name,
+            filters={"technology": technology, "node_loc": node_loc},
+        )
+        if len(sample):
+            unit = str(sample.iloc[0]["unit"])
+            break
+
+    bound = act[["node_loc", "technology", "mode", "time", "year_act"]].assign(
+        value=act["lvl"].astype(float),
+        unit=unit,
+    )
+
+    scenario.remove_solution()
+
+    with scenario.transact(
+        f"Lock {technology} ACT in {node_loc} via bound_activity_lo/up"
+    ):
+        scenario.add_par("bound_activity_lo", bound)
+        scenario.add_par("bound_activity_up", bound.copy())
+
+    log.info(
+        "Locked %s in %s to solved ACT (%d bound rows) on %s/%s",
+        technology,
+        node_loc,
+        len(bound),
+        scenario.model,
+        scenario.scenario,
+    )
+
+
 def freeze_truck_history(context, scenario, year_freeze: int = 2030):
     """Temporary function to freeze truck activity, deprecated after MixT update.
 

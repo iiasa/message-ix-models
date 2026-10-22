@@ -1,0 +1,29 @@
+# Set configuration for additional techs for EFC.
+#
+# For each set, the group may contain:
+# - 'require': elements that must already be present.
+# - 'remove': elements to remove.
+# - 'add': elements to add.
+
+commodity:
+  require:
+  - hydrogen
+  - co_gas
+
+level:
+  require:
+  - final
+  add:
+  - byproduct
+  remove:
+  - refinery
+
+mode:
+  require:
+  - M1
+
+technology:
+  require:
+  - catalytic_reforming_ref
+  - hydro_cracking_ref
+  - hydrotreating_ref

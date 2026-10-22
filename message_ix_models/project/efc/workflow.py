@@ -17,9 +17,9 @@ from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parit
 from message_ix_models.project.efc import (
     aas_co2_storage_growth,
     aas_co2_storage_share_mode,
-    aas_coal_growth_near_term,
-    freeze_truck_history,
+    lock_agg_ref_chn_from_act,
 )
+from message_ix_models.project.efc.efc_tech import build as build_efc_tech
 from message_ix_models.tools.policy import add_anchor
 from message_ix_models.workflow import Workflow
 
@@ -68,7 +68,7 @@ SF_ACC_POLICY_IDS = [
 log = logging.getLogger(__name__)
 
 # EFC ixmp platform and model name
-# Can rename for your local ixmp platform. 
+# Can rename for your local ixmp platform.
 EFC_PLATFORM_NAME = "local_efc"
 EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
 
@@ -386,6 +386,17 @@ def build_hydrogen(
     return scenario
 
 
+def build_other_efc_techs(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Run :mod:`.efc_tech` build.
+
+    Lock the activity of agg_ref only for R12_CHN as other regions are not calibrated.
+    """
+    lock_agg_ref_chn_from_act(scenario)
+    return build_efc_tech(context, scenario)
+
+
 def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
     """Copy 1p5c emission constraints and add CO2 storage AAS parameters.
 
@@ -462,6 +473,7 @@ def solve(
 _scen_all = [
     "chn_baseline",
     "chn_baseline_sf",
+    "chn_baseline_sf_test",
     "chn_nz2060",
     "chn_nz2060_sf",
     "chn_nz2060_acc_sf",
@@ -500,10 +512,10 @@ def generate(context: Context) -> Workflow:
     url = url_prefix + "/"
     base_url = f"{url_prefix}/baseline_MT"
 
-    # which is a clone from 
+    # which is a clone from
     # MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3/baseline_MT#13
-    # that starts from OF v6.6 step14 with the loil bunker fix by LC, 
-    # then the lastest transport build by 2026-10-16. 
+    # that starts from OF v6.6 step14 with the loil bunker fix by LC,
+    # then the lastest transport build by 2026-10-16.
 
     # Common keyword argument for cloning (without solution; smaller DB writes)
     c = dict(keep_solution=False)
@@ -516,7 +528,7 @@ def generate(context: Context) -> Workflow:
         clone=dict(keep_solution=True),
     )
     name = wf.add_step("base reported", name, report)
-    # YJ: updates in transport module after August 2026 not included, 
+    # YJ: updates in transport module after August 2026 not included,
     # i.e., the report of transport non-CO2 emissions
     name = wf.add_step(
         "base calibrated",
@@ -541,6 +553,14 @@ def generate(context: Context) -> Workflow:
         stage="cpol",
         target=f"{url}chn_baseline_sf",
         clone=c,
+    )
+
+    name = wf.add_step(
+        "baseline_sf_test added",
+        "baseline_sf added",
+        build_other_efc_techs,
+        target=f"{url}chn_baseline_sf_test",
+        clone=dict(keep_solution=True),
     )
 
     name = wf.add_step(

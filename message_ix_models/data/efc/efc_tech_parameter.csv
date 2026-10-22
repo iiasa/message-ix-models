@@ -1,0 +1,13 @@
+﻿parameter,node,year,technology,mode,commodity,level,emission,relation,value
+output,R12_CHN,all,catalytic_reforming_ref,M1,hydrogen,byproduct,,,7.6
+input,R12_CHN,all,hydro_cracking_ref,cracking_gasoline,hydrogen,byproduct,,,0.108
+input,R12_CHN,all,hydro_cracking_ref,cracking_loil,hydrogen,byproduct,,,0.07901
+input,R12_CHN,all,hydrotreating_ref,atm_gasoil,hydrogen,byproduct,,,0.01
+input,R12_CHN,all,hydrotreating_ref,vacuum_gasoil,hydrogen,byproduct,,,0.01
+input,R12_CHN,all,hydrotreating_ref,naphtha,hydrogen,byproduct,,,0.01
+input,R12_CHN,all,hydrotreating_ref,kerosene,hydrogen,byproduct,,,0.01
+input,R12_CHN,all,hydrotreating_ref,diesel,hydrogen,byproduct,,,0.01
+input,R12_CHN,all,hydrotreating_ref,atm_residue,hydrogen,byproduct,,,0.01
+input,R12_CHN,all,hydrotreating_ref,vacuum_residue,hydrogen,byproduct,,,0.01
+input,all,all,h2_co_gas,M1,co_gas,final,,,1
+output,all,all,h2_co_gas,M1,hydrogen,byproduct,,,10

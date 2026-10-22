@@ -1,0 +1,11 @@
+# Addtional technologies added by the EFC efc_tech module.
+# YJ: they are seperately prepared as only R12_CHN is calibrated.
+
+h2_co_gas:
+  name: Hydrogen production by coke oven gas
+  description: >-
+    Main source of byproduct hydrogen in R12_CHN, consumes co_gas at final and produces hydrogen at
+    byproduct level. 
+  input: {commodity: co_gas, level: final}
+  output: {commodity: hydrogen, level: byproduct}
+
