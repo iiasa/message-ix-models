@@ -3,17 +3,19 @@
 import logging
 import re
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from genno import Computer
 from ixmp.util import parse_url
 
 if TYPE_CHECKING:
     from click import Command
+    from ixmp import Platform
     from ixmp.types import PlatformInfo, TimeSeriesIdentifiers
     from message_ix import Scenario
 
     from message_ix_models import Context
+    from message_ix_models.util.config import Config
 
 log = logging.getLogger(__name__)
 
@@ -65,10 +67,10 @@ class WorkflowStep:
     kwargs: dict
 
     #: Target platform name and additional options.
-    platform_info: "PlatformInfo | dict"
+    platform_info: "PlatformInfo"
 
     #: Target model name, scenario name, and optional version.
-    scenario_info: "dict | TimeSeriesIdentifiers"
+    scenario_info: "TimeSeriesIdentifiers"
 
     def __init__(
         self,
@@ -85,7 +87,7 @@ class WorkflowStep:
             if clone is not False:
                 raise TypeError("target= must be supplied for clone=True")
             self.platform_info = dict()
-            self.scenario_info = dict()
+            self.scenario_info = dict()  # type: ignore [typeddict-item]
 
         # Store the callback and options
         self.action = action
@@ -97,30 +99,35 @@ class WorkflowStep:
         self, context: "Context", scenario: "Scenario | None" = None
     ) -> "Scenario":
         """Execute the workflow step."""
+        config: "Config" = context.core
         if scenario is None:
             # No base scenario
             if self.action:
                 raise RuntimeError(
                     f"Step with action {self.action!r} requires a base scenario"
                 )
-            # Use Context to retrieve the identified scenario
-            context.platform_info.update(self.platform_info)
-            context.scenario_info.update(self.scenario_info)
-            s = context.get_scenario()
+            # Use core Config to retrieve the identified scenario
+            config.platform_info.update(self.platform_info)
+            config.scenario_info.update(self.scenario_info)
+            s = config.get_scenario()
             log.info(f"Loaded ixmp://{s.platform.name}/{s.url}")
         else:
             # Modify the context to identify destination scenario; possibly nothing
-            context.dest_scenario.update(self.scenario_info)
+            config.dest_scenario.update(self.scenario_info)
             s = scenario
             log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
 
-        if context.dest_scenario:
-            log.info(f"  with context.dest_scenario={context.dest_scenario}")
+        if config.dest_scenario:
+            log.info(f"  with context.dest_scenario={config.dest_scenario}")
 
         if self.clone is not False:
             # Clone to target model/scenario name
-            log.info("Clone to {model}/{scenario}".format(**self.scenario_info))
-            clone_kw = dict(self.scenario_info)  # Create a copy and discard type info
+            clone_kw = self.scenario_info | dict(platform=s.platform)
+
+            if self.platform_info.get("name", "") != s.platform.name:
+                # Clone to a different platform
+                clone_kw.update(platform=config.get_platform(**self.platform_info))
+
             # If clone contains keyword arguments, e.g. shift_first_model_year, use them
             # NB user code should give clone = dict(keep_solution=True) if desired
             clone_kw.update(
@@ -128,6 +135,12 @@ class WorkflowStep:
                 if isinstance(self.clone, dict)
                 else dict(keep_solution=False)
             )
+
+            p = cast("Platform", clone_kw["platform"])
+            log.info(
+                f"Clone to ixmp://{p.name}/{clone_kw['model']}/{clone_kw['scenario']}"
+            )
+
             s = s.clone(**clone_kw)
 
         # Run the action/callback/function, if any
@@ -135,7 +148,7 @@ class WorkflowStep:
             log.info(f"Execute {self.action!r}")
 
             # Modify context to identify the target scenario
-            context.set_scenario(s)
+            config.set_scenario(s)
 
             try:
                 # Invoke the callback
