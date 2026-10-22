@@ -61,21 +61,26 @@ scenarios:
   base:
     build: nexus
     sdgs: baseline
+  # Mf (efficient distribution: 10 % instead of 20 % losses, half the electricity,
+  # higher variable cost) is banned everywhere except +adapt (10-22).
   BAU:
     from: base
     eflow: true
     renewable_growth: true
+    ban_mode: Mf
   BAUfg:
     from: base
     eflow: true
     renewable_growth: true
     fossil_gw_var_cost: 0.4
+    ban_mode: Mf
   BAUfgd:
     from: base
     eflow: true
     renewable_growth: true
     fossil_gw_var_cost: 0.4
     desal_free: true
+    ban_mode: Mf
   # Final set (10-22): both carry the desalination fix and the fossil-groundwater
   # price, so desalination is used before fossil groundwater as the narrative asks.
   maladapt:
@@ -91,7 +96,7 @@ scenarios:
     sdgs: SDG         # efficient distribution only, treatment/recycling targets, e-flows
     renewable_growth: true
     fossil_gw_var_cost: 0.4
-    desal_free: true
+    # no desal_free (10-22): desalination stays as the module builds it
 
 # Not represented yet (see README): irrigation efficiency, desalination
 # prioritised over fossil groundwater (today the LP orders them by cost), a

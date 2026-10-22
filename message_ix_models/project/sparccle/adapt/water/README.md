@@ -9,11 +9,11 @@ every scenario lives there.
 | key | scenario | made by | levers |
 |---|---|---|---|
 | `base` | `CurrentPolicies_SSPx_W_base` | `water-ix nexus --sdgs baseline` on the starter (solved by the build) | none |
-| `BAU` | `CurrentPolicies_SSPx_W_BAU` | clone of `base` | environmental-flow lower bounds on `return_flow`; renewable-water growth cap 2 %/yr (SSP2) or 3 %/yr (SSP3) on `extract_surfacewater`, `extract_groundwater` |
-| `BAUfg` | `CurrentPolicies_SSPx_W_BAUfg` | clone of `base` | `BAU` levers; `var_cost` 0.4 USD/m³ on `extract_gw_fossil`, above levelised membrane desalination (~0.34), so desalination is used before fossil groundwater |
+| `BAU` | `CurrentPolicies_SSPx_W_BAU` | clone of `base` | environmental-flow lower bounds on `return_flow`; renewable-water growth cap 2 %/yr (SSP2) or 3 %/yr (SSP3) on `extract_surfacewater`, `extract_groundwater`; efficient distribution mode `Mf` bounded to zero |
+| `BAUfg` | `CurrentPolicies_SSPx_W_BAUfg` | clone of `base` | `BAU` levers; `var_cost` 0.4 USD/m³ on `extract_gw_fossil`, above levelised membrane desalination (~0.34), so desalination is used before fossil groundwater. (The 10-21 run predates the `Mf` ban.) |
 | `BAUfgd` | `CurrentPolicies_SSPx_W_BAUfgd` | clone of `base` | `BAUfg` levers; desalination freed: 2025 `historical_new_capacity` of `membrane`/`distillation` copied to 2030, their 10 %/yr `growth_new_capacity_up` removed |
-| `maladapt` | `CurrentPolicies_SSPx_W_maladapt` | clone of `base` | `BAUfgd` levers (e-flows, growth cap, fossil groundwater priced, desalination freed); efficient distribution mode `Mf` bounded to zero from the first model year |
-| `adapt` | `CurrentPolicies_SSPx_W_+adapt` | `water-ix nexus --sdgs SDG` on the starter, then growth cap, fossil groundwater priced, desalination freed | SDG package: `Mf`-only distribution with mid-tier costs, treatment targets (urban 0.95, rural 0.8), connection targets, SDG6 recycling, e-flow bounds |
+| `maladapt` | `CurrentPolicies_SSPx_W_maladapt` | clone of `base` | same as `BAUfgd` (e-flows, growth cap, fossil groundwater priced, desalination freed, `Mf` banned) |
+| `adapt` | `CurrentPolicies_SSPx_W_+adapt` | `water-ix nexus --sdgs SDG` on the starter, then growth cap and fossil groundwater priced; desalination left as the module builds it (no `desal_free`) | SDG package: `Mf`-only distribution with mid-tier costs, treatment targets (urban 0.95, rural 0.8), connection targets, SDG6 recycling, e-flow bounds |
 
 Starters, hydrology inputs, naming and levers live in `config.yaml`; the logic
 in `workflow.py` (pure functions `growth_cap_rows`, `mode_ban_rows` here,
