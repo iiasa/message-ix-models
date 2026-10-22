@@ -1,9 +1,9 @@
-"""Tests for :mod:`message_ix_models.project.sparccle.water.workflow`."""
+"""Tests for :mod:`message_ix_models.project.sparccle.adapt.water.workflow`."""
 
 import pandas as pd
 import pytest
 
-from message_ix_models.project.sparccle.water.workflow import (
+from message_ix_models.project.sparccle.adapt.water.workflow import (
     DESAL_PLANTS,
     LEVERS,
     RENEWABLE_EXTRACTION,

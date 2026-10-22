@@ -1,4 +1,4 @@
-# SPARCCLE water adaptation scenarios (`sparccle.water`)
+# SPARCCLE water adaptation scenarios (`sparccle.adapt.water`)
 
 Water-sector BAU / maladaptation / +adaptation scenarios on a MESSAGEix-Nexus
 build of the SPARCCLE starters (`SSP_SSPx_v6.6_sp / NPiREF_GDP_CI_50_ensemble_2`,
@@ -18,7 +18,7 @@ every scenario lives there.
 Starters, hydrology inputs, naming and levers live in `config.yaml`; the logic
 in `workflow.py` (pure functions `growth_cap_rows`, `mode_ban_rows` here,
 `eflow_bound_rows` in `water/data/water_supply.py`, covered by
-`tests/project/test_sparccle_water.py` and `tests/model/water/data/test_water_supply.py`).
+`tests/project/test_sparccle_adapt_water.py` and `tests/model/water/data/test_water_supply.py`).
 
 ## How the narrative maps onto the model
 
@@ -70,7 +70,7 @@ in `workflow.py` (pure functions `growth_cap_rows`, `mode_ban_rows` here,
 - **Basin-level detail.** `water-ix report --water` gives regional IAMC
   variables (run by the job script, CSVs under `~/sparccle/out/reports/water/`);
   `scripts/water_report.py` compares scenarios into `report.md` plus figures. A
-  basin-level script comparable to `adapt/scripts/cooling_detail.py` is still
+  basin-level script comparable to `../scripts/cooling_detail.py` is still
   to be written.
 
 ## Running (UniCC)
@@ -78,11 +78,11 @@ in `workflow.py` (pure functions `growth_cap_rows`, `mode_ban_rows` here,
 ```sh
 # one SSP per job, serial inside (one HSQLDB process); SSP2 and SSP3 in parallel
 cd ~/sparccle/logs
-sbatch <repo>/message_ix_models/project/sparccle/water/scripts/run_sparccle_water.sh SSP2
-sbatch <repo>/message_ix_models/project/sparccle/water/scripts/run_sparccle_water.sh SSP3 base BAU   # keys: base BAU maladapt adapt
+sbatch <repo>/message_ix_models/project/sparccle/adapt/water/scripts/run_sparccle_water.sh SSP2
+sbatch <repo>/message_ix_models/project/sparccle/adapt/water/scripts/run_sparccle_water.sh SSP3 base BAU   # keys: base BAU maladapt adapt
 
 # build one scenario by hand (no solve)
-mix-models sparccle_water run --config message_ix_models/project/sparccle/water/config.yaml "SSP2 BAU" --go
+mix-models sparccle_water run --config message_ix_models/project/sparccle/adapt/water/config.yaml "SSP2 BAU" --go
 # platform / model / scenario of a key, and whether it exists / is solved
 mix-models sparccle_water names SSP2 maladapt
 mix-models sparccle_water status SSP2 maladapt

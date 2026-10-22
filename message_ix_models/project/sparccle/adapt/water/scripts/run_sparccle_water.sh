@@ -35,7 +35,7 @@ SELF=${BASH_SOURCE[0]}
 [ -n "$SLURM_JOB_ID" ] && SELF=$(scontrol show job "$SLURM_JOB_ID" | sed -n 's/.*Command=\([^ ]*\).*/\1/p')
 SCRIPT_DIR=$(cd "$(dirname "$SELF")" && pwd)
 CFG=$SCRIPT_DIR/../config.yaml
-SOLVE=$SCRIPT_DIR/../../adapt/scripts/solve_local.py
+SOLVE=$SCRIPT_DIR/../../scripts/solve_local.py
 
 source /opt/apps/lmod/8.7/init/bash
 module load Python/3.11.5-GCCcore-13.2.0
@@ -44,7 +44,7 @@ module load gams
 source "${MSG_ENV:-$HOME/env/msg_pci}/bin/activate"
 export IXMP_DATA="${IXMP_DATA:-$HOME/.local/share/ixmp_pci}"
 WATER_OUT="${WATER_OUT:-$HOME/sparccle/out/reports/water}"
-REPORT_SRC=$SCRIPT_DIR/../../../../reporting_output   # where water.report writes
+REPORT_SRC=$SCRIPT_DIR/../../../../../reporting_output   # where water.report writes
 REGIONS=$(grep -E "^regions:" "$CFG" | awk '{print $2}')
 cd "$HOME"
 

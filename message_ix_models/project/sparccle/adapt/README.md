@@ -1,5 +1,8 @@
 # SPARCCLE adaptation scenarios (`sparccle.adapt`)
 
+Power-sector scenarios below; water-sector scenarios in [`water/`](water/README.md)
+(`mix-models sparccle_water`).
+
 Power-sector adaptation and maladaptation scenarios on top of the SPARCCLE
 cooling + power-plant climate-impact scenario (`..._cooling_CI_p`, see
 `project/sparccle`). All scenarios are clones of that solved base on a local

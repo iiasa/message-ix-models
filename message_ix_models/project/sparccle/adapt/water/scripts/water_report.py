@@ -30,6 +30,31 @@ OTHER = [
     "Water Waste|Treated|Rural",
     "Water Extraction|Seawater|Cooling",
 ]
+DEMANDS = {
+    "irrigation": [
+        "Water Withdrawal|Irrigation|Cereal",
+        "Water Withdrawal|Irrigation|Oil Crops",
+        "Water Withdrawal|Irrigation|Sugar Crops",
+    ],
+    "municipal": ["Water Withdrawal|Municipal Water"],
+    "industry": [
+        "Water Withdrawal|Industrial Water|Unconnected",
+        "Water Withdrawal|Industrial Water|Unconnected Eff",
+    ],
+    "electricity + other energy": [
+        "Water Withdrawal|Electricity|Cooling|Fresh Water",
+        "Water Withdrawal|Electricity|Hydro",
+        "Water Withdrawal|Energy|Non-Cooling",
+    ],
+}
+SUPPLIES = {
+    "surface water": ["Water Extraction|Surface Water"],
+    "renewable groundwater": ["Water Extraction|Groundwater"],
+    "fossil groundwater": ["Water Extraction|Fossil Groundwater"],
+    "desalination": ["Water Desalination"],
+    "wastewater reuse": ["Water Waste|Reuse"],
+}
+DEMAND_COLORS = ["#e6c9a8", "#c2a5cf", "#9ecae1", "#fdae6b"]
 YEARS = [2035, 2050, 2070, 2100]
 COLORS = ["#4477aa", "#66ccee", "#ee6677", "#228833", "#ccbb44", "#aa3377", "#bbbbbb"]
 
@@ -126,6 +151,113 @@ def fig_regions(
     return path
 
 
+def world_sum(df: pd.DataFrame, variables: list[str]) -> pd.Series:
+    """World value by year summed over `variables`."""
+    total = pd.Series(dtype=float)
+    for v in variables:
+        total = total.add(world(df, v), fill_value=0.0)
+    return total
+
+
+def fig_balance(data: dict[str, pd.DataFrame], out: Path) -> Path:
+    """Supplies above the axis, demands below; the line is supply minus demand."""
+    n = len(data)
+    fig, axes = plt.subplots(1, n, figsize=(4.4 * n, 4.8), sharey=True)
+    axes = [axes] if n == 1 else list(axes)
+    for ax, (label, df) in zip(axes, data.items()):
+        sup = pd.DataFrame({k: world_sum(df, v) for k, v in SUPPLIES.items()})
+        dem = pd.DataFrame({k: world_sum(df, v) for k, v in DEMANDS.items()})
+        years = [
+            y for y in sorted(set(sup.index) | set(dem.index)) if 2035 <= y <= 2100
+        ]
+        sup = sup.reindex(years).fillna(0.0)
+        dem = dem.reindex(years).fillna(0.0)
+        ax.stackplot(
+            years, sup.T.values, labels=sup.columns, colors=COLORS[: len(sup.columns)]
+        )
+        ax.stackplot(years, (-dem).T.values, labels=dem.columns, colors=DEMAND_COLORS)
+        ax.plot(
+            years,
+            sup.sum(axis=1) - dem.sum(axis=1),
+            color="black",
+            lw=1.2,
+            label="supply - demand",
+        )
+        ax.axhline(0, color="black", lw=0.6)
+        ax.set_title(label)
+        ax.set_xlabel("year")
+        ax.grid(alpha=0.3)
+    axes[0].set_ylabel("MCM/yr  (supply above, demand below)")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=5, fontsize=8, frameon=False)
+    fig.tight_layout(rect=(0, 0.13, 1, 1))
+    path = out / "fig_balance.png"
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return path
+
+
+CSS = """
+@page { size: A4; margin: 18mm 16mm; }
+body { font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt;
+       line-height: 1.4; color: #222; }
+h1 { font-size: 20pt; margin: 0 0 6pt; }
+h2 { font-size: 14pt; margin-top: 18pt; border-bottom: 1px solid #999;
+     padding-bottom: 2pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; font-size: 9pt;
+        page-break-inside: avoid; }
+th, td { border: 1px solid #bbb; padding: 2pt 6pt; text-align: right; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) {
+  text-align: left; }
+th { background: #eee; }
+img { width: 100%; display: block; margin: 8pt 0; page-break-inside: avoid; }
+code { font-family: Consolas, monospace; font-size: 9pt; background: #f3f3f3;
+       padding: 0 2pt; }
+"""
+BROWSERS = [
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+]
+
+
+def build_pdf(md_path: Path) -> Path:
+    """`md_path` -> HTML (+CSS) -> PDF via a headless Chrome/Edge; needs `markdown`."""
+    import subprocess
+
+    try:
+        import markdown
+    except ImportError as e:  # pragma: no cover
+        raise SystemExit(
+            "PDF needs the `markdown` package: pip install markdown"
+        ) from e
+    body = markdown.markdown(md_path.read_text(encoding="utf-8"), extensions=["tables"])
+    html = md_path.with_suffix(".html")
+    html.write_text(
+        f"<!doctype html><html><head><meta charset='utf-8'><style>{CSS}</style>"
+        f"</head><body>{body}</body></html>",
+        encoding="utf-8",
+    )
+    browser = next((b for b in BROWSERS if Path(b).exists()), None)
+    if browser is None:  # pragma: no cover
+        raise SystemExit(f"no Chrome/Edge found; open {html} and print to PDF")
+    pdf = md_path.with_suffix(".pdf")
+    subprocess.run(
+        [
+            browser,
+            "--headless=new",
+            "--disable-gpu",
+            "--no-pdf-header-footer",
+            f"--print-to-pdf={pdf.resolve()}",
+            html.resolve().as_uri(),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return pdf
+
+
 def md_table(t: pd.DataFrame) -> str:
     """`t` (MultiIndex rows, year columns) as a markdown table, no extra deps."""
     t = t.reset_index()
@@ -162,6 +294,7 @@ def main() -> None:
     p.add_argument(
         "inputs", nargs="+", help="LABEL=path.csv; the first is the reference"
     )
+    p.add_argument("--pdf", action="store_true", help="also render report.pdf")
     a = p.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
 
@@ -172,6 +305,7 @@ def main() -> None:
     ref = next(iter(data))
 
     figs = [fig_sources(data, a.out)]
+    balance = fig_balance(data, a.out)
     for var in ["Water Extraction|Fossil Groundwater", "Water Desalination"]:
         figs.append(fig_regions(data, var, 2050, a.out))
 
@@ -186,6 +320,16 @@ def main() -> None:
         f"![sources]({figs[0].name})",
         "",
         table_world(data, SOURCES),
+        "",
+        "## Supply and demand balance",
+        "",
+        "Supplies above the axis (extraction by source, desalination, wastewater"
+        " reuse), withdrawals below (irrigation, municipal, industry, electricity"
+        " and other energy). Seawater for cooling is left out of both sides. The"
+        " line is supply minus demand: transfer losses, return flows and the"
+        " overlap between extraction and reuse.",
+        "",
+        f"![balance]({balance.name})",
         "",
         "## Differences from the reference (World, MCM/yr)",
         "",
@@ -216,8 +360,11 @@ def main() -> None:
         "",
         table_world(data, {v: v for v in OTHER}),
     ]
-    (a.out / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(a.out / "report.md")
+    md = a.out / "report.md"
+    md.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(md)
+    if a.pdf:
+        print(build_pdf(md))
 
 
 if __name__ == "__main__":

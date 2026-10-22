@@ -6,7 +6,7 @@
 #   mix-models sparccle_water names SSP2 BAU        # -> platform model scenario
 #
 # Solving: `base` and `adapt` are solved by the `water-ix nexus` build itself;
-# `BAU` and `maladapt` by adapt/scripts/solve_local.py (see
+# `BAU` and `maladapt` by ../scripts/solve_local.py (see
 # scripts/run_sparccle_water.sh).
 
 source_platform: ixmp_dev
