@@ -33,8 +33,8 @@ def test_load_config_packaged() -> None:
     assert config["scenarios"]["adapt"]["sdgs"] == "SDG"
     assert config["scenarios"]["adapt"]["label"] == "+adapt"
     assert config["scenarios"]["maladapt"]["ban_mode"] == "Mf"
-    for key in ("maladapt", "adapt"):
-        assert config["scenarios"][key]["fossil_gw_var_cost"] == pytest.approx(0.4)
+    assert config["scenarios"]["adapt"]["fossil_gw_var_cost"] == pytest.approx(0.4)
+    assert config["scenarios"]["maladapt"]["fossil_gw_var_cost"] == pytest.approx(0.7)
     assert config["scenarios"]["maladapt"]["desal_free"] is True
     assert "desal_free" not in config["scenarios"]["adapt"]
     for key in ("BAUfgd", "maladapt"):

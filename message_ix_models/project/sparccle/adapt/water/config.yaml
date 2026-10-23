@@ -73,11 +73,14 @@ scenarios:
     ban_mode: Mf
   # Final set (10-22): both carry the desalination fix and the fossil-groundwater
   # price, so desalination is used before fossil groundwater as the narrative asks.
+  # maladapt: fossil groundwater priced above membrane desalination (~0.54 USD/m3
+  # with its heat input) so desalination comes first, as the narrative asks;
+  # BAUfgd keeps 0.4 (10-23).
   maladapt:
     from: base
     eflow: true
     renewable_growth: true
-    fossil_gw_var_cost: 0.4
+    fossil_gw_var_cost: 0.7
     desal_free: true
     ban_mode: Mf            # no efficiency improvement in distribution
   adapt:
