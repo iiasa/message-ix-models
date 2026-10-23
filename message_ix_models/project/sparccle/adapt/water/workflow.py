@@ -340,8 +340,13 @@ def generate(
             step = f"{ssp} {key}"
             target = f"ixmp://{platform}/{model}/{scenario_name(config, ssp, key)}"
             if spec.get("build") == "nexus":
+                # "<SSP> <key>" must be the last step of the key: the job script
+                # runs exactly that target, so a build with levers is split into
+                # "<SSP> <key> build" and the in-place "<SSP> <key>" constrain step.
+                has_levers = any(spec.get(lever) for lever in LEVERS)
+                build_step = f"{step} build" if has_levers else step
                 wf.add_step(
-                    step,
+                    build_step,
                     starter_step,
                     build_nexus,
                     target=target,
@@ -351,18 +356,17 @@ def generate(
                     new_name=scenario_name(config, ssp, key),
                     **config["nexus"],
                 )
-                if any(spec.get(lever) for lever in LEVERS):
+                if has_levers:
                     # constrain the built scenario in place; the caller re-solves
                     wf.add_step(
-                        f"{step} constrain",
                         step,
+                        build_step,
                         apply,
                         target=target,
                         config=config,
                         key=key,
                         ssp=ssp,
                     )
-                    step = f"{step} constrain"
             else:
                 wf.add_step(
                     step,

@@ -63,6 +63,12 @@ in `workflow.py` (pure functions `growth_cap_rows`, `mode_ban_rows` here,
   from Marina Andrijevic's 2026 country projections, SSP1/3/5 modelled and the
   other SSPs assigned; see `data/pre_processing/generate_desalination.py`),
   which the backfill sets to **zero in 2110** because the projection ends in 2100.
+  Even freed (`BAUfgd`, 10-22) no plant is built: membrane desalination costs
+  ~0.54 USD/m³ once its energy inputs are priced (electricity 0.0003 and district
+  heat 0.001 GWa/MCM, ~0.26 USD/m³ together) against ~0.43 for fossil groundwater
+  at the 0.4 `var_cost`, and the existing plants retire by 2055. Reverse osmosis
+  takes no heat in reality, so the heat input is the first thing to question;
+  the alternative is a fossil-groundwater price of ~0.6 USD/m³.
 - **"Up to 10 % loss reduction".** The `Mf` coefficients are what the CSV says;
   they are not calibrated to a 10 % cut.
 - **Basin-level detail.** `water-ix report --water` gives regional IAMC
@@ -82,7 +88,7 @@ sbatch <repo>/message_ix_models/project/sparccle/adapt/water/scripts/run_sparccl
 # build one scenario by hand (no solve)
 mix-models sparccle_water run --config message_ix_models/project/sparccle/adapt/water/config.yaml "SSP2 BAU" --go
 # platform / model / scenario of a key, and whether it exists / is solved
-mix-models sparccle_water names SSP2 maladapt
+mix-models sparccle_water names SSP2 maladapt   # platform model scenario sdgs
 mix-models sparccle_water status SSP2 maladapt
 
 # compare the reporting CSVs of several scenarios (first = reference)

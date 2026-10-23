@@ -51,7 +51,7 @@ cd "$HOME"
 SOURCE=$(grep -E "^source_platform:" "$CFG" | awk '{print $2}')
 LOCAL_DB=$(grep -E "^local_db:" "$CFG" | awk '{print $2}')
 # `names` prints one line; ixmp/Java logging may precede it, so keep the last line only
-read -r PLATFORM MODEL STARTER < <(mix-models sparccle_water names --config "$CFG" "$SSP" starter 2>/dev/null | tail -1)
+read -r PLATFORM MODEL STARTER _ < <(mix-models sparccle_water names --config "$CFG" "$SSP" starter 2>/dev/null | tail -1)
 
 case "$MODEL" in SSP_*) ;; *) echo "!! could not parse names output: $PLATFORM $MODEL $STARTER"; exit 1;; esac
 echo "== $(date -u +%FT%TZ) localize $SOURCE/$MODEL/$STARTER -> $PLATFORM"
@@ -59,7 +59,7 @@ srun python "$SCRIPT_DIR/localize_starter.py" "$SOURCE" "$MODEL" "$STARTER" "$LO
 
 status=0
 for KEY in "${KEYS[@]}"; do
-  read -r PLATFORM MODEL SCEN < <(mix-models sparccle_water names --config "$CFG" "$SSP" "$KEY" 2>/dev/null | tail -1)
+  read -r PLATFORM MODEL SCEN SDGS < <(mix-models sparccle_water names --config "$CFG" "$SSP" "$KEY" 2>/dev/null | tail -1)
   case "$MODEL" in SSP_*) ;; *) echo "!! could not parse names output: $PLATFORM $MODEL $SCEN"; exit 1;; esac
   STATE=$(mix-models sparccle_water status --config "$CFG" "$SSP" "$KEY" 2>/dev/null | tail -1)
   if [ "$STATE" = "solved" ] && [ "${REBUILD:-0}" != "1" ]; then
@@ -77,7 +77,7 @@ for KEY in "${KEYS[@]}"; do
   fi
   [ "${WATER_REPORT:-1}" = "0" ] && continue
   echo "== $(date -u +%FT%TZ) report $PLATFORM/$MODEL/$SCEN"
-  if srun mix-models --url "ixmp://$PLATFORM/$MODEL/$SCEN" water-ix --regions "$REGIONS" --ssp "$SSP" report --water; then
+  if srun mix-models --url "ixmp://$PLATFORM/$MODEL/$SCEN" water-ix --regions "$REGIONS" --ssp "$SSP" report --water --sdgs "${SDGS:-baseline}"; then
     mkdir -p "$WATER_OUT"
     cp -v "$REPORT_SRC/${MODEL}_${SCEN}_nexus.csv" "$WATER_OUT/" || status=1
   else

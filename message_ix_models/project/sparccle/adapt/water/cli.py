@@ -34,7 +34,11 @@ cli.add_command(
 @click.argument("ssp")
 @click.argument("key")
 def names(config_path, ssp, key):
-    """Print "PLATFORM MODEL SCENARIO" of scenario KEY of starter SSP."""
+    """Print "PLATFORM MODEL SCENARIO SDGS" of scenario KEY of starter SSP.
+
+    SDGS is the water SDG setting the scenario was built with (``baseline`` or
+    ``SDG``), which ``water-ix report`` needs to pick the matching rates.
+    """
     from .workflow import load_config, platform_of, scenario_name
 
     config = load_config(config_path)
@@ -45,7 +49,18 @@ def names(config_path, ssp, key):
         if key is None
         else scenario_name(config, ssp, key)
     )
-    click.echo(f"{platform_of(config, ssp)} {model} {scenario}")
+    sdgs = _sdgs_of(config, key)
+    click.echo(f"{platform_of(config, ssp)} {model} {scenario} {sdgs}")
+
+
+def _sdgs_of(config: dict, key: str | None) -> str:
+    """SDG setting of scenario `key`: its build's, or that of the clone source."""
+    while key is not None:
+        spec = config["scenarios"][key]
+        if "build" in spec:
+            return spec.get("sdgs", "baseline")
+        key = spec.get("from")
+    return "baseline"
 
 
 @cli.command("status", params=[CONFIG_OPTION])
