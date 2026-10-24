@@ -153,6 +153,10 @@ def genno_generic(
 # - NH3: 0.171 t H2 / t NH3
 # - methanol: 0.242 t H2 / t methanol; fuel GWa bridged at meth_t_d
 #   0.697615 GWa/Mt before applying 0.242
+# - syn_liq: CTL FT 0.286 t H2 / t liquid;
+#   same HHV bridge as methanol 0.937 → 0.889 GWa H2 / GWa lightoil
+#   (2.27273 GWa coal in per GWa liquid ⇒ 0.391 GWa H2 / GWa coal);
+#   then GWa H2 → Mt H2 at LHV 120 MJ/kg (0.03154 EJ/GWa)
 _CAPTIVE_NH3 = frozenset(
     {
         "biomass_NH3",
@@ -169,13 +173,16 @@ _CAPTIVE_NH3 = frozenset(
 _CAPTIVE_METH = frozenset(
     {"meth_bio", "meth_bio_ccs", "meth_coal", "meth_coal_ccs", "meth_ng", "meth_ng_ccs"}
 )
+_CAPTIVE_SYN = frozenset({"syn_liq", "syn_liq_ccs"})
 _CAPTIVE_NH3_MT_H2 = 0.171
 _CAPTIVE_METH_MT_H2 = 0.242
 _CAPTIVE_METH_GWA_TO_MT_H2 = (1.0 / 0.697615) * _CAPTIVE_METH_MT_H2
+_CAPTIVE_SYN_GWA_H2 = 0.889  # GWa H2 / GWa lightoil (FT; see comment above)
+_CAPTIVE_SYN_GWA_TO_MT_H2 = _CAPTIVE_SYN_GWA_H2 * (0.03154 / 0.120)
 
 
 def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
-    """Append ``in|t|m|hydrogen|captive`` from NH3 / methanol ``out`` rows.
+    """Append ``in|t|m|hydrogen|captive`` from NH3 / methanol / syn_liq ``out`` rows.
 
     Values are Mt H2 (mass stoich). ``meth_h2`` is excluded (merchant H2).
     """
@@ -192,8 +199,14 @@ def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
     # level-specific factors so GWa fuel and Mt feedstock both land in Mt H2
     specs: list[tuple[frozenset[str], str, frozenset[str], float]] = [
         (_CAPTIVE_NH3, "NH3", frozenset({"secondary_material"}), _CAPTIVE_NH3_MT_H2),
-        (_CAPTIVE_METH, "methanol", frozenset({"primary_material"}), _CAPTIVE_METH_MT_H2),
+        (
+            _CAPTIVE_METH,
+            "methanol",
+            frozenset({"primary_material"}),
+            _CAPTIVE_METH_MT_H2,
+        ),
         (_CAPTIVE_METH, "methanol", frozenset({"primary"}), _CAPTIVE_METH_GWA_TO_MT_H2),
+        (_CAPTIVE_SYN, "lightoil", frozenset({"secondary"}), _CAPTIVE_SYN_GWA_TO_MT_H2),
     ]
 
     for techs, commodity, levels, factor in specs:

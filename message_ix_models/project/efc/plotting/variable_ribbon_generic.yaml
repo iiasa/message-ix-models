@@ -506,7 +506,7 @@ groups:
   - in|fueloil_NH3_ccs|*|hydrogen|captive
   - in|electr_NH3|*|hydrogen|captive
 
-- title: "in|chemicals formaldehyde, HVC|by commodity (Mt)"
+- title: "in|formaldehyde, HVC|by commodity (Mt)"
   dim_s: plastics_resins_fertilizers
   aggregate_by: dim_c
   variables:
@@ -535,6 +535,13 @@ groups:
   aggregate_by: dim_c
   variables:
   - in|NH3_to_N_fertil|*|NH3|*
+
+- title: "in|coal chemicals|by commodity (Mt)"
+  dim_s: coalchemicals
+  aggregate_by: dim_c
+  variables:
+  - in|syn_liq|*|hydrogen|captive
+  - in|syn_liq_ccs|*|hydrogen|captive
 
 - title: "in|industry other|by commodity (EJ)"
   dim_s: industry_other
@@ -634,6 +641,8 @@ groups:
   - in|meth_coal_ccs|*|hydrogen|captive
   - in|meth_bio|*|hydrogen|captive
   - in|meth_bio_ccs|*|hydrogen|captive
+  - in|syn_liq|*|hydrogen|captive
+  - in|syn_liq_ccs|*|hydrogen|captive
   - in|dri_h2_steel|*|hydrogen|final
   - in|furnace_h2_aluminum|*|hydrogen|final
   - in|furnace_h2_cement|*|hydrogen|final
