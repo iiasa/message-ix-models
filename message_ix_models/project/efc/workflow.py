@@ -473,7 +473,6 @@ def solve(
 _scen_all = [
     "chn_baseline",
     "chn_baseline_sf",
-    "chn_baseline_sf_test",
     "chn_nz2060",
     "chn_nz2060_sf",
     "chn_nz2060_acc_sf",
@@ -539,13 +538,24 @@ def generate(context: Context) -> Workflow:
         stage="_base",
     )
     name = wf.add_step(
-        "baseline added",
+        "base_hydrogen added",
         name,
         build_hydrogen,
-        target=f"{url}chn_baseline",
+        target=f"{url}chn_base_hydrogen",
         clone=c,
     )
-
+    name = wf.add_step(
+        "base_hydrogen solved",
+        name,
+        solve,
+    )
+    name = wf.add_step(
+        "baseline added",
+        name,
+        build_other_efc_techs,
+        target=f"{url}chn_baseline",
+        clone=dict(keep_solution=True),
+    )
     name = wf.add_step(
         "baseline_sf added",
         "baseline added",
@@ -554,15 +564,6 @@ def generate(context: Context) -> Workflow:
         target=f"{url}chn_baseline_sf",
         clone=c,
     )
-
-    name = wf.add_step(
-        "baseline_sf_test added",
-        "baseline_sf added",
-        build_other_efc_techs,
-        target=f"{url}chn_baseline_sf_test",
-        clone=dict(keep_solution=True),
-    )
-
     name = wf.add_step(
         "nz2060 added",
         "baseline added",
