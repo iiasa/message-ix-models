@@ -271,13 +271,15 @@ def generic_flow(
     """Write generic reporting to a local Excel file.
 
     in and out flows for all technologies are reported, plus stoichiometric
-    ``in|{NH3,methanol tech}|*|hydrogen|captive`` rows.
+    ``in|{NH3,methanol tech}|*|hydrogen|captive`` rows and R12-regional
+    international shipping bunker demand (downscaled from ``R12_GLB``).
     No unit column.
     """
     from message_ix.report import Reporter
 
     from message_ix_models.project.efc.generic_report import (
         append_captive_hydrogen,
+        append_regional_shipping,
         genno_generic,
     )
 
@@ -289,6 +291,7 @@ def generic_flow(
         firstmodelyear=scenario.firstmodelyear,
     )
     df = append_captive_hydrogen(df)
+    df = append_regional_shipping(df)
 
     out_path = context.get_local_path(
         "efc",

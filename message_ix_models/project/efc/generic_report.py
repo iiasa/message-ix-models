@@ -233,3 +233,136 @@ def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
         "Appended %d captive-H2 row(s) (in|*|*|hydrogen|captive, Mt H2)", len(extra)
     )
     return pd.concat([df, extra], ignore_index=True)
+
+
+# International shipping bunkers are reported only at R12_GLB. Downscale to the
+# 12 R12 regions with each region's share of the matching fuel export (same
+# idea as message_data materials_dac_tables: ship_reg = ship_glb * exp_reg/exp_glb).
+_GLB_REGIONS = frozenset({"R12_GLB", "World", "WORLD", "glb"})
+# bunker tech → export tech used for the regional share
+_BUNKER_EXPORT_TECH: dict[str, str] = {
+    "foil_bunker": "foil_exp",
+    "foil_occ_bunker": "foil_exp",
+    "LNG_bunker": "LNG_exp",
+    "LNG_occ_bunker": "LNG_exp",
+    "meth_bunker": "meth_exp",
+    "eth_bunker": "eth_exp",
+    "NH3_bunker": "export_NH3",
+    "LH2_bunker": "lh2_exp",
+}
+# meth_exp has both GWa fuel (primary) and Mt feedstock (primary_material);
+# only energy-level exports are used for methanol bunker shares.
+_EXPORT_ENERGY_LEVELS: dict[str, frozenset[str] | None] = {
+    "meth_exp": frozenset({"primary"}),
+}
+
+
+def _regional_nodes(df: pd.DataFrame) -> list[str]:
+    """R12 (or other) nodes excluding the global reporting node."""
+    regions = [
+        r for r in sorted(df["region"].astype(str).unique()) if r not in _GLB_REGIONS
+    ]
+    return regions
+
+
+def _export_shares(
+    df: pd.DataFrame,
+    parts: pd.DataFrame,
+    export_tech: str,
+    year_cols: list,
+    regions: list[str],
+) -> pd.DataFrame:
+    """Region × year shares of ``in|{export_tech}|…`` (sum over modes/levels)."""
+    levels = _EXPORT_ENERGY_LEVELS.get(export_tech)
+    hit = (
+        (parts[0] == "in")
+        & (parts[1] == export_tech)
+        & ~df["region"].astype(str).isin(_GLB_REGIONS)
+    )
+    if levels is not None:
+        hit = hit & parts[4].isin(levels)
+    if not hit.any():
+        return pd.DataFrame(0.0, index=regions, columns=year_cols)
+
+    block = df.loc[hit, ["region", *year_cols]].copy()
+    block[year_cols] = block[year_cols].apply(pd.to_numeric, errors="coerce")
+    exp = (
+        block.groupby("region", sort=False)[year_cols]
+        .sum()
+        .reindex(regions)
+        .fillna(0.0)
+    )
+    total = exp.sum(axis=0)
+    # years with no export → all-zero shares (fillna after div-by-zero → NaN)
+    return exp.div(total.where(total != 0), axis=1).fillna(0.0)
+
+
+def append_regional_shipping(df: pd.DataFrame) -> pd.DataFrame:
+    """Append R12-regional copies of GLB international shipping bunker ``in|`` rows.
+
+    Original GLB rows are kept. Variable names (including mode) are unchanged.
+    """
+    if df.empty:
+        return df
+
+    parts = df["variable"].astype(str).str.split("|", expand=True)
+    if parts.shape[1] < 5:
+        return df
+
+    year_cols = [c for c in df.columns if c not in _ID_COLUMNS]
+    regions = _regional_nodes(df)
+    if not regions or not year_cols:
+        return df
+
+    bunker_hit = (
+        (parts[0] == "in")
+        & parts[1].isin(_BUNKER_EXPORT_TECH)
+        & (parts[4] == "final")
+        & df["region"].astype(str).isin(_GLB_REGIONS)
+    )
+    if not bunker_hit.any():
+        return df
+
+    glb = df.loc[bunker_hit, _ID_COLUMNS + year_cols].copy()
+    glb[year_cols] = glb[year_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
+    glb["_export"] = parts.loc[bunker_hit, 1].map(_BUNKER_EXPORT_TECH).to_numpy()
+
+    share_by_export = {
+        export_tech: _export_shares(df, parts, export_tech, year_cols, regions)
+        for export_tech in sorted(glb["_export"].unique())
+    }
+
+    chunks: list[pd.DataFrame] = []
+    n_reg = len(regions)
+    for export_tech, share in share_by_export.items():
+        block_glb = glb.loc[glb["_export"] == export_tech]
+        if block_glb.empty:
+            continue
+        # Broadcast: each GLB row → one row per region
+        vals = block_glb[year_cols].to_numpy()  # (n_var, n_year)
+        # (n_var, n_reg, n_year)
+        scaled = share.to_numpy()[None, :, :] * vals[:, None, :]
+        n_var = len(block_glb)
+        out = pd.DataFrame(
+            {
+                "model": block_glb["model"].to_numpy().repeat(n_reg),
+                "scenario": block_glb["scenario"].to_numpy().repeat(n_reg),
+                "region": list(regions) * n_var,
+                "variable": block_glb["variable"].to_numpy().repeat(n_reg),
+            }
+        )
+        for i, c in enumerate(year_cols):
+            out[c] = scaled[:, :, i].reshape(-1)
+        keep = out[year_cols].abs().gt(0).any(axis=1)
+        if keep.any():
+            chunks.append(out.loc[keep, df.columns])
+
+    if not chunks:
+        return df
+
+    extra = pd.concat(chunks, ignore_index=True)
+    log.info(
+        "Appended %d regional shipping bunker row(s) (downscaled from R12_GLB)",
+        len(extra),
+    )
+    return pd.concat([df, extra], ignore_index=True)
