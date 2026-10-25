@@ -291,7 +291,7 @@ def generic_flow(
         firstmodelyear=scenario.firstmodelyear,
     )
     df = append_captive_hydrogen(df)
-    df = append_regional_shipping(df)
+    df = append_regional_shipping(df, method="uniform_mix")
 
     out_path = context.get_local_path(
         "efc",
@@ -396,7 +396,7 @@ def build_other_efc_techs(
 
     Lock ``agg_ref`` activity to solved ACT in all regions.
     """
-    lock_agg_ref_from_act(scenario)
+    lock_agg_ref_from_act(scenario, node_loc="R12_CHN")
     return build_efc_tech(context, scenario)
 
 
