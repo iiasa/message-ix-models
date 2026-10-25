@@ -238,10 +238,10 @@ def append_captive_hydrogen(df: pd.DataFrame) -> pd.DataFrame:
 # International shipping bunkers are reported only at R12_GLB.
 # Downscale methods (see append_regional_shipping):
 # - by_fuel: ship_reg,f = ship_glb,f * exp_reg,f / exp_glb,f  (per-fuel mix)
-# - uniform_mix: same GLB fuel structure everywhere; only regional totals differ
+# - uniform_mix: same GLB fuel structure everywhere; regional totals from
+#   bunker-linked fuel trade (exp + imp)
 _GLB_REGIONS = frozenset({"R12_GLB", "World", "WORLD", "glb"})
 _ShippingMethod = Literal["by_fuel", "uniform_mix"]
-# bunker tech → export tech used for the regional share
 _BUNKER_EXPORT_TECH: dict[str, str] = {
     "foil_bunker": "foil_exp",
     "foil_occ_bunker": "foil_exp",
@@ -252,14 +252,19 @@ _BUNKER_EXPORT_TECH: dict[str, str] = {
     "NH3_bunker": "export_NH3",
     "LH2_bunker": "lh2_exp",
 }
-# meth_exp has both GWa fuel (primary) and Mt feedstock (primary_material);
-# only energy-level exports are used for methanol bunker shares.
-_EXPORT_ENERGY_LEVELS: dict[str, frozenset[str] | None] = {
+# meth_* has both GWa fuel (primary) and Mt feedstock (primary_material);
+# only energy-level rows are used for shares / trade weights.
+_TRADE_ENERGY_LEVELS: dict[str, frozenset[str] | None] = {
     "meth_exp": frozenset({"primary"}),
+    "meth_imp": frozenset({"primary"}),
 }
-# export_NH3 is Mt; omit from the uniform_mix weight (GWa fuels only).
-_UNIFORM_WEIGHT_EXPORTS = frozenset(
-    {"foil_exp", "LNG_exp", "meth_exp", "eth_exp", "lh2_exp"}
+# GWa bunker-linked trade techs for uniform_mix totals (exp + imp).
+# loil included (materials uses loil_bunker/loil_exp even if not in ribbon list).
+_WEIGHT_EXPORT_TECHS = frozenset(
+    {"foil_exp", "loil_exp", "LNG_exp", "meth_exp", "eth_exp", "lh2_exp"}
+)
+_WEIGHT_IMPORT_TECHS = frozenset(
+    {"foil_imp", "loil_imp", "LNG_imp", "meth_imp", "eth_imp", "lh2_imp"}
 )
 
 
@@ -271,51 +276,26 @@ def _regional_nodes(df: pd.DataFrame) -> list[str]:
     return regions
 
 
-def _export_shares(
+def _normalize_shares(weight: pd.DataFrame) -> pd.DataFrame:
+    """Region×year absolute weights → shares (0 if column total is 0)."""
+    total = weight.sum(axis=0)
+    return weight.div(total.where(total != 0), axis=1).fillna(0.0)
+
+
+def _sum_tech_inputs(
     df: pd.DataFrame,
     parts: pd.DataFrame,
-    export_tech: str,
+    techs: frozenset[str],
     year_cols: list,
     regions: list[str],
 ) -> pd.DataFrame:
-    """Region × year shares of ``in|{export_tech}|…`` (sum over modes/levels)."""
-    levels = _EXPORT_ENERGY_LEVELS.get(export_tech)
-    hit = (
-        (parts[0] == "in")
-        & (parts[1] == export_tech)
-        & ~df["region"].astype(str).isin(_GLB_REGIONS)
-    )
-    if levels is not None:
-        hit = hit & parts[4].isin(levels)
-    if not hit.any():
-        return pd.DataFrame(0.0, index=regions, columns=year_cols)
-
-    block = df.loc[hit, ["region", *year_cols]].copy()
-    block[year_cols] = block[year_cols].apply(pd.to_numeric, errors="coerce")
-    exp = (
-        block.groupby("region", sort=False)[year_cols]
-        .sum()
-        .reindex(regions)
-        .fillna(0.0)
-    )
-    total = exp.sum(axis=0)
-    # years with no export → all-zero shares (fillna after div-by-zero → NaN)
-    return exp.div(total.where(total != 0), axis=1).fillna(0.0)
-
-
-def _aggregate_export_shares(
-    df: pd.DataFrame,
-    parts: pd.DataFrame,
-    year_cols: list,
-    regions: list[str],
-) -> pd.DataFrame:
-    """One region×year share from summed energy-unit bunker-linked exports."""
+    """Sum ``in|{tech}|…`` over *techs* by region (energy levels only when mapped)."""
     weight = pd.DataFrame(0.0, index=regions, columns=year_cols)
-    for export_tech in sorted(_UNIFORM_WEIGHT_EXPORTS):
-        levels = _EXPORT_ENERGY_LEVELS.get(export_tech)
+    for tech in sorted(techs):
+        levels = _TRADE_ENERGY_LEVELS.get(tech)
         hit = (
             (parts[0] == "in")
-            & (parts[1] == export_tech)
+            & (parts[1] == tech)
             & ~df["region"].astype(str).isin(_GLB_REGIONS)
         )
         if levels is not None:
@@ -331,8 +311,34 @@ def _aggregate_export_shares(
             .fillna(0.0),
             fill_value=0.0,
         )
-    total = weight.sum(axis=0)
-    return weight.div(total.where(total != 0), axis=1).fillna(0.0)
+    return weight
+
+
+def _export_shares(
+    df: pd.DataFrame,
+    parts: pd.DataFrame,
+    export_tech: str,
+    year_cols: list,
+    regions: list[str],
+) -> pd.DataFrame:
+    """Region × year shares of ``in|{export_tech}|…`` (sum over modes/levels)."""
+    return _normalize_shares(
+        _sum_tech_inputs(df, parts, frozenset({export_tech}), year_cols, regions)
+    )
+
+
+def _trade_shares(
+    df: pd.DataFrame,
+    parts: pd.DataFrame,
+    year_cols: list,
+    regions: list[str],
+) -> pd.DataFrame:
+    """Region×year shares from summed bunker-linked fuel trade (exp + imp)."""
+    abs_w = _sum_tech_inputs(df, parts, _WEIGHT_EXPORT_TECHS, year_cols, regions).add(
+        _sum_tech_inputs(df, parts, _WEIGHT_IMPORT_TECHS, year_cols, regions),
+        fill_value=0.0,
+    )
+    return _normalize_shares(abs_w)
 
 
 def _broadcast_glb_to_regions(
@@ -403,7 +409,7 @@ def _shipping_chunks(
     """Build regional downscaled frames for ``method``."""
     chunks: list[pd.DataFrame] = []
     if method == "uniform_mix":
-        share = _aggregate_export_shares(df, parts, year_cols, regions)
+        share = _trade_shares(df, parts, year_cols, regions)
         part = _broadcast_glb_to_regions(
             glb.drop(columns=["_export"]), share, regions, year_cols, df.columns
         )
@@ -441,9 +447,9 @@ def append_regional_shipping(
             (``foil_exp``, ``LNG_exp``, …). Regional *fuel mixes* can differ
             from GLB (materials_dac_tables style).
         ``"uniform_mix"`` (default)
-            One regional share (from summed energy-unit bunker-linked exports)
-            is applied to every bunker variable. Every region keeps the GLB
-            fuel structure; only the regional *totals* differ and sum to GLB.
+            One regional share (from bunker-linked fuel trade: exp + imp) is
+            applied to every bunker variable. Every region keeps the GLB fuel
+            structure; only the regional *totals* differ and sum to GLB.
     """
     if df.empty:
         return df
@@ -479,6 +485,6 @@ def append_regional_shipping(
     log.info(
         "Appended %d regional shipping bunker row(s) from R12_GLB (%s)",
         len(extra),
-        method,
+        method if method == "by_fuel" else f"{method}/trade",
     )
     return pd.concat([df, extra], ignore_index=True)
