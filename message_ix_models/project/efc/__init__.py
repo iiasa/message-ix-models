@@ -26,16 +26,21 @@ _TRUCK_TECHNOLOGIES: tuple[str, ...] = (
 )
 
 
-def lock_agg_ref_chn_from_act(
+def lock_agg_ref_from_act(
     scenario,
     *,
     technology: str = "agg_ref",
-    node_loc: str = "R12_CHN",
+    node_loc: str | None = None,
 ):
-    """Lock *technology* activity in *node_loc* to solved ``ACT``.
+    """Lock *technology* activity to solved ``ACT``.
 
     Reads ``ACT``, removes the solution, then sets equal
     ``bound_activity_lo`` / ``bound_activity_up``.
+
+    Parameters
+    ----------
+    node_loc :
+        Region to lock. ``None`` (default) locks all regions with ACT.
     """
     if not scenario.has_solution():
         raise ValueError(
@@ -44,22 +49,21 @@ def lock_agg_ref_chn_from_act(
             "(clone this step with keep_solution=True)"
         )
 
-    act = scenario.var(
-        "ACT",
-        filters={"technology": technology, "node_loc": node_loc},
-    )
+    filters: dict = {"technology": technology}
+    if node_loc is not None:
+        filters["node_loc"] = node_loc
+
+    act = scenario.var("ACT", filters=filters)
+    where = node_loc if node_loc is not None else "all regions"
     if act.empty:
         raise ValueError(
-            f"No ACT for {technology} in {node_loc} on "
+            f"No ACT for {technology} in {where} on "
             f"{scenario.model}/{scenario.scenario}"
         )
 
     unit = "???"
     for par_name in ("bound_activity_up", "bound_activity_lo", "output"):
-        sample = scenario.par(
-            par_name,
-            filters={"technology": technology, "node_loc": node_loc},
-        )
+        sample = scenario.par(par_name, filters=filters)
         if len(sample):
             unit = str(sample.iloc[0]["unit"])
             break
@@ -72,7 +76,7 @@ def lock_agg_ref_chn_from_act(
     scenario.remove_solution()
 
     with scenario.transact(
-        f"Lock {technology} ACT in {node_loc} via bound_activity_lo/up"
+        f"Lock {technology} ACT in {where} via bound_activity_lo/up"
     ):
         scenario.add_par("bound_activity_lo", bound)
         scenario.add_par("bound_activity_up", bound.copy())
@@ -80,7 +84,7 @@ def lock_agg_ref_chn_from_act(
     log.info(
         "Locked %s in %s to solved ACT (%d bound rows) on %s/%s",
         technology,
-        node_loc,
+        where,
         len(bound),
         scenario.model,
         scenario.scenario,

@@ -17,7 +17,7 @@ from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parit
 from message_ix_models.project.efc import (
     aas_co2_storage_growth,
     aas_co2_storage_share_mode,
-    lock_agg_ref_chn_from_act,
+    lock_agg_ref_from_act,
 )
 from message_ix_models.project.efc.efc_tech import build as build_efc_tech
 from message_ix_models.tools.policy import add_anchor
@@ -391,9 +391,9 @@ def build_other_efc_techs(
 ) -> message_ix.Scenario:
     """Run :mod:`.efc_tech` build.
 
-    Lock the activity of agg_ref only for R12_CHN as other regions are not calibrated.
+    Lock ``agg_ref`` activity to solved ACT in all regions.
     """
-    lock_agg_ref_chn_from_act(scenario)
+    lock_agg_ref_from_act(scenario)
     return build_efc_tech(context, scenario)
 
 
