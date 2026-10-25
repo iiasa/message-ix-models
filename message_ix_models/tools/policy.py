@@ -649,16 +649,16 @@ def _apply_speed_arrival(
                     growth_ref, speed, step
                 )
 
-# YJ: allowed window for depth-arrival. 
-# Now the difficult part is whether we get starting values of year_act, 
-# if so, re-design is needed but more dynamics can be allowed. 
+
+# YJ: allowed window for depth-arrival.
+# Now the difficult part is whether we get starting values of year_act,
+# if so, re-design is needed but more dynamics can be allowed.
 def _apply_arrival_depth(
     df_update: pd.DataFrame,
     df_loop: pd.DataFrame,
     node_col: str,
 ) -> None:
-    """Set value to depth_converted for every year in ``[year_act, arrival]``.
-    """
+    """Set value to depth_converted for every year in ``[year_act, arrival]``."""
     cols = ["year_act", "arrival", "depth_converted"]
     if "node" in df_loop.columns:
         cols = [*cols, "node"]
@@ -763,6 +763,7 @@ def add_anchor(
     anchor_bound_emission(df_anchor, scenario)
     anchor_tax_emission(df_anchor, scenario)
     anchor_growth_land_scen(df_anchor, scenario)
+    anchor_bound_activity(df_anchor, scenario)
 
     return scenario
 
@@ -1763,6 +1764,86 @@ def anchor_growth_land_scen(  # noqa: C901
 
         log.info(
             "anchor_growth_land_scen: added %d %s rows",
+            len(df_updates),
+            par_name,
+        )
+
+    return
+
+
+_BOUND_ACTIVITY_PARS = ("bound_activity_lo", "bound_activity_up")
+
+
+def anchor_bound_activity(  # noqa: C901
+    df_anchor: pd.DataFrame, scenario: message_ix.Scenario
+) -> None:
+    """Apply anchor settings to ``bound_activity_lo`` and ``bound_activity_up``.
+
+    Scaffolds over ``year_act`` for model years between ``year_act`` and
+    ``arrival``. Comma-separated ``technology`` / ``mode`` are expanded; missing
+    ``mode`` defaults to ``M1``.
+    """
+
+    df_ba = df_anchor.loc[df_anchor["parameter"].isin(_BOUND_ACTIVITY_PARS)].copy()
+    if df_ba.empty:
+        log.info(
+            "anchor_bound_activity: no policies tuning "
+            "'bound_activity_lo'/'bound_activity_up'"
+        )
+        return
+
+    if "mode" not in df_ba.columns:
+        df_ba["mode"] = "M1"
+    else:
+        df_ba["mode"] = df_ba["mode"].fillna("M1")
+
+    info = ScenarioInfo(scenario)
+
+    for par_name, df_par in df_ba.groupby("parameter", dropna=False):
+        updates: list[pd.DataFrame] = []
+        df_par = _tech_mode(df_par)
+        for (_policy_id, technology, mode), group in df_par.groupby(
+            ["policy_id", "technology", "mode"], dropna=False
+        ):
+            nodes = _nodes(group) or nodes_ex_world(info.N)
+            start = group["year_act"].dropna()
+            end = group["arrival"].dropna()
+            if start.empty:
+                continue
+            start_year = int(start.min())
+            end_year = int(end.max()) if not end.empty else start_year
+            years = [int(y) for y in info.Y if start_year <= int(y) <= end_year]
+            if not years:
+                continue
+            df_initial = make_df(
+                par_name,
+                technology=technology,
+                mode=mode,
+                time="year",
+                unit="???",
+                value=0.0,
+            ).pipe(broadcast, node_loc=nodes, year_act=years)
+
+            updates.append(
+                _apply_depth_speed_arrival(
+                    df_initial, group.copy(), node_col="node_loc"
+                )
+            )
+
+        df_updates = (
+            pd.concat(updates, ignore_index=True) if updates else pd.DataFrame()
+        )
+        if df_updates.empty:
+            continue
+
+        debug_updates_path = local_data_path("anchor", f"_debug_anchor_{par_name}.csv")
+        df_updates.to_csv(debug_updates_path, index=False)
+
+        with scenario.transact(f"apply anchor {par_name}"):
+            scenario.add_par(par_name, df_updates)
+
+        log.info(
+            "anchor_bound_activity: added %d %s rows",
             len(df_updates),
             par_name,
         )
