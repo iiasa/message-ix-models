@@ -14,11 +14,7 @@ if TYPE_CHECKING:
 from message_ix_models import Context
 from message_ix_models.model.hydrogen.data_hydrogen import add_hydrogen_techs
 from message_ix_models.model.hydrogen.yoga_modes import apply_meth_h2_mode_parity
-from message_ix_models.project.efc import (
-    aas_co2_storage_growth,
-    aas_co2_storage_share_mode,
-    lock_agg_ref_from_act,
-)
+from message_ix_models.project.efc import lock_agg_ref_from_act
 from message_ix_models.project.efc.efc_tech import build as build_efc_tech
 from message_ix_models.tools.policy import add_anchor
 from message_ix_models.workflow import Workflow
@@ -32,39 +28,39 @@ METH_H2_CO2_RELATIONS = ("CO2_Emission", "CO2_Emission_Global_Total")
 METH_H2_CO2_COEFFICIENT = 0.549
 
 # CPOL anchor policies to try first.
-SF_POLICY_IDS = [
-    # ammonia
-    "10e-CHN-ENE-MOD-25_02",
-    "10e-CHN-ENE-MOD-30_01",
-    "10e-CHN-ENE-MOD-30_04",
-    "10e-CHN-ENE-MOD-30_05",
-    # methanol
-    "10f-CHN-ENE-MOD-25_02",
-    "10f-CHN-ENE-MOD-30_01",
-    "10f-CHN-ENE-MOD-30_03",
-    # "10f-CHN-ENE-MOD-30_04",
-    "10f-CHN-ENE-MOD-30_05",
-    "10f-CHN-ENE-MOD-30_06",
-    # hydrogen
-    "10d-CHN-ENE-MOD-30_01",
-]
-SF_ACC_POLICY_IDS = [
-    # ammonia
-    "10e-CHN-ENE-MOD-25_02",
-    "10e-CHN-ENE-MOD-30_03",  # accelerated
-    "10e-CHN-ENE-MOD-30_04",
-    "10e-CHN-ENE-MOD-30_05",
-    # methanol
-    "10f-CHN-ENE-MOD-25_02",
-    "10f-CHN-ENE-MOD-30_02",  # accelerated
-    "10f-CHN-ENE-MOD-30_03",
-    # "10f-CHN-ENE-MOD-30_04",
-    "10f-CHN-ENE-MOD-30_05",
-    "10f-CHN-ENE-MOD-30_06",
-    # hydrogen
-    # "10d-CHN-ENE-MOD-30_02",  # accelerated
-    "10d-CHN-ENE-MOD-30_01",
-]
+# SF_POLICY_IDS = [
+#     # ammonia
+#     "10e-CHN-ENE-MOD-25_02",
+#     "10e-CHN-ENE-MOD-30_01",
+#     "10e-CHN-ENE-MOD-30_04",
+#     "10e-CHN-ENE-MOD-30_05",
+#     # methanol
+#     "10f-CHN-ENE-MOD-25_02",
+#     "10f-CHN-ENE-MOD-30_01",
+#     "10f-CHN-ENE-MOD-30_03",
+#     # "10f-CHN-ENE-MOD-30_04",
+#     "10f-CHN-ENE-MOD-30_05",
+#     "10f-CHN-ENE-MOD-30_06",
+#     # hydrogen
+#     "10d-CHN-ENE-MOD-30_01",
+# ]
+# SF_ACC_POLICY_IDS = [
+#     # ammonia
+#     "10e-CHN-ENE-MOD-25_02",
+#     "10e-CHN-ENE-MOD-30_03",  # accelerated
+#     "10e-CHN-ENE-MOD-30_04",
+#     "10e-CHN-ENE-MOD-30_05",
+#     # methanol
+#     "10f-CHN-ENE-MOD-25_02",
+#     "10f-CHN-ENE-MOD-30_02",  # accelerated
+#     "10f-CHN-ENE-MOD-30_03",
+#     # "10f-CHN-ENE-MOD-30_04",
+#     "10f-CHN-ENE-MOD-30_05",
+#     "10f-CHN-ENE-MOD-30_06",
+#     # hydrogen
+#     # "10d-CHN-ENE-MOD-30_02",  # accelerated
+#     "10d-CHN-ENE-MOD-30_01",
+# ]
 log = logging.getLogger(__name__)
 
 # EFC ixmp platform and model name
@@ -397,7 +393,11 @@ def build_other_efc_techs(
     Lock ``agg_ref`` activity to solved ACT in all regions.
     """
     lock_agg_ref_from_act(scenario, node_loc="R12_CHN")
-    return build_efc_tech(context, scenario)
+    build_efc_tech(context, scenario)
+
+    scenario.set_as_default()
+
+    return scenario
 
 
 def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
@@ -440,8 +440,6 @@ def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scen
         scenario.scenario,
     )
 
-    scenario = aas_co2_storage_growth(context, scenario)
-    scenario = aas_co2_storage_share_mode(context, scenario)
     log.info(
         "add_1p5c: additional assumptions added to %s/%s",
         scenario.model,
@@ -496,23 +494,15 @@ def generate(context: Context) -> Workflow:
     # It is cre_user juyiyi and lives under the EFC model name, but it is NOT ours
     # to overwrite: pin the version and clone, never build in place.
     #
-    # The chain is MT, never BMT, even though the previous parent URL named a
-    # "2.1-BMT-R12" model: that was an upstream naming legacy and the scenario
-    # inside it never ran the Buildings step. The discriminator is the Buildings
-    # rename of residential/commercial _rc -> _afofio in model/buildings/build.py;
-    # the parent has ZERO *afofio* technologies and the full _rc set (eth_rc,
-    # h2_rc, elec_rc, gas_rc, foil_rc), so reporting filters must use _rc names.
-    # Re-check with EFC_2026 scripts/verify/check_mt_vs_bmt_lineage.py.
-    #
-    # apply_bmt_config() above is not a Buildings build step either — it is a
-    # Context configurator required for transport reporting.
-    #
     # Platform is named explicitly (not the process default): open/clone the parent
     # onto EFC_PLATFORM_NAME before running, e.g.
     #   import ixmp; mp = ixmp.Platform(EFC_PLATFORM_NAME)
     url_prefix = f"ixmp://{EFC_PLATFORM_NAME}/{EFC_MODEL_NAME}"
     url = url_prefix + "/"
-    base_url = f"{url_prefix}/baseline_MT"
+    base_url = (
+        f"ixmp://{EFC_PLATFORM_NAME}/"
+        "MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3/baseline_MT"
+    )
 
     # which is a clone from
     # MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3/baseline_MT#13

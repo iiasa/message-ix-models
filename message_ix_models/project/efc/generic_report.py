@@ -152,7 +152,7 @@ def genno_generic(
 # for methanol and 10.53 Mt for ammonia):
 # - NH3: 0.171 t H2 / t NH3
 # - methanol: 0.242 t H2 / t methanol; fuel GWa bridged at meth_t_d
-#   0.697615 GWa/Mt before applying 0.242
+#   0.697615 GWa/Mt before applying 0.242, then 1.05 factor for CTO
 # - syn_liq: CTL FT 0.286 t H2 / t liquid;
 #   same HHV bridge as methanol 0.937 → 0.889 GWa H2 / GWa lightoil
 #   (2.27273 GWa coal in per GWa liquid ⇒ 0.391 GWa H2 / GWa coal);
@@ -175,7 +175,7 @@ _CAPTIVE_METH = frozenset(
 )
 _CAPTIVE_SYN = frozenset({"syn_liq", "syn_liq_ccs"})
 _CAPTIVE_NH3_MT_H2 = 0.171
-_CAPTIVE_METH_MT_H2 = 0.242
+_CAPTIVE_METH_MT_H2 = 0.254
 _CAPTIVE_METH_GWA_TO_MT_H2 = (1.0 / 0.697615) * _CAPTIVE_METH_MT_H2
 _CAPTIVE_SYN_GWA_H2 = 0.889  # GWa H2 / GWa lightoil (FT; see comment above)
 _CAPTIVE_SYN_GWA_TO_MT_H2 = _CAPTIVE_SYN_GWA_H2 * (0.03154 / 0.120)
