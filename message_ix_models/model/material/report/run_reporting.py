@@ -4,6 +4,7 @@ import message_ix
 import numpy as np
 import pandas as pd
 import pyam
+from genno.core.exceptions import ComputationError
 from message_ix.report import Reporter
 
 from message_ix_models.model.material.report.reporter_utils import (
@@ -553,6 +554,15 @@ def split_mto_feedstock(
             "meth_ind_fs",
         ]
     )
+    # A solution without methanol production has no methanol feedstock to split; the
+    # shares below would sum an empty quantity and fail.
+    try:
+        no_methanol = len(rep.get("out::methanol-prod")) == 0
+    except ComputationError:
+        no_methanol = True
+    if no_methanol:
+        rep.set_filters()
+        return py_df_all
     for c, full_name in zip(
         ["coal", "gas", "bio", "h2"],
         ["Coal", "Gas", "Biomass", "Hydrogen"],
