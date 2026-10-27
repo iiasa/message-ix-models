@@ -251,7 +251,7 @@ jobs:
           -m "not (ece_db or snapshot)" \
           --color=yes --durations=20 -rA --verbose \
           --cov-report=term-missing --cov-report=xml \
-          --numprocesses=auto --dist=loadscope \
+          --numprocesses=2 --dist=loadscope \
           ${{ steps.extra.outputs.pytest-args }} \
           --jvmargs="-Xmx6G" --local-cache
 
