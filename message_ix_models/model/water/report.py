@@ -1840,6 +1840,11 @@ def report(sc: Scenario, reg: str, ssp: str, sdgs: bool = False) -> None:  # noq
                 f"Water Withdrawal|Municipal Water|Unconnected|{setting_cap}{suffix}"
             )
             tmp = f"_tmp_connected|{setting_cap}{suffix}"
+            if connected_var not in report_iam.variable:
+                # An SDG build runs distribution in the efficient mode only, so
+                # only the " Eff" variables exist; pyam would otherwise treat
+                # the missing name as a scalar and fail on str * float.
+                continue
             # total * rate -> stash as temp; total * (1-rate) -> Unconnected
             report_iam.multiply(
                 connected_var,
