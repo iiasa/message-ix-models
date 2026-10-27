@@ -43,24 +43,27 @@ ROLES = {
 YEAR = 2050
 #: Reading of the maladaptation vs +adaptation table (filled after the runs).
 MVA_TEXT = """\
-Reading the table (2031-2050, four five-year periods):
+Reading the table (2025-2050; the two MESSAGE sectors only diverge from 2035,
+so their 2025-2050 numbers dilute a 2035-2050 effect over ten extra years of
+shared history):
 
 - **Buildings** is where +adaptation and maladaptation differ most. Passive
-  cooling, fans and coolers instead of AC-led cooling save 7 EJ/yr of
-  electricity on average (−3.4 %), 123 billion USD/yr of electricity-supply
-  investment (−6.3 %) and 12.5 Gt CO2 cumulated to 2050 (−2 %); the gap keeps
-  widening after 2050 (−8.5 % electricity and −7 % CO2 in 2100).
+  cooling, fans and coolers instead of AC-led cooling save 4.8 EJ/yr of
+  electricity on average (−2.7 %; −7 EJ/yr over 2031-2050 alone), 99 billion
+  USD/yr of electricity-supply investment (−5.2 %) and 12 Gt CO2 cumulated
+  (−1.5 %); the gap keeps widening after 2050 (−8.5 % electricity and −7 % CO2
+  in 2100).
 - **Power plants**: the no-freshwater-cooling scenario cuts cumulative CO2 by
-  1.7 Gt (−0.2 %; −1.3 to −1.6 % per year in 2050-2070) at an electricity
-  supply that is unchanged. Electricity-supply investment is *higher* (+13
-  billion USD/yr, +1.4 %; +25 in 2050) because the plants that lose access to
-  freshwater cooling are replaced by capital-intensive, fuel-free capacity: in
-  2050 coal (−128 GW) and nuclear (−33 GW) give way to solar (+328 GW), wind
+  0.8 Gt (−0.1 %; −1.3 to −1.6 % per year in 2050-2070) at an electricity
+  supply that is unchanged. Electricity-supply investment is *higher* (+8
+  billion USD/yr on average, +25 in 2050) because the plants that lose access
+  to freshwater cooling are replaced by capital-intensive, fuel-free capacity:
+  in 2050 coal (−128 GW) and nuclear (−33 GW) give way to solar (+328 GW), wind
   (+100 GW), hydro (+76 GW) and storage (+43 GW); non-fossil investment is +34
   billion USD/yr, fossil −12. Less CO2, more up-front capital, same output.
 - **Water**: all three indicators move by less than 1 %. +adaptation needs
-  0.5 EJ/yr less electricity (efficient distribution and reuse replace pumping
-  of fossil groundwater and desalination) and 1.5 Gt less CO2 to 2050. The
+  0.3 EJ/yr less electricity (efficient distribution and reuse replace pumping
+  of fossil groundwater and desalination) and 1.4 Gt less CO2 to 2050. The
   small CO2 *increase* in 2100 (+228 Mt, +0.6 %) is not a water effect but a
   reshuffle of the electricity mix in a nearly flat LP: in 2100 `+adapt` runs
   1.3 EJ more advanced coal and 2 EJ less gas combined cycle than `maladapt`
@@ -267,9 +270,11 @@ def main() -> None:
     wr = _load("water_report", ADAPT / "water" / "scripts" / "water_report.py")
     br = _load("buildings_report", BUILD / "buildings_report.py")
     mva = _load("malad_vs_adapt", ADAPT / "scripts" / "malad_vs_adapt.py")
-    cmp_df = mva.collect(mva.YEARS)
+    mva_years = [y for y in mva.GRID if mva.START <= y <= mva.END]
+    cmp_df = mva.collect(mva_years)
     mva.OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     cmp_df.to_csv(mva.OUT_CSV, index=False)
+    mva.write_xlsx(cmp_df, mva_years)
 
     pw, wt, bl = power_numbers(), water_numbers(wr), buildings_numbers(br)
 
@@ -330,18 +335,23 @@ def main() -> None:
         "",
         "+adaptation against maladaptation (power plants `nofresh35` vs `malad35`,",
         "water `+adapt` vs `maladapt`, buildings `POSITIVEADAPT2` vs `MALADAPT`),",
-        "World, over 2031-2050 (model years 2035-2050, five years each): cumulative",
-        "energy-system CO2 (`Emissions|CO2|Energy` for power and buildings, the",
-        "MESSAGE `EMISS` fossil-and-industry CO2 total for water), average annual",
-        "electricity supply (`Secondary Energy|Electricity`) and average annual",
-        "investment in electricity supply (`Investment|Energy Supply|Electricity`;",
-        "for water generation CAP_NEW × inv_cost plus transmission and",
-        "distribution, pulled from the scenarios). Full numbers in",
-        "`results/tables/malad_vs_adapt.csv`.",
+        "World, over 2025-2050 (every calendar year, linear interpolation between",
+        "the reported years; the water scenarios start in 2035 and take 2025/2030",
+        "from the power-plant base on the same starter): cumulative energy-system",
+        "CO2 (`Emissions|CO2|Energy` for power and buildings, the MESSAGE `EMISS`",
+        "fossil-and-industry CO2 total for water), average annual electricity supply",
+        "(`Secondary Energy|Electricity`) and average annual investment in",
+        "electricity supply (`Investment|Energy Supply|Electricity`; for water",
+        "generation CAP_NEW × inv_cost plus transmission and distribution, pulled",
+        "from the scenarios). Relative change with the absolute difference in",
+        "brackets; copy-ready version in `results/tables/malad_vs_adapt.xlsx`, full",
+        "numbers in `results/tables/malad_vs_adapt.csv`.",
+        "",
+        mva.matrix_table(cmp_df, mva_years),
         "",
         "![+adaptation relative to maladaptation](figures/malad_vs_adapt.png)",
         "",
-        mva.diff_table(cmp_df, mva.YEARS),
+        mva.diff_table(cmp_df, mva_years),
         "",
         MVA_TEXT,
         "",
