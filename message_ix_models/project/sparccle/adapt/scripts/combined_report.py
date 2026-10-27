@@ -11,9 +11,10 @@ cross-sector summary computed from the sector data:
 
 - power: ``results/tables/emissions_world.csv`` and the objective table of
   ``report_p.md`` (scenarios BAU / malad35 / nofresh35);
-- water: the ``*_nexus.csv`` reporting in ``water/results/data`` and
-  ``water/results/data/emissions_ssp2.csv`` (EMISS and OBJ pulled from the
-  scenarios; scenarios BAUfgd / maladapt / +adapt);
+- water: the ``*_nexus.csv`` reporting in ``water/results/data``,
+  ``water/results/data/emissions_ssp2.csv`` (OBJ) and ``elec_ssp2.csv`` (EMISS,
+  electricity generation and investment pulled from the scenarios; scenarios
+  BAUfgd / maladapt / +adapt);
 - buildings: the IMAGE xlsx in ``buildings/`` (BAU / MALADAPT / POSITIVEADAPT2).
 """
 
@@ -40,6 +41,26 @@ ROLES = {
     },
 }
 YEAR = 2050
+#: Reading of the maladaptation vs +adaptation table (filled after the runs).
+MVA_TEXT = """Reading the table:
+
+- **Buildings** is where +adaptation and maladaptation differ most. Passive
+  cooling, fans and coolers instead of AC-led cooling save 10.6 EJ of
+  electricity in 2050 (−4 %) and 42 EJ in 2100 (−8.5 %), 125 billion USD/yr of
+  electricity-supply investment (−6 %) and 880 Mt CO2/yr (−3 %), widening to
+  −2,200 Mt (−7 %) by 2100.
+- **Power plants**: the no-freshwater-cooling scenario cuts energy CO2 by 1.3–1.6 %
+  in 2050–2070 (−465 and −617 Mt/yr) because nuclear and coal lose most from
+  dry cooling, while electricity supply is unchanged and electricity-supply
+  investment is 2 % higher (+25 billion USD/yr in 2050). By 2100 the two
+  converge.
+- **Water**: all three indicators move by less than 0.5 %. +adaptation needs
+  0.4–0.5 EJ/yr less electricity (efficient distribution and reuse replace
+  pumping of fossil groundwater and desalination) and 113 Mt less CO2 in 2035;
+  after 2050 the CO2 difference is within 0.1 % and turns slightly positive in
+  2100 (+228 Mt, +0.6 %) as the cheaper water system leaves more room for
+  fossil generation.
+"""
 
 
 def _load(name: str, path: Path):
@@ -98,10 +119,13 @@ def water_numbers(wr) -> dict:
     f = WATER / "data" / "emissions_ssp2.csv"
     if f.exists():
         em = pd.read_csv(f)
-        out["co2"] = em[(em.variable == "EMISS|CO2") & (em.year == YEAR)].set_index(
+        out["obj"] = em[em.variable == "OBJ"].set_index("scenario")["value"]
+    f = WATER / "data" / "elec_ssp2.csv"
+    if f.exists():  # fossil-fuel and industry CO2 (EMISS `TCE_CO2_FFI`, Mt C)
+        em = pd.read_csv(f)
+        out["co2"] = em[(em.variable == "EMISS|TCE_CO2_FFI") & (em.year == YEAR)].set_index(
             "scenario"
         )["value"]
-        out["obj"] = em[em.variable == "OBJ"].set_index("scenario")["value"]
     return out
 
 
@@ -231,6 +255,10 @@ def main() -> None:
     a = p.parse_args()
     wr = _load("water_report", ADAPT / "water" / "scripts" / "water_report.py")
     br = _load("buildings_report", BUILD / "buildings_report.py")
+    mva = _load("malad_vs_adapt", ADAPT / "scripts" / "malad_vs_adapt.py")
+    cmp_df = mva.collect(mva.YEARS)
+    mva.OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    cmp_df.to_csv(mva.OUT_CSV, index=False)
 
     pw, wt, bl = power_numbers(), water_numbers(wr), buildings_numbers(br)
 
@@ -276,17 +304,37 @@ def main() -> None:
         "  (34,000 MCM/yr in 2050) and fossil groundwater falls 16 %, at +4.6 % system",
         "  cost. +adaptation reduces withdrawals from every source through efficiency",
         "  and reuse at almost no cost (+0.03 %), but builds no desalination either.",
-        "  Energy-system CO2 is identical across the four water scenarios to the",
-        "  Mt: the water levers do not reach the energy side at this precision",
-        "  (electricity for pumping, desalination and treatment is a small load),",
-        "  so water adaptation is a cost and water-balance question, not an",
-        "  emissions one.",
+        "  Energy-system CO2 moves by less than 0.5 % across the four water",
+        "  scenarios (electricity for pumping, desalination and treatment is a",
+        "  small load), so water adaptation is a cost and water-balance question",
+        "  more than an emissions one.",
         "- **Buildings.** Both IMAGE adaptation runs give the same 8.3 billion people",
         "  air-conditioning access and cut heat-vulnerable population by 90 %; the",
         "  maladaptation run does it with 3.5 times the BAU cooling electricity, the",
         "  +adaptation run with 2.6 times, doubling passive-cooled floor space and",
         "  shifting to fans and coolers. That difference is 3 points of energy-system",
         "  CO2 and 7 points of electricity-supply investment in 2050.",
+        "",
+        "## Maladaptation vs +adaptation: emissions, electricity, investment",
+        "",
+        "Difference +adaptation minus maladaptation (power plants `nofresh35` −",
+        "`malad35`, water `+adapt` − `maladapt`, buildings `POSITIVEADAPT2` −",
+        "`MALADAPT`), World, absolute and relative to maladaptation. CO2 is the",
+        "energy-system total (`Emissions|CO2|Energy` for power and buildings; the",
+        "MESSAGE `EMISS` CO2 total for water). Electricity supply is",
+        "`Secondary Energy|Electricity`; investment is `Investment|Energy",
+        "Supply|Electricity` (for water: generation CAP_NEW × inv_cost plus",
+        "transmission and distribution, pulled from the scenarios). Levels in the",
+        "second table (maladaptation / +adaptation); full numbers in",
+        "`results/tables/malad_vs_adapt.csv`.",
+        "",
+        "![+adaptation relative to maladaptation](figures/malad_vs_adapt.png)",
+        "",
+        mva.diff_table(cmp_df, mva.YEARS),
+        "",
+        mva.levels_table(cmp_df, mva.YEARS),
+        "",
+        MVA_TEXT,
         "",
     ]
     chapters = [
