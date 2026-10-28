@@ -222,10 +222,11 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> "AnyQuantit
         cols = list(dims) + ["value", "unit"]
         tmp = (
             pd.read_csv(path, engine="pyarrow")
-            # Drop a leading index column that appears in some files
+            # Drop a leading index column that appears in some files. The column name
+            # is "" with pandas <3.1, and "Unnamed: 0" with pandas ≥3.1.
             # TODO Adjust .snapshot.unpack() to avoid generating this column; update
-            # data; then remove this call
-            .drop(columns="", errors="ignore")
+            #      data; then remove this call
+            .drop(columns=["", "Unnamed: 0"], errors="ignore")
             .set_axis(cols, axis=1)
             .set_index(cols[:-2])
         )
