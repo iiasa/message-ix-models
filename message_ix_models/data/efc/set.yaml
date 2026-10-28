@@ -4,15 +4,26 @@
 # - 'require': elements that must already be present.
 # - 'remove': elements to remove.
 # - 'add': elements to add.
+#
+# Meta (handled in efc_tech.add_data, not apply_spec 1-D sets):
+# - map_tec_addon / cat_addon: [parent_or_type, member] pairs
+# - parameter_copy: copy par rows from one technology to another
 
 commodity:
   require:
   - hydrogen
   - co_gas
+  - NH3
+  - coal
+  - electr
+  add:
+  - electr_dummy
 
 level:
   require:
   - final
+  - secondary
+  - secondary_material
   add:
   - byproduct
   remove:
@@ -21,9 +32,44 @@ level:
 mode:
   require:
   - M1
+  - M2
 
 technology:
   require:
   - catalytic_reforming_ref
   - hydro_cracking_ref
   - hydrotreating_ref
+  - coal_adv
+  - biomass_NH3
+  - electr_NH3
+  - gas_NH3_ccs
+
+type_addon:
+  add:
+  - coal_adv_cfNH3_addon
+
+addon:
+  add:
+  - coal_adv_cfNH3
+
+shares:
+  add:
+  - cofire_penetration
+
+relation:
+  add:
+  - green_nh3_cofire
+
+map_tec_addon:
+  add:
+  - [coal_adv, coal_adv_cfNH3_addon]
+
+cat_addon:
+  add:
+  - [coal_adv_cfNH3_addon, coal_adv_cfNH3]
+
+parameter_copy:
+  - parameters: [capacity_factor, technical_lifetime]
+    node: R12_CHN
+    from_technology: coal_adv
+    to_technology: coal_adv_cfNH3

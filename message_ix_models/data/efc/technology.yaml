@@ -9,3 +9,8 @@ h2_co_gas:
   input: {commodity: co_gas, level: final}
   output: {commodity: hydrogen, level: byproduct}
 
+coal_adv_cfNH3:
+  name: Advanced coal power with ammonia cofiring
+  description: >-
+    10% NH3 cofiring addon on coal_adv (R12_CHN). Consumes NH3@secondary_material,
+    reduces coal@secondary, produces electr@secondary.
