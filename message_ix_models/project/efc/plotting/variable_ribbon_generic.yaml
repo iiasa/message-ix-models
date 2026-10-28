@@ -22,10 +22,12 @@
 x_axis_range: [2020, 2100]
 main_region: R12_CHN
 
-near_term_fill:
-  from_scenario: baseline
-  to_scenario: 1p5c
-  years: [2020, 2025]
+# Near-term historical backfill (HIST_SOURCE_SCENARIO / HIST_TARGET_PATTERN /
+# HIST_YEARS) is set as R constants in vet_ribbon_generic.R. Optional override:
+# near_term_fill:
+#   from_scenario: chn_baseline_sf
+#   to_scenario: nz2060
+#   years: [2020, 2025]
 
 colors:
   # commodities
@@ -53,14 +55,14 @@ colors:
   dac_co2: "#56B4E9"
   fic_co2: "#777777"
   # meth_h2 / H2 CO2-source modes
-  feedstock_bic: "#8C564B"
-  fuel_bic: "#B4918A"
-  feedstock_dac: "#56B4E9"
-  fuel_dac: "#91CEF1"
-  feedstock_fic: "#777777"
-  fuel_fic: "#A7A7A7"
-  feedstock: "#999999"
-  fuel: "#CCCCCC"
+  # feedstock_bic: "#8C564B"
+  # fuel_bic: "#B4918A"
+  # feedstock_dac: "#56B4E9"
+  # fuel_dac: "#91CEF1"
+  # feedstock_fic: "#777777"
+  # fuel_fic: "#A7A7A7"
+  # feedstock: "#999999"
+  # fuel: "#CCCCCC"
   # hydrogen production routes
   h2_smr: "#999999"
   h2_smr_ccs: "#0072B2"
@@ -114,11 +116,16 @@ colors:
   bus: "#DDCC77"
   truck: "#D55E00"
   power: "#117733"
-  chemicals: "#CC79A7"
+  olefins_btx: "#E7298A"
+  plastics_resins: "#AA3377"
+  plastics_resins_fertilizers: "#BB5566"
+  fertilizers: "#66A61E"
+  coalchemicals: "#4D4D4D"
+  iron: "#E69F00"
   iron_steel: "#E69F00"
   industry_other: "#999933"
   refining: "#88CCEE"
-  lh2_supply: "#7570B3"
+  chemicals: "#CC79A7"
   other_demand: "#332288"
 
 groups:
@@ -147,7 +154,7 @@ groups:
 - title: "out|hydrogen production|by technology (Mt)"
   aggregate_by: dim_t
   plot_unit: "Mt H2"
-  scale_factor: 0.0002628333333333333
+  scale_factor: 0.2628333333333333  # GWa -> Mt H2: 0.03154 EJ/GWa / 0.120 EJ/Mt
   scale_from_unit: "GWa"
   variables:
   - out|h2_smr|*|hydrogen|*
@@ -228,7 +235,7 @@ groups:
 
 - title: "in|shipping|by commodity (EJ)"
   dim_s: shipping
-  aggregate_by: dim_c
+  aggregate_by: dim_t
   plot_unit: "EJ"
   scale_factor: 0.03154  # GWa -> EJ
   scale_from_unit: "GWa"
@@ -269,18 +276,18 @@ groups:
   - in|igcc_ccs|*|coal|*
   - in|syn_liq|*|coal|*
   - in|syn_liq_ccs|*|coal|*
-  - in|gas_cc|*|gas|*
-  - in|gas_cc_ccs|*|gas|*
-  - in|gas_ct|*|gas|*
-  - in|gas_ppl|*|gas|*
-  - in|foil_ppl|*|fueloil|*
-  - in|loil_cc|*|lightoil|*
-  - in|loil_ppl|*|lightoil|*
-  - in|bio_istig|*|biomass|*
-  - in|bio_istig_ccs|*|biomass|*
-  - in|bio_ppl|*|biomass|*
-  - in|nuc_hc|*|u5|*
-  - in|nuc_lc|*|u5|*
+  # - in|gas_cc|*|gas|*
+  # - in|gas_cc_ccs|*|gas|*
+  # - in|gas_ct|*|gas|*
+  # - in|gas_ppl|*|gas|*
+  # - in|foil_ppl|*|fueloil|*
+  # - in|loil_cc|*|lightoil|*
+  # - in|loil_ppl|*|lightoil|*
+  # - in|bio_istig|*|biomass|*
+  # - in|bio_istig_ccs|*|biomass|*
+  # - in|bio_ppl|*|biomass|*
+  # - in|nuc_hc|*|u5|*
+  # - in|nuc_lc|*|u5|*
   - in|h2_ct|*|hydrogen|*
 
 - title: "in|olefins & BTX|by commodity (EJ)"
@@ -355,7 +362,7 @@ groups:
   dim_s: refining
   aggregate_by: dim_t
   plot_unit: "Mt H2"
-  scale_factor: 0.0002628333333333333  # GWa -> Mt H2 at LHV 120 MJ/kg
+  scale_factor: 0.2628333333333333  # GWa -> Mt H2: 0.03154 EJ/GWa / 0.120 EJ/Mt
   scale_from_unit: "GWa"
   variables:
   - in|hydro_cracking_ref|*|hydrogen|*
@@ -441,7 +448,7 @@ groups:
   dim_s: methanol
   aggregate_by: dim_l
   plot_unit: "Mt H2"
-  scale_factor: 0.0002628333333333333
+  scale_factor: 0.2628333333333333  # GWa -> Mt H2: 0.03154 EJ/GWa / 0.120 EJ/Mt
   scale_from_unit: "GWa"
   variables:
   - in|meth_h2|*|hydrogen|*
@@ -452,12 +459,11 @@ groups:
   - in|meth_bio|*|hydrogen|captive
   - in|meth_bio_ccs|*|hydrogen|captive
 
-# Clean rename of the old 7-segment mess:
-#   in|Industry|Chemicals|meth_h2|DAC_CO2|feedstock|dac_co2
-# -> meth_h2|feedstock_dac|dac_co2|<level>  (dim_head added below)
 - title: "in|methanol|CO2 (Mt)"
   dim_s: methanol
   aggregate_by: dim_m
+  plot_unit: "Mt CO2"
+  scale_factor: 3.6666666666666665  # Mt C -> Mt CO2 (44/12)
   variables:
   - in|meth_h2|*|bic_co2|*
   - in|meth_h2|*|dac_co2|*
@@ -615,7 +621,7 @@ groups:
 - title: "in|sector|hydrogen (Mt)"
   aggregate_by: dim_s
   plot_unit: "Mt H2"
-  scale_factor: 0.0002628333333333333
+  scale_factor: 0.2628333333333333  # GWa -> Mt H2: 0.03154 EJ/GWa / 0.120 EJ/Mt
   scale_from_unit: "GWa"
   variables:
   - in|LH2_bunker|*|lh2|final

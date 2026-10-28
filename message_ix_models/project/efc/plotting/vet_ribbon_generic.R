@@ -286,41 +286,81 @@ normalize_region <- function(region_name) {
 df_long <- df_long %>%
   mutate(Region_Canon = normalize_region(Region))
 
-# Optional near-term backfill: copy the configured near-term year values (e.g.
-# 2020/2025), per variable and region, from a source scenario (e.g. "baseline")
-# into a target scenario (e.g. "1p5c") that does not report them. Scenarios are
-# matched by case-sensitive substring on the "Scenario" column. Configured via
-# the YAML "near_term_fill:" block.
+# Near-term historical backfill: for HIST_YEARS, replace each target scenario's
+# rows entirely with a copy of HIST_SOURCE_SCENARIO (same variables/regions/
+# values). 
+HIST_SOURCE_SCENARIO <- "chn_baseline_sf"
+HIST_TARGET_PATTERN <- "nz2060"
+HIST_YEARS <- c(2020, 2025)
+
 nt_cfg <- var_config$near_term_fill
-if (!is.null(nt_cfg)) {
-  from_pat <- nt_cfg$from_scenario
-  to_pat <- nt_cfg$to_scenario
-  fill_years <- if (!is.null(nt_cfg$years)) as.numeric(nt_cfg$years) else c(2020, 2025)
-  if (is.null(from_pat) || is.null(to_pat)) {
-    cat("near_term_fill: need both from_scenario and to_scenario; skipping\n")
-  } else if (!"Scenario" %in% names(df_long)) {
-    cat("near_term_fill: no 'Scenario' column in data; skipping\n")
+from_pat <- if (!is.null(nt_cfg) && !is.null(nt_cfg$from_scenario)) {
+  nt_cfg$from_scenario
+} else {
+  HIST_SOURCE_SCENARIO
+}
+to_pat <- if (!is.null(nt_cfg) && !is.null(nt_cfg$to_scenario)) {
+  nt_cfg$to_scenario
+} else {
+  HIST_TARGET_PATTERN
+}
+fill_years <- if (!is.null(nt_cfg) && !is.null(nt_cfg$years)) {
+  as.numeric(nt_cfg$years)
+} else {
+  HIST_YEARS
+}
+
+if (is.null(from_pat) || is.null(to_pat) || length(from_pat) == 0 || length(to_pat) == 0) {
+  cat("near_term_fill: need both from_scenario and to_scenario; skipping\n")
+} else if (!"Scenario" %in% names(df_long)) {
+  cat("near_term_fill: no 'Scenario' column in data; skipping\n")
+} else {
+  src_hist <- df_long %>%
+    filter(grepl(from_pat, Scenario, fixed = TRUE), Year %in% fill_years)
+  if (nrow(src_hist) == 0) {
+    cat("near_term_fill: no source rows for", from_pat,
+        "in years", paste(fill_years, collapse = "/"), "; skipping\n")
   } else {
-    # Source values keyed by variable+region+year (one source scenario assumed).
-    src_lookup <- df_long %>%
-      filter(grepl(from_pat, Scenario, fixed = TRUE), Year %in% fill_years) %>%
-      group_by(Variable, Region, Year) %>%
-      summarise(src_value = dplyr::first(Value[!is.na(Value)]), .groups = "drop")
+    # Identity columns that distinguish one scenario file from another; everything
+    # else (Variable, Region, Year, Value, dim_*) is taken from the source.
+    id_cols <- intersect(
+      c("Model", "Scenario", "Scenario_Name", "Scenario_Type"),
+      names(df_long)
+    )
+    targets <- df_long %>%
+      filter(grepl(to_pat, Scenario, fixed = TRUE)) %>%
+      distinct(across(all_of(id_cols)))
+    # Do not rewrite the source scenario into itself.
+    targets <- targets %>%
+      filter(!grepl(from_pat, Scenario, fixed = TRUE))
 
-    df_long <- df_long %>%
-      left_join(src_lookup, by = c("Variable", "Region", "Year")) %>%
-      mutate(Value = ifelse(
-        grepl(to_pat, Scenario, fixed = TRUE) & Year %in% fill_years & !is.na(src_value),
-        src_value, Value)) %>%
-      select(-src_value)
+    if (nrow(targets) == 0) {
+      cat("near_term_fill: no target scenarios matching", to_pat, "; skipping\n")
+    } else {
+      transplanted <- bind_rows(lapply(seq_len(nrow(targets)), function(i) {
+        row <- targets[i, , drop = FALSE]
+        out <- src_hist
+        for (col in id_cols) out[[col]] <- row[[col]][1]
+        out
+      }))
 
-    n_filled <- df_long %>%
-      filter(grepl(to_pat, Scenario, fixed = TRUE), Year %in% fill_years, !is.na(Value)) %>%
-      nrow()
-    cat("near_term_fill: copied", nrow(src_lookup), "source value(s) into",
-        n_filled, "target row(s) (", from_pat, "->", to_pat,
-        "for years", paste(fill_years, collapse = "/"), ")\n")
-    flush.console()
+      n_drop <- df_long %>%
+        filter(grepl(to_pat, Scenario, fixed = TRUE),
+               !grepl(from_pat, Scenario, fixed = TRUE),
+               Year %in% fill_years) %>%
+        nrow()
+      df_long <- df_long %>%
+        filter(!(grepl(to_pat, Scenario, fixed = TRUE) &
+                   !grepl(from_pat, Scenario, fixed = TRUE) &
+                   Year %in% fill_years)) %>%
+        bind_rows(transplanted)
+
+      cat("near_term_fill: replaced", n_drop, "target hist row(s) with",
+          nrow(transplanted), "copied from", from_pat, "->",
+          paste(unique(targets$Scenario), collapse = ", "),
+          "for years", paste(fill_years, collapse = "/"), "\n")
+      flush.console()
+    }
   }
 }
 
@@ -557,6 +597,12 @@ prepare_group <- function(group) {
   if (!is.null(x_axis_range) && length(x_axis_range) == 2) {
     df_g <- df_g %>% filter(Year >= x_axis_range[1] & Year <= x_axis_range[2])
   }
+
+  df_g <- df_g %>%
+    group_by(Scenario_Name, Region_Canon) %>%
+    tidyr::complete(Year, Layer, fill = list(Value = 0)) %>%
+    ungroup() %>%
+    mutate(Layer = factor(Layer, levels = layer_levels))
 
   list(df = df_g, layer_levels = layer_levels, layer_labels = layer_labels,
        legend_title = legend_title, unit_value = unit_value)
