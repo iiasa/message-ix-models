@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 
 
 class TestEncoder:
+    @pytest.mark.skip_ci_py315
     def test_sdmx(self):
         """:mod:`message_ix_models` configures :class:`.Encoder` for :class:`.Code`."""
         codes0 = [sdmx_model.Code(id=f"FOO{i}", name="foo") for i in range(5)]

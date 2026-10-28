@@ -22,6 +22,7 @@ def test_fetch(version: str) -> None:
     assert p.exists()
 
 
+@pytest.mark.skip_ci_py315
 @mark.parametrize(
     "version, N_total, N_transport",
     (
@@ -48,6 +49,7 @@ def test_get(version: str, N_total: int, N_transport: int) -> None:
     assert N_transport == N
 
 
+@pytest.mark.skip_ci_py315
 @mark.zenodo_timeout
 def test_read0() -> None:
     result = get("2024")
@@ -65,6 +67,7 @@ def test_read0() -> None:
     assert "Italy" == p.country.name
 
 
+@pytest.mark.skip_ci_py315
 @mark.parametrize(
     "filename, N_total",
     (

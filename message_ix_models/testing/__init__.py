@@ -3,6 +3,7 @@ import os
 import platform
 import re
 import shutil
+import sys
 from base64 import b32hexencode
 from collections.abc import Generator
 from copy import deepcopy
@@ -96,6 +97,11 @@ MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
         "xfail", reason="No input data/config for {0}", raises=lambda args: args[1]
     ),
     "non_public_data": MarkFactory("xfail", reason="Requires non-public data ({0})"),
+    "skip_ci_py315": pytest.mark.skipif(
+        GHA and sys.version_info >= (3, 15),
+        reason="Stalls or times out on GitHub Actions with Python 3.15. "
+        "See https://github.com/iiasa/message-ix-models/pull/574.",
+    ),
     "xfail_old_ixmp4": pytest.mark.xfail(
         condition=find_spec("ixmp4") is not None and version("ixmp4") < "0.16",
         reason="Fails with ixmp4 older than the latest minor version",

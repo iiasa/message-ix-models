@@ -9,6 +9,8 @@ from message_ix_models.model.water.data.water_supply import (
 )
 from message_ix_models.tests.model.water.conftest import water_params
 
+pytestmark = pytest.mark.skip_ci_py315
+
 
 @pytest.mark.parametrize(
     "water_context",

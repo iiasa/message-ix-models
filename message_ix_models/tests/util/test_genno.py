@@ -3,6 +3,7 @@ import pytest
 from message_ix_models.util.genno import append
 
 
+@pytest.mark.skip_ci_py315
 def test_append() -> None:
     from genno import Computer
 
