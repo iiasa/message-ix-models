@@ -6,7 +6,7 @@ from message_ix_models.model.transport.slurm import Template
 @pytest.mark.parametrize("source", ("github", "gitlab", "foo"))
 def test_template(source: str) -> None:
     # Format succeeds with no arguments
-    argv, body = Template().format(source=source)
+    argv, body = Template().format(source=source, mix_models_args=[])
 
     # print(body.decode())  # DEBUG Show the script
 
