@@ -349,10 +349,15 @@ class Config:
     def get_platform(
         self, *args, reload: bool = False, **kwargs: Unpack["PlatformInfo"]
     ) -> "ixmp.Platform":
-        """Return a :class:`.Platform` from :attr:`platform_info`.
+        """Return a :class:`.Platform`.
 
-        When used through the CLI, :attr:`platform_info` is a 'base' platform as
-        indicated by the --url or --platform  options.
+        If no `kwargs` are given, connect to a Platform using :attr:`platform_info`.
+        When used through the CLI, :attr:`platform_info` refers to a 'base' platform as
+        indicated by the :program:`--url` or :program:`--platform` options.
+
+        If `kwargs` are given, for instance :py:`name="foo"`, these are passed directly
+        to Platform to connect to a different platform, and :attr:`platform_info` is
+        ignored.
 
         If a Platform has previously been instantiated with :meth:`get_platform`, the
         same object is returned—unless `reload` is :any:`True`.

@@ -41,9 +41,9 @@ class WorkflowStep:
     set_as_default :
         See :attr:`set_as_default`.
     kwargs :
-        Other keyword arguments to the :attr:`action`. These are stored as
-        a :class:`dict` at :attr:`kwargs`. Because of the signature of WorkflowStep,
-        these may not include 'action', 'target', 'clone', or 'set_as_default'.
+        Other keyword arguments to the :attr:`action`. These are stored as a
+        :class:`dict` at :attr:`kwargs`. Because of the signature of WorkflowStep, these
+        may not include 'action', 'target', 'clone', or 'set_as_default'.
     """
 
     #: Function or other callable to be executed on a scenario. This must take at least

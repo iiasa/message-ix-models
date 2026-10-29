@@ -29,7 +29,7 @@ In particular:
   ``$USER`` and ``$VIRTUAL_ENV`` environment variables, respectively, wherever Command 2
   is invoked.
 - Without the option :program:`--go`, the batch script is only printed out. When the
-  option is added, sbatch is actually invoked.
+  option is added, :program:`sbatch` is actually invoked.
 
 See also:
 
@@ -51,17 +51,19 @@ from .common import package_data_path
 
 
 class Template:
-    """A template for a Slurm invocation.
+    """A template for a Slurm job script."""
 
-    A list of :class:`str` in which:
-
-    - The *first* entry should be the name or path of a program, for instance "sbatch".
-    - The *final* entry should be a script body to be passed as standard input to the
-      program.
-    - Any intermediate entries should be command-line arguments to the program.
-    """
-
+    #: A list of :class:`str` in which:
+    #:
+    #: - The *first* entry should be the name or path of a program, for instance
+    #:   :program:`sbatch`.
+    #: - The *final* entry should be a script body to be passed as standard input to the
+    #:   program.
+    #: - Any intermediate entries should be command-line arguments to the program.
     argv: list[str]
+
+    #: Default values for any parameters or substitution values used to format the
+    #: :attr:`argv`.
     default_parameters: dict[str, str] = {}
 
     def __init__(self, *argv: str) -> None:
@@ -131,7 +133,13 @@ class Template:
 
 
 class JinjaTemplate(Template):
-    """A template that uses :mod:`jinja2`."""
+    """A template that uses :mod:`jinja2`.
+
+    Instead of the final :attr:`.Template.argv` containing the body of the job script,
+    this class loads a Jinja template from :attr:`file` and formats it.
+
+    .. todo:: Replace :class:`Template` with this class; that is, use Jinja always.
+    """
 
     #: Relative path of a file in :file:`message_ix_models/data/`. The documentation for
     #: :meth:`jinja.Environment.get_template` states “‘/’ is used as the file system
