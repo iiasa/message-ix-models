@@ -3,22 +3,32 @@
 Regions
 *******
 
-The combined |MESSAGEix|-GLOBIOM framework has global coverage and divides the world into 11 regions which are also the native regions of the |MESSAGEix| model (see :numref:`fig-reg` and :numref:`tab-reg` below). GLOBIOM natively operates at the level of 30 regions which in the linkage to |MESSAGEix| are aggregated to the 11 regions as listed in :numref:`tab-globiomreg`.
+|name| is operated in a variety of spatial scopes and resolutions,
+but most commonly with global scope
+and 12 regions, each including 1 or more countries.
+(see :numref:`fig-reg` and :numref:`tab-reg` below).
+GLOBIOM has a native 30-region resolution;
+in the linkage to |name| these are aggregated to the MESSAGE regions.
 
 .. _fig-reg:
 .. figure:: /_static/MESSAGE_regions.png
    :width: 800px
 
-   Map of 11 |MESSAGEix|-GLOBIOM regions including their aggregation to the four regions used in the Representative Concentration Pathways (RCPs).
+   Map of 11 |name| regions including their aggregation to the four regions used in the Representative Concentration Pathways (RCPs).
 
-The country definitions of the 11 |MESSAGEix| regions are described in the table below (:numref:`tab-reg`). In some scenarios, the |MESSAGEix| region of FSU (Former Soviet Union) is disaggregated into four sub-regions resulting in a 14-region |MESSAGEix| model.
+The country definitions of the 12 |name| regions are described in the table below (:numref:`tab-reg`).
+In alternate spatial aggregations,
+one or more countries are separated from these regions
+to create 14 or 17-region scenarios.
+
+.. todo:: Replace these with references to :doc:`/pkg-data/node`.
 
 .. _tab-reg:
-.. list-table:: Listing of 11 regions used in |MESSAGEix|-GLOBIOM, including their country definitions.
+.. list-table:: Listing of 11 regions of |name| and the countries included in each.
    :widths: 13 18 69
    :header-rows: 1
 
-   * - MESSAGE regions
+   * - |name| R12 region
      - Definition
      - List of countries
    * - **NAM**
@@ -55,15 +65,20 @@ The country definitions of the 11 |MESSAGEix| regions are described in the table
      - Sub-Saharan Africa
      - Angola, Benin, Botswana, British Indian Ocean Territory, Burkina Faso, Burundi, Cameroon, Cape Verde, Central African Republic, Chad, Comoros, Cote d'Ivoire, Congo, Democratic Republic of Congo, Djibouti, Equatorial Guinea, Eritrea, Ethiopia, Gabon, Gambia, Ghana, Guinea, Guinea-Bissau, Kenya, Lesotho, Liberia, Madagascar, Malawi, Mali, Mauritania, Mauritius, Mozambique, Namibia, Niger, Nigeria, Reunion, Rwanda, Sao Tome and Principe, Senegal, Seychelles, Sierra Leone, Somalia, South Africa, Saint Helena, Swaziland, Tanzania, Togo, Uganda, Zambia, Zimbabwe   |
 
-In addition to the 11 geographical regions, in the glboal |MESSAGEix| model there is a global trade region where market clearing of global energy markets is happening and international shipping bunker fuel demand, uranium resource extraction and the nuclear fuel cycle are represented.
+In addition to the 11 geographical regions,
+|name| contains a global trade region
+where market clearing of global energy markets is happening
+and international shipping bunker fuel demand,
+uranium resource extraction,
+and the nuclear fuel cycle are represented.
 
 .. _tab-globiomreg:
-.. list-table:: Listing of 30 regions used in GLOBIOM, including their country definitions and the mapping to the 11 regions of the combined |MESSAGEix|-GLOBIOM model.
+.. list-table:: Listing of 30 regions used in GLOBIOM, including their country definitions and the mapping to the 11 regions of |name|.
    :widths: 13 17 70
    :header-rows: 1
 
-   * - MESSAGE regions
-     - GLOBIOM regions
+   * - |name| R12 region
+     - GLOBIOM region
      - List of countries
    * - **NAM**
      - Canada
