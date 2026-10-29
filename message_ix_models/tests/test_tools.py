@@ -364,6 +364,47 @@ def test_remove_emission_bounds(scenario: "Scenario") -> None:
     remove_emission_bounds.main(scenario)
 
 
+@pytest.mark.parametrize(
+    "kwargs, remaining",
+    [
+        (dict(remove_cumulative_only=True), {"y0", "y1"}),
+        (dict(), {"y0"}),  # Bounds after y0 removed too
+        (dict(remove_all=True), set()),
+    ],
+)
+def test_remove_emission_bounds_scope(
+    scenario: "Scenario", kwargs: dict, remaining: set[str]
+) -> None:
+    info = ScenarioInfo(scenario)
+    years = {"y0": info.y0, "y1": info.Y[1]}
+    with scenario.transact("Prepare for test of remove_emission_bounds()"):
+        scenario.add_set("type_emission", "TCE")
+        scenario.add_set("type_tec", "all")
+        for y in years.values():
+            scenario.add_set("type_year", str(y))
+            scenario.add_set("cat_year", [str(y), y])
+        scenario.add_par(
+            "bound_emission",
+            pd.DataFrame(
+                dict(
+                    node="World",
+                    type_emission="TCE",
+                    type_tec="all",
+                    type_year=["cumulative"] + [str(y) for y in years.values()],
+                    value=1.0,
+                    unit="tC",
+                )
+            ),
+        )
+
+    remove_emission_bounds.main(scenario, **kwargs)
+
+    labels = {str(v): k for k, v in years.items()}
+    left = set(scenario.par("bound_emission")["type_year"])
+    assert "cumulative" not in left
+    assert {labels[y] for y in left} == remaining
+
+
 def test_update_h2_blending(scenario: "Scenario") -> None:
     with scenario.transact("Prepare for test of update_h2_blending()"):
         scenario.add_set("relation", "h2mix_direct")
