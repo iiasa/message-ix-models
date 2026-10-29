@@ -1,0 +1,49 @@
+# Overshoot (peak-and-decline) scenarios on the EFC model.
+#
+# Emission quantities are given in Gt CO2 (cumulative) or Gt CO2/yr (annual); the
+# workflow converts them to the Mt C units MESSAGE uses. P and F are measured on
+# EMISS[World, TCE_CO2], period-weighted, over the budget window.
+
+# ixmp platform for all targets. The parent must already exist on it, because workflow
+# clones stay on one platform. Left empty on purpose: set it here or pass the global
+# --platform option.
+platform:
+
+model: MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC overshoot
+
+parent:
+  model: MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3
+  scenario: baseline_MT
+  version: 13
+
+# The no-policy baseline is re-cloned with this first model year, so earlier periods
+# are fixed from the baseline solution.
+first_model_year: 2030
+
+budget:
+  # cat_year set element holding the budget years. Distinct from "cumulative", which
+  # runs to 2110 in the parent and is removed by ENGAGE step_2 by name.
+  type_year: cumulative_os
+  # Model period years; period 2030 covers 2026-2030.
+  first_year: 2030
+  last_year: 2100
+
+# Upper bound on World TCE_CO2 (Gt CO2/yr) for model years after the budget window,
+# which the budget does not constrain. Starting choice: net zero; revisit in
+# calibration. Empty to leave those years unbounded.
+bound_after_window: 0.0
+
+# Per peak level: F = cumulative Gt CO2 over the budget window (equal to the budget
+# by construction); floor = lower bound on global CO2 (Gt CO2/yr), which sets the peak.
+# Floor values are starting points from a toy model, not calibrated. The toy cannot
+# reach P450 with F = 400 counted from 2026 (lowest peak there is about 514).
+levels:
+  p450:
+    F: 400
+    floor: 0.0
+  p550:
+    F: 400
+    floor: -3.3
+  p650:
+    F: 400
+    floor: -6.3
