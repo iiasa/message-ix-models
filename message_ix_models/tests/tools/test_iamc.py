@@ -1,3 +1,5 @@
+import pytest
+
 from message_ix_models.project.advance.data import LOCATION, NAME
 from message_ix_models.tools.iamc import describe
 from message_ix_models.tools.iamc.structure import CL_SCENARIO_DIAGNOSTIC
@@ -5,6 +7,7 @@ from message_ix_models.util import MESSAGE_MODELS_PATH, package_data_path
 
 
 class TestCL_SCENARIO_DIAGNOSTIC:
+    @pytest.mark.skip_ci_py315
     def test_create(self) -> None:
         # Function runs without error
         result = CL_SCENARIO_DIAGNOSTIC.create()

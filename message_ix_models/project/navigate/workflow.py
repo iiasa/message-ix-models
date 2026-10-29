@@ -685,7 +685,7 @@ def generate(context: Context) -> Workflow:  # noqa: C901
         name = wf.add_step(
             f"{variant} {s} solved",
             name,
-            build_solve_buildings,  # type: ignore
+            build_solve_buildings,
             target=target,
             clone=True,
             navigate_scenario=s,

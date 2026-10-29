@@ -23,6 +23,7 @@ class TestNoDuplicates:
         )
         return dict(input=pd.DataFrame(), output=duplicated)
 
+    @pytest.mark.skip_ci_py315
     def test_run(self, caplog: pytest.LogCaptureFixture, data: "ParameterData") -> None:
         instance = NoDuplicates()
 

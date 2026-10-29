@@ -2,6 +2,7 @@ import re
 from typing import AnyStr, Generic
 
 
+# TODO When dropping support for Python 3.11, write Substitutions[AnyStr]
 class Substitutions(Generic[AnyStr]):
     """Store and apply a sequence of substitutions using :func:`re.sub`.
 

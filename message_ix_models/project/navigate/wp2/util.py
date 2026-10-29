@@ -6,12 +6,8 @@ from typing import TYPE_CHECKING, Literal
 import pandas as pd
 from message_ix import Scenario, make_df
 
-from message_ix_models.util import (
-    ScenarioInfo,
-    broadcast,
-    nodes_ex_world,
-    path_fallback,
-)
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import broadcast, nodes_ex_world, path_fallback
 
 if TYPE_CHECKING:
     from typing import Sequence, TypedDict

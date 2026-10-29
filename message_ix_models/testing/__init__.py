@@ -1,13 +1,10 @@
 import logging
 import os
+import platform
 import re
 import shutil
-
-try:
-    from base64 import b32hexencode as b32encode
-except ImportError:
-    from base64 import b32encode
-import platform
+import sys
+from base64 import b32hexencode
 from collections.abc import Generator
 from copy import deepcopy
 from importlib.metadata import version
@@ -100,6 +97,11 @@ MARK: dict[str, pytest.MarkDecorator | MarkFactory] = {
         "xfail", reason="No input data/config for {0}", raises=lambda args: args[1]
     ),
     "non_public_data": MarkFactory("xfail", reason="Requires non-public data ({0})"),
+    "skip_ci_py315": pytest.mark.skipif(
+        GHA and sys.version_info >= (3, 15),
+        reason="Stalls or times out on GitHub Actions with Python 3.15. "
+        "See https://github.com/iiasa/message-ix-models/pull/574.",
+    ),
     "xfail_old_ixmp4": pytest.mark.xfail(
         condition=find_spec("ixmp4") is not None and version("ixmp4") < "0.16",
         reason="Fails with ixmp4 older than the latest minor version",
@@ -572,7 +574,7 @@ def export_test_data(context: Context):
     mark_time()
 
 
-def not_ci(reason=None, action="skip"):
+def not_ci(reason=None, action="skip") -> pytest.MarkDecorator:
     """Mark a test as xfail or skipif if on CI infrastructure.
 
     Checks the ``GITHUB_ACTIONS`` environment variable; returns a pytest mark.
@@ -641,7 +643,7 @@ def loaded_snapshot(
         new_name = request.node.name
     except AttributeError:
         # Generate a new scenario name with a random part
-        new_name = f"baseline {b32encode(randbytes(3)).decode().rstrip('=').lower()}"
+        new_name = f"baseline {b32hexencode(randbytes(3)).decode().rstrip('=').lower()}"
 
     log.info(f"Clone to '{model_name}/{new_name}'")
     yield base.clone(scenario=new_name, keep_solution=solved)

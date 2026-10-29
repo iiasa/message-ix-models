@@ -81,7 +81,7 @@ class TestConfig:
 
         # xarray objects are generated for advanced indexing
         indexers = cfg.spec.add.set["consumer_group indexers"]
-        assert all(isinstance(da, xr.DataArray) for da in indexers.values())  # type: ignore [attr-defined]
+        assert all(isinstance(da, xr.DataArray) for da in indexers.values())
 
         # Codes for commodities are generated
         codes = cfg.spec.add.set["commodity"]

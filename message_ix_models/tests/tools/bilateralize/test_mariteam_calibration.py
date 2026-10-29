@@ -5,13 +5,16 @@ from message_ix_models.tools.bilateralize.mariteam_calibration import (
 )
 from message_ix_models.tools.bilateralize.utils import load_config
 
-MARK = pytest.mark.xfail(
-    raises=FileNotFoundError,
-    reason="Input data files not available for testing.",
-)
+pytestmark = [
+    pytest.mark.skip_ci_py315,
+    pytest.mark.xfail(
+        raises=FileNotFoundError,
+        # P:/ene.model/MESSAGE_trade/MariTEAM/MariTEAM_output_2025-07-21.csv
+        reason="Input data files not available for testing.",
+    ),
+]
 
 
-@MARK  # P:/ene.model/MESSAGE_trade/MariTEAM/MariTEAM_output_2025-07-21.csv
 def test_calibrate_mariteam(
     project_name: str | None = None,
     config_name: str | None = None,

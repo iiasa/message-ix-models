@@ -34,6 +34,7 @@ def test_filter_fix_cost_by_lifetime(scenario: "Scenario") -> None:
     filter_fix_cost_by_lifetime(scenario)
 
 
+@pytest.mark.skip_ci_py315
 @pytest.mark.parametrize(
     "par",
     (
@@ -49,6 +50,7 @@ def test_replace_pre_base_year_cost(
     replace_pre_base_year_cost(scenario, config, par)
 
 
+@pytest.mark.skip_ci_py315
 @pytest.mark.usefixtures("ssp_user_data")
 def test_update_scenario_costs(scenario: "Scenario", config: "Config") -> None:
     # Function runs without error

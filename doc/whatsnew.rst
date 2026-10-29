@@ -4,6 +4,10 @@ What's new
 Next release
 ============
 
+
+- :mod:`message_ix_models` supports and is tested with `Python 3.15 <https://www.python.org/downloads/release/python-3150/>`__ (:pull:`574`),
+  released 2026-10-09.
+- Support for Python 3.10 is dropped (:pull:`574`), as it has reached end-of-life.
 - Fix import of :mod:`message_ix_models` without :mod:`plotnine` (:issue:`323`, :issue:`540`, :pull:`547`).
 - Add IAMC code list :class:`~.iamc.structure.CL_SCENARIO_DIAGNOSTIC` (:pull:`501`).
 - New module :ref:`tools-newclimate` (:pull:`499`).

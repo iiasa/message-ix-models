@@ -156,7 +156,7 @@ def generate_product(
 
         fmt = dict(zip(dims.keys(), item))  # Format the ID and name
         result.id = result.id.format(**fmt)
-        result.name = str(result.name).format(**fmt)  # type: ignore [assignment]
+        result.name = str(result.name).format(**fmt)
 
         codes.append(result)  # Store code and indices
         indices.append(tuple(map(str, item)))

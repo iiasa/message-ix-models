@@ -19,17 +19,17 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: R",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 license = "Apache-2.0"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
   "click",
   "colorama",
@@ -121,17 +121,30 @@ files = [
   "doc",
   "message_ix_models",
 ]
+# strict = true  # As of 2026-10-21, causes ~2364 errors
+# The following are implied by strict in mypy 2.4.0
+# check_untyped_defs = true           # 103
+# disallow_any_generics = true        # 294
+# disallow_incomplete_defs = true     # 497
+disallow_subclassing_any = true
+# disallow_untyped_calls = true       # 743
+disallow_untyped_decorators = true
+# disallow_untyped_defs = true        # 981
+extra_checks = true
+no_implicit_reexport = true
+strict_equality = true
+warn_redundant_casts = true
+# warn_return_any = true              #  90
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 module = [
   # TODO Satisfy mypy in the following
   "message_ix_models.model.material.build",
-  "message_ix_models.model.material.data_ammonia",
   "message_ix_models.model.material.data_generic",
   "message_ix_models.model.material.data_petro",
   "message_ix_models.model.material.data_steel",
   "message_ix_models.model.material.data_util",
-  "message_ix_models.model.material.demand.*",
   "message_ix_models.model.material.util",
   # Legacy codes that may not be type hinted
   "message_ix_models.report.legacy.*",
@@ -143,23 +156,11 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available
 module = [
-  "colorama",
-  "fabric",
   "message_data.*",
-  "pooch",
-  "pycountry",
+  "pandas.*",
   # Indirectly via message_ix
   # This should be a subset of the list in message_ix's pyproject.toml
-  "matplotlib.*",
-  "pandas.*",
   "pyam",
-  # Indirectly via ixmp
-  # This should be a subset of the list in ixmp's pyproject.toml
-  "dask.*",
-  "jpype",
-  "memory_profiler",
-  "scipy",
-  "sklearn",
 ]
 ignore_missing_imports = true
 

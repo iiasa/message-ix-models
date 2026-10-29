@@ -9,6 +9,8 @@ from message_ix_models.model.water.data.water_for_ppl import (
 )
 from message_ix_models.tests.model.water.conftest import setup_valid_basins
 
+pytestmark = pytest.mark.skip_ci_py315
+
 
 def _get_test_node(regions: str) -> str:
     """Return a valid test node for the given region configuration."""

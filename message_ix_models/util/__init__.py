@@ -83,6 +83,7 @@ __all__ = [
     "maybe_query",
     "merge_data",
     "minimum_version",
+    "nodes_ex_world",
     "package_data_path",
     "path_fallback",
     "preserve_log_level",

@@ -23,7 +23,7 @@ defaults:
 env:
   gams-version: 48.7.0
   label: "safe to test"
-  python-version: "3.14"
+  python-version: "3.15"
   r-version: "4.6"
 
 jobs:
@@ -123,13 +123,13 @@ jobs:
         # - Latest supported Python version for those or other dependencies.
         # Minimum version given in pyproject.toml + earlier version of Python
         # For this job only, the oldest version of Python supported by message-ix-models
-        - { upstream: v3.8.0,  python: "3.10"  }  # Released 2024-01-12
+        - { upstream: v3.8.0,  python: "3.11" }  # Released 2024-01-12
         - { upstream: v3.9.0,  python: "3.13" }  # 2024-06-04
         - { upstream: v3.10.0, python: "3.14" }  # 2025-02-21
-        # Latest released version + latest released Python
+        # Latest released version + latest version of Python it explicitly supports
         - { upstream: v3.11.0, python: "3.14" }  # 2025-05-27
         # Development version + latest released Python
-        - { upstream: main,    python: "3.14" }
+        - { upstream: main,    python: "3.15" }
 
         exclude:
         # Specific version combinations that are invalid / not to be used
@@ -140,6 +140,9 @@ jobs:
         - { os: macos-15-intel, version: { upstream: v3.10.0 }}
         - { os: macos-15-intel, version: { upstream: v3.11.0 }}
         - { os: macos-15-intel, version: { upstream: main }}
+        # Temporary; see https://github.com/iiasa/message-ix-models/pull/574
+        # Pre-built wheels for JPype1 v1.7.1 are not available for Windows
+        - { os: windows-latest, version: { python: "3.15" }}
 
       fail-fast: false
 
@@ -248,7 +251,7 @@ jobs:
           -m "not (ece_db or snapshot)" \
           --color=yes --durations=20 -rA --verbose \
           --cov-report=term-missing --cov-report=xml \
-          --numprocesses=auto --dist=loadscope \
+          --numprocesses=2 --dist=loadscope \
           ${{ steps.extra.outputs.pytest-args }} \
           --jvmargs="-Xmx6G" --local-cache
 

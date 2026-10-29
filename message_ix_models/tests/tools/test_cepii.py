@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class TestBACI:
     class TestOptions:
+        @pytest.mark.skip_ci_py315
         def test_post_init(self) -> None:
             with pytest.raises(
                 ValueError,

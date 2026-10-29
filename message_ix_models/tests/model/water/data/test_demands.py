@@ -52,6 +52,7 @@ def test_add_sectoral_demands(water_context, water_scenario, assert_message_para
     )
 
 
+@pytest.mark.skip_ci_py315
 @pytest.mark.parametrize(
     "water_context",
     [
@@ -87,6 +88,7 @@ def test_add_water_availability(water_context, assert_message_params):
     )
 
 
+@pytest.mark.skip_ci_py315
 @pytest.mark.parametrize(
     "water_context",
     [
