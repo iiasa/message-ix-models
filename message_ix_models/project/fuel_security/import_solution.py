@@ -5,6 +5,10 @@ solution back into the database, leaving the scenario without a solution.
 
     python import_solution.py MODEL SCENARIO VERSION [--gdx PATH] [--heap 32G] [--unlock]
 
+--var / --equ import only the named variables / equations (default: all). The
+equations are the bulk of a solution; e.g. --equ COMMODITY_BALANCE_GT keeps memory
+much lower than importing every equation's levels and marginals.
+
 --unlock releases a lock left by a killed job. Only use it when no other process
 is using the scenario.
 
@@ -29,6 +33,8 @@ parser.add_argument("version", type=int)
 parser.add_argument("--platform", default="mydb")
 parser.add_argument("--gdx", help="Default: message_ix's MsgOutput file for the scenario")
 parser.add_argument("--heap", default="32G", help="Java heap; reading a solution is large")
+parser.add_argument("--var", nargs="*", default=[], help="Variables to import")
+parser.add_argument("--equ", nargs="*", default=[], help="Equations to import")
 parser.add_argument("--unlock", action="store_true", help="Release a stale lock first")
 args = parser.parse_args()
 
@@ -51,6 +57,6 @@ if scen.has_solution():
 print(f"Importing solution into {scen.url}")
 mp._backend.read_file(gdx, ItemType.MODEL, filters=dict(scenario=scen),
                       check_solution=True, comment="Import solution from GDX",
-                      equ_list=[], var_list=[])
+                      equ_list=args.equ, var_list=args.var)
 print("has_solution:", scen.has_solution())
 mp.close_db()
