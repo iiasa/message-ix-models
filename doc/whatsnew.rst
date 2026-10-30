@@ -4,7 +4,6 @@ What's new
 Next release
 ============
 
-
 - :mod:`message_ix_models` supports and is tested with `Python 3.15 <https://www.python.org/downloads/release/python-3150/>`__ (:pull:`574`),
   released 2026-10-09.
 - Support for Python 3.10 is dropped (:pull:`574`), as it has reached end-of-life.
@@ -27,9 +26,13 @@ Next release
   subclass :class:`~.edits.structure.CL_SCENARIO_EDITS_MCE` (:pull:`497`).
 - Adjust :mod:`.project.ssp.transport` (:pull:`485`):
 - Add stub of :func:`.scenariomip.workflow.generate` (:pull:`394`).
-- Improve :func:`~.report.report` output when :attr:`.Config.verbose` is :py:`True`
-  (:pull:`497`).
-- Improve :doc:`/buildings/index` (:pull:`433`, :pull:`486`):
+- Improve :func:`~.report.report`:
+
+  - More readable output when :attr:`.Config.verbose` is :py:`True` (:pull:`497`).
+  - If |Scenario| is passed as a second positional argument,
+    pass on to :func:`.report.prepare_reporter` (:pull:`578`).
+
+- Improve :doc:`/buildings/index` (:pull:`433`, :pull:`486`, :pull:`578`):
 
   - Expand docstring of :func:`.buildings.build_and_solve`.
   - New submodules :mod:`.buildings.workflow` and
@@ -81,12 +84,19 @@ Next release
     - Add common :data:`.IAMC_VAR_REPLACE` for replacements.
     - Remove zero values prior to the first model period (:pull:`486`).
 
+  - Improve command-line interface:
+
+    - Handle :program:`mix-models transport run --platform-dest=...` option.
+    - Improve :program:`mix-models sbatch -m model.transport`.
+
   - Simplify :class:`~.transport.config.Config`:
 
     - Add :attr:`.Config.project_scenario_code`
       and corresponding :attr:`.ScenarioCodeAnnotations.project_scenario_URN`;
       handle references to project-specific code lists such as
       :class:`.circeular.structure.CL_SCENARIO_TRANSPORT`.
+    - Return a full URL from :meth:`.Config.get_target_url`
+      if :attr:`.Config.dest_platform` is set.
     - Remove :py:`Config.load_factor`, superseded by :class:`.LoadFactorF`.
     - Remove unused :py:`Config.ldv_stock_method` and :py:`Config.futures_scenario`.
 
@@ -104,12 +114,16 @@ Next release
   - Retire urban/rural unconnected water technologies.
   - Disable CPLEX scaling in water-ix solves.
 
+- Handle 2-platform clone in :class:`.WorkflowStep` (:pull:`578`).
 - New reporting operators
   :func:`~.operator.full` (:pull:`497`) and
   :func:`~.operator.remove_zeros` (:pull:`486`).
+- Add a :py:`name=...` argument to :meth:`.Config.get_platform` (:pull:`578`).
 - Add :obj:`.adapt_R12_R11`
   to adapt data from the :ref:`R12` to the :ref:`R11` node list (:pull:`486`).
   (Note this is the reverse of :obj:`.adapt_R11_R12`.)
+- New class :class:`.slurm.JinjaTemplate` (:pull:`578`)
+  for preparing Slurm job scripts from :mod:`jinja2` templates.
 - New utility class :class:`.Substitutions` for manipulating labels
   and scenario names
   (:pull:`497`).
@@ -125,6 +139,7 @@ Next release
   add :class:`.MarkFactory` utility class,
   and adjust existing tests.
 - New utility :func:`.import_from_fqn` (:pull:`486`).
+- New utility class :class:`.util.ixmp.Platforms` (:pull:`578`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
 
 v2026.4.17

@@ -211,6 +211,7 @@ intersphinx_mapping = {
     "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
     "genno": ("https://genno.readthedocs.io/en/stable", None),
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
+    "jinja": ("https://jinja.palletsprojects.com/en/stable/", None),
     "message-ix": ("https://docs.messageix.org/en/latest/", None),
     # "m-data": (
     #     f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",

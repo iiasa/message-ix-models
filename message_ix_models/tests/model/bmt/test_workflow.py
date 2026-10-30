@@ -11,6 +11,9 @@ from message_ix_models.model.bmt.workflow import (
 
 @generate.minimum_version
 def test_generate(test_context: Context) -> None:
+    # Ensure dest_scenario is empty
+    assert {} == test_context.core.dest_scenario  # type: ignore [comparison-overlap]
+
     # Workflow can be generated successfully
     wf = generate(test_context)
 

@@ -75,9 +75,10 @@ migrate = [
   "GitPython",
 ]
 report = ["plotnine", "xlsxwriter"]
+slurm = ["Jinja2"]
 tests = [
   "message-ix[tests]",
-  "message_ix_models[bilateralize,buildings,material,report,transport]",
+  "message_ix_models[bilateralize,buildings,material,report,slurm,transport]",
   "pytest",
   "pytest-cov",
   "pytest-timeout",
@@ -167,11 +168,13 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 # Default options for invoking pytest
 # - Skip tests with the "ece_db" marker
-# - Disable faulthandler plugin on Windows to prevent spurious console noise
+# - Disable plugins:
+#   - alembic, faker: to prevent verbose log output
+#   - faulthandler: to prevent spurious console noise on Windows
 # - No coverage report
 addopts = """
   -m "not ece_db"
-  -p no:faulthandler
+  -p no:alembic -p no:faker -p no:faulthandler
   --cov=message_ix_models --cov-report="""
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 markers = [

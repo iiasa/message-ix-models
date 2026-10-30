@@ -6,7 +6,7 @@ from dataclasses import is_dataclass
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self, Unpack
 
 import ixmp
 
@@ -14,6 +14,7 @@ from .config import ConfigHelper
 
 if TYPE_CHECKING:
     import message_ix
+    from ixmp.types import PlatformInfo
 
     import message_ix_models.model.config
     import message_ix_models.report.config
@@ -248,8 +249,8 @@ class Context:
                 # Force update() to use dealiasing via set(), above
                 self.set(k, v)
 
-    def __deepcopy__(self, memo):
-        result = Context()  # Create a new instance; this also updates _CONTEXTS
+    def __deepcopy__(self, memo) -> Self:
+        result = type(self)()  # Create a new instance; this also updates _CONTEXTS
         result._values.update((k, deepcopy(v)) for k, v in self._values.items())
         return result
 
@@ -418,7 +419,9 @@ class Context:
         """
         return self.core.get_local_path(*parts, suffix=suffix)
 
-    def get_platform(self, reload: bool = False) -> "ixmp.Platform":
+    def get_platform(
+        self, reload: bool = False, **kwargs: Unpack["PlatformInfo"]
+    ) -> "ixmp.Platform":
         """Return a :class:`.Platform` from :attr:`.Config.platform_info`.
 
         Shorthand for :meth:`.Config.get_platform`.

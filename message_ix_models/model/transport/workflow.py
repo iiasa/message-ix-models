@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 #: - :py:`lpmethod=4, scaind=1` to overcome LP status 5 (optimal with unscaled
 #:   infeasibilities) when running on SSP(2024) base scenarios in some situations.
 #: - :py:`iis=1` to display verbose conflict information on infeasibility.
-#: - :py:`threads=8` for performance on UniCC.
+#: - :py:`threads=16` for performance on UniCC.
 #: - :py:`tilim=45 * 60` to limit runtime to 45 minutes on IIASA-hosted GitHub Actions
 #:   runners.
 SOLVE_CONFIG = WorkflowConfig(
@@ -30,9 +30,9 @@ SOLVE_CONFIG = WorkflowConfig(
         model="MESSAGE",
         solve_options=dict(
             iis=1,
-            lpmethod=6,
-            scaind=0,
-            threads=8,
+            lpmethod=4,
+            scaind=1,
+            threads=16,
             tilim=45 * 60,
         ),
     ),
@@ -103,7 +103,12 @@ def add_steps(wf: "Workflow", base: str, scenario_code: "Code") -> str:
 
     # Build MESSAGEix-Transport on the scenario
     name = wf.add_step(
-        f"{label} built", base, build.main, target=target_url, clone=True, config=config
+        f"{label} built",
+        base,
+        build.main,
+        target=target_url,
+        clone=dict(keep_solution=True),
+        config=config,
     )
 
     if config.policy:
@@ -211,6 +216,8 @@ def generate(
     from .config import CL_SCENARIO, Config
 
     # Handle CLI options
+    dest_platform = options.pop("platform_dest", "")
+    context.dest_platform = dict(name=dest_platform) if dest_platform else {}
     # TODO respect quiet
     options.pop("target_model_name", None)  # Stored on context.core.dest_scenario
     options.pop("target_scenario_name", None)  # Stored on context.core.dest_scenario
