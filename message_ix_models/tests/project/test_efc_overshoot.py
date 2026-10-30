@@ -11,11 +11,17 @@ from message_ix_models.project.efc_overshoot.workflow import (
     budget_mtc,
     check_trajectory,
     configure_context,
+    copy_macro_workbook,
+    demand_from_solution,
+    file_digest,
     gtco2_to_mtc,
     load_config,
+    macro_demand_gap,
     tax_from_price,
+    transfer_demand,
     window_years,
 )
+from message_ix_models.util import package_data_path
 
 MODEL_YEARS = [2030, 2035, 2040, 2045, 2050, 2055, 2060, 2070, 2080, 2090, 2100, 2110]
 
@@ -122,23 +128,23 @@ def test_load_config_default() -> None:
     [
         ("model: m\n", "lacks"),
         (
-            "model: m\nparent: {}\nfirst_model_year: 2030\nlevels: {}\n"
+            "model: m\nparent: {}\nmacro: {}\nfirst_model_year: 2030\nlevels: {}\n"
             "budget: {first_year: 2100, last_year: 2030}\n",
             "is empty",
         ),
         (
-            "model: m\nparent: {}\nfirst_model_year: 2030\nlevels: {}\n"
+            "model: m\nparent: {}\nmacro: {}\nfirst_model_year: 2030\nlevels: {}\n"
             "budget: {first_year: 2030, last_year: 2100}\n",
             "no peak levels",
         ),
         (
-            "model: m\nparent: {}\nfirst_model_year: 2030\n"
+            "model: m\nparent: {}\nmacro: {}\nfirst_model_year: 2030\n"
             "budget: {first_year: 2030, last_year: 2100}\n"
             "levels: {p1: {F: 400}}\n",
             "needs both",
         ),
         (
-            "model: m\nparent: {}\nfirst_model_year: 2030\n"
+            "model: m\nparent: {}\nmacro: {}\nfirst_model_year: 2030\n"
             "budget: {first_year: 2030, last_year: 2100}\n"
             "levels: {p1: {F: 400, floor: 2}}\n",
             "must be ≤ 0",
@@ -187,6 +193,15 @@ def test_generate(test_context) -> None:
         assert step(f"{level} EN3").kwargs == dict(level=level)
         assert step(f"{level} EN3").scenario_info["scenario"] == f"os_{level}_EN3"
         assert wf.graph[f"{level} EN1"][2] == f"{level} base"
+        # Every level starts from the MACRO-calibrated reference
+        assert wf.graph[f"{level} base"][2] == "baseline macro"
+    # add_macro clones itself; the step must not clone, and its target must name the
+    # clone add_macro makes, so that --from "baseline macro" loads it
+    assert step("baseline macro").clone is False
+    assert step("baseline macro").scenario_info["scenario"] == (
+        step("baseline fmy").scenario_info["scenario"] + "_macro"
+    )
+    assert wf.graph["baseline macro"][2] == "baseline fmy"
 
 
 class FakeScenario:
@@ -404,3 +419,110 @@ def test_en2_removes_window_budget(monkeypatch, no_solve, covered, ok) -> None:
         with pytest.raises(ValueError, match="not the model years"):
             wf_mod.en2(cast(Any, _context()), cast(Any, s), level="p550")
         assert "solve" not in no_solve
+
+
+def _demand() -> pd.DataFrame:
+    # Units as in the parent: energy GWa, materials t, transport Gp * km / a
+    rows = [
+        ("R12_AFR", "i_spec", "useful", 2025, "GWa"),
+        ("R12_AFR", "i_spec", "useful", 2030, "GWa"),
+        ("R12_AFR", "steel", "demand", 2030, "t"),
+        ("R12_AFR", "transport pax 2w", "useful", 2030, "Gp * km / a"),
+    ]
+    df = pd.DataFrame(rows, columns=["node", "commodity", "level", "year", "unit"])
+    return df.assign(time="year", value=[1.0, 2.0, 3.0, 4.0])
+
+
+def _DEMAND(years=(2030,)) -> pd.DataFrame:
+    d = _demand()
+    d = d[d.year.isin(years)].drop(columns=["unit", "value"])
+    return d.assign(lvl=[20.0, 30.0, 40.0][: len(d)], mrg=0.0)
+
+
+def test_demand_from_solution_keeps_units() -> None:
+    out = demand_from_solution(_demand(), _DEMAND())
+    by = out.set_index("commodity")
+    assert by.loc["steel", "unit"] == "t"
+    assert by.loc["transport pax 2w", "unit"] == "Gp * km / a"
+    assert by.loc["i_spec", "unit"] == "GWa"
+    assert by["value"].tolist() == [20.0, 30.0, 40.0]
+    # 2025 is outside the solved horizon: not returned, so add_par leaves it alone
+    assert 2025 not in out["year"].tolist()
+
+
+@pytest.mark.parametrize(
+    "mutate, match",
+    [
+        (lambda d, D: (d, D.assign(lvl=float("nan"))), "NaN"),
+        (lambda d, D: (d[d.commodity != "steel"], D), "no demand row"),
+        (lambda d, D: (pd.concat([d, d.iloc[[1]]]), D), "duplicate"),
+    ],
+)
+def test_demand_from_solution_raises(mutate, match) -> None:
+    d, D = mutate(_demand(), _DEMAND())
+    with pytest.raises(ValueError, match=match):
+        demand_from_solution(d, D)
+
+
+@pytest.mark.parametrize(
+    "src_solved, tgt_solved, match",
+    [(False, False, "no solution"), (True, True, "has a solution")],
+)
+def test_transfer_demand_refuses(src_solved, tgt_solved, match) -> None:
+    def scen(solved):
+        return SimpleNamespace(has_solution=lambda: solved, url="m/s#1")
+
+    with pytest.raises(ValueError, match=match):
+        transfer_demand(cast(Any, scen(src_solved)), cast(Any, scen(tgt_solved)))
+
+
+def test_transfer_demand_writes_target(no_solve) -> None:
+    events = no_solve
+    src = FakeScenario(events, var={"DEMAND": _DEMAND()})
+    src.has_solution = lambda: True  # type: ignore[attr-defined]
+    src.url = "src"  # type: ignore[attr-defined]
+    tgt = FakeScenario(events, par={"demand": _demand()})
+    tgt.has_solution = lambda: False  # type: ignore[attr-defined]
+    tgt.url = "tgt"  # type: ignore[attr-defined]
+
+    transfer_demand(cast(Any, src), cast(Any, tgt))
+
+    assert events == ["par:demand", "var:DEMAND", "transact", "add_par:demand:3"]
+
+
+def test_copy_macro_workbook(tmp_path) -> None:
+    template = tmp_path / "shipped.xlsx"
+    template.write_bytes(b"shipped")
+    dest = tmp_path / "study" / "copy.xlsx"
+
+    copy_macro_workbook(template, dest)
+
+    assert dest.read_bytes() == b"shipped"
+    dest.write_bytes(b"refreshed")
+    assert template.read_bytes() == b"shipped"
+    with pytest.raises(ValueError, match="Refusing"):
+        copy_macro_workbook(template, tmp_path / "." / "shipped.xlsx")
+
+
+def test_shipped_macro_workbook_exists() -> None:
+    template = package_data_path(
+        "material", "macro", load_config()["macro"]["template"]
+    )
+    assert template.is_file()
+    assert len(file_digest(template)) == 64
+
+
+def test_package_data_path_absolute_part(tmp_path) -> None:
+    # calibrate_macro relies on this: the material functions then use our copy
+    dest = tmp_path / "copy.xlsx"
+    assert package_data_path("material", "macro", str(dest)) == dest
+
+
+def test_macro_demand_gap() -> None:
+    d = _demand()
+    D = d.drop(columns=["unit"]).rename(columns={"value": "lvl"})
+    assert macro_demand_gap(d, D) == 0.0
+    D.loc[D.commodity == "steel", "lvl"] = 3.3
+    assert macro_demand_gap(d, D) == pytest.approx(0.1)
+    with pytest.raises(ValueError, match="share no rows"):
+        macro_demand_gap(d, D.assign(node="nowhere"))

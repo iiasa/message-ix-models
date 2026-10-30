@@ -10,9 +10,15 @@ Per peak level the chain is ENGAGE-style:
 - ``EN3``: the EN2 World ``TCE_CO2`` price is applied as a World ``TCE_non-CO2`` tax.
 
 The chain stops at EN3: ENGAGE step_4 removes every tax, including the EN3 one.
+
+Every level starts from ``baseline macro``: MACRO calibrated on our own solved
+reference, so each level can carry a MESSAGE-MACRO solve whose demand is transferred
+to its other steps (:func:`transfer_demand`).
 """
 
+import hashlib
 import logging
+import shutil
 import subprocess
 from collections.abc import Iterable, Mapping
 from functools import cache
@@ -21,7 +27,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from message_ix_models.util import identify_nodes, package_data_path
+from message_ix_models.util import identify_nodes, local_data_path, package_data_path
 from message_ix_models.workflow import Workflow
 
 if TYPE_CHECKING:
@@ -43,7 +49,10 @@ GLOBAL_CO2_RELATION = "CO2_Emission_Global_Total"
 #: Others, e.g. the IMO shipping bound on ``CO2_shipping_IMO``, are baseline policy.
 CLIMATE_TYPE_EMISSION = ("TCE", "TCE_CO2", "TCE_non-CO2")
 
-_REQUIRED = ("model", "parent", "first_model_year", "budget", "levels")
+_REQUIRED = ("model", "parent", "first_model_year", "budget", "levels", "macro")
+
+#: Index of the ``demand`` parameter and the ``DEMAND`` variable.
+DEMAND_DIMS = ["node", "commodity", "level", "year", "time"]
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:
@@ -160,6 +169,69 @@ def code_revision() -> str:
     return rev + ("-dirty" if dirty else "")
 
 
+def demand_from_solution(demand: pd.DataFrame, DEMAND: pd.DataFrame) -> pd.DataFrame:
+    """Rows of the `demand` parameter with values from the solved `DEMAND`.
+
+    Each row keeps its unit from `demand`: message_data's ``transfer_demands`` labels
+    every row GWa, but this model's demands are also in t, Gp * km / a and Gt * km / a.
+    Only rows that `DEMAND` covers are returned, so rows outside the solved horizon
+    (e.g. historical years) stay as they are when the result is added.
+    """
+    if DEMAND["lvl"].isna().any():
+        raise ValueError("DEMAND contains NaN")
+    dup = demand.duplicated(DEMAND_DIMS).sum()
+    if dup:
+        raise ValueError(f"demand has {dup} duplicate keys")
+    m = demand.merge(DEMAND[DEMAND_DIMS + ["lvl"]], on=DEMAND_DIMS, how="right")
+    orphan = m[m["unit"].isna()]
+    if len(orphan):
+        raise ValueError(
+            f"{len(orphan)} DEMAND rows have no demand row in the target, e.g. "
+            f"{orphan[DEMAND_DIMS].head(3).to_dict('records')}"
+        )
+    return m.assign(value=m["lvl"])[DEMAND_DIMS + ["value", "unit"]]
+
+
+def transfer_demand(source: "Scenario", target: "Scenario") -> None:
+    """Set the demand parameter of `target` to the solved DEMAND of `source`."""
+    if not source.has_solution():
+        raise ValueError(f"{source.url} has no solution to take DEMAND from")
+    if target.has_solution():
+        raise ValueError(f"{target.url} has a solution; clone it without one first")
+    data = demand_from_solution(target.par("demand"), source.var("DEMAND"))
+    with target.transact(f"Demand from DEMAND of {source.url}"):
+        target.add_par("demand", data)
+    log.info(f"Transferred {len(data)} demand rows from {source.url}")
+
+
+def file_digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def copy_macro_workbook(template: Path, dest: Path) -> None:
+    """Copy the shipped calibration workbook to `dest`, which is refreshed instead.
+
+    material's ``update_macro_calib_file`` writes into the workbook it is given; the
+    shipped one (``data/material/macro/``) is shared with the EFC workflow.
+    """
+    if dest.resolve() == template.resolve():
+        raise ValueError(f"Refusing to use the shipped workbook {template} as the copy")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(template, dest)
+
+
+def macro_demand_gap(demand: pd.DataFrame, DEMAND: pd.DataFrame) -> float:
+    """Largest relative difference between solved DEMAND and the demand parameter.
+
+    A calibrated MESSAGE-MACRO reference reproduces its own demand.
+    """
+    m = demand.merge(DEMAND, on=DEMAND_DIMS, how="inner")
+    if m.empty:
+        raise ValueError("demand and DEMAND share no rows")
+    rel = (m["lvl"] - m["value"]).abs() / m["value"].abs().where(m["value"] != 0, 1.0)
+    return float(rel.max())
+
+
 def _stamp(scenario: "Scenario", step: str) -> None:
     """Record which code built `scenario`; B/L calibration is only valid per build."""
     scenario.set_meta(
@@ -174,10 +246,10 @@ def _remove_solution(scenario: "Scenario") -> None:
         pass  # No solution
 
 
-def _solve(context: "Context", scenario: "Scenario") -> None:
+def _solve(context: "Context", scenario: "Scenario", model: str = "MESSAGE") -> None:
     from message_ix_models.project.efc.workflow import solve
 
-    solve(context, scenario)
+    solve(context, scenario, model=model)
 
 
 def build_baseline(context: "Context", scenario: "Scenario") -> "Scenario":
@@ -191,10 +263,65 @@ def build_baseline(context: "Context", scenario: "Scenario") -> "Scenario":
 
 
 def solve_reference(context: "Context", scenario: "Scenario") -> "Scenario":
-    """Solve the no-policy reference after the first-model-year shift."""
-    _solve(context, scenario)
+    """Prepare the reference for MACRO calibration and solve it with MESSAGE.
+
+    BMT's prep_for_macro removes the MACRO years from ``cat_year`` and the sectors
+    the calibration workbook lacks, then solves. Its solve passes --cap_comm=1, which
+    is a no-op here: the parent has no input_cap*/output_cap* data.
+    """
+    from message_ix_models.model.bmt.workflow import prep_for_macro
+
+    prep_for_macro(context, scenario)
     _stamp(scenario, "baseline_fmy")
     return scenario
+
+
+def calibrate_macro(context: "Context", scenario: "Scenario") -> "Scenario":
+    """Calibrate MACRO on the solved reference; solve and check MESSAGE-MACRO.
+
+    The calibration workbook is a copy, refreshed from `scenario`'s solution; the
+    shipped one is never written and is checked byte-identical afterwards. Returns
+    the calibrated clone, named by message_ix ``{scenario}_macro``.
+    """
+    from message_ix_models.model.material.data_util import add_macro_materials
+    from message_ix_models.model.material.util import update_macro_calib_file
+
+    config = context["efc_overshoot"]["macro"]
+    template = package_data_path("material", "macro", config["template"])
+    dest = local_data_path(
+        "efc_overshoot",
+        "macro",
+        f"macro_calibration_{scenario.scenario}_v{scenario.version}.xlsx",
+        context=context,
+    ).resolve()
+    before = file_digest(template)
+
+    copy_macro_workbook(template, dest)
+    # Both functions join their argument to data/material/macro/; an absolute path
+    # replaces that base, so they read and write `dest` only.
+    update_macro_calib_file(scenario, str(dest))
+    calibrated = add_macro_materials(scenario, str(dest))
+
+    if file_digest(template) != before:
+        raise RuntimeError(f"Shipped MACRO workbook {template} changed")
+
+    _solve(context, calibrated, model="MESSAGE-MACRO")
+    gap = macro_demand_gap(calibrated.par("demand"), calibrated.var("DEMAND"))
+    log.info(f"MACRO reproduces reference demand within {gap:.2e}")
+    if gap > config["demand_tolerance"]:
+        raise ValueError(
+            f"Calibrated MESSAGE-MACRO deviates from reference demand by {gap:.2e} "
+            f"> {config['demand_tolerance']}"
+        )
+    calibrated.set_meta(
+        {
+            "efc_overshoot_macro_workbook": str(dest),
+            "efc_overshoot_macro_workbook_sha256": file_digest(dest),
+            "efc_overshoot_macro_gap": gap,
+        }
+    )
+    _stamp(calibrated, "baseline_macro")
+    return calibrated
 
 
 def step_0(context: "Context", scenario: "Scenario", *, level: str) -> "Scenario":
@@ -393,11 +520,19 @@ def generate(context: "Context", config: Mapping[str, Any] | None = None) -> Wor
         clone=dict(keep_solution=True, shift_first_model_year=fmy),
     )
     wf.add_step("baseline fmy reported", "baseline fmy", report)
+    # add_macro clones to "{scenario}_macro" itself; the target names that clone so
+    # that --from "baseline macro" loads it
+    wf.add_step(
+        "baseline macro",
+        "baseline fmy",
+        calibrate_macro,
+        target=f"{url}/os_baseline_fmy{fmy}_macro",
+    )
 
     for level in config["levels"]:
         wf.add_step(
             f"{level} base",
-            "baseline fmy",
+            "baseline macro",
             step_0,
             target=f"{url}/os_{level}_base",
             clone=dict(keep_solution=False),

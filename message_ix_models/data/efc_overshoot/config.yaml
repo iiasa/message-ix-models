@@ -35,6 +35,15 @@ budget:
 # calibration. Empty to leave those years unbounded.
 bound_after_window: 0.0
 
+# MACRO is calibrated on the solved reference (step "baseline macro"). The shipped
+# workbook in data/material/macro/ is only read; a per-scenario copy under local data
+# is refreshed from the reference solution and used for calibration.
+macro:
+  template: macro_calibration_input_SSP2_bmt.xlsx
+  # Largest accepted relative deviation of calibrated MESSAGE-MACRO DEMAND from the
+  # reference demand. Starting choice; revisit after the first calibration.
+  demand_tolerance: 0.01
+
 # Per peak level: F = cumulative Gt CO2 over the budget window (equal to the budget
 # by construction); floor = lower bound on global CO2 (Gt CO2/yr), which sets the peak.
 # Floor values are starting points from a toy model, not calibrated. The toy cannot
