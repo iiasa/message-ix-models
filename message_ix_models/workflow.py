@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Literal, overload
 
 from genno import Computer
+from ixmp import Platform
 from ixmp.util import parse_url
 from message_ix import Scenario
 
@@ -112,6 +113,11 @@ class WorkflowStep:
                 if isinstance(self.clone, dict)
                 else dict(keep_solution=False)
             )
+            # Clone onto the target platform, if `target` names a different one
+            target_name = self.platform_info.get("name")
+            if target_name and target_name != s.platform.name:
+                log.info(f"  onto platform {target_name!r}")
+                clone_kw.setdefault("platform", Platform(**self.platform_info))
             s = s.clone(**clone_kw)
 
         if not self.action:
