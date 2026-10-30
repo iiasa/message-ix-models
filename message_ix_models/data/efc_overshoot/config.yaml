@@ -4,17 +4,19 @@
 # workflow converts them to the Mt C units MESSAGE uses. P and F are measured on
 # EMISS[World, TCE_CO2], period-weighted, over the budget window.
 
-# ixmp platform for all targets. The parent must already exist on it, because workflow
-# clones stay on one platform. Left empty on purpose: set it here or pass the global
-# --platform option.
-platform:
+# ixmp platform for all targets: JDBC + PostgreSQL (pgsql-16.iiasa.ac.at/ixmp_jdbc),
+# because ixmp-dev is full. The parent must already exist on it, because workflow
+# clones stay on one platform. The global --platform option overrides this.
+platform: message-jdbc-pg
 
 model: MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC overshoot
 
+# Version 1 on message-jdbc-pg is a copy (with solution) of ixmp-dev version 13, made
+# 2026-10-30; all sets/parameters and OBJ matched the source.
 parent:
   model: MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3
   scenario: baseline_MT
-  version: 13
+  version: 1
 
 # The no-policy baseline is re-cloned with this first model year, so earlier periods
 # are fixed from the baseline solution.

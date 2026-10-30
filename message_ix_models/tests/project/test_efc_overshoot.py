@@ -112,7 +112,7 @@ def test_tax_from_price_raises(mutate, match) -> None:
 
 def test_load_config_default() -> None:
     config = load_config()
-    assert config["platform"] is None
+    assert config["platform"] == "message-jdbc-pg"
     assert config["budget"]["type_year"] != "cumulative"
     assert set(config["levels"]) == {"p450", "p550", "p650"}
 
@@ -172,7 +172,7 @@ def test_generate(test_context) -> None:
     assert step("parent").scenario_info == dict(
         model="MESSAGEix-GLOBIOM-GAINS 2.1-BMT-R12 NGFS C3",
         scenario="baseline_MT",
-        version=13,
+        version=1,
     )
     assert step("parent").platform_info["name"] == "pg-test"
     assert step("baseline fmy").clone == dict(
