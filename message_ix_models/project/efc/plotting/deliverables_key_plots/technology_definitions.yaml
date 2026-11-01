@@ -1,0 +1,497 @@
+# Technology definitions for EFC highlight technologies.
+# n_technologies: 152
+
+technologies:
+  bf_biomass_steel:
+    name: Blast furnace (biomass / charcoal)
+    description: Blast furnace producing iron from iron ore using charcoal/biomass instead
+      of coke.
+  bf_ccs_steel:
+    name: Blast furnace with CCS
+    description: Blast furnace ironmaking with carbon capture and storage (addon route on
+      bf_steel).
+  bf_steel:
+    name: Blast furnace
+    description: Blast furnace producing iron from iron ore
+  biomass_NH3:
+    name: Ammonia production from biomass
+    description: Ammonia synthesis with hydrogen produced from biomass gasification
+  biomass_NH3_ccs:
+    name: Bioammonia production with CCS
+    description: Ammonia synthesis with hydrogen produced from biomass gasification with CCS
+  catalytic_cracking_ref:
+    name: Catalytic cracking process unit
+    description: Catalytic cracking converts gas oils with high gasoline yield
+  catalytic_reforming_ref:
+    name: Catalytic reforming process unit
+    description: Catalytic reforming used to produce hydrogen from refinery feedstock
+  CH2O_synth:
+    name: Formaldehyde Synthesis
+    description: Synthesis of formaldehyde from methanol via silver-catalyst pathway
+  CH2O_to_resin:
+    name: Formaldehyde resin synthesis
+    description: Synthesis of formaldehyde resins (proxy chemical phenol-formaldehyde)
+  coal_adv:
+    name: coal_adv
+    description: Advanced coal power plant
+  coal_adv_ccs:
+    name: coal_adv_ccs
+    description: Advanced coal power plant with carbon capture and storage
+  coal_adv_cfNH3:
+    name: Advanced coal power with ammonia cofiring
+    description: 10% NH3 cofiring addon on coal_adv (R12_CHN). Consumes NH3@secondary_material,
+      reduces coal@secondary, produces electr@secondary.
+  coal_NH3:
+    name: Ammonia production from coal
+    description: Ammonia synthesis with hydrogen from coal gasification
+  coal_NH3_ccs:
+    name: Ammonia production from coal with CCS
+    description: Ammonia synthesis with hydrogen from coal gasification with CCS
+  coal_ppl:
+    name: coal_ppl
+    description: Coal power-plant
+  coal_ppl_u:
+    name: coal_ppl_u
+    description: Coal power plant without abatement measures
+  con_ar:
+    name: Kerosene aircraft
+    description: Conventional jet engine passenger aircraft using light oil petroleum products
+      (kerosene jet fuel)
+  conE_ar:
+    name: Biofuel aircraft
+    description: Conventional jet engine passenger aircraft using biofuels
+  conh_ar:
+    name: Hydrogen aircraft
+    description: Conventional jet engine passenger aircraft using hydrogen
+  conm_ar:
+    name: Synfuel aircraft
+    description: Conventional jet engine passenger aircraft using methanol/synthetic fossil
+      liquids
+  dri_coal_steel:
+    name: Direct reduction iron (coal)
+    description: Sponge iron (DRI) production from iron ore using coal as the reductant.
+  dri_gas_ccs_steel:
+    name: Direct reduction iron (natural gas) with CCS
+    description: Gas-based DRI production with carbon capture and storage.
+  dri_gas_steel:
+    name: Direct reduction iron (natural gas)
+    description: Sponge iron (DRI) production from iron ore using natural gas as the reductant.
+  dri_h2_steel:
+    name: Direct reduction iron (hydrogen)
+    description: Sponge iron (DRI) production from iron ore using hydrogen as the reductant.
+  ELC_100:
+    name: Battery-electric LDV
+    description: Battery-electric light-duty vehicle using electricity only (100-mile all-electric
+      range)
+  electr_NH3:
+    name: Ammonia production from electricity
+    description: Integrated ammonia production facility combining on-site hydrogen electrolyser
+      with ammonia synthesis unit
+  eth_bunker:
+    name: eth_bunker
+    description: Ethanol demand for international shipping bunkers (global trade)
+  ethanol_to_ethylene_petro:
+    name: Ethanol dehydration
+    description: Ethylene production via ethanol dehydration
+  f road electr:
+    name: Freight road vehicle powered by electricity
+    description: (No description in source technology file.)
+  f road gas fc:
+    name: Gas fuel cell truck
+    description: 'Hybridized fuel cell freight truck using natural gas via steam reformation.
+      Previous ID: FR_FCg.'
+  f road gas ic:
+    name: Gas combustion truck
+    description: Internal combustion engine freight truck using natural gas.
+  f road methanol:
+    name: Synfuel truck
+    description: Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
+      via steam reformation.
+  FC_bus:
+    name: Hybridized hydrogen fuel cell bus
+    description: Hybridized fuel cell bus using hydrogen
+  fc_h2_aluminum:
+    name: Hydrogen fuel-cell for aluminum process heat
+    description: Fuel cell using hydrogen to produce heat for aluminum and electricity
+  fc_h2_petro:
+    name: Hydrogen fuel-cell for petrochemicals process heat
+    description: Fuel cell using hydrogen to produce heat for petrochemicals and electricity
+  fc_h2_refining:
+    name: Hydrogen fuel-cell for refinery process heat
+    description: Fuel cell using hydrogen to produce heat for refineries and electricity
+  fc_h2_resins:
+    name: Hydrogen fuel-cell for resin process heat
+    description: Fuel cell using hydrogen to produce heat for resins and electricity
+  fc_h2_steel:
+    name: Hydrogen fuel-cell for steel process heat
+    description: Fuel cell using hydrogen to produce heat for steel and electricity
+  FCg_bus:
+    name: Hybridized natural gas fuel cell bus
+    description: Hybridized fuel cell bus using natural gas via steam reformation
+  FCm_bus:
+    name: Hybridized synfuel cell bus
+    description: Hybridized fuel cell bus using methanol/synthetic fossil liquids via steam
+      reformation
+  foil_bunker:
+    name: foil_bunker
+    description: Fuel oil demand for international shipping bunkers (global trade)
+  foil_occ_bunker:
+    name: foil_occ_bunker
+    description: Added in the ScenarioMIP7/SSP2024 project.
+  FR_FCH:
+    name: Fuel cell truck
+    description: Hybridized fuel cell freight truck using hydrogen
+  FR_ICAe:
+    name: Biofuel truck
+    description: Internal combustion engine freight truck using biofuels
+  FR_ICE_H:
+    name: High-efficiency light oil truck
+    description: High-efficiency internal combustion engine freight truck using gasoline/diesel
+  FR_ICE_L:
+    name: Low-efficiency light oil truck
+    description: Low-efficiency internal combustion engine freight truck using gasoline/diesel
+  FR_ICE_M:
+    name: Medium-efficiency light oil truck
+    description: Medium-efficiency internal combustion engine freight truck using gasoline/diesel
+  FR_ICH:
+    name: Hybrid ICE truck
+    description: Hybridized internal combustion engine freight truck using gasoline/diesel
+  fueloil_NH3:
+    name: Ammonia production from fueloil
+    description: Ammonia synthesis with hydrogen via partial oxidation of fueloil
+  fueloil_NH3_ccs:
+    name: Ammonia production from fueloil with CCS
+    description: Ammonia synthesis with hydrogen via partial oxidation of fueloil with CCS
+  furnace_biomass_aluminum:
+    name: Industrial furnace from biomass for aluminum sector
+    description: Generalized furnace using biomass to provide process heat for aluminum production
+  furnace_biomass_cement:
+    name: Industrial furnace from biomass for cement sector
+    description: Generalized furnace using biomass to provide process heat for cement production
+  furnace_biomass_petro:
+    name: Industrial furnace from biomass for petrochemical sector
+    description: Generalized furnace using biomass to provide process heat for petrochemical
+      production
+  furnace_biomass_refining:
+    name: Industrial furnace from biomass for refinery sector
+    description: Generalized furnace using biomass to provide process heat for refineries
+  furnace_coal_aluminum:
+    name: Industrial furnace from coal for aluminum sector
+    description: Generalized furnace using coal to provide process heat for aluminum production
+  furnace_coal_cement:
+    name: Industrial furnace from coal for cement sector
+    description: Generalized furnace using coal to provide process heat for cement production
+  furnace_coal_petro:
+    name: Industrial furnace from coal for petrochemicals sector
+    description: Generalized furnace using coal to provide process heat for petrochemicals
+      production
+  furnace_coal_refining:
+    name: Industrial furnace from coal for refinery sector
+    description: Generalized furnace using coal to provide process heat for refineries
+  furnace_coke_petro:
+    name: Industrial furnace from coke for petrochemical sector
+    description: Generalized furnace using coke to provide process heat for petrochemical
+      production
+  furnace_coke_refining:
+    name: Industrial furnace from coke for refinery sector
+    description: Generalized furnace using coke to provide process heat for refineries
+  furnace_elec_aluminum:
+    name: Industrial furnace using electricity for aluminum sector
+    description: Generalized furnace using electricity to provide process heat for aluminum
+      production
+  furnace_elec_cement:
+    name: Industrial furnace using electricity for cement sector
+    description: Generalized furnace using electricity to provide process heat for cement
+      production
+  furnace_elec_petro:
+    name: Industrial furnace using electricity for petrochemical sector
+    description: Generalized furnace using electricity to provide process heat for petrochemical
+      production
+  furnace_elec_refining:
+    name: Industrial furnace using electricity for refinery sector
+    description: Generalized furnace using electricity to provide process heat for refineries
+  furnace_ethanol_aluminum:
+    name: Industrial furnace using ethanol for aluminum sector
+    description: Generalized furnace using ethanol to provide process heat for aluminum production
+  furnace_ethanol_cement:
+    name: Industrial furnace using ethanol for cement sector
+    description: Generalized furnace using ethanol to provide process heat for cement production
+  furnace_ethanol_petro:
+    name: Industrial furnace using ethanol for petrochemical sector
+    description: Generalized furnace using ethanol to provide process heat for petrochemicals
+      production
+  furnace_ethanol_refining:
+    name: Industrial furnace using ethanol for refinery sector
+    description: Generalized furnace using ethanol to provide process heat for refineries
+  furnace_ethanol_resins:
+    name: Industrial furnace using ethanol for resins sector
+    description: Generalized furnace using ethanol to provide process heat for resins production
+  furnace_ethanol_steel:
+    name: Industrial furnace using ethanol for steel sector
+    description: Generalized furnace using ethanol to provide process heat for steel production
+  furnace_foil_aluminum:
+    name: Industrial furnace using fueloil for aluminum sector
+    description: Generalized furnace using fueloil to provide process heat for aluminum production
+  furnace_foil_cement:
+    name: Industrial furnace using fueloil for cement sector
+    description: Generalized furnace using fueloil to provide process heat for cement production
+  furnace_foil_petro:
+    name: Industrial furnace using fueloil for petrochemical sector
+    description: Generalized furnace using fueloil to provide process heat for petrochemicals
+      production
+  furnace_foil_refining:
+    name: Industrial furnace using fueloil for refinery sector
+    description: Generalized furnace using fueloil to provide process heat for refineries
+  furnace_gas_aluminum:
+    name: Industrial furnace using natural gas for aluminum sector
+    description: Generalized furnace using gas to provide process heat for aluminum production
+  furnace_gas_cement:
+    name: Industrial furnace using natural gas for cement sector
+    description: Generalized furnace using gas to provide process heat for cement production
+  furnace_gas_petro:
+    name: Industrial furnace using natural gas for petrochemical sector
+    description: Generalized furnace using gas to provide process heat for petrochemicals
+      production
+  furnace_gas_refining:
+    name: Industrial furnace using natural gas for refinery sector
+    description: Generalized furnace using gas to provide process heat for refineries
+  furnace_h2_aluminum:
+    name: Industrial furnace using hydrogen for aluminum sector
+    description: Generalized furnace using hydrogen to provide process heat for aluminum production
+  furnace_h2_cement:
+    name: Industrial furnace using hydrogen for cement sector
+    description: Generalized furnace using hydrogen to provide process heat for cement production
+  furnace_h2_petro:
+    name: Industrial furnace using hydrogen for petrochemicals sector
+    description: Generalized furnace using hydrogen to provide process heat for petrochemicals
+      production
+  furnace_h2_refining:
+    name: Industrial furnace using hydrogen for refinery sector
+    description: Generalized furnace using hydrogen to provide process heat for refineries
+  furnace_h2_resins:
+    name: Industrial furnace using hydrogen for resin sector
+    description: Generalized furnace using hydrogen to provide process heat for resins production
+  furnace_h2_steel:
+    name: Industrial furnace using hydrogen for steel sector
+    description: Generalized furnace using hydrogen to provide process heat for steel production
+  furnace_loil_aluminum:
+    name: Industrial furnace using lightoil for aluminum sector
+    description: Generalized furnace using lightoil to provide process heat for aluminum production
+  furnace_loil_cement:
+    name: Industrial furnace using lightoil for cement sector
+    description: Generalized furnace using lightoil to provide process heat for cement production
+  furnace_loil_petro:
+    name: Industrial furnace using lightoil for petrochemical sector
+    description: Generalized furnace using lightoil to provide process heat for petrochemical
+      production
+  furnace_loil_refining:
+    name: Industrial furnace using lightoil for refinery sector
+    description: Generalized furnace using lightoil to provide process heat for refineries
+  furnace_methanol_aluminum:
+    name: Industrial furnace using methanol for aluminum sector
+    description: Generalized furnace using methanol to provide process heat for aluminum production
+  furnace_methanol_cement:
+    name: Industrial furnace using methanol for cement sector
+    description: Generalized furnace using methanol to provide process heat for cement production
+  furnace_methanol_petro:
+    name: Industrial furnace using methanol for petrochemical sector
+    description: Generalized furnace using methanol to provide process heat for petrochemical
+      production
+  furnace_methanol_refining:
+    name: Industrial furnace using methanol for refinery sector
+    description: Generalized furnace using methanol to provide process heat for refineries
+  furnace_methanol_resins:
+    name: Industrial furnace using methanol for resin sector
+    description: Generalized furnace using methanol to provide process heat for resins production
+  furnace_methanol_steel:
+    name: Industrial furnace using methanol for steel sector
+    description: Generalized furnace using methanol to provide process heat for steel production
+  gas_NH3:
+    name: Ammonia production from natural gas
+    description: Ammonia synthesis with hydrogen via steam reforming of methane
+  gas_NH3_ccs:
+    name: Ammonia production from natural gas with CCS
+    description: Ammonia synthesis with hydrogen via steam reforming of methane with CCS
+  h2_bio:
+    name: h2_bio
+    description: Hydrogen production from biomass with C (via gasification)
+  h2_bio_ccs:
+    name: h2_bio_ccs
+    description: Hydrogen production from biomass with C (via gasification) with carbon capture
+      and storage
+  h2_co_gas:
+    name: Hydrogen production by coke oven gas
+    description: Main source of byproduct hydrogen in R12_CHN, consumes co_gas at final and
+      produces hydrogen at byproduct level.
+  h2_coal:
+    name: h2_coal
+    description: Hydrogen production via coal gasification
+  h2_coal_ccs:
+    name: h2_coal_ccs
+    description: Hydrogen production via coal gasification with carbon capture and storage
+  h2_ct:
+    name: Hydrogen combustion turbine
+    description: Power generation from hydrogen in a combustion turbine (peaking / flexible
+      electricity).
+  h2_elec_alk:
+    name: Alkaline electrolysis
+    description: Hydrogen production via alkaline water electrolysis (HYway / MESSAGE hydrogen
+      module; replaces generic h2_elec).
+  h2_elec_pem:
+    name: PEM electrolysis
+    description: Hydrogen production via proton-exchange membrane (PEM) water electrolysis.
+  h2_elec_soe:
+    name: Solid-oxide electrolysis
+    description: Hydrogen production via solid-oxide electrolysis (SOE / high-temperature
+      electrolysis).
+  h2_fc_I:
+    name: h2_fc_I
+    description: Hydrogen fuel cell cogeneration system for industry specific
+  h2_i:
+    name: h2_i
+    description: Gaseous hydrogen in industry thermal
+  h2_pyro_elec:
+    name: Methane pyrolysis (electric)
+    description: Hydrogen production by methane pyrolysis with electricity, co-producing solid
+      carbon black.
+  h2_smr:
+    name: h2_smr
+    description: Hydrogen production via steam-methane reforming of natural gas
+  h2_smr_ccs:
+    name: h2_smr_ccs
+    description: Hydrogen production via steam-methane reforming of natural gas with carbon
+      capture and storage
+  HFC_ptrp:
+    name: Hydrogen fuel cell LDV
+    description: Hybridized fuel cell light-duty vehicle using hydrogen
+  hydro_cracking_ref:
+    name: Hydrocracking
+    description: Hydrocracking unit of a refinery converting gas oils with hydrogen to lighter
+      petroleum products
+  hydrotreating_ref:
+    name: Hydrotreating refinery unit
+    description: Hydrotreating unit of a refinery
+  IAHe_ptrp:
+    name: Biofuel hybrid LDV
+    description: Hybridized internal combustion engine light-duty vehicle using biofuels
+  IAHm_ptrp:
+    name: Methanol hybrid LDV
+    description: Hybridized internal combustion engine light-duty vehicle using methanol/
+      synthetic fossil liquids
+  ICAe_bus:
+    name: Biofuel bus
+    description: Internal combustion engine bus using biofuels
+  ICAe_ffv:
+    name: Biofuel ICE LDV
+    description: Internal combustion engine light-duty vehicle using biofuels. Although real-world
+      flex-fuel vehicles are run on varying mix of ethanol and lightoil, this technology uses
+      only ethanol.
+  ICAm_ptrp:
+    name: Synfuel ICE LDV
+    description: Internal combustion engine light-duty vehicle using methanol/synthetic fossil
+      liquids
+  ICE_conv:
+    name: ICE_conv
+    description: Future (2005 and after) medium/high-efficiency internal combustion engine
+      light-duty vehicle using gasoline/diesel
+  ICE_H_bus:
+    name: High-efficiency internal combustion bus
+    description: High-efficiency internal combustion engine bus using gasoline/diesel
+  ICE_M_bus:
+    name: Medium-efficiency internal combustion bus
+    description: Medium-efficiency internal combustion engine bus using gasoline/diesel
+  ICE_nga:
+    name: Gas ICE LDVV
+    description: Internal combustion engine light-duty vehicle using natural gas
+  ICG_bus:
+    name: Natural gas bus
+    description: Internal combustion engine bus using natural gas
+  ICH_bus:
+    name: Hybridized internal combustion bus
+    description: Hybridized internal combustion engine bus using gasoline/diesel
+  ICH_chyb:
+    name: Hybrid LDV
+    description: Hybridized internal combustion engine light-duty vehicle using gasoline/diesel
+  igcc:
+    name: igcc
+    description: Integrated gasification combined cycle (IGCC) power plant
+  igcc_ccs:
+    name: igcc_ccs
+    description: Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage
+  IGH_ghyb:
+    name: Gas hybrid LDV
+    description: Hybridized internal combustion engine light-duty vehicle using natural gas
+  LH2_bunker:
+    name: LH2_bunker
+    description: Liquified hydrogen demand for international shipping bunkers (global trade)
+  LNG_bunker:
+    name: LNG_bunker
+    description: Liquified natural gas demand for international shipping bunkers (global trade)
+  LNG_occ_bunker:
+    name: LNG_occ_bunker
+    description: Added in the ScenarioMIP7/SSP2024 project.
+  meth_bio:
+    name: Biomethanol production
+    description: Methanol production via biomass gasification
+  meth_bio_ccs:
+    name: Biomethanol production with CCS
+    description: Methanol production via biomass gasification with CCS
+  meth_bunker:
+    name: meth_bunker
+    description: Methanol demand for international shipping bunkers (global trade)
+  meth_coal:
+    name: Methanol production from coal
+    description: Methanol production via coal gasification
+  meth_coal_ccs:
+    name: Methanol production from coal with CCS
+    description: Methanol production via coal gasification with CCS
+  meth_h2:
+    name: Methanol production from hydrogen
+    description: Methanol production from synthetic syngas (H2 and CO2)
+  meth_ind_fs:
+    name: Industrial methanol feedstock
+    description: Methanol use as industrial feedstock (materials module).
+  meth_ng:
+    name: Methanol production from natural gas
+    description: Methanol production via steam reforming of natural gas
+  meth_ng_ccs:
+    name: Methanol production from gas
+    description: Methanol production via steam reforming of natural gas with CCS
+  MTO_petro:
+    name: Methanol-to-Olefins
+    description: Methanol-to-Olefins process unit producing ethylene and propylene from methanol
+  NH3_bunker:
+    name: Ammonia bunkers
+    description: Ammonia demand for international shipping bunkers (global trade).
+  NH3_to_N_fertil:
+    name: Nitrogen fertilizer production
+    description: Nitrogen fertilizer production from ammonia
+  PHEV_bus:
+    name: Plug-in hybrid-electric bus
+    description: Plug-in hybrid-electric bus using gasoline/diesel
+  PHEV_ptrp:
+    name: PHEV_ptrp
+    description: Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
+      all-electric range)
+  production_HVC:
+    name: High Value Chemicals production
+    description: Pseudo technology aggregating all chemicals belong to HVC group to HVC commodity
+  residual_NH3:
+    name: Non-fertilizer ammonia production
+    description: Pseudo technology that moves ammonia from level x to level y
+  sp_eth_I:
+    name: sp_eth_I
+    description: Ethanol (without net C) replacement for specific use of light oil in industry
+  steam_cracker_petro:
+    name: Steam cracker
+    description: Most important conventional technology for primary petrochemicals
+  syn_liq:
+    name: syn_liq
+    description: Coal liquefaction and light oil synthesis
+  syn_liq_ccs:
+    name: syn_liq_ccs
+    description: Coal liquefaction and light oil synthesis with carbon capture and storage
+  Trolley_bus:
+    name: Electric trolley-bus
+    description: Electric trolleybus connected to power cables

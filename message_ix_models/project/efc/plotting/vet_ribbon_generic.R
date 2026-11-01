@@ -72,11 +72,42 @@ groups <- lapply(seq_along(var_config$groups), function(i) {
   } else {
     as.character(g$scale_from_unit)
   }
+  # Optional pre-scale bridge (e.g. Mt NH3 -> GWa) before scale_factor.
+  # Each entry: {from: "Mt", to: "GWa", factor: 0.5882}
+  unit_bridge <- g$unit_bridge
+  if (is.null(unit_bridge)) unit_bridge <- list()
+  # Flag groups whose plot-ready series should be written to
+  # deliverables_key_plots/data/ for the key-plot polish script.
+  deliverable <- isTRUE(g$deliverable)
+  # Optional export filters so the deliverables folder only holds numbers
+  # that appear in the polished figure (years / scenario / subfolder).
+  deliverable_set <- if (is.null(g$deliverable_set) || g$deliverable_set == "") {
+    NA_character_
+  } else {
+    as.character(g$deliverable_set)
+  }
+  deliverable_scenario <- if (is.null(g$deliverable_scenario) || g$deliverable_scenario == "") {
+    NA_character_
+  } else {
+    as.character(g$deliverable_scenario)
+  }
+  deliverable_years <- if (is.null(g$deliverable_years) || length(g$deliverable_years) == 0) {
+    numeric(0)
+  } else {
+    as.numeric(unlist(g$deliverable_years))
+  }
   list(title = title, variables = vars, aggregate_by = agg, dim_s = dim_s,
        dim_head = dim_head, scale_factor = scale_factor, plot_unit = plot_unit,
-       scale_from_unit = scale_from_unit)
+       scale_from_unit = scale_from_unit, unit_bridge = unit_bridge,
+       deliverable = deliverable, deliverable_set = deliverable_set,
+       deliverable_scenario = deliverable_scenario,
+       deliverable_years = deliverable_years)
 })
 cat("Loaded", length(groups), "variable group(s) from", basename(config_file), "\n")
+n_deliverable <- sum(vapply(groups, function(g) isTRUE(g$deliverable), logical(1)))
+if (n_deliverable > 0) {
+  cat("  ", n_deliverable, "group(s) flagged deliverable -> CSV export\n")
+}
 
 # Expand a pipe-delimited pattern against available variable names. A segment
 # of "*" matches any non-empty segment (one mode, one commodity, ...). Exact
@@ -555,6 +586,23 @@ prepare_group <- function(group) {
   }
   unit_value <- if (unit_str != "") paste0(" (", unit_str, ")") else ""
 
+  # Optional unit bridge first (e.g. Mt NH3 -> GWa) so a following
+  # scale_from_unit / scale_factor can treat bridged rows with the others.
+  bridges <- group$unit_bridge
+  if (!is.null(bridges) && length(bridges) > 0) {
+    for (b in bridges) {
+      from_u <- as.character(b$from)
+      to_u <- as.character(b$to)
+      fac <- as.numeric(b$factor)
+      if (is.na(from_u) || from_u == "" || is.na(to_u) || to_u == "" || is.na(fac)) {
+        next
+      }
+      hit <- grepl(from_u, df_g$Unit, ignore.case = TRUE)
+      df_g$Value[hit] <- df_g$Value[hit] * fac
+      df_g$Unit[hit] <- to_u
+    }
+  }
+
   # Plot-only rescale before aggregation so mixed-unit groups (EJ fuel + Mt
   # feedstock) can share one stack. Optional scale_from_unit regex selects
   # which rows are rescaled; others pass through. Unifying Unit to plot_unit
@@ -689,23 +737,214 @@ plot_group_scenario <- function(group, prep, region_ylims, scenario_name, page_l
   return(combined_plot)
 }
 
+# ---------------------------------------------------------------------------
+# Deliverable CSV export: plot-ready series for groups with deliverable: true.
+# Written next to this script under deliverables_key_plots/data/ so the polish
+# script can one-click re-run without re-reading the Excel reports.
+# ---------------------------------------------------------------------------
+slugify <- function(title) {
+  s <- tolower(as.character(title))
+  s <- gsub("[^a-z0-9]+", "_", s)
+  gsub("^_|_$", "", s)
+}
+
+deliverables_dir <- file.path(script_dir, "deliverables_key_plots")
+deliverables_data_dir <- file.path(deliverables_dir, "data")
+if (!dir.exists(deliverables_data_dir)) {
+  dir.create(deliverables_data_dir, recursive = TRUE)
+}
+
+# Spot overlay (second layer on the stacked bars). Computed here so the
+# deliverables folder only receives finished numbers.
+# Non-fossil production share (%) for sector-fuel deliverables: look up the
+# matching out|… production group, drop fossil tech layers, divide by total.
+# Output columns: Title/Scenario/Scenario_Name/Region/Year/Spot_Value
+# (+ Spot_Label, Unit). Region is always main_region (R12_CHN -> CHN).
+nonfossil_spot_specs <- list(
+  "in|sector|hydrogen (Mt)" = list(
+    production_title = "out|hydrogen production|by technology (Mt)",
+    # Fossil: SMR, coal gasification, catalytic reforming, CO gas
+    fossil_pattern = "smr|coal|catalytic_reforming|co_gas"
+  ),
+  "in|sector|methanol (Mt)" = list(
+    production_title = "out|methanol production|by technology (Mt)",
+    # Fossil: natural gas, coal (bio / h2 remain non-fossil)
+    fossil_pattern = "(^|_)ng(_|$)|(^|_)coal(_|$)"
+  ),
+  "in|sector|ammonia (Mt)" = list(
+    production_title = "out|ammonia production|by technology (Mt)",
+    # Fossil: gas, coal, fuel oil (biomass / electr remain non-fossil)
+    fossil_pattern = "(^|_)gas(_|$)|(^|_)coal(_|$)|fueloil"
+  )
+)
+
+# Cache prepare_group() results so spot lookups reuse production preps.
+prep_cache <- new.env(parent = emptyenv())
+
+get_group_prep <- function(title) {
+  if (exists(title, envir = prep_cache, inherits = FALSE)) {
+    return(get(title, envir = prep_cache))
+  }
+  idx <- which(vapply(groups, function(g) identical(g$title, title), logical(1)))
+  if (length(idx) == 0) return(NULL)
+  prep <- prepare_group(groups[[idx[[1]]]])
+  assign(title, prep, envir = prep_cache)
+  prep
+}
+
+compute_deliverable_spots <- function(group, prep, df_stack) {
+  spec <- nonfossil_spot_specs[[group$title]]
+  if (is.null(spec)) return(NULL)
+
+  prod_prep <- get_group_prep(spec$production_title)
+  if (is.null(prod_prep) || is.null(prod_prep$df) || nrow(prod_prep$df) == 0) {
+    cat("  Spot skip:", group$title, "- no prep for",
+        spec$production_title, "\n", file = stderr())
+    return(NULL)
+  }
+
+  # Match the stack export filters (scenario / years / main region).
+  scens <- unique(as.character(df_stack$Scenario_Name))
+  years <- unique(as.numeric(df_stack$Year))
+
+  df_prod <- prod_prep$df %>%
+    filter(Region_Canon == main_region,
+           as.character(Scenario_Name) %in% scens,
+           Year %in% years) %>%
+    mutate(Layer = as.character(Layer),
+           is_fossil = grepl(spec$fossil_pattern, Layer, ignore.case = TRUE))
+
+  if (nrow(df_prod) == 0) {
+    cat("  Spot skip:", group$title, "- no production rows for",
+        main_region, "\n", file = stderr())
+    return(NULL)
+  }
+
+  shares <- df_prod %>%
+    group_by(Scenario_Name, Region_Canon, Year) %>%
+    summarise(
+      total = sum(Value, na.rm = TRUE),
+      fossil = sum(Value[is_fossil], na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      Spot_Value = ifelse(total > 0, 100 * (total - fossil) / total, NA_real_),
+      Scenario = vapply(as.character(Scenario_Name), scenario_label_for, character(1)),
+      Title = group$title,
+      Region = Region_Canon,
+      Spot_Label = "Non-fossil production share",
+      Unit = "%"
+    ) %>%
+    select(Title, Scenario, Scenario_Name, Region, Year, Spot_Value,
+           Spot_Label, Unit) %>%
+    arrange(Scenario, Year)
+
+  # Drop years with no production (NA share)
+  shares <- shares %>% filter(!is.na(Spot_Value))
+  if (nrow(shares) == 0) return(NULL)
+  shares
+}
+
+export_deliverable_csv <- function(group, prep) {
+  if (!isTRUE(group$deliverable)) return(invisible(NULL))
+
+  unit_str <- sub("^ \\((.*)\\)$", "\\1", prep$unit_value)
+  if (is.null(unit_str) || is.na(unit_str)) unit_str <- ""
+
+  out_dir <- deliverables_data_dir
+  if (!is.na(group$deliverable_set) && group$deliverable_set != "") {
+    out_dir <- file.path(deliverables_data_dir, group$deliverable_set)
+  }
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+
+  df_out <- prep$df %>%
+    filter(Region_Canon == main_region) %>%
+    mutate(
+      Scenario = vapply(as.character(Scenario_Name), scenario_label_for, character(1)),
+      Title = group$title,
+      Unit = dplyr::coalesce(na_if(as.character(Unit), ""), unit_str),
+      Layer = as.character(Layer),
+      Layer_Order = as.integer(match(Layer, prep$layer_levels)),
+      Legend_Title = prep$legend_title,
+      Region = Region_Canon
+    )
+
+  if (!is.na(group$deliverable_scenario) && group$deliverable_scenario != "") {
+    pat <- group$deliverable_scenario
+    df_out <- df_out %>%
+      filter(grepl(pat, Scenario, ignore.case = TRUE) |
+               grepl(pat, Scenario_Name, ignore.case = TRUE))
+  }
+  if (length(group$deliverable_years) > 0) {
+    df_out <- df_out %>% filter(Year %in% group$deliverable_years)
+  }
+
+  # Drop layers that are zero in every kept year/scenario (plot-ready only)
+  live_layers <- df_out %>%
+    group_by(Layer) %>%
+    summarise(tot = sum(abs(Value), na.rm = TRUE), .groups = "drop") %>%
+    filter(tot > 0) %>%
+    pull(Layer)
+  df_out <- df_out %>%
+    filter(Layer %in% live_layers) %>%
+    mutate(Layer_Order = as.integer(match(Layer, prep$layer_levels))) %>%
+    select(Title, Scenario, Scenario_Name, Region, Year, Layer, Layer_Order,
+           Value, Unit, Legend_Title) %>%
+    arrange(Scenario, Year, Layer_Order)
+
+  stem <- slugify(group$title)
+  out_path <- file.path(out_dir, paste0(stem, ".csv"))
+  readr::write_csv(df_out, out_path)
+  cat("  Deliverable CSV:", file.path(basename(out_dir), basename(out_path)),
+      "(", nrow(df_out), "rows,", main_region, ")\n", file = stderr())
+
+  spots <- compute_deliverable_spots(group, prep, df_out)
+  if (!is.null(spots) && nrow(spots) > 0) {
+    spots_path <- file.path(out_dir, paste0(stem, "_spots.csv"))
+    readr::write_csv(spots, spots_path)
+    cat("  Deliverable spots:", basename(spots_path), "(", nrow(spots),
+        "rows)\n", file = stderr())
+  }
+
+  flush.console()
+  invisible(out_path)
+}
+
+# Optional: VET_EXPORT_DELIVERABLES_ONLY=1 skips the vetting PDF and only
+# writes the deliverable CSVs (much faster when refreshing key-plot inputs).
+export_only <- Sys.getenv("VET_EXPORT_DELIVERABLES_ONLY", "") %in% c("1", "true", "TRUE")
+
 # Create timestamp for filename (YYYYMMDD_HHMM format)
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M")
 pdf_filename <- paste0("vet_ribbon_", timestamp, ".pdf")
 
-# Create PDF: one page per (group x scenario)
-pdf(file.path(output_dir, pdf_filename), width = 16, height = 10)
+if (!export_only) {
+  # Create PDF: one page per (group x scenario)
+  pdf(file.path(output_dir, pdf_filename), width = 16, height = 10)
+}
 
 total_pages <- length(groups) * length(check_scenarios)
-cat("\nStarting to plot", length(groups), "group(s) x", length(check_scenarios),
-    "scenario(s) =", total_pages, "pages...\n", file = stderr())
+if (export_only) {
+  cat("\nExport-only mode: writing deliverable CSVs (skipping PDF)...\n",
+      file = stderr())
+} else {
+  cat("\nStarting to plot", length(groups), "group(s) x", length(check_scenarios),
+      "scenario(s) =", total_pages, "pages...\n", file = stderr())
+}
 cat(paste(rep("=", 60), collapse = ""), "\n", file = stderr())
 flush.console()
 
 for (i in seq_along(groups)) {
   group <- groups[[i]]
+  if (export_only && !isTRUE(group$deliverable)) next
+
   # Prepare once per group and derive shared y-limits across all scenarios
   prep <- prepare_group(group)
+  assign(group$title, prep, envir = prep_cache)
+  export_deliverable_csv(group, prep)
+
+  if (export_only) next
+
   region_ylims <- compute_region_ylims(prep$df)
   for (j in seq_along(check_scenarios)) {
     scenario_name <- check_scenarios[j]
@@ -722,8 +961,13 @@ for (i in seq_along(groups)) {
   }
 }
 
-dev.off()
-
-cat(paste(rep("=", 60), collapse = ""), "\n", file = stderr())
-cat("All ribbon plots saved to", file.path(output_dir, pdf_filename), "\n", file = stderr())
+if (!export_only) {
+  dev.off()
+  cat(paste(rep("=", 60), collapse = ""), "\n", file = stderr())
+  cat("All ribbon plots saved to", file.path(output_dir, pdf_filename), "\n",
+      file = stderr())
+} else {
+  cat(paste(rep("=", 60), collapse = ""), "\n", file = stderr())
+  cat("Deliverable CSVs written to", deliverables_data_dir, "\n", file = stderr())
+}
 flush.console()

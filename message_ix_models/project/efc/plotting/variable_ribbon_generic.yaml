@@ -234,6 +234,7 @@ groups:
 # =========================================================================
 
 - title: "in|shipping|by commodity (EJ)"
+  deliverable: true
   dim_s: shipping
   aggregate_by: dim_t
   plot_unit: "EJ"
@@ -250,6 +251,7 @@ groups:
   - in|LH2_bunker|*|lh2|final
 
 - title: "in|aviation|by commodity (EJ)"
+  deliverable: true
   dim_s: aviation
   aggregate_by: dim_c
   plot_unit: "EJ"
@@ -265,6 +267,10 @@ groups:
   dim_s: power
   aggregate_by: dim_c
   plot_unit: "EJ"
+  unit_bridge:
+  - from: "Mt"
+    to: "GWa"
+    factor: 0.5882352941176471  # 1/1.7
   scale_factor: 0.03154  # GWa -> EJ
   scale_from_unit: "GWa"
   variables:
@@ -272,6 +278,7 @@ groups:
   - in|coal_ppl_u|*|coal|*
   - in|coal_adv|*|coal|*
   - in|coal_adv_ccs|*|coal|*
+  - in|coal_adv_cfNH3|*|NH3|*
   - in|igcc|*|coal|*
   - in|igcc_ccs|*|coal|*
   - in|syn_liq|*|coal|*
@@ -288,7 +295,7 @@ groups:
   # - in|bio_ppl|*|biomass|*
   # - in|nuc_hc|*|u5|*
   # - in|nuc_lc|*|u5|*
-  - in|h2_ct|*|hydrogen|*
+  # - in|h2_ct|*|hydrogen|*
 
 - title: "in|olefins & BTX|by commodity (EJ)"
   dim_s: olefins_btx
@@ -304,6 +311,7 @@ groups:
   - in|steam_cracker_petro|*|ht_heat|*
 
 - title: "in|olefins & BTX|by commodity (Mt)"
+  deliverable: true
   dim_s: olefins_btx
   aggregate_by: dim_c
   variables:
@@ -316,6 +324,7 @@ groups:
   - in|steam_cracker_petro|*|propane|*
 
 - title: "in|iron|by commodity (EJ)"
+  deliverable: true
   dim_s: iron
   aggregate_by: dim_c
   plot_unit: "EJ"
@@ -550,6 +559,7 @@ groups:
   - in|syn_liq_ccs|*|hydrogen|captive
 
 - title: "in|industry other|by commodity (EJ)"
+  deliverable: true
   dim_s: industry_other
   aggregate_by: dim_c
   plot_unit: "EJ"
@@ -619,6 +629,9 @@ groups:
 # Merchant H2 (GWa -> Mt H2 at LHV 120) + captive H2 already in Mt H2
 # (mass stoich from append_captive_hydrogen; scale_from_unit skips Mt rows).
 - title: "in|sector|hydrogen (Mt)"
+  deliverable: true
+  deliverable_scenario: nz2060
+  deliverable_years: [2030, 2060, 2090]
   aggregate_by: dim_s
   plot_unit: "Mt H2"
   scale_factor: 0.2628333333333333  # GWa -> Mt H2: 0.03154 EJ/GWa / 0.120 EJ/Mt
@@ -669,6 +682,9 @@ groups:
 # Fuel methanol (GWa) -> Mt via meth_t_d bridge 0.697615 GWa/Mt, then stack
 # with material feedstock Mt leaves. scale_from_unit limits rescale to GWa.
 - title: "in|sector|methanol (Mt)"
+  deliverable: true
+  deliverable_scenario: nz2060
+  deliverable_years: [2030, 2060, 2090]
   aggregate_by: dim_s
   plot_unit: "Mt methanol"
   scale_factor: 1.43345  # 1 / 0.697615
@@ -691,9 +707,13 @@ groups:
   - in|meth_ind_fs|*|methanol|*
 
 # No need to aggregate for now
-# Later to fertilizer and power. 
+# Later to fertilizer and power.
 - title: "in|sector|ammonia (Mt)"
+  deliverable: true
+  deliverable_scenario: nz2060
+  deliverable_years: [2030, 2060, 2090]
   aggregate_by: dim_s
   variables:
   - in|NH3_to_N_fertil|*|NH3|*
   - in|residual_NH3|*|NH3|*
+  - in|coal_adv_cfNH3|*|NH3|*
