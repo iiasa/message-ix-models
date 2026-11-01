@@ -416,7 +416,7 @@ def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scen
         main as remove_emission_bounds,
     )
 
-    remove_emission_bounds(scenario, remove_all=True)
+    # remove_emission_bounds(scenario, remove_all=True)
 
     with scenario.transact("Copy bound_emission and tax_emission from donor scenario"):
         for par_name in _EMISSION_CONSTRAINT_PARAMETERS:
