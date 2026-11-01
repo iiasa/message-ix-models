@@ -24,13 +24,21 @@ iamc_prefix:
 unit: EJ/yr
 
 vars:
-  # refinery
+  # Default level is `refinery`; 
+  # EFC efc_tech removes it and uses `byproduct`. Fallback kept. 
   catalytic_reforming_ref|hydrogen:
     filter:
-      {technology: catalytic_reforming_ref, mode: M1, commodity: hydrogen, level: refinery}
+      {technology: catalytic_reforming_ref, mode: M1, commodity: hydrogen, level: [refinery, byproduct]}
     original_unit: GWa
     short:
       out_catalytic_reforming_ref
+
+  h2_co_gas|hydrogen:
+    filter:
+      {technology: h2_co_gas, mode: M1, commodity: hydrogen, level: byproduct}
+    original_unit: GWa
+    short:
+      out_h2_co_gas
 
   # gas
   h2_smr|hydrogen:

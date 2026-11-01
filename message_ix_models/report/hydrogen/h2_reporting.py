@@ -3,6 +3,7 @@ import logging
 from typing import List, Optional
 
 import message_ix
+import numpy as np
 import pandas as pd
 import pyam
 import yaml
@@ -15,6 +16,25 @@ from message_ix_models.util import broadcast, package_data_path
 from .config import Config
 
 LOG = logging.getLogger(__name__)
+
+# Tiny negative ACT (and ACT×coeff flows) from solver tolerance; treat as zero.
+_SOLVER_NOISE_FLOOR = -0.01
+
+
+def _zero_solver_noise(
+    values: pd.Series, floor: float = _SOLVER_NOISE_FLOOR
+) -> pd.Series:
+    """Map ``floor < value < 0`` to 0; leave positives and large negatives unchanged."""
+    arr = values.to_numpy(dtype=float, copy=True)
+    noise = (arr > floor) & (arr < 0)
+    if noise.any():
+        LOG.info(
+            "Zeroed %d solver-noise value(s) in (%.2g, 0)",
+            int(noise.sum()),
+            floor,
+        )
+        arr = np.where(arr > floor, np.maximum(arr, 0.0), arr)
+    return pd.Series(arr, index=values.index, name=values.name)
 
 
 def ensure_historical_keys(rep: Reporter) -> None:
@@ -353,6 +373,7 @@ def format_reporting_df(
         )
 
     df.columns = ["value"]
+    df["value"] = _zero_solver_noise(df["value"])
 
     # Apply unit conversions using iam_units.registry
     df = convert_units_from_mapping(df, unit, domain=domain)

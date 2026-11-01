@@ -189,16 +189,38 @@ def validate_origin_coefficients(inputs: pd.DataFrame, outputs: pd.DataFrame) ->
             )
     # Do not infer captive production == use: the commodity inequality can leave a
     # surplus. Only its identity/pool separation is asserted, not global closure.
+    #
+    # Why this check exists: origin estimates (origin.py) allocate market H2 from
+    # PRODUCER_ROUTES only. Captive H2 must stay a separate pool — otherwise
+    # reforming / coke-oven byproduct would be counted as market supply.
     captive_out = outputs[
         (outputs["commodity"] == "hydrogen") & (outputs["level"] == "refinery")
     ]
     captive_in = inputs[
         (inputs["commodity"] == "hydrogen") & (inputs["level"] == "refinery")
     ]
-    if set(captive_out["technology"]) != {"catalytic_reforming_ref"} or set(
-        captive_in["technology"]
-    ) != {"hydro_cracking_ref"}:
-        raise ValueError("Unexpected captive refinery H2 producer/consumer pool")
+    if captive_out.empty and captive_in.empty:
+        captive_out = outputs[
+            (outputs["commodity"] == "hydrogen") & (outputs["level"] == "byproduct")
+        ]
+        captive_in = inputs[
+            (inputs["commodity"] == "hydrogen") & (inputs["level"] == "byproduct")
+        ]
+        expected_out = {"catalytic_reforming_ref", "h2_co_gas"}
+        expected_in = {"hydro_cracking_ref", "hydrotreating_ref"}
+        pool_label = "byproduct"
+    else:
+        expected_out = {"catalytic_reforming_ref"}
+        expected_in = {"hydro_cracking_ref"}
+        pool_label = "refinery"
+    actual_out = set(captive_out["technology"])
+    actual_in = set(captive_in["technology"])
+    if actual_out != expected_out or actual_in != expected_in:
+        raise ValueError(
+            f"Unexpected captive {pool_label} H2 producer/consumer pool: "
+            f"out={sorted(actual_out)} (expected {sorted(expected_out)}), "
+            f"in={sorted(actual_in)} (expected {sorted(expected_in)})"
+        )
     _coefficient(
         _select(inputs, "LH2_bunker", "lh2", "final"),
         1.3,

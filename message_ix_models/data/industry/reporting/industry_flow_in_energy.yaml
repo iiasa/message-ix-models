@@ -5,9 +5,9 @@
 # Per-tech LEVEL and MODE are taken from the scenario `input` parameter (queried on
 # the ixmp-dev baseline), NOT assumed. Both vary and both are load-bearing:
 #   - level: mostly `final`; *_refining draw hydrogen at `secondary`;
-#     hydro_cracking_ref at `refinery`.
+#     hydro_cracking_ref at `refinery` (legacy) or `byproduct` (EFC);
+#     hydrotreating_ref splits captive `byproduct` vs market `final`.
 #   - mode: furnaces high_temp(+low_temp), fuel cells low_temp, h2_fc_I/h2_i/
-#     dri_h2_steel M1, hydro_cracking_ref cracking_gasoline/cracking_loil.
 # These industry techs have NO mode literally named "all" (unlike the transport
 # demand techs), so a `mode: all` filter would match nothing and emit an empty frame.
 #
@@ -93,11 +93,23 @@ vars:
     original_unit: GWa
     short: in_h2_i_hydrogen
 
-  # ---- Industry|Refining: hydrocracking draws hydrogen at `refinery`, cracking modes ----
+  # ---- Industry|Refining: captive H2 (refinery legacy / byproduct EFC) ----
   Industry|Refining|hydro_cracking_ref|hydrogen:
-    filter: {technology: hydro_cracking_ref, commodity: hydrogen, level: refinery, mode: [cracking_gasoline, cracking_loil]}
+    filter: {technology: hydro_cracking_ref, commodity: hydrogen, level: [refinery, byproduct], mode: [cracking_gasoline, cracking_loil]}
     original_unit: GWa
     short: in_hydro_cracking_ref_hydrogen
+
+  # EFC: captive share of hydrotreating (byproduct). Market share is the
+  # `|hydrogen|final` leaf below — do not merge levels into one IAMC name.
+  Industry|Refining|hydrotreating_ref|hydrogen:
+    filter: {technology: hydrotreating_ref, commodity: hydrogen, level: byproduct, mode: [atm_gasoil, vacuum_gasoil, naphtha, kerosene, diesel, atm_residue, vacuum_residue]}
+    original_unit: GWa
+    short: in_hydrotreating_ref_hydrogen
+
+  Industry|Refining|hydrotreating_ref|hydrogen|final:
+    filter: {technology: hydrotreating_ref, commodity: hydrogen, level: final, mode: [atm_gasoil, vacuum_gasoil, naphtha, kerosene, diesel, atm_residue, vacuum_residue]}
+    original_unit: GWa
+    short: in_hydrotreating_ref_hydrogen_final
 
   # ---- Industry|Iron and Steel: hydrogen DRI (mode M1) ----
   Industry|Iron and Steel|dri_h2_steel|hydrogen:

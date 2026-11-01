@@ -111,6 +111,10 @@ CONSUMER_MAP: dict[str, dict[str, tuple[str, ...]]] = {
             )
         },
         "dri_h2_steel": ("in|Industry|Iron and Steel|dri_h2_steel|hydrogen",),
+        # Specify merchant H2 share at level final only 
+        "hydrotreating_ref_final": (
+            "in|Industry|Refining|hydrotreating_ref|hydrogen|final",
+        ),
         "h2_liq": ("in|Industry|Chemicals|h2_liq|hydrogen",),
         "meth_h2": tuple(
             f"in|Industry|Chemicals|meth_h2|{source}_CO2|hydrogen"
@@ -185,8 +189,17 @@ TRADE_LEAVES: dict[str, dict[str, str]] = {
         Bunkers="in|Shipping|NH3_bunker|ammonia",
     ),
 }
-CAPTIVE_PRODUCER: str = "out|catalytic_reforming_ref|hydrogen"
-CAPTIVE_CONSUMER: str = "in|Industry|Refining|hydro_cracking_ref|hydrogen"
+CAPTIVE_PRODUCERS: dict[str, str] = {
+    "catalytic_reforming_ref": "out|catalytic_reforming_ref|hydrogen",
+    "h2_co_gas": "out|h2_co_gas|hydrogen",
+}
+CAPTIVE_CONSUMERS: dict[str, str] = {
+    "hydro_cracking_ref": "in|Industry|Refining|hydro_cracking_ref|hydrogen",
+    "hydrotreating_ref": "in|Industry|Refining|hydrotreating_ref|hydrogen",
+}
+# Backward-compatible aliases for the legacy single-leaf contract.
+CAPTIVE_PRODUCER: str = CAPTIVE_PRODUCERS["catalytic_reforming_ref"]
+CAPTIVE_CONSUMER: str = CAPTIVE_CONSUMERS["hydro_cracking_ref"]
 HVC_LEAVES: dict[str, tuple[str, ...]] = {
     "ethylene": (
         "in|Chemicals|production_HVC|ethylene",
@@ -341,8 +354,9 @@ def _observed_targets(obs: _Observations) -> list[tuple[str, str, str, str, pd.S
             unit,
             export.reindex(net.index) - imports.reindex(net.index) - net,
         )
-    captive = obs.leaf(CAPTIVE_CONSUMER, "EJ/yr", required=False, complete=False)
-    add("Hydrogen Captive", "Use", "hydro_cracking_ref", "EJ/yr", captive)
+    for tech, leaf in CAPTIVE_CONSUMERS.items():
+        captive = obs.leaf(leaf, "EJ/yr", required=False, complete=False)
+        add("Hydrogen Captive", "Use", tech, "EJ/yr", captive)
     components = []
     for olefin, leaves in HVC_LEAVES.items():
         use = obs.leaf(leaves[0], "Mt/yr", complete=False)
@@ -433,9 +447,19 @@ def origin_estimates(frame: pd.DataFrame) -> pd.DataFrame:
     chunks = []
     for carrier, kind, use, unit, target in _observed_targets(obs):
         if carrier == "Hydrogen Captive":
-            producer = obs.pool(CAPTIVE_PRODUCER, "EJ/yr").to_frame(
-                "catalytic_reforming_ref"
-            )
+            frames = []
+            for tech, leaf in CAPTIVE_PRODUCERS.items():
+                series = obs.leaf(leaf, "EJ/yr", required=False, complete=False)
+                if not series.empty:
+                    frames.append(
+                        series.reindex(target.index, fill_value=0.0).rename(tech)
+                    )
+            if not frames:
+                producer = pd.DataFrame(
+                    0.0, index=target.index, columns=["catalytic_reforming_ref"]
+                )
+            else:
+                producer = pd.concat(frames, axis=1)
             allocated = _shares(producer, target, "captive hydrogen")
         elif kind == "Trade":
             if use == "Net":
