@@ -63,7 +63,7 @@ cli.add_command(
                 ["--key", "report_key"], default="transport all", help="Key to report."
             ),
         ]
-        + [PARAMS[n] for n in "dest nodes quiet".split()],
+        + [PARAMS[n] for n in "dest nodes platform_dest quiet".split()],
     )
 )
 

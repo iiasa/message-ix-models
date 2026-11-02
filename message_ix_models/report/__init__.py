@@ -244,6 +244,9 @@ def report(context: Context, *args, **kwargs) -> None:
         - :py:`context.report`, which is an instance of :class:`.report.Config`; see
           there for available configuration settings.
     """
+    scenario: Scenario | None = None
+
+    # TODO Remove the following; adjust the code that depends on it
     # Handle deprecated usage that appears in:
     # - .model.cli.new_baseline()
     # - .model.create.solve()
@@ -275,6 +278,13 @@ def report(context: Context, *args, **kwargs) -> None:
     if context.report.legacy["use"]:
         return _invoke_legacy_reporting(context)
 
+    # `args` may include a refernce to the Scenario to be reported; pass this to
+    # prepare_reporter()
+    if len(args) == 1 and isinstance(args[0], Scenario):
+        scenario = args[0]
+    # elif len(args):
+    #     raise TypeError(f"Unexpected positional args to report(): {args!r}")
+
     # Update `context` using any remaining `kwargs`
     context.update(kwargs)
 
@@ -285,7 +295,7 @@ def report(context: Context, *args, **kwargs) -> None:
         if context.core.verbose
         else silence_log("genno ixmp.model.base message_ix_models")
     ):
-        rep, key = prepare_reporter(context)
+        rep, key = prepare_reporter(context, scenario)
 
     log_before(context, rep, key)
 

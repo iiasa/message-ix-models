@@ -178,7 +178,7 @@ class TestWorkflow:
             f"Step runs on ixmp://{mp}/{ms}#1",
             "  with "
             "context.dest_scenario={(('model': 'foo'|'scenario': 'bar')(, )?){2}}",
-            "Clone to foo/bar",
+            "Clone to ixmp://message-ix-models/foo/bar",
             "Execute <function solve at [^>]*>",
         ]
         for expr, message in zip(messages, caplog.messages[start_index:]):

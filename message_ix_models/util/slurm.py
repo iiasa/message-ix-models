@@ -29,7 +29,7 @@ In particular:
   ``$USER`` and ``$VIRTUAL_ENV`` environment variables, respectively, wherever Command 2
   is invoked.
 - Without the option :program:`--go`, the batch script is only printed out. When the
-  option is added, sbatch is actually invoked.
+  option is added, :program:`sbatch` is actually invoked.
 
 See also:
 
@@ -40,26 +40,34 @@ See also:
 
 import os
 from importlib import import_module
+from pathlib import PurePosixPath
 from subprocess import PIPE, STDOUT, run
 from typing import Any
 
 import click
 import ixmp
 
+from .common import package_data_path
 
-class Template(list):
-    """A template for a Slurm invocation.
 
-    A list of :class:`str` in which:
+class Template:
+    """A template for a Slurm job script."""
 
-    - The *first* entry should be the name or path of a program, for instance "sbatch".
-    - The *final* entry should be a script body to be passed as standard input to the
-      program.
-    - Any intermediate entries should be command-line arguments to the program.
-    """
+    #: A list of :class:`str` in which:
+    #:
+    #: - The *first* entry should be the name or path of a program, for instance
+    #:   :program:`sbatch`.
+    #: - The *final* entry should be a script body to be passed as standard input to the
+    #:   program.
+    #: - Any intermediate entries should be command-line arguments to the program.
+    argv: list[str]
 
-    def __init__(self, *args: str) -> None:
-        super().__init__(args)
+    #: Default values for any parameters or substitution values used to format the
+    #: :attr:`argv`.
+    default_parameters: dict[str, str] = {}
+
+    def __init__(self, *argv: str) -> None:
+        self.argv = list(argv)
 
     @classmethod
     def from_module(cls, module_name: str) -> "Template":
@@ -68,9 +76,11 @@ class Template(list):
         for name in dir(mod):
             obj = getattr(mod, name)
             if isinstance(obj, cls):
-                return obj
+                return obj  # Template instance
+            elif isinstance(obj, type) and issubclass(obj, cls):
+                return obj()  # Template subclass; instantiate
         raise ImportError(  # pragma: no cover
-            f"No instance of {cls} in module {mod.__name__!r}"
+            f"No instance or subclass of {cls} in module {mod.__name__!r}"
         )
 
     def format(
@@ -96,16 +106,10 @@ class Template(list):
             2. :class:`bytes` with the formatted script body to be passed as standard
                input to the program.
         """
-        kw = (
-            dict(
-                home_path=os.environ["HOME"],
-                mix_models_args=" ".join(parameters.pop("mix_models_args", [])),
-            )
-            | parameters
-        )
+        kw = self.prepare_parameters(parameters)
 
-        args = [arg.format(**kw) for arg in self[:-1]]
-        body = self[-1].format(**kw)
+        args = [arg.format(**kw) for arg in self.argv[:-1]]
+        body = self.argv[-1].format(**kw)
 
         if as_directives:
             lines = body.splitlines()
@@ -114,6 +118,77 @@ class Template(list):
             args = args[:1]
 
         return args, body.encode()
+
+    def prepare_parameters(self, parameters: dict) -> dict:
+        return (
+            dict(
+                home_path=os.environ["HOME"],
+                # "USER" is typically not defined on Windows
+                username=os.environ.get("USER", "USER"),
+                mix_models_args=" ".join(parameters.pop("mix_models_args", [])),
+            )
+            | self.default_parameters
+            | parameters
+        )
+
+
+class JinjaTemplate(Template):
+    """A template that uses :mod:`jinja2`.
+
+    Instead of the final :attr:`.Template.argv` containing the body of the job script,
+    this class loads a Jinja template from :attr:`file` and formats it.
+
+    .. todo:: Replace :class:`Template` with this class; that is, use Jinja always.
+    """
+
+    #: Relative path of a file in :file:`message_ix_models/data/`. The documentation for
+    #: :meth:`jinja.Environment.get_template` states “‘/’ is used as the file system
+    #: separator, even on Windows.”
+    file: PurePosixPath
+
+    def __init__(self, *argv: str, file: PurePosixPath) -> None:  # pragma: no cover
+        super().__init__(*argv)
+
+        # Empty body for Template.format()
+        self.argv.append("")
+
+        self.file = file
+
+    def format(
+        self, as_directives: bool = False, **parameters: Any
+    ) -> tuple[list[str], bytes]:
+        from jinja2 import (
+            Environment,
+            FileSystemLoader,
+            StrictUndefined,
+            select_autoescape,
+        )
+
+        argv, body = super().format(as_directives, **parameters)
+
+        # Load a Jinja2 template according to `self.file`
+        loader = FileSystemLoader(package_data_path())
+        env = Environment(
+            loader=loader,
+            autoescape=select_autoescape(),
+            undefined=StrictUndefined,
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
+        template = env.get_template(str(self.file))
+
+        # Replace `body` with the rendered Jinja2 template
+        body = template.render(**self.prepare_parameters(parameters)).encode()
+
+        return argv, body
+
+    def prepare_parameters(self, parameters: dict) -> dict:
+        # Same as base class, except do not concatenate mix_models_args to string
+        return (
+            dict(home_path=os.environ["HOME"], username=os.environ.get("USER", "USER"))
+            | self.default_parameters
+            | parameters
+        )
 
 
 #: Default template for :func:`cli`. Currently, the same as suggested by

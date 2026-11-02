@@ -1,9 +1,10 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
 
-from message_ix_models.util.config import ConfigHelper
+from message_ix_models.util.config import Config, ConfigHelper
 
 
 @dataclass
@@ -131,3 +132,19 @@ subconfig-b:  # No name manipulation for subkeys here
         """:meth:`.ConfigHelper.update` raises AttributeError."""
         with pytest.raises(AttributeError):
             c.update(foo_4="")
+
+
+class TestConfig:
+    def test_deepcopy(self) -> None:
+        """:meth:`.Config.__deepcopy__` result has different :class:`dict` fields."""
+        c1 = Config()
+        c2 = deepcopy(c1)
+
+        # The copy has a different dict instance for this field
+        assert id(c1.scenario_info) != id(c2.scenario_info)
+
+        # Update original
+        c1.scenario_info.update(model="m", scenario="s")  # type: ignore [call-arg]
+
+        # The copy is not updated
+        assert {} == c2.scenario_info  # type: ignore [comparison-overlap]

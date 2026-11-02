@@ -1,21 +1,22 @@
 import logging
 import os
 import pickle
-from collections.abc import Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from hashlib import blake2s
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Hashable, cast
+from typing import TYPE_CHECKING, Any, Hashable, Self, Unpack
 
 import ixmp
 from ixmp.util import parse_url
 
 from ._dataclasses import asdict
+from .ixmp import Platforms
 from .scenarioinfo import ScenarioInfo
 
 if TYPE_CHECKING:
     import message_ix
-    from ixmp.types import PlatformInfo
+    from ixmp.types import PlatformInfo, TimeSeriesIdentifiers
 
 log = logging.getLogger(__name__)
 
@@ -223,12 +224,10 @@ class Config:
 
     # NB the below works around python/mypy#5723
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
-    dest_platform: "PlatformInfo" = field(
-        default_factory=lambda: cast("PlatformInfo", dict())
-    )
+    dest_platform: "PlatformInfo" = field(default_factory=dict)  # type: ignore [assignment]
 
     #: Like :attr:`scenario_info`, used by e.g. :meth:`.clone_to_dest`.
-    dest_scenario: MutableMapping[str, str] = field(default_factory=dict)
+    dest_scenario: "TimeSeriesIdentifiers" = field(default_factory=dict)  # type: ignore [assignment]
 
     #: Whether an operation should be carried out, or only previewed. Different modules
     #: will respect :attr:`dry_run` in distinct ways, if at all, and **should** document
@@ -243,17 +242,15 @@ class Config:
     # NB the below works around python/mypy#5723
     #: Keyword arguments—especially `name`—for the :class:`ixmp.Platform` constructor,
     #: from the :program:`--platform` or :program:`--url` CLI option.
-    platform_info: "PlatformInfo" = field(
-        default_factory=lambda: cast("PlatformInfo", dict())
-    )
+    platform_info: "PlatformInfo" = field(default_factory=dict)  # type: ignore [assignment]
 
-    # Private reference to an ixmp.Platform
-    _mp: "ixmp.Platform | None" = None
+    # Private collection of references to :class:`ixmp.Platform`.
+    _platforms: Platforms = field(default_factory=Platforms)
 
     #: Keyword arguments—`model`, `scenario`, and optionally `version`—for the
     #: :class:`ixmp.Scenario` constructor, as given by the :program:`--model`/
     #: :program:`--scenario` or :program:`--url` CLI options.
-    scenario_info: MutableMapping[str, int | str | None] = field(default_factory=dict)
+    scenario_info: "TimeSeriesIdentifiers" = field(default_factory=dict)  # type: ignore [assignment]
 
     #: Like `scenario_info`, but a list for operations affecting multiple scenarios.
     scenarios: list[ScenarioInfo] = field(default_factory=list)
@@ -270,19 +267,20 @@ class Config:
 
         cache.COMPUTER.graph["config"]["cache_path"] = self._cache_path
 
-    def __deepcopy__(self, memo):
-        # Hide "_mp" from the copy
-        mp = self._mp
-        self._mp = None
+    def __deepcopy__(self, memo) -> Self:
+        """Return a deep copy, except preserve a reference to :attr:`_platforms`."""
+        # Hide any existing Platforms so they are not copied
+        tmp = self._platforms
+        self._platforms = Platforms()
 
-        # Create a copy of other field values; invokes deepcopy() on each
-        data = asdict(self)
+        # Copy; give the copy a reference to the actual Platforms
+        data = asdict(self) | dict(_platforms=tmp)
+        result = type(self)(**data)
 
-        # Restore reference
-        self._mp = mp
+        # Restore
+        self._platforms = tmp
 
-        # Create the copy
-        return type(self)(**data)
+        return result
 
     @property
     def cache_path(self) -> Path:
@@ -319,9 +317,8 @@ class Config:
 
         If no such Platform exists or the connection is already closed, does nothing.
         """
-        if self._mp:
-            self._mp.close_db()
-            self._mp = None
+        while len(self._platforms):
+            self._platforms.popitem()
 
     def get_cache_path(self, *parts) -> Path:
         """Return a path to a local cache file, i.e. within :attr:`cache_path`.
@@ -349,27 +346,30 @@ class Config:
         result = self.local_data.joinpath(*parts)
         return result.with_suffix(suffix) if suffix else result
 
-    def get_platform(self, reload: bool = False) -> "ixmp.Platform":
-        """Return a :class:`.Platform` from :attr:`platform_info`.
+    def get_platform(
+        self, *args, reload: bool = False, **kwargs: Unpack["PlatformInfo"]
+    ) -> "ixmp.Platform":
+        """Return a :class:`.Platform`.
 
-        When used through the CLI, :attr:`platform_info` is a 'base' platform as
-        indicated by the --url or --platform  options.
+        If no `kwargs` are given, connect to a Platform using :attr:`platform_info`.
+        When used through the CLI, :attr:`platform_info` refers to a 'base' platform as
+        indicated by the :program:`--url` or :program:`--platform` options.
+
+        If `kwargs` are given, for instance :py:`name="foo"`, these are passed directly
+        to Platform to connect to a different platform, and :attr:`platform_info` is
+        ignored.
 
         If a Platform has previously been instantiated with :meth:`get_platform`, the
-        same object is returned unless `reload` is :any:`True`.
+        same object is returned—unless `reload` is :any:`True`.
         """
-        # Return an existing Platform, if any
-        if not reload and self._mp:
-            return self._mp
+        if (args, kwargs) == ((), {}):
+            # No args given → use the name= or other args from `platform_info`
+            kwargs = self.platform_info
 
-        # Close any existing Platform, e.g. to reload it
-        if self._mp:
-            self._mp.close_db()
-            self._mp = None
+        if reload:
+            self._platforms.pop(*args, **kwargs)
 
-        # Create a Platform
-        self._mp = ixmp.Platform(**self.platform_info)
-        return self._mp
+        return self._platforms.get(*args, **kwargs)
 
     def get_scenario(self) -> "message_ix.Scenario":
         """Return a :class:`.Scenario` from :attr:`scenario_info`.
@@ -439,14 +439,14 @@ class Config:
         :attr:`url` is also updated.
         """
         self.scenario_info.update(
-            model=scenario.model, scenario=scenario.scenario, version=scenario.version
+            dict(
+                model=scenario.model,
+                scenario=scenario.scenario,
+                version=scenario.version,
+            )
         )
-        try:
-            url = scenario.url
-        except AttributeError:
-            # Compatibility with ixmp <3.5
-            url = f"{scenario.model}/{scenario.scenario}/{scenario.version}"
-        self.url = f"ixmp://{scenario.platform.name}/{url}"
+
+        self.url = f"ixmp://{scenario.platform.name}/{scenario.url}"
 
     def write_debug_archive(self) -> None:
         """Write an archive containing the files listed in :attr:`debug_paths`.

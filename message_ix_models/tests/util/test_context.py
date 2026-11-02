@@ -106,7 +106,7 @@ class TestContext:
         # Attribute access works
         assert test_context.foo == 23
 
-    def test_deepcopy(self, session_context):
+    def test_deepcopy(self, session_context: Context) -> None:
         """Paths are preserved through deepcopy()."""
         ld = session_context.local_data
 
