@@ -48,12 +48,20 @@ starters:
 #                    unit (= USD/m3). The base prices fossil groundwater at
 #                    ~0.03 USD/m3 (inv 0.065 over 20 y + electricity) against
 #                    ~0.34 for membrane desalination (inv 1.90 over 30 y, fix
-#                    0.155, electricity and heat), so 0.4 puts it after desalination.
+#                    0.155, electricity 3 kWh/m3; no heat since the 11-02 CSV
+#                    fix), so 0.4 puts it after desalination.
 #   desal_free       copy the last historical desalination builds (2025) to the
 #                    period before the first model year (2030) and remove the
 #                    module's 10 %/yr growth_new_capacity_up on membrane and
 #                    distillation; without it the growth chain starts from zero
 #                    and no desalination plant can ever be built
+#   fossil_gw_cap    bound_activity_up on extract_gw_fossil in every model year
+#                    = factor x its historical_activity of the last historical
+#                    year (the #522 merit-order seed); basins without history
+#                    are capped at zero
+#   desal_potential  replace bound_total_capacity_up on extract_salinewater_basin
+#                    with another SSP series of the projection file
+#                    (SSP1/SSP3/SSP5 are modelled; SSP2 inherits SSP1)
 #   sdgs: SDG        the water module's SDG package: Mf-only distribution with
 #                    mid-tier costs, treatment targets (urban 0.95, rural 0.8),
 #                    connection targets, SDG6 recycling, e-flow bounds
@@ -64,6 +72,10 @@ scenarios:
   # Mf (efficient distribution: 10 % instead of 20 % losses, half the electricity,
   # higher variable cost) is banned everywhere except +adapt (10-22). BAUfgd is
   # the BAU of record; the 10-21 BAU and BAUfg runs were stepping stones.
+  # 11-02: every constrained scenario holds fossil groundwater at its 2030
+  # dispatch level (fossil_gw_cap 1.0: bound_activity_up = historical_activity
+  # of the #522 merit-order seed, zero in basins without history); the var_cost
+  # stays as the price of what is still pumped.
   BAUfgd:
     from: base
     eflow: true
@@ -71,11 +83,12 @@ scenarios:
     fossil_gw_var_cost: 0.4
     desal_free: true
     ban_mode: Mf
+    fossil_gw_cap: 1.0
   # Final set (10-22): both carry the desalination fix and the fossil-groundwater
   # price, so desalination is used before fossil groundwater as the narrative asks.
   # maladapt: fossil groundwater priced above membrane desalination (~0.54 USD/m3
-  # with its heat input) so desalination comes first, as the narrative asks;
-  # BAUfgd keeps 0.4 (10-23).
+  # with the heat input the CSV carried until 11-02; ~0.34 without) so
+  # desalination comes first, as the narrative asks; BAUfgd keeps 0.4 (10-23).
   maladapt:
     from: base
     eflow: true
@@ -83,12 +96,14 @@ scenarios:
     fossil_gw_var_cost: 0.7
     desal_free: true
     ban_mode: Mf            # no efficiency improvement in distribution
+    fossil_gw_cap: 1.0
   adapt:
     label: "+adapt"   # step names cannot hold "+" (regex targets); the scenario name can
     build: nexus
     sdgs: SDG         # efficient distribution only, treatment/recycling targets, e-flows
     renewable_growth: true
     fossil_gw_var_cost: 0.4
+    fossil_gw_cap: 1.0
     # no desal_free (10-22): desalination stays as the module builds it
 
 # Not represented yet (see README): irrigation efficiency, desalination

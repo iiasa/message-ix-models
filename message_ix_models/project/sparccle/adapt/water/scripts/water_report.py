@@ -91,8 +91,10 @@ ASSUMPTIONS = [
     (
         "desalination (membrane)",
         "investment 1.90 USD per m³/yr (30 y), fixed "
-        "0.155, electricity 0.0003 and heat 0.001 GWa/MCM, ≈0.34 USD/m³ before heat; "
-        "distillation 1.55 / 1.65",
+        "0.155, electricity 0.0003 GWa/MCM (3 kWh/m³); runs before 11-02 also "
+        "carried 0.001 GWa/MCM heat from swapped CSV columns, ≈0.54 USD/m³ with it, "
+        "≈0.34 without; distillation 1.55 / 1.65, electricity 0.0005 and heat 0.001 "
+        "GWa/MCM after the fix",
     ),
     (
         "desalination potential",

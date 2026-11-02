@@ -7,7 +7,9 @@ from message_ix_models.project.sparccle.adapt.water.workflow import (
     DESAL_PLANTS,
     LEVERS,
     RENEWABLE_EXTRACTION,
+    desal_potential_rows,
     desal_seed_rows,
+    fossil_gw_cap_rows,
     fossil_gw_cost_rows,
     growth_cap_rows,
     load_config,
@@ -26,6 +28,11 @@ def test_load_config_packaged() -> None:
         "maladapt",
         "adapt",
     }
+    for key in ("BAUfgd", "maladapt", "adapt"):
+        assert config["scenarios"][key]["fossil_gw_cap"] == pytest.approx(1.0)
+    assert "fossil_gw_cap" not in config["scenarios"]["base"]
+    for spec in config["scenarios"].values():
+        assert "desal_potential" not in spec  # lever available, unused
     assert config["scenarios"]["BAUfgd"]["desal_free"] is True
     assert set(config["starters"]) == {"SSP2", "SSP3"}
     assert config["nexus"] == {"rcps": "7p0", "rels": "low"}
@@ -50,6 +57,8 @@ def test_load_config_packaged() -> None:
         "ban_mode",
         "fossil_gw_var_cost",
         "desal_free",
+        "fossil_gw_cap",
+        "desal_potential",
     }
     assert DESAL_PLANTS == ["membrane", "distillation"]
 
@@ -171,3 +180,74 @@ def test_desal_seed_rows() -> None:
     assert set(df["year_vtg"]) == {2030}
     assert sorted(df["value"]) == [2.0, 3.0]
     assert list(df.columns) == list(hist.columns)
+
+
+def test_fossil_gw_cap_rows() -> None:
+    hist = pd.DataFrame(
+        {
+            "node_loc": ["B1", "B1", "B2"],
+            "technology": "extract_gw_fossil",
+            "year_act": [2025, 2030, 2030],
+            "mode": "M1",
+            "time": "year",
+            "value": [5.0, 10.0, 4.0],
+            "unit": "MCM/year",
+        }
+    )
+    inp = pd.DataFrame(
+        {
+            "node_loc": ["B1", "B1", "B2", "B3"],
+            "technology": "extract_gw_fossil",
+            "year_vtg": [2030, 2035, 2035, 2035],
+            "year_act": [2035, 2035, 2035, 2035],
+            "mode": "M1",
+            "time": "year",
+            "value": 0.0001,
+            "unit": "GWa/MCM",
+        }
+    )
+
+    df = fossil_gw_cap_rows(hist, inp, [2035, 2040], 1.0)
+
+    assert len(df) == 3 * 2  # three basins x two years
+    assert set(df["year_act"]) == {2035, 2040}
+    by_node = df[df["year_act"] == 2035].set_index("node_loc")["value"]
+    assert by_node["B1"] == pytest.approx(10.0)  # last historical year, not 2025
+    assert by_node["B2"] == pytest.approx(4.0)
+    assert by_node["B3"] == pytest.approx(0.0)  # no history -> no fossil groundwater
+    assert (df["unit"] == "MCM/year").all()
+    assert (fossil_gw_cap_rows(hist, inp, [2035], 1.5)["value"].max()) == pytest.approx(
+        15.0
+    )
+
+
+def test_desal_potential_rows() -> None:
+    bound = pd.DataFrame(
+        {
+            "node_loc": ["B1|X", "B1|X", "B2|X", "B2|X"],
+            "technology": "extract_salinewater_basin",
+            "year_act": [2035, 2050, 2035, 2050],
+            "value": [1.0, 2.0, 3.0, 4.0],
+            "unit": "MCM/year",
+        }
+    )
+    proj = pd.DataFrame(
+        {
+            "BCU_name": ["1|X", "1|X", "1|X", "2|X", "2|X"],
+            "ssp": ["SSP1", "SSP3", "SSP3", "SSP3", "SSP3"],
+            "year": [2035, 2035, 2050, 2035, 2065],
+            "cap_km3_year": [0.9, 0.5, -0.1, 0.25, 9.0],
+        }
+    )
+
+    df = desal_potential_rows(bound, proj, "SSP3")
+
+    assert list(df.columns) == list(bound.columns)
+    assert len(df) == len(bound)
+    got = df.set_index(["node_loc", "year_act"])["value"]
+    assert got[("B1|X", 2035)] == pytest.approx(500.0)  # km3 -> MCM
+    assert got[("B1|X", 2050)] == pytest.approx(0.0)  # negative clipped
+    assert got[("B2|X", 2035)] == pytest.approx(250.0)
+    assert got[("B2|X", 2050)] == pytest.approx(0.0)  # missing year -> zero
+    with pytest.raises(ValueError, match="SSP9"):
+        desal_potential_rows(bound, proj, "SSP9")

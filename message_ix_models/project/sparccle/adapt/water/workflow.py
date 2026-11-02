@@ -17,6 +17,10 @@ Per starter (SSP2, SSP3; ``config.yaml``), on its local HSQLDB platform:
   while the first model year is 2035, so its 10 %/yr growth chain on new
   capacity starts from zero; the 2025 builds are copied to 2030 and the growth
   cap is removed.
+- Since 11-02 every constrained scenario also caps fossil groundwater at its
+  last historical dispatch (``fossil_gw_cap``: ``bound_activity_up`` = factor ×
+  2030 ``historical_activity``, zero where none). ``desal_potential`` swaps the
+  desalination potential for another SSP series of the projection (unused).
 - ``adapt`` (scenario ``..._W_+adapt``): a second nexus build with the water
   module's SDG package (efficient distribution only, treatment and recycling
   targets, e-flow bounds), then the growth cap.
@@ -40,8 +44,9 @@ from message_ix_models.model.water.data.water_supply import (
     eflow_bound_rows,
     read_e_flow,
 )
+from message_ix_models.model.water.utils import KM3_TO_MCM
 from message_ix_models.project.sparccle.workflow import local_platform_name
-from message_ix_models.util import ScenarioInfo, broadcast
+from message_ix_models.util import ScenarioInfo, broadcast, package_data_path
 from message_ix_models.workflow import Workflow
 
 if TYPE_CHECKING:
@@ -55,7 +60,21 @@ log = logging.getLogger(__name__)
 RENEWABLE_EXTRACTION = ["extract_surfacewater", "extract_groundwater"]
 
 #: Scenario keys that change an existing scenario rather than build one.
-LEVERS = ("eflow", "renewable_growth", "ban_mode", "fossil_gw_var_cost", "desal_free")
+LEVERS = (
+    "eflow",
+    "renewable_growth",
+    "ban_mode",
+    "fossil_gw_var_cost",
+    "desal_free",
+    "fossil_gw_cap",
+    "desal_potential",
+)
+
+#: Fossil groundwater backstop technology.
+FOSSIL_GW = "extract_gw_fossil"
+
+#: Seawater intake carrying the desalination potential (``bound_total_capacity_up``).
+SALINE_INTAKE = "extract_salinewater_basin"
 
 #: Desalination plant technologies (growth-capped by the water module).
 DESAL_PLANTS = ["membrane", "distillation"]
@@ -130,6 +149,55 @@ def desal_seed_rows(hist: pd.DataFrame, from_year: int, to_year: int) -> pd.Data
     out = hist[hist["year_vtg"] == from_year].copy()
     out["year_vtg"] = to_year
     return out.reset_index(drop=True)
+
+
+def fossil_gw_cap_rows(
+    hist: pd.DataFrame, inp: pd.DataFrame, years: list[int], factor: float
+) -> pd.DataFrame:
+    """``bound_activity_up`` on fossil groundwater in `years`.
+
+    The cap is `factor` × the ``historical_activity`` of the last historical year
+    in `hist` per (node, mode, time). Every basin of `inp` (the technology's
+    ``input``) gets a row; basins without history are capped at zero, so fossil
+    groundwater cannot appear where none was pumped.
+    """
+    last = int(hist["year_act"].max())
+    h = hist.loc[hist["year_act"] == last, ["node_loc", "mode", "time", "value"]]
+    combos = (
+        inp[["node_loc", "technology", "mode", "time"]]
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
+    df = combos.merge(h, on=["node_loc", "mode", "time"], how="left")
+    df["value"] = df["value"].fillna(0.0) * factor
+    return make_df("bound_activity_up", **df, unit="MCM/year").pipe(
+        broadcast, year_act=years
+    )
+
+
+def desal_potential_rows(
+    bound: pd.DataFrame, proj: pd.DataFrame, ssp: str
+) -> pd.DataFrame:
+    """`bound` (``bound_total_capacity_up`` of the seawater intake) revalued.
+
+    `proj` is ``projected_desalination_potential_km3_year_<regions>.csv``
+    (``BCU_name, ssp, year, cap_km3_year``); the `ssp` series replaces the
+    values, negative potentials become zero and (basin, year) pairs without a
+    row get zero, as the water module's backfill does.
+    """
+    p = proj[proj["ssp"] == ssp]
+    if p.empty:
+        raise ValueError(f"no {ssp!r} rows in the desalination projection")
+    p = pd.DataFrame(
+        {
+            "node_loc": "B" + p["BCU_name"].astype(str),
+            "year_act": p["year"].astype(int),
+            "new": p["cap_km3_year"].clip(lower=0) * KM3_TO_MCM,
+        }
+    )
+    out = bound.merge(p, on=["node_loc", "year_act"], how="left")
+    out["value"] = out["new"].fillna(0.0)
+    return out.drop(columns="new")
 
 
 def scenario_status(platform: str, model: str, scenario: str) -> str:
@@ -211,6 +279,13 @@ class Changes:
     def __bool__(self) -> bool:
         return bool(self.rows or self.removals)
 
+    def add(self, par: str, df: pd.DataFrame) -> None:
+        """Append `df` to the rows of `par` (several levers may write one parameter)."""
+        prev = self.rows.get(par)
+        self.rows[par] = (
+            df if prev is None else pd.concat([prev, df], ignore_index=True)
+        )
+
 
 def _lever_eflow(  # pragma: no cover
     ch: Changes, context: "Context", scenario: "Scenario", config: dict
@@ -277,15 +352,57 @@ def _lever_ban(
 ) -> None:  # pragma: no cover
     output = scenario.par("output", filters={"mode": [mode]})
     df = mode_ban_rows(output, mode, years)
-    ch.rows["bound_activity_up"] = df
+    ch.add("bound_activity_up", df)
     techs = sorted(df["technology"].unique())
     ch.messages.append(f"mode {mode} banned from {years[0]}: {', '.join(techs)}")
 
 
-def apply(  # pragma: no cover
+def _lever_fossil_cap(
+    ch: Changes, scenario: "Scenario", years: list[int], factor: float
+) -> None:  # pragma: no cover
+    hist = scenario.par("historical_activity", filters={"technology": [FOSSIL_GW]})
+    if hist.empty:
+        raise RuntimeError(f"{scenario.url}: no historical_activity on {FOSSIL_GW}")
+    inp = scenario.par("input", filters={"technology": [FOSSIL_GW]})
+    df = fossil_gw_cap_rows(hist, inp, years, factor)
+    ch.add("bound_activity_up", df)
+    ch.messages.append(
+        f"{FOSSIL_GW} capped at {factor} x {int(hist['year_act'].max())} activity"
+        f" from {years[0]} ({len(df)} rows, {(df['value'] == 0).sum()} at zero)"
+    )
+
+
+def _lever_desal_potential(
+    ch: Changes, context: "Context", scenario: "Scenario", ssp: str
+) -> None:  # pragma: no cover
+    bound = scenario.par(
+        "bound_total_capacity_up", filters={"technology": [SALINE_INTAKE]}
+    )
+    if bound.empty:
+        raise RuntimeError(
+            f"{scenario.url}: no bound_total_capacity_up on {SALINE_INTAKE}"
+        )
+    proj = pd.read_csv(
+        package_data_path(
+            "water",
+            "infrastructure",
+            f"projected_desalination_potential_km3_year_{context.regions}.csv",
+        )
+    )
+    df = desal_potential_rows(bound, proj, ssp)
+    ch.rows["bound_total_capacity_up"] = df
+    world = df.groupby("year_act")["value"].sum()
+    ch.messages.append(
+        f"desalination potential from the {ssp} projection ({len(df)} rows;"
+        f" World 2050 {world.get(2050, float('nan')):,.0f} MCM/yr,"
+        f" was {bound.loc[bound['year_act'] == 2050, 'value'].sum():,.0f})"
+    )
+
+
+def _collect(  # pragma: no cover
     context: "Context", scenario: "Scenario", *, config: dict, key: str, ssp: str
-) -> None:
-    """Apply the levers of scenario `key` in place; drops the solution on change."""
+) -> Changes:
+    """Gather the parameter changes of every lever set on scenario `key`."""
     spec = config["scenarios"][key]
     starter = config["starters"][ssp]
     info = ScenarioInfo(scenario)
@@ -302,6 +419,18 @@ def apply(  # pragma: no cover
         _lever_desal(ch, scenario, info)
     if spec.get("ban_mode"):
         _lever_ban(ch, scenario, spec["ban_mode"], years)
+    if spec.get("fossil_gw_cap") is not None:
+        _lever_fossil_cap(ch, scenario, years, float(spec["fossil_gw_cap"]))
+    if spec.get("desal_potential"):
+        _lever_desal_potential(ch, context, scenario, str(spec["desal_potential"]))
+    return ch
+
+
+def apply(  # pragma: no cover
+    context: "Context", scenario: "Scenario", *, config: dict, key: str, ssp: str
+) -> None:
+    """Apply the levers of scenario `key` in place; drops the solution on change."""
+    ch = _collect(context, scenario, config=config, key=key, ssp=ssp)
 
     message = f"sparccle_water {ssp} {key}: " + "; ".join(ch.messages)
     if not ch:
