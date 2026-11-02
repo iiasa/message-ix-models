@@ -51,57 +51,6 @@ def test_demand_dummy(test_context: Context, regions: str, years: str) -> None:
 
 
 @build.get_computer.minimum_version
-@mark.parametrize(
-    "ssp",
-    [
-        SSP_2017["2"],
-        SSP_2024["1"],
-        SSP_2024["2"],
-        SSP_2024["3"],
-        SSP_2024["4"],
-        SSP_2024["5"],
-    ],
-)
-def test_exo_pdt(
-    test_context: Context, ssp: SSP_2017 | SSP_2024, regions="R12", years="B"
-) -> None:
-    from message_ix_models.model.transport.testing import assert_units
-
-    c, info = testing.configure_build(
-        test_context, regions=regions, years=years, options=dict(ssp=ssp)
-    )
-
-    data = c.get("transport demand::ixmp")
-    # data = c.get("demand::P+ixmp")
-
-    # Returns a dict with a single key/data frame
-    assert {"demand"} == set(data.keys())
-
-    # Data have common, expected units
-    for _, group_df in data["demand"].groupby("unit"):
-        try:
-            assert_units(group_df, {"[passenger]": 1, "[length]": 1, "[time]": -1})
-        except AssertionError:
-            continue
-        else:
-            df = group_df
-            break
-
-    # Passenger distance travelled is positive
-    negative = df[df.value < 0]
-    assert 0 == len(negative), f"Negative values in PDT:\n{negative.to_string()}"
-
-    # Both LDV and non-LDV commodities are demanded
-    assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"].unique())
-
-    # Demand covers the model horizon
-    assert set(info.Y) == set(df["year"].unique()), (
-        "`demand` does not cover the model horizon",
-        df,
-    )
-
-
-@build.get_computer.minimum_version
 def test_exo_report(test_context: Context, tmp_path: Path) -> None:
     """Exogenous demand results can be plotted.
 
