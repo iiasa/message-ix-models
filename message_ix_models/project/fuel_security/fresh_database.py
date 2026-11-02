@@ -16,6 +16,8 @@ Steps:
 
 Options:
 - --model limits the copy to some models (default: all models in --source).
+- --exclude skips scenarios by name; shell-style patterns, quoted, e.g.
+  --exclude '*_bilateral' '*_FSU*'. Excluded scenarios are printed.
 - Rerun with --resume after an interrupted copy: scenarios already in --db are
   skipped. Without --resume, an existing --db is refused.
 - The new database is converted to cached tables at the end, so it is kept on disk
@@ -25,6 +27,7 @@ Options:
 """
 
 import argparse
+from fnmatch import fnmatch
 from pathlib import Path
 
 import ixmp
@@ -38,11 +41,19 @@ from message_ix_models.project.fuel_security.copy_scenario_to_local import (
 )
 
 
-def default_versions(source, models):
-    """Default versions of all scenarios in `source`, limited to `models` if given."""
+def default_versions(source, models, exclude):
+    """Default versions of all scenarios in `source`, limited to `models` if given.
+
+    Scenarios whose name matches any pattern in `exclude` are left out.
+    """
     listed = source.scenario_list(default=True)
     if models:
         listed = listed[listed["model"].isin(models)]
+    if exclude:
+        drop = listed["scenario"].map(lambda s: any(fnmatch(s, e) for e in exclude))
+        for row in listed[drop].sort_values(["model", "scenario"]).itertuples():
+            print(f"  excluded: {row.model}/{row.scenario}")
+        listed = listed[~drop]
     return listed.sort_values(["model", "scenario"])
 
 
@@ -78,6 +89,8 @@ def main():
     parser.add_argument("--source", default="mydb", help="platform name to copy from")
     parser.add_argument("--db", required=True, help="path of the new local HSQLDB")
     parser.add_argument("--model", nargs="*", help="models to copy (default: all)")
+    parser.add_argument("--exclude", nargs="*", default=[],
+                        help="scenario name patterns to skip, e.g. '*_bilateral'")
     parser.add_argument("--heap", default="32G", help="Java heap size")
     parser.add_argument("--list", action="store_true", help="only list, copy nothing")
     parser.add_argument("--resume", action="store_true",
@@ -89,7 +102,7 @@ def main():
 
     source = ixmp.Platform(args.source, jvmargs=f"-Xmx{args.heap}")
     try:
-        todo = default_versions(source, args.model)
+        todo = default_versions(source, args.model, args.exclude)
         print(f"{len(todo)} default scenario versions in {args.source}:")
         if not args.list:
             for row in todo.itertuples():
