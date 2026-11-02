@@ -5,3 +5,4 @@ Emissions
 
    message/index
    globiom/index
+   gains/index
