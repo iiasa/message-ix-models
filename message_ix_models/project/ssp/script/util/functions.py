@@ -548,6 +548,8 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):  # noqa: C901
             "dac_htg",
         ]
 
+        co2util_techs = ["meth_h2"]
+
         dac_techs = ["dac_lt", "dac_hte", "dac_htg"]
 
         update_meth_h2_modes(scen)
@@ -584,7 +586,7 @@ def add_ccs_setup(scen: message_ix.Scenario, ssp="SSP2"):  # noqa: C901
             "relation_activity",
             scen.par(
                 "relation_activity",
-                {"technology": co2_pipes + ccs_techs, "relation": rels},
+                {"technology": co2_pipes + ccs_techs + co2util_techs, "relation": rels},
             ),
         )
 
