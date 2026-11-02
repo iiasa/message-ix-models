@@ -192,7 +192,7 @@ def test_debug(
     )
 
     # Insert key-specific and common checks
-    result = check.insert(c, N_node, verbosity, tmp_path)
+    result = check.insert(c, verbosity, tmp_path)
 
     k = "test_debug"
     # DEBUG Show and compute a different key
