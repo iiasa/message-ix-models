@@ -40,5 +40,6 @@ Tooling
 
 See:
 
-- :doc:`howto/unicc` —a guide for one particular cluster using SLURM.
+- :doc:`howto/bootstrap` —set up the MESSAGEix ecosystem on any Unix system.
+- :doc:`howto/slurm` —run MESSAGEix solves via SLURM.
 - :mod:`.util.slurm` for the :program:`mix-models sbatch` command-line utility.
