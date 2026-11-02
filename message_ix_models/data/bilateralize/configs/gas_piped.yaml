@@ -52,6 +52,8 @@ gas_piped_trade:
     - TCE
     - TCE_non-CO2
     - TCE_other
+  emission_factor:
+    CO2: 0.507368
   bunker_technology: # not applicable for pipelines
   trade_technical_lifetime:
       1

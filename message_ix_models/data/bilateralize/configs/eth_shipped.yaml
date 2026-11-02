@@ -47,6 +47,7 @@ eth_shipped_trade:
   specify_network:
     False
   tracked_emissions: # List of tracked emission types
+  emission_factor:
   bunker_technology:
     oil_tanker_loil:
       loil_tobunker
