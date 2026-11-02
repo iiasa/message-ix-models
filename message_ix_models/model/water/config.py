@@ -15,7 +15,7 @@ class Config(ConfigHelper):
     nexus_set: Literal["cooling", "nexus"] = "nexus"
 
     #: Climate scenario used for water availability and cooling data.
-    RCP: str = "no_climate"
+    RCP: str = "2p6"
 
     #: Water SDG policy setting.
     SDG: str = "baseline"
