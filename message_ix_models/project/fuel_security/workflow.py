@@ -143,30 +143,44 @@ def generate(context: Context) -> Workflow:
         target = "ixmp://mydb/fuel_security/NPi2030"
     ) # Add and solve NPi2030 onto baseline_DEFAULT to create fuel_security/NPi2030
 
+    # Load the (solved) base scenarios already on mydb. Bilateralize steps start from
+    # these instead of from the clone/policy steps above, so a bilateralize run only
+    # opens mydb: it does not connect to ixmp-dev or re-clone/re-solve the base. This
+    # also means the JVM is started by mydb's platform config, so its "jvmargs" (Java
+    # heap) apply when reading the bilateral solution back into the database.
+    # Run the step that creates each base (e.g. "Base cloned") once beforehand.
+    for name, scen in (
+        ("Base local", "baseline_DEFAULT"),
+        ("NPi2030 local", "NPi2030"),
+        ("INDC2030i_forever local", "INDC2030i_forever"),
+        ("INDC2030i_forever_gdp local", "INDC2030i_forever_gdp"),
+    ):
+        wf.add_step(name, None, target=f"ixmp://mydb/fuel_security/{scen}")
+
     wf.add_step(
         "Baseline bilateralized",
-        "Base cloned",
+        "Base local",
         _bilateralize,
         target="ixmp://mydb/fuel_security/baseline_bilateral"
     ) # Bilateralize fuel_security/baseline_DEFAULT to create fuel_security/baseline_bilateral
-    
+
     wf.add_step(
         "NPi2030 bilateralized",
-        "Add and solve NPi2030",
+        "NPi2030 local",
         _bilateralize,
         target="ixmp://mydb/fuel_security/NPi2030_bilateral"
     ) # Bilateralize NPi2030 to create fuel_security/NPi2030_bilateral
 
     wf.add_step(
         "INDC2030i_forever bilateralized",
-        "Clone INDC2030i_forever",
+        "INDC2030i_forever local",
         _bilateralize,
         target="ixmp://mydb/fuel_security/INDC2030i_forever_bilateral"
     ) # Bilateralize INDC2030i_forever to create fuel_security/INDC2030i_forever_bilateral
 
     wf.add_step(
         "INDC2030i_forever_gdp bilateralized",
-        "INDC2030i_forever_gdp",
+        "INDC2030i_forever_gdp local",
         _bilateralize,
         target="ixmp://mydb/fuel_security/INDC2030i_forever_gdp_bilateral"
     ) # Bilateralize INDC2030i_forever_gdp to create fuel_security/INDC2030i_forever_gdp_bilateral
