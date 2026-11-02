@@ -3,6 +3,7 @@ What's new
 
 Next release
 ============
+- Add option for a balance_equality check in bilateralization module (:pull:`536`)
 
 - :mod:`message_ix_models` supports and is tested with `Python 3.15 <https://www.python.org/downloads/release/python-3150/>`__ (:pull:`574`),
   released 2026-10-09.
