@@ -324,7 +324,7 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
 }
 
 
-def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
+def insert(c: "Computer", verbosity: int, path: "Path") -> "CheckResult":
     """Insert :data:`CHECKS` into `c`.
 
     Parameters
@@ -334,21 +334,26 @@ def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckRe
     path :
         Passed to :func:`.verbose_check`.
     """
+    # Local namespace for evaluating `condition`, below
     context: "Context" = c.graph["context"]  # noqa: F841
+
+    # Information about the base scenario, used for certain checks
     info: "ScenarioInfo" = c.get("info")
+    N_node = len(info.set["node"]) - 1  # Number of nodes
 
     # Checks to insert
     checks = CHECKS.copy()
 
-    # Handle CHECKS_CONDITIONAL: if the condition (key) evaluates True, add some checks
+    # Handle CHECKS_CONDITIONAL: if the `condition` evaluates True, add some checks
     for condition, to_update in CHECKS_CONDITIONAL.items():
         if not eval(condition):
             continue
         checks.update(to_update)
 
+    # Checks that are not static, e.g. depending on the model configuration
     # Has exactly the periods (y) in the model horizon
-    k = "disutility:n-cg-t-y"
-    checks[k] = checks[k] + (HasCoords({"y": info.Y}),)
+    for key in (demand.TARGET, "disutility:n-cg-t-y"):
+        checks[key] = checks[key] + (HasCoords({"y": info.Y}),)
 
     # Construct a list of common checks to be appended to every value in `checks`
     common = [Size({"n": N_node}), NoneMissing()] + verbose_check(verbosity, path)
