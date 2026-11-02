@@ -165,21 +165,11 @@ Pre-processing
 
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
   - :file:`groundwater_harmonize.r`: contains workflow to calculate historical capacity of renewable groundwater, table depth and energy consumption
-  - :file:`generate_water_constraints.r`: contains function to calculate municipal, manufacturing, rural water demands, water access and sanitation rates
-  - :file:`desalination.r`: contains script for assessing the historical and possible future desalination capacity of a region or country
-  - :file:`hydro_agg_raster.py`: contains workflow for processing the hydrological data in NC4 and adjust the unit conversions, daily to monthly aggregation.
-  - :file:`hydro_agg_spatial.R`: contains workflow for spatially aggregating monthly hydrological data onto basin using appropriate raster masking onto shapefiles
-  - :file:`hydro_agg_basin.py`: contains workflow for aggregating monthly data to 5 yearly averages using appropriate statistical methods (quantiles, averages etc.).
-    It also calculates e flows based on Variable MF method.
-
-Deprecated R Code
-=================
-
-- :file:`data/water/deprecated`: contains `R` scripts from the older water sector implementation
-
-  - :file:`Figures.R`: R script for producing figures
-  - :file:`cooling_tech_av.R`: contains similar code as in the above-mentioned scripts, but this was originated from another workstream.
-  - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop pathways for sectoral water withdrawals, return flows and infrastructure penetration rates in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
+  - :file:`basin_allocation.py`: contains shared helpers for mapping country totals to R12 basins
+  - :file:`generate_access_rates.py`: contains script for generating R12 drinking-water access rate CSVs
+  - :file:`generate_sectoral_demands.py`: contains script for generating R12 sectoral water demand CSVs
+  - :file:`generate_desalination.py`: contains script for generating R12 historical and projected desalination capacity CSVs
+  - :file:`generate_hydro_availability.py`: contains workflow for generating R12 hydro availability and e-flow CSVs
 
 Reference
 =========

@@ -327,41 +327,10 @@ def _make_technical_lifetime(
 
 
 def _make_capacity_factor(inp: pd.DataFrame, context: "Context") -> pd.DataFrame:
-    """Generate capacity_factor parameter with optional climate impacts."""
-    cfg = Config.from_context(context)
+    """Generate the dimensionless capacity_factor parameter."""
     cap_fact = make_matched_dfs(inp, capacity_factor=1)["capacity_factor"]
-    cap_fact["unit"] = "-"  # capacity_factor is dimensionless
-    cap_fact = cap_fact.drop_duplicates().reset_index(drop=True)
-
-    if cfg.RCP == "no_climate":
-        return cap_fact
-
-    # Apply climate impacts on freshwater cooling
-    impact_path = package_data_path(
-        "water",
-        "ppl_cooling_tech",
-        f"power_plant_cooling_impact_MESSAGE_{context.regions}_{cfg.RCP}.csv",
-    )
-    df_impact = pd.read_csv(impact_path)
-
-    for node in df_impact["node"]:
-        is_fresh = cap_fact["technology"].str.contains("fresh")
-        node_match = cap_fact["node_loc"] == node
-
-        yr = cap_fact["year_act"]
-        conditions = [
-            is_fresh & (yr >= 2025) & (yr < 2050) & node_match,
-            is_fresh & (yr >= 2050) & (yr < 2070) & node_match,
-            is_fresh & (yr >= 2070) & node_match,
-        ]
-        choices = [
-            df_impact[df_impact["node"] == node]["2025s"].values[0],
-            df_impact[df_impact["node"] == node]["2050s"].values[0],
-            df_impact[df_impact["node"] == node]["2070s"].values[0],
-        ]
-        cap_fact["value"] = np.select(conditions, choices, default=cap_fact["value"])
-
-    return cap_fact
+    cap_fact["unit"] = "-"
+    return cap_fact.drop_duplicates().reset_index(drop=True)
 
 
 def _make_investment_cost(context: "Context") -> pd.DataFrame:
