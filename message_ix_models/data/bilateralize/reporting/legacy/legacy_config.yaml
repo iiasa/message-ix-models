@@ -1,0 +1,157 @@
+report_config:
+    table_def: "message_data.tools.post_processing.materials_dac_tables"
+    aggr_def: "materials_dac_aggregates.csv"
+    var_def: "materials_dac_variable_definitions.csv"
+    unit_yaml: 'materials_dac_units.yaml'
+    kyoto_hist: False
+    lu_hist: False
+run_tables:
+    Prc:
+        root: Price
+        active: True
+        function: retr_price
+        args: {"units_CPrc_co2": "US$2010/tCO2",
+               "units_CPrc_co2_outp": "US$2010/t CO2", # Name of units in output file
+               "units_energy": "US$2010/GJ",
+               "units_energy_outp": "US$2010/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": 0.03171,
+               "units_agri": "Index (2020 = 1)"}
+    Tec_Invst:
+        root: Investment|Energy Supply
+        active: True
+        function: retr_supply_inv
+        args: {"units_energy": "billion US$2010/yr",
+               "units_emi": "Mt CO2/yr",
+               "units_ene_mdl": "GWa"}
+    GDP:
+        root: GDP
+        active: True
+        function: retr_macro
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Cst:
+        root: Cost
+        active: True
+        function: retr_cost
+        condition: scen.var("COST_NODAL_NET").empty
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Res_extr:
+        root: Resource|Extraction
+        active: True
+        function: retr_extraction
+        args: {"units": "EJ/yr"}
+    Res_extr_cum:
+        root: Resource|Cumulative Extraction
+        active: True
+        function: retr_cumulative_extraction
+        args: {"units": "ZJ"}
+    Res_remain:
+        root: Resource|Remaining
+        active: False # This function is not yet working
+        function: retr_remaining_resources
+        args: {"units": "ZJ"}
+    Enrgy_PE:
+        root: Primary Energy
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr"}
+    Enrgy_PE_sub:
+        root: Primary Energy (substitution method)
+        active: False
+        function: retr_pe
+        args: {"units": "EJ/yr",
+               "method": "substitution"}
+    Enrgy_FE:
+        root: Final Energy
+        active: True
+        function: retr_fe
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_elec:
+        root: Secondary Energy|Electricity
+        active: True
+        function: retr_SE_elecgen
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_heat:
+        root: Secondary Energy|Heat
+        active: True
+        function: retr_SE_district_heat
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_syn:
+        root: Secondary Energy
+        active: True
+        function: retr_SE_synfuels
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_gas:
+        root: Secondary Energy|Gases
+        active: True
+        function: retr_SE_gases
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_solid:
+        root: Secondary Energy|Solids
+        active: True
+        function: retr_SE_solids
+        args: {"units": "EJ/yr"}
+    Tec_cap:
+        root: Capacity
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.tic,
+               "units": "GW"}
+    Tec_cap_add:
+        root: Capacity Additions
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.nic,
+               "units": "GW/yr"}
+    Tec_cap_cum:
+        root: Cumulative Capacity
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.cumcap,
+               "units": "GW"}
+    Tec_inv_cst:
+        root: Capital Cost
+        active: True
+        function: retr_ppl_parameters
+        args: {"prmfunc": pp.inv_cost,
+               "units": "US$2010/kW"}
+    Tec_FOM_cst:
+        root: OM Cost|Fixed
+        active: True
+        function: retr_ppl_opcost_parameters
+        args: {"prmfunc": pp.fom,
+               "units": "US$2010/kW/yr"}
+    Tec_VOM_cst:
+        root: OM Cost|Variable
+        active: True
+        function: retr_ppl_opcost_parameters
+        args: {"prmfunc": pp.vom,
+               "units": "US$2010/kWh"}
+    Tec_lft:
+        root: Lifetime
+        active: True
+        function: retr_ppl_parameters
+        args: {"prmfunc": pp.pll,
+               "units": "years"}
+    Tec_eff:
+        root: Efficiency
+        active: True
+        function: retr_eff_parameters
+        args: {"units": "%"}
+    Pop:
+        root: Population
+        active: True
+        function: retr_pop
+        args: {"units": "million"}
+    Enrgy_UE_inp:
+        root: Useful Energy
+        active: True
+        function: retr_demands_input
+        args: {"units": "EJ/yr"}
+    Enrgy_UE_outp:
+        root: Useful Energy
+        active: True
+        function: retr_demands_output
+        args: {"units": "EJ/yr"}
