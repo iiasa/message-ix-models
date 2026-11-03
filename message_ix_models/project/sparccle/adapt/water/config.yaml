@@ -70,6 +70,13 @@ scenarios:
   base:
     build: nexus
     sdgs: baseline
+  # 11-03: one-scenario test of the water-module fixes (seed irrigation split
+  # by availability share like the LP, initial_activity_up on the renewable
+  # extractors, zero-share basin_to_reg modes bounded at 0). Compare with
+  # `base` before any clone is rerun.
+  base_test:
+    build: nexus
+    sdgs: baseline
   # Mf (efficient distribution: 10 % instead of 20 % losses, half the electricity,
   # higher variable cost) is banned everywhere except +adapt (10-22). BAUfgd is
   # the BAU of record; the 10-21 BAU and BAUfg runs were stepping stones.

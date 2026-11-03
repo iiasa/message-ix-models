@@ -12,6 +12,7 @@ from message_ix_models.model.water.utils import (
     GW_ELEC_DEPTH_ADDER_GWA_KM3,
     GW_FOSSIL_ELEC_MULTIPLIER,
     KM3_TO_MCM,
+    RENEWABLE_INITIAL_ACTIVITY_SHARE,
     SW_ELEC_INTENSITY_GWA_KM3,
     USD_KM3_TO_USD_MCM,
     GWa_KM3_TO_GWa_MCM,
@@ -143,6 +144,53 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
         df_sw.reset_index(drop=True, inplace=True)
 
     return df_sw
+
+
+def zero_share_bounds(share: pd.DataFrame) -> pd.DataFrame:
+    """``bound_activity_up`` = 0 on every ``basin_to_reg_*`` mode whose share is 0.
+
+    GAMS builds ``SHARE_CONSTRAINT_MODE_UP`` only where ``share_mode_up`` is
+    non-zero, so a basin with no availability would otherwise supply its region
+    without limit (B132|NAM: 61 km3 of fossil groundwater, 29 % of NAM
+    irrigation in 2035, from a 2,100 km2 sliver with zero runoff).
+    """
+    zero = share[share["value"] == 0]
+    return make_df(
+        "bound_activity_up",
+        node_loc=zero["node_share"],
+        technology=zero["technology"],
+        year_act=zero["year_act"],
+        mode=zero["mode"],
+        time=zero["time"],
+        value=0.0,
+        unit="MCM/year",
+    )
+
+
+def renewable_initial_activity(
+    df_sw: pd.DataFrame, df_gw: pd.DataFrame, share: float
+) -> pd.DataFrame:
+    """``initial_activity_up`` of the renewable extractors: `share` of the basin's
+    availability (km3 -> MCM), zero where availability is negative.
+
+    The dynamic constraint otherwise anchors on ``historical_activity`` alone,
+    so a basin seeded at zero could never extract surface or renewable
+    groundwater.
+    """
+    frames = []
+    for tec, df in (("extract_surfacewater", df_sw), ("extract_groundwater", df_gw)):
+        frames.append(
+            make_df(
+                "initial_activity_up",
+                node_loc="B" + df["Region"].astype(str),
+                technology=tec,
+                year_act=df["year"],
+                time=df["time"],
+                value=df["value"].clip(lower=0) * KM3_TO_MCM * share,
+                unit="MCM/year",
+            )
+        )
+    return pd.concat(frames, ignore_index=True)
 
 
 def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
@@ -849,6 +897,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
 
         results["share_mode_up"] = share
+        results["bound_activity_up"] = zero_share_bounds(share)
 
         tl = (
             make_df(
@@ -947,6 +996,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
         )
 
         results["growth_activity_up"] = growth_activity_up
+
+        df_sw_av, df_gw_av = read_water_availability(context)
+        results["initial_activity_up"] = renewable_initial_activity(
+            df_sw_av, df_gw_av, RENEWABLE_INITIAL_ACTIVITY_SHARE
+        )
 
         # Remove duplicates and NaN values from all DataFrames in results
         for key, df in results.items():

@@ -24,13 +24,15 @@ def test_load_config_packaged() -> None:
 
     assert set(config["scenarios"]) == {
         "base",
+        "base_test",
         "BAUfgd",
         "maladapt",
         "adapt",
     }
     for key in ("BAUfgd", "maladapt", "adapt"):
         assert config["scenarios"][key]["fossil_gw_cap"] == pytest.approx(1.0)
-    assert "fossil_gw_cap" not in config["scenarios"]["base"]
+    for key in ("base", "base_test"):
+        assert "fossil_gw_cap" not in config["scenarios"][key]
     for spec in config["scenarios"].values():
         assert "desal_potential" not in spec  # lever available, unused
     assert config["scenarios"]["BAUfgd"]["desal_free"] is True

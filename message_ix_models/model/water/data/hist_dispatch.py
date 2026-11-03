@@ -13,6 +13,7 @@ from message_ix_models.model.water.data.demands import (
     groundwater_share_floor,
     read_water_availability,
 )
+from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 from message_ix_models.model.water.utils import (
     GW_ELEC_DEPTH_ADDER_GWA_KM3,
     GW_FOSSIL_ELEC_MULTIPLIER,
@@ -59,6 +60,54 @@ def read_hist_capacity(context: "Context") -> pd.DataFrame:
     df = pd.read_csv(cap_path)
     valid = Config.from_context(context).valid_basins
     return df[df["BCU_name"].isin(valid)].copy()
+
+
+def basin_capacities(
+    df_hist: pd.DataFrame, basins: pd.Index
+) -> tuple[pd.Series, pd.Series, pd.Series]:
+    """Dispatch ceilings (MCM/yr) of the three extractors over every basin.
+
+    Surface and groundwater take the capacity file's values and zero where the
+    file has no row (8 of the 214 R12 basins); fossil groundwater is unbounded
+    everywhere. Dispatching only the file's rows left the unlisted basins with
+    no ``historical_activity`` at all, which the growth constraint turned into
+    zero renewable extraction for the whole horizon.
+    """
+    cap = df_hist.set_index("BCU_name").reindex(basins)
+    sw = (KM3_TO_MCM * cap["hist_cap_sw_km3_year"]).fillna(0.0).rename_axis("BCU_name")
+    gw = (KM3_TO_MCM * cap["hist_cap_gw_km3_year"]).fillna(0.0).rename_axis("BCU_name")
+    fossil = pd.Series(np.inf, index=basins).rename_axis("BCU_name")
+    return sw, gw, fossil
+
+
+def basin_availability_shares(context: "Context") -> pd.DataFrame:
+    """Each basin's share of its region's surface-water availability.
+
+    The same key ``share_mode_up`` applies to ``basin_to_reg_*`` in the LP
+    (:func:`map_basin_region_wat`), taken at the first model year so the seed
+    splits regional irrigation the way the model will. Columns ``BCU_name``
+    (unprefixed), ``region``, ``share``.
+    """
+    info = context["water build info"]
+    df = map_basin_region_wat(context)
+    node = "region" if "region" in df.columns else "node"
+    df = df[df["year"] == info.Y[0]]
+    df = df.groupby(["MSGREG", node], as_index=False)["share"].mean()
+    return pd.DataFrame(
+        {
+            "BCU_name": df[node].str.replace("^B", "", regex=True),
+            "region": df["MSGREG"],
+            "share": df["share"].fillna(0.0),
+        }
+    )
+
+
+def allocate_regional_series(regional: pd.Series, shares: pd.DataFrame) -> pd.Series:
+    """Split `regional` (indexed by region) over basins by `shares`."""
+    value = (
+        shares["share"].to_numpy() * shares["region"].map(regional).fillna(0).to_numpy()
+    )
+    return pd.Series(value, index=shares["BCU_name"].to_numpy()).rename_axis("BCU_name")
 
 
 def merit_order_dispatch(
@@ -205,6 +254,14 @@ def _read_irrigation_demand(context: "Context", year: int) -> pd.Series:
     but may not be visible when ``context.get_scenario()`` reloads from
     the DB; ``land_output`` is the upstream source.
 
+    Regional totals are split over basins by the availability share the LP
+    enforces through ``share_mode_up`` (:func:`basin_availability_shares`).
+    Splitting by historical surface-water capacity instead (until 2026-11-03)
+    seeded irrigation in other basins than the model serves it from in 2035
+    (B69|PAS 0.1 % vs 26.6 %), and fossil groundwater, the only extractor
+    without a growth bound, absorbed the step: 765 km3 in the seed, 1,468 km3
+    in 2035.
+
     Returns an empty Series when no rows are present for ``year``
     (e.g. country-mode builds where irrigation is not coupled).
     """
@@ -226,20 +283,7 @@ def _read_irrigation_demand(context: "Context", year: int) -> pd.Series:
     per_scenario = li.groupby(["node", "land_scenario"], as_index=False)["value"].sum()
     regional_irr = per_scenario.groupby("node")["value"].mean()
 
-    df_hist = read_hist_capacity(context)
-    if df_hist.empty:
-        return empty
-
-    df_hist["region"] = (
-        f"{context.regions}_" + df_hist["BCU_name"].str.split("|").str[-1]
-    )
-    cap = df_hist["hist_cap_sw_km3_year"].clip(lower=0)
-    region_cap = cap.groupby(df_hist["region"]).transform("sum")
-    share = (cap / region_cap.where(region_cap > 0)).fillna(0)
-    irr = share * df_hist["region"].map(regional_irr).fillna(0)
-    return pd.Series(irr.to_numpy(), index=df_hist["BCU_name"].to_numpy()).rename_axis(
-        "BCU_name"
-    )
+    return allocate_regional_series(regional_irr, basin_availability_shares(context))
 
 
 def add_water_hist_dispatch(context: "Context") -> dict[str, pd.DataFrame]:
@@ -249,23 +293,14 @@ def add_water_hist_dispatch(context: "Context") -> dict[str, pd.DataFrame]:
     last_vtg_yr = info.Y[0] - 5
     sub_time = list(cfg.time)
 
+    basins = pd.Index(sorted("B" + b for b in cfg.valid_basins), name="BCU_name")
     df_hist = read_hist_capacity(context)
     df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     # hist_cap_*_km3_year is installed historical capacity; the dispatch uses it
     # as an annual activity ceiling. The duration-period scaling belongs only
     # to historical_new_capacity.
-    sw_cap = (
-        (KM3_TO_MCM * df_hist["hist_cap_sw_km3_year"])
-        .set_axis(df_hist["BCU_name"])
-        .rename_axis("BCU_name")
-    )
-    gw_cap = (
-        (KM3_TO_MCM * df_hist["hist_cap_gw_km3_year"])
-        .set_axis(df_hist["BCU_name"])
-        .rename_axis("BCU_name")
-    )
-    fossil_cap = pd.Series(np.inf, index=df_hist["BCU_name"])
+    sw_cap, gw_cap, fossil_cap = basin_capacities(df_hist, basins)
 
     gw_energy_path = package_data_path(
         "water", "availability", f"gw_energy_intensity_depth_{context.regions}.csv"
@@ -282,7 +317,7 @@ def add_water_hist_dispatch(context: "Context") -> dict[str, pd.DataFrame]:
 
     demand = read_historical_demand(context, last_vtg_yr)
     demand.index = "B" + demand.index.astype(str)
-    demand = demand.reindex(df_hist["BCU_name"].to_numpy()).fillna(0)
+    demand = demand.reindex(basins).fillna(0)
 
     # Reserve groundwater its share_low_lim_GWat floor share before merit-ordering.
     # Availability has no pre-horizon row, so use the firstmodelyear value.

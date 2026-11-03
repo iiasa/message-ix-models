@@ -7,6 +7,8 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     eflow_bound_rows,
     map_basin_region_wat,
+    renewable_initial_activity,
+    zero_share_bounds,
 )
 from message_ix_models.tests.model.water.conftest import water_params
 
@@ -80,6 +82,41 @@ def test_add_e_flow(water_context):
     assert isinstance(result, dict)
     assert "bound_activity_lo" in result
     assert isinstance(result["bound_activity_lo"], pd.DataFrame)
+
+
+def test_zero_share_bounds_only_zero_modes() -> None:
+    share = pd.DataFrame(
+        {
+            "shares": "share_basin",
+            "node_share": ["R12_NAM", "R12_NAM", "R12_NAM"],
+            "technology": ["basin_to_reg_plus"] * 3,
+            "mode": ["M132|NAM", "M90|NAM", "M132|NAM"],
+            "year_act": [2035, 2035, 2040],
+            "time": "year",
+            "value": [0.0, 0.175, 0.0],
+            "unit": "%",
+        }
+    )
+    out = zero_share_bounds(share)
+    assert len(out) == 2
+    assert set(out["mode"]) == {"M132|NAM"}
+    assert (out["value"] == 0).all()
+    assert set(out["year_act"]) == {2035, 2040}
+
+
+def test_renewable_initial_activity_share_of_availability() -> None:
+    df_sw = pd.DataFrame(
+        {"Region": ["1|A", "2|A"], "value": [10.0, -1.0], "year": 2035, "time": "year"}
+    )
+    df_gw = pd.DataFrame(
+        {"Region": ["1|A"], "value": [2.0], "year": 2035, "time": "year"}
+    )
+    out = renewable_initial_activity(df_sw, df_gw, 0.02)
+    sw = out[out["technology"] == "extract_surfacewater"].set_index("node_loc")["value"]
+    gw = out[out["technology"] == "extract_groundwater"].set_index("node_loc")["value"]
+    assert sw["B1|A"] == pytest.approx(10.0 * 1000 * 0.02)  # km3 -> MCM, 2 %
+    assert sw["B2|A"] == 0.0  # negative availability -> no headroom
+    assert gw["B1|A"] == pytest.approx(40.0)
 
 
 def test_eflow_bound_rows() -> None:

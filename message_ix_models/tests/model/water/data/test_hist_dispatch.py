@@ -1,10 +1,13 @@
 """Tests for historical supply-side dispatch."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from message_ix_models.model.water.data.demands import groundwater_share_floor
 from message_ix_models.model.water.data.hist_dispatch import (
+    allocate_regional_series,
+    basin_capacities,
     cap_surfacewater_for_gw_floor,
     merit_order_dispatch,
 )
@@ -44,6 +47,36 @@ def test_dispatch_rejects_infeasible_demand():
             demand=_s({"A": 100.0}),
             commodity_prices={"electr": 1.0},
         )
+
+
+def test_basin_capacities_zero_where_file_has_no_row():
+    df_hist = pd.DataFrame(
+        {
+            "BCU_name": ["B1", "B2"],
+            "hist_cap_sw_km3_year": [1.0, 0.5],
+            "hist_cap_gw_km3_year": [0.2, 0.0],
+        }
+    )
+    basins = pd.Index(["B1", "B2", "B3"], name="BCU_name")
+    sw, gw, fossil = basin_capacities(df_hist, basins)
+
+    assert sw.tolist() == pytest.approx([1000.0, 500.0, 0.0])
+    assert gw.tolist() == pytest.approx([200.0, 0.0, 0.0])
+    assert np.isinf(fossil).all()
+    assert list(fossil.index) == ["B1", "B2", "B3"]  # B3 dispatched, fossil only
+
+
+def test_allocate_regional_series_uses_shares():
+    shares = pd.DataFrame(
+        {
+            "BCU_name": ["1|A", "2|A", "3|B"],
+            "region": ["R12_A", "R12_A", "R12_B"],
+            "share": [0.25, 0.75, 1.0],
+        }
+    )
+    out = allocate_regional_series(pd.Series({"R12_A": 100.0}), shares)
+    assert out.tolist() == pytest.approx([25.0, 75.0, 0.0])  # no R12_B total -> 0
+    assert list(out.index) == ["1|A", "2|A", "3|B"]
 
 
 def test_groundwater_share_floor_matches_definition():

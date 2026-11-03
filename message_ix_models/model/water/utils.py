@@ -69,6 +69,11 @@ GW_ELEC_DEPTH_ADDER_GWA_KM3 = 0.043464579
 # 20% above renewable on every dimension (electricity here, inv_cost and
 # lifetime in add_water_supply), instead of an arbitrary discouragement penalty.
 GW_FOSSIL_ELEC_MULTIPLIER = 1.2
+# Renewable extraction may start from a zero seed: initial_activity_up is
+# this share of the basin's renewable availability per year. It is the
+# additive term of the dynamic activity constraint, 5.2x per 5-year period
+# at the 2 %/yr growth_activity_up, so 10 % of availability by 2035.
+RENEWABLE_INITIAL_ACTIVITY_SHARE = 0.02
 # Reference electricity price for the historical merit-order dispatch:
 # 50 USD/MWh x 8766 MWh/GWa.
 HIST_DISPATCH_ELEC_PRICE_USD_GWA = 50.0 * 8766.0
