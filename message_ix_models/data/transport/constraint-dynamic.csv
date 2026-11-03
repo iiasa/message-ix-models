@@ -12,30 +12,31 @@ technology,      commodity, name,                    value
 F RAIL,          *,         growth_activity_lo,       -0.0192
 F RAIL,          electr,    growth_activity_lo,       -0.0
 
-F RAIL,          *,         growth_new_capacity_up,    0.0192
+F RAIL,          *,         growth_new_capacity_up,    0.0539
 F RAIL,          *,         initial_new_capacity_up,   3.0
 
 F ROAD,          *,         growth_activity_lo,       -0.0192
 F ROAD,          electr,    growth_activity_lo,       -0.0139
-F ROAD,          lightoil,  growth_activity_lo,       -0.1000
+F ROAD,          lightoil,  growth_activity_lo,       -0.1392
 F ROAD,          gas,       growth_activity_lo,       -0.1000
-
-F ROAD,          gas,       growth_new_capacity_up,    0.005
-F ROAD,          electr,    growth_new_capacity_up,    0.1000
 
 F ROAD,          *,        growth_new_capacity_up,    0.0192
 
+F ROAD,          gas,       growth_new_capacity_up,    0.0020
+F ROAD,          electr,    growth_new_capacity_up,    0.1392
+
+
 F ROAD,          *,         initial_new_capacity_up,   2.0
 
-LDV,             *,         growth_activity_lo,       -0.0700
+LDV,             *,         growth_activity_lo,       -0.0200
 ELC_100,         *,         growth_activity_lo,       -0.0192
 ICE_conv,        *,         growth_activity_lo,       -0.0700
 
 # Some LDV technologies
 ELC_100,         *,         growth_new_capacity_lo,   -0.0539
-ELC_100,         *,         growth_new_capacity_up,    0.1000
-ICE_conv,        *,         growth_new_capacity_lo,   -0.0700
-ICE_conv,        *,         growth_new_capacity_up,    0.0192
+ELC_100,         *,         growth_new_capacity_up,    0.1392
+ICE_conv,        *,         growth_new_capacity_lo,   -0.1392
+ICE_conv,        *,         growth_new_capacity_up,    0.0539
 PHEV_ptrp,       *,         growth_new_capacity_up,    0.0539
 
 # Other LDV technologies
@@ -44,7 +45,7 @@ IAHe_ptrp,       *,         growth_new_capacity_up,    0.0192
 IAHm_ptrp,       *,         growth_new_capacity_up,    0.0192
 ICAe_ffv,        *,         growth_new_capacity_up,    0.0192
 ICAm_ptrp,       *,         growth_new_capacity_up,    0.0192
-ICE_nga,         *,         growth_new_capacity_up,    0.00192
+ICE_nga,         *,         growth_new_capacity_up,    0.0100
 ICH_chyb,        *,         growth_new_capacity_up,    0.0192
 IGH_ghyb,        *,         growth_new_capacity_up,    0.0192
 
@@ -62,12 +63,12 @@ usage LDV,       *,         growth_activity_up,        0.0539
 usage LDV,       *,         initial_activity_up,       1000000
 
 P ex LDV,        *,         growth_activity_lo,       -0.0192
-P ex LDV,        electr,    growth_activity_lo,        0.0
+P ex LDV,        electr,    growth_activity_lo,        -0.0
 
-# P ex LDV,      *,         growth_activity_up,        0.0371
+# P ex LDV,      *,         growth_activity_up,        0.0539
 # P ex LDV,      *,         initial_activity_up,       2.0
 
-P ex LDV,        *,         growth_new_capacity_up,    0.0192
+P ex LDV,        *,         growth_new_capacity_up,    0.0539
 # NB The value could be 2.0, except in the test suite where
 #    transport/test_build.py::test_bare_res[R12-B-False-IKARUS-True]
 #    has infeasibilities in n=R12_SAS and t=BUS.
