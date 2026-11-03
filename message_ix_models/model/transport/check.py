@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 from message_ix_models.model.transport import (
     Config,
     constraint,
+    demand,
     disutility,
+    emission,
     freight,
-    key,
     ldv,
     material,
     other,
@@ -15,6 +16,7 @@ from message_ix_models.model.transport import (
     policy,
     vehicle,
 )
+from message_ix_models.model.transport import key as K
 from message_ix_models.model.transport.testing import assert_units
 from message_ix_models.testing.check import (
     Check,
@@ -166,39 +168,52 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     # The following are intermediate checks formerly in .test_demand.test_exo
     "mode share:n-t-y:base": (HasUnits(""),),
     "mode share:n-t-y": (HasUnits(""),),
-    key.pop: (HasUnits("Mpassenger"),),
+    K.pop: (HasUnits("Mpassenger"),),
     "cg share:n-y-cg": (HasUnits(""),),
     "GDP:n-y:PPP+capita": (HasUnits("kUSD / passenger / year"),),
     "votm:n-y": (HasUnits(""),),
-    key.price: (HasUnits("USD / km"),),
+    K.price: (HasUnits("USD / km"),),
     "cost:n-y-c-t": (HasUnits("USD / km"),),
-    key.pdt_nyt[0]: (HasUnits("passenger km / year"),),
-    key.pdt_nyt[1]: (HasUnits("passenger km / year"),),
-    key.ldv_ny + "total": (HasUnits("Gp km / a"),),
+    K.pdt_nyt[0]: (HasUnits("passenger km / year"),),
+    K.pdt_nyt[1]: (HasUnits("passenger km / year"),),
+    K.ldv_ny + "total": (HasUnits("Gp km / a"),),
     # FIXME Handle dimensionality instead of exact units
     # demand.ldv_nycg: (HasUnits({"[length]": 1, "[passenger]": 1, "[time]": -1}),),
     "pdt factor:n-y-t": (HasUnits(""),),
     # "fv factor:n-y": (HasUnits(""),),  # Fails: this key no longer exists
     # "fv:n:advance": (HasUnits(""),),  # Fails: only fuzzed data in message-ix-models
-    key.fv_cny: (HasUnits("Gt km / a"),),
+    K.fv_cny: (HasUnits("Gt km / a"),),
     #
     # Exogenous demand calculation succeeds
-    "transport demand::ixmp": (
+    demand.TARGET: (
         # Data is returned for the demand parameter only
         ContainsDataForParameters({"demand"}),
-        HasCoords({"level": ["useful"]}),
+        # Certain labels are present
+        HasCoords(
+            {
+                "commodity": ["transport pax air", "transport pax RUEAF"],
+                "level": ["useful"],
+            }
+        ),
         # Certain labels are specifically excluded/dropped in the calculation
         HasCoords(
             {"commodity": ["transport pax ldv", "transport F WATER"]}, inverse=True
         ),
         # No negative values
         NonNegative(),
+        # Has certain units
+        HasUnits({"[passenger]": 1, "[length]": 1, "[time]": -1}),
         # …plus default NoneMissing
     ),
     f"input{ldv.Li}": (LDV_PHEV_input(),),
     # .disutility.prepare_computer()
     "disutility:n-cg-t-y": (Size(dict(cg=27 * 12)),),
     disutility.TARGET: (ContainsDataForParameters({"input"}),),
+    emission.TARGET: (
+        ContainsDataForParameters({"emission_factor"}),
+        # Emissions species are transformed
+        HasCoords({"emission": ["VOC transport"]}),
+    ),
     # The following partly replicates .test_ldv.test_get_ldv_data()
     # NB Cannot use NoDuplicates here yet due to:
     # - inv_cost: 50076 duplicated keys
@@ -266,7 +281,7 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
     "historical_new_capacity::LDV+ixmp": (HasUnits("million * v / a"),),
     "input::vehicle+ixmp": (
         # Includes data for historical vintages operating within the model time horizon
-        HasCoords({"year_vtg": [2010]}),
+        HasCoords({"technology": ["ELE_moto"], "year_vtg": [2010]}),
         # No data are generated for R12_GLB
         HasCoords({"node_loc": ["R12_GLB"]}, inverse=True),
     ),
@@ -309,7 +324,7 @@ CHECKS_CONDITIONAL: dict[str, dict["KeyLike", tuple[Check, ...]]] = {
 }
 
 
-def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckResult":
+def insert(c: "Computer", verbosity: int, path: "Path") -> "CheckResult":
     """Insert :data:`CHECKS` into `c`.
 
     Parameters
@@ -319,21 +334,26 @@ def insert(c: "Computer", N_node: int, verbosity: int, path: "Path") -> "CheckRe
     path :
         Passed to :func:`.verbose_check`.
     """
+    # Local namespace for evaluating `condition`, below
     context: "Context" = c.graph["context"]  # noqa: F841
+
+    # Information about the base scenario, used for certain checks
     info: "ScenarioInfo" = c.get("info")
+    N_node = len(info.set["node"]) - 1  # Number of nodes
 
     # Checks to insert
     checks = CHECKS.copy()
 
-    # Handle CHECKS_CONDITIONAL: if the condition (key) evaluates True, add some checks
+    # Handle CHECKS_CONDITIONAL: if the `condition` evaluates True, add some checks
     for condition, to_update in CHECKS_CONDITIONAL.items():
         if not eval(condition):
             continue
         checks.update(to_update)
 
+    # Checks that are not static, e.g. depending on the model configuration
     # Has exactly the periods (y) in the model horizon
-    k = "disutility:n-cg-t-y"
-    checks[k] = checks[k] + (HasCoords({"y": info.Y}),)
+    for key in (demand.TARGET, "disutility:n-cg-t-y"):
+        checks[key] = checks[key] + (HasCoords({"y": info.Y}),)
 
     # Construct a list of common checks to be appended to every value in `checks`
     common = [Size({"n": N_node}), NoneMissing()] + verbose_check(verbosity, path)

@@ -27,6 +27,7 @@ from message_ix_models.util import as_codes
             {
                 "ADVANCE",
                 "B210-R11",
+                "GAINS",
                 "ISR",
                 "R11",
                 "R12",

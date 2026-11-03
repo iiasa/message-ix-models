@@ -13,7 +13,7 @@ from genno import Key, quote
 from genno.core.key import iter_keys, single_key
 
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import get_codelist, get_codes
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -355,6 +355,7 @@ def add_structure(c: "Computer", *, context: "Context", strict: bool = True) -> 
     c.graph.setdefault("context", context)
 
     # Retrieve the node codelist
+    c.add("n::codelist", get_codelist(f"node/{context.model.regions}"), strict=strict)
     c.add("n::codes", quote(get_codes(f"node/{context.model.regions}")), strict=strict)
 
     # Convert the codelist into a nested dict for aggregate()

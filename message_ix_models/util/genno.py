@@ -4,6 +4,7 @@ Most code appearing here **should** be migrated upstream, to genno itself.
 """
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -29,6 +30,7 @@ __all__ = [
 ]
 
 
+@dataclass(slots=True)
 class Collector:
     """Helper class to collect and merge data at a target key.
 
@@ -54,16 +56,13 @@ class Collector:
     4. Add "bar::foo" (denoting the output of (3)) to the keys merged by (1).
     """
 
-    __slots__ = ("_computer", "_key_cb", "_target")
-
-    def __init__(
-        self, target: "KeyLike", key_cb: Callable[["KeyLike"], "KeyLike"]
-    ) -> None:
-        self._target = target
-        self._key_cb = key_cb
+    target: "KeyLike"
+    key_cb: Callable[["KeyLike"], "KeyLike"]
+    _computer: "Computer | None" = None
 
     @property
     def computer(self) -> "Computer":
+        assert self._computer is not None
         return self._computer
 
     @computer.setter
@@ -71,20 +70,20 @@ class Collector:
         from message_ix_models.report.operator import merge_data
 
         self._computer = c
+
         # Add the computation that merges data for this Collector
-        assert self._target not in self._computer
-        self._computer.graph[self._target] = (merge_data,)
+        assert self.target not in c
+        c.add(self.target, merge_data, strict=True)
 
     def __call__(self, _target_name: str, *args, **kwargs) -> "KeyLike":
         # Construct a key using the callback
-        key = self._key_cb(_target_name)
+        key = self.key_cb(_target_name)
 
         # Add a computation at `key` using the `args` and `kwargs`
-        c = self._computer
-        c.add(key, *args, **kwargs)
+        self.computer.add(key, *args, **kwargs)
 
         # Extend the keys to be collected with `key`
-        c.graph[self._target] = c.graph[self._target] + (key,)
+        self.computer.graph[self.target] = self.computer.graph[self.target] + (key,)
 
         return key
 

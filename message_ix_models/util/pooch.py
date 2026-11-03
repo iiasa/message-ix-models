@@ -23,18 +23,22 @@ class Extract:
     - :file:`.zip` or :file:`.tar.xz` archives.
     """
 
-    def __init__(self, members=None, extract_dir=None):
+    def __init__(self, members=None, extract_dir=None) -> None:
         self.members = members
         self.extract_dir = Path(extract_dir or ".")
 
-    def __call__(self, fname, action, pooch):
-        return extract_if_newer(Path(fname), self.extract_dir, self.members)
+    def __call__(self, fname: str, action, pooch) -> list[Path]:
+        ignore = ["__MACOSX", ".DS_Store"]
+        paths = extract_if_newer(
+            Path(fname), self.extract_dir, self.members, ignore=ignore
+        )
+        return list(filter(lambda p: p.is_file(), paths))
 
 
 class UnpackSnapshot:
     """Pooch processor that calls :func:`.snapshot.unpack`."""
 
-    def __call__(self, fname, action, pooch):
+    def __call__(self, fname, action, pooch) -> Path:
         from message_ix_models.model.snapshot import unpack
 
         path = Path(fname)
@@ -59,6 +63,18 @@ SOURCE: MutableMapping[str, Mapping[str, Any]] = {
             },
         ),
         processor=Extract(extract_dir="cepii-baci"),
+    ),
+    "JGCRI_CEDS": dict(
+        pooch_args=dict(
+            base_url="doi:https://doi.org/10.5281/zenodo.15059443",
+            registry={
+                "CEDS_v_2025_03_18_aggregate.zip": "sha256:b55f0dddb4eb8e14435b13d835f99497b789cb3378eee391d1c78af58c5e8095",  # noqa: E501
+                "CEDS_v_2025_03_18_detailed.zip": "sha256:c2215c88b71c6b0230f6826c131cdd055f869b8b31620f521ca173837d4e6045",  # noqa: E501
+                "CEDS_v_2025_03_18_supplementary_bunkers.zip": "sha256:53050a413244cdcc53c7008bc4bde032bbc7ca1fe4bc4871d5b03f3c432cfeea",  # noqa: E501
+                "CEDS_v_2025_03_18_supplementary_extension.zip": "sha256:c62973a8745346e5a0df3d381cdc01529aa76877013dfd02b559745571a58813",  # noqa: E501
+            },
+        ),
+        processor=Extract(extract_dir="jgcri_ceds"),
     ),
     "PRIMAP": dict(
         pooch_args=dict(
@@ -145,10 +161,16 @@ def fetch(
 
     p = pooch.create(**pooch_args)
 
-    if len(p.registry) > 1:  # pragma: no cover
-        raise NotImplementedError("fetch() with registries with >1 files")
+    if "fname" not in fetch_kwargs:
+        # No explicit fname keyword argument to Pooch.fetch()
+        keys = list(p.registry.keys())
+        fetch_kwargs.update(fname=keys[0])
+        if len(keys) > 1:
+            log.warning(
+                f"Missing Pooch.fetch(fname=…); using 1st of {len(keys)}: {keys[0]}"
+            )
 
-    filenames = p.fetch(next(iter(p.registry.keys())), **fetch_kwargs)
+    filenames = p.fetch(**fetch_kwargs)
 
     if isinstance(filenames, (str, Path)):
         filenames = [filenames]
