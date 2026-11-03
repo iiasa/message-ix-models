@@ -19,8 +19,9 @@ Per starter (SSP2, SSP3; ``config.yaml``), on its local HSQLDB platform:
   cap is removed.
 - Since 11-02 every constrained scenario also caps fossil groundwater at its
   last historical dispatch (``fossil_gw_cap``: ``bound_activity_up`` = factor ×
-  2030 ``historical_activity``, zero where none). ``desal_potential`` swaps the
-  desalination potential for another SSP series of the projection (unused).
+  2030 ``historical_activity``; basins without history stay unbounded).
+  ``desal_potential`` swaps the desalination potential for another SSP series
+  of the projection (unused).
 - ``adapt`` (scenario ``..._W_+adapt``): a second nexus build with the water
   module's SDG package (efficient distribution only, treatment and recycling
   targets, e-flow bounds), then the growth cap.
@@ -157,9 +158,12 @@ def fossil_gw_cap_rows(
     """``bound_activity_up`` on fossil groundwater in `years`.
 
     The cap is `factor` × the ``historical_activity`` of the last historical year
-    in `hist` per (node, mode, time). Every basin of `inp` (the technology's
-    ``input``) gets a row; basins without history are capped at zero, so fossil
-    groundwater cannot appear where none was pumped.
+    in `hist` per (node, mode, time) of `inp` (the technology's ``input``).
+    Basins without history get no row and stay unbounded: the historical
+    capacity file has no entry for 36 of the 214 R12 basins, so the dispatch
+    seed gives them neither surface nor renewable groundwater and the base
+    serves them with fossil groundwater alone (B121|MEA, B16|FSU, ...). A zero
+    cap there made every clone infeasible (jobs 3188869/70, 11-03).
     """
     last = int(hist["year_act"].max())
     h = hist.loc[hist["year_act"] == last, ["node_loc", "mode", "time", "value"]]
@@ -168,8 +172,8 @@ def fossil_gw_cap_rows(
         .drop_duplicates()
         .reset_index(drop=True)
     )
-    df = combos.merge(h, on=["node_loc", "mode", "time"], how="left")
-    df["value"] = df["value"].fillna(0.0) * factor
+    df = combos.merge(h, on=["node_loc", "mode", "time"], how="inner")
+    df["value"] = df["value"] * factor
     return make_df("bound_activity_up", **df, unit="MCM/year").pipe(
         broadcast, year_act=years
     )
@@ -366,9 +370,12 @@ def _lever_fossil_cap(
     inp = scenario.par("input", filters={"technology": [FOSSIL_GW]})
     df = fossil_gw_cap_rows(hist, inp, years, factor)
     ch.add("bound_activity_up", df)
+    n_all = inp["node_loc"].nunique()
+    n_capped = df["node_loc"].nunique()
     ch.messages.append(
         f"{FOSSIL_GW} capped at {factor} x {int(hist['year_act'].max())} activity"
-        f" from {years[0]} ({len(df)} rows, {(df['value'] == 0).sum()} at zero)"
+        f" from {years[0]} ({len(df)} rows, {n_capped} of {n_all} basins;"
+        f" {n_all - n_capped} without history left unbounded)"
     )
 
 

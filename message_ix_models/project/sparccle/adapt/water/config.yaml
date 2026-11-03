@@ -57,8 +57,9 @@ starters:
 #                    and no desalination plant can ever be built
 #   fossil_gw_cap    bound_activity_up on extract_gw_fossil in every model year
 #                    = factor x its historical_activity of the last historical
-#                    year (the #522 merit-order seed); basins without history
-#                    are capped at zero
+#                    year (the #522 merit-order seed); the 36 basins without
+#                    history (no surface/groundwater capacity data, fossil-only
+#                    in the base) stay unbounded
 #   desal_potential  replace bound_total_capacity_up on extract_salinewater_basin
 #                    with another SSP series of the projection file
 #                    (SSP1/SSP3/SSP5 are modelled; SSP2 inherits SSP1)
@@ -74,8 +75,8 @@ scenarios:
   # the BAU of record; the 10-21 BAU and BAUfg runs were stepping stones.
   # 11-02: every constrained scenario holds fossil groundwater at its 2030
   # dispatch level (fossil_gw_cap 1.0: bound_activity_up = historical_activity
-  # of the #522 merit-order seed, zero in basins without history); the var_cost
-  # stays as the price of what is still pumped.
+  # of the #522 merit-order seed; basins without history stay unbounded); the
+  # var_cost stays as the price of what is still pumped.
   BAUfgd:
     from: base
     eflow: true

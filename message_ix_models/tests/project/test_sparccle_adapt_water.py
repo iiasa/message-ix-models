@@ -209,12 +209,12 @@ def test_fossil_gw_cap_rows() -> None:
 
     df = fossil_gw_cap_rows(hist, inp, [2035, 2040], 1.0)
 
-    assert len(df) == 3 * 2  # three basins x two years
+    assert len(df) == 2 * 2  # two basins with history x two years
     assert set(df["year_act"]) == {2035, 2040}
     by_node = df[df["year_act"] == 2035].set_index("node_loc")["value"]
     assert by_node["B1"] == pytest.approx(10.0)  # last historical year, not 2025
     assert by_node["B2"] == pytest.approx(4.0)
-    assert by_node["B3"] == pytest.approx(0.0)  # no history -> no fossil groundwater
+    assert "B3" not in by_node.index  # no history -> no cap, stays unbounded
     assert (df["unit"] == "MCM/year").all()
     assert (fossil_gw_cap_rows(hist, inp, [2035], 1.5)["value"].max()) == pytest.approx(
         15.0
