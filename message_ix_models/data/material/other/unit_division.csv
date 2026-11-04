@@ -1,3 +1,22 @@
 numerator,denominator,result
 Mt/yr,Mt/yr,-
 -,Mt/yr,1/Mt/yr
+Mt C/yr,Mt/yr,Mt C/Mt
+Mt C/yr,GWyr/yr,Mt C/GWyr
+GWyr/yr,Mt/yr,GWyr/Mt
+GWyr/yr,GWyr/yr,-
+kt BC/yr,Mt/yr,kt BC/Mt
+kt BC/yr,GWyr/yr,kt BC/GWyr
+kt CO/yr,Mt/yr,kt CO/Mt
+kt CO/yr,GWyr/yr,kt CO/GWyr
+kt HFC-134a-equiv./yr,Mt/yr,kt HFC-134a-equiv./Mt
+kt NH3/yr,Mt/yr,kt NH3/Mt
+kt NH3/yr,GWyr/yr,kt NH3/GWyr
+kt NOx/yr,Mt/yr,kt NOx/Mt
+kt NOx/yr,GWyr/yr,kt NOx/GWyr
+kt OC/yr,Mt/yr,kt OC/Mt
+kt OC/yr,GWyr/yr,kt OC/GWyr
+kt VOC/yr,Mt/yr,kt VOC/Mt
+kt VOC/yr,GWyr/yr,kt VOC/GWyr
+Mt/yr,Mt/yr,-
+t HFC-134a-equiv./yr,Mt/yr,t HFC-134a-equiv./Mt

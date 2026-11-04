@@ -22,6 +22,8 @@ dim_par_map = {
     "CAP_NEW_cost": ["technology", "mode"],
     "DEMAND": ["commodity"],
     "REL": ["relation"],
+    "dimensionless": ["technology", "mode"],
+    "time": ["technology"],
 }
 
 
@@ -79,6 +81,9 @@ def group_parameters(ps: list) -> dict[str, set[Any] | set[str | Any] | list[str
         "REL": rel_pars,
     }
     # ps - cost_pars - tot_cap_pars - new_cap_pars - act_pars - land_pars - rel_pars
+    excluded = {x for sub in par_types.values() for x in sub}
+    ungrouped = [item for item in ps if (item not in excluded)]
+    par_types["dimensionless"] = ungrouped
     return par_types
 
 
@@ -115,7 +120,7 @@ def get_dim_set(par_data_reduced, dims) -> pd.DataFrame:
 
 def classify_tecs(df: pd.DataFrame) -> pd.DataFrame:
     """Classify technologies as either energy or mass type."""
-    substrings = ["ref", "fur", "hp_", "solar", "dheat", "fc_", "gas_pro"]
+    substrings = ["ref", "fur", "hp_", "solar", "dheat", "fc_", "gas_pro", "loil_trp"]
     pattern = "|".join(re.escape(s) for s in substrings)
 
     t_GWyr = df[df["technology"].str.contains(pattern, na=False)].assign(type="energy")
@@ -131,9 +136,6 @@ def classify_rels(df: pd.DataFrame) -> pd.DataFrame:
         "bof_bound_2020",
         "bf_bound_2020",
         "max_global_recycling_steel",
-    ]
-    mass = df[df["relation"].isin(mass_rels)].assign(type="mass")
-    dimensionless_rels = [
         "max_regional_recycling_steel",
         "maximum_recycling_aluminum",
         "meth_exp_tot",
@@ -142,14 +144,63 @@ def classify_rels(df: pd.DataFrame) -> pd.DataFrame:
         "NFert_trd_cap",
         "minimum_recycling_steel",
     ]
-    dimless = df[df["relation"].isin(dimensionless_rels)].assign(type="dimensionless")
-    result = pd.concat([mass, dimless])
+    mass = df[df["relation"].isin(mass_rels)].assign(type="mass")
+    emi_units = {
+        "BCA_Emission": "kt BC/yr",
+        "CO_Emission": "kt CO/yr",
+        "CO2_cc": "Mt C/yr",
+        "CO2_Emission": "Mt C/yr",
+        "CO2_Emission_Global_Total": "Mt C/yr",
+        "CO2_feedstocks": "Mt C/yr",
+        "CO2_ind": "Mt C/yr",
+        "CO2_trade": "Mt C/yr",
+        "CO2_trp": "Mt C/yr",
+        "NH3_Emission": "kt NH3/yr",
+        "NOx_Emission": "kt NOx/yr",
+        "OCA_Emission": "kt OC/yr",
+        "VOC_Emission": "kt VOC/yr",
+        "HFC_Emission": "kt HFC-134a-equiv./yr",
+        "HFC_mobile_red": "t HFC-134a-equiv./yr",
+        "h2_scrub_limit": "Mt C/yr",
+    }
+    ene = [
+        "coal-exp",
+        "h2_exp_limit",
+        "lim_exp_afr_meth",
+        "lim_exp_eeu_meth",
+        "lim_exp_fsu_meth",
+        "lim_exp_pao_meth",
+        "lim_exp_weu_meth",
+        "meth_exp_limit",
+        "oper_res",
+        "PE_total_traditional",
+        "RES_variable_limt",
+        "solar_curtailment_1",
+        "solar_curtailment_2",
+        "solar_curtailment_3",
+        "solar_step",
+        "solar_step2",
+        "solar_step3",
+        "wind_curtailment_1",
+        "wind_curtailment_2",
+        "wind_curtailment_3",
+        "wind_step",
+        "wind_step2",
+        "wind_step3",
+    ]
+    ene = df[df["relation"].isin(ene)].assign(type="energy")
+    emi = df[df["relation"].isin(emi_units.keys())].assign(
+        type=lambda d: d["relation"].map(emi_units)
+    )
+    result = pd.concat([mass, ene, emi])
     return result
 
 
 def classify_dim(df: pd.DataFrame, dim: list[str]) -> pd.DataFrame:
     """Classify dimension items as either energy or mass type."""
     if dim == ["technology", "mode"]:
+        return classify_tecs(df)
+    if dim == ["technology"]:
         return classify_tecs(df)
     elif dim == ["commodity"]:
         return df.assign(type="mass")
@@ -166,9 +217,11 @@ def generate_lu_tables() -> pd.DataFrame:
         "CAP_NEW": "GW/yr",
         "CAP": "GW",
         "ACT_cost": "USD_2005/kWyr",
-        "CAP_cost": "USD_2005/kW",
-        "CAP_NEW_cost": "USD_2005/kW/yr",
+        "CAP_cost": "USD_2005/kW/yr",
+        "CAP_NEW_cost": "USD_2005/kW",
         "DEMAND": "GWyr/yr",
+        "REL": "GWyr/yr",
+        "time": "yr",
     }
     mass_units = {
         "ACT": "Mt/yr",
@@ -179,10 +232,11 @@ def generate_lu_tables() -> pd.DataFrame:
         "CAP_NEW_cost": "USD_2005/t/yr",
         "DEMAND": "Mt/yr",
         "REL": "Mt/yr",
+        "time": "yr",
     }
     r1 = pd.DataFrame(["energy"], columns=["type"]).assign(**ene_units)
     r2 = pd.DataFrame(["mass"], columns=["type"]).assign(**mass_units)
-    return pd.concat([r1, r2])
+    return pd.concat([r1, r2]).assign(dimensionless="-")
 
 
 def overwrite_units(
@@ -205,6 +259,8 @@ def overwrite_units(
     # - Prepare unit mapping (index = columns of par that define unit)
     unit_map = generate_lu_tables().set_index("type")
     par_dims = scen.idx_names(par)
+    if not any(dim in dim_filter.columns for dim in par_dims):
+        return pd.DataFrame()
     # - Query parameter data from scenario
     query_filter = {
         col: dim_filter[col].unique() for col in dim_filter.columns if col in par_dims
@@ -245,7 +301,9 @@ def overwrite_relation_unit(
         package_data_path("material", "other", "unit_division.csv")
     )
     if any(i in par for i in ["upper", "lower"]):
-        return df.merge(units.rename("unit").reset_index()).drop("type", axis=1)
+        result = df.merge(units.rename("unit").reset_index(), how="outer")
+        result["unit"] = result["unit"].combine_first(result["type"])
+        return result.drop("type", axis=1)
     unit2_map = {
         "relation_activity": "ACT",
         "relation_total_capacity": "CAP",
@@ -262,11 +320,11 @@ def overwrite_relation_unit(
         .drop("type", axis=1)
         .rename(columns={"unit": "denominator"})
     )
+    df = df.merge(units.rename("numerator").reset_index(), how="outer")
+    df["numerator"] = df["numerator"].combine_first(df["type"])
+    df = df.drop("type", axis=1)
     new = (
-        df.merge(units.rename("numerator").reset_index(), how="left")
-        .fillna("-")
-        .merge(unit2_map, how="left")
-        .drop("type", axis=1)
+        df.merge(unit2_map, how="inner")
         .merge(div_look_up)
         .rename(columns={"result": "unit"})
         .drop(columns=["numerator", "denominator"])
@@ -283,6 +341,8 @@ def get_unit_corrected_par_data(scen: "Scenario") -> dict[str, pd.DataFrame]:
 
     corrected = {}
     for par, typ in tec_ps_groups.items():
+        if par == "emission_factor":
+            continue
         par_unit_dims = dim_par_map[typ]
         dim_set = get_dim_set(par_data_idx, par_unit_dims)
         df = overwrite_units(scen, par, tec_ps_groups[par], dim_set)
