@@ -1,0 +1,20 @@
+# config file for GDP_climate_shocks
+rime_path: "C:\\Users\\%username%\\IIASA\\ECE.prog - GDP_damages\\"
+model_name: SSP_SSP2_v6.1
+model_name_clone: SSP_SSP2_v6.1_GDP_CI_2025_test
+ssp: SSP2
+scens_ref:
+  - "SSP2 - Medium Emissions"
+damage_model:
+  - Waidelich
+  - Kotz
+  - Burke
+percentiles:
+  - 50
+shift_year: Null  # or 2030 if you want to force a shift
+regions:
+  - R12
+# magicc_input_path: 
+# magicc_input_list: 
+
+
