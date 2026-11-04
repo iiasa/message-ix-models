@@ -260,24 +260,30 @@ con_ar:
   message-v-id: AIRp_JF
 
 conh_ar:
-  name: Hydrogen aircraft
-  description: Conventional jet engine passenger aircraft using hydrogen
+  name: Hydrogen-based synfuel aircraft
+  description: >-
+    Conventional jet-engine passenger aircraft using synthetic
+    hydrocarbon jet fuel produced via hydrogen-based syngas synthesis
+    and Fischer-Tropsch (FT) conversion.
   input: {commodity: hydrogen}
   report: Air|Hydrogen
   message-v-id: AIRp_H2
 
 conm_ar:
-  name: Synfuel aircraft
+  name: Methanol-based synfuel aircraft
   description: >-
-    Conventional jet engine passenger aircraft using methanol/synthetic fossil
-    liquids
+    Conventional jet-engine passenger aircraft using synthetic
+    hydrocarbon jet fuel produced from methanol.
   input: {commodity: methanol}
   report: Air|Synfuel
   message-v-id: AIRp_MET
 
 conE_ar:
-  name: Biofuel aircraft
-  description: Conventional jet engine passenger aircraft using biofuels
+  name: Alcohol-to-jet fuel aircraft
+  description: >-
+    Conventional jet-engine passenger aircraft using alcohol-to-jet
+    (ATJ) fuel produced by converting ethanol into synthetic
+    hydrocarbon jet fuel.
   input: {commodity: ethanol}
   report: Air|Biofuel
   message-v-id: AIRp_BIO
