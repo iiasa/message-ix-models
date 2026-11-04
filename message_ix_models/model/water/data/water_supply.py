@@ -146,6 +146,52 @@ def map_basin_region_wat(context: "Context") -> pd.DataFrame:
     return df_sw
 
 
+def basin_availability_shares(context: "Context") -> pd.DataFrame:
+    """Each basin's share of its region's surface-water availability.
+
+    The same key ``share_mode_up`` applies to ``basin_to_reg_*`` in the LP
+    (:func:`map_basin_region_wat`), taken at the first model year so the seed
+    splits regional irrigation the way the model will. Columns ``BCU_name``
+    (unprefixed), ``region``, ``share``.
+    """
+    info = context["water build info"]
+    df = map_basin_region_wat(context)
+    node = "region" if "region" in df.columns else "node"
+    df = df[df["year"] == info.Y[0]]
+    df = df.groupby(["MSGREG", node], as_index=False)["share"].mean()
+    return pd.DataFrame(
+        {
+            "BCU_name": df[node].str.replace("^B", "", regex=True),
+            "region": df["MSGREG"],
+            "share": df["share"].fillna(0.0),
+        }
+    )
+
+
+def redistribute_capacity_by_availability(
+    df_hist: pd.DataFrame, shares: pd.DataFrame
+) -> pd.DataFrame:
+    """Spread each region's historical SW/GW capacity over its basins by share.
+
+    The capacity file records where withdrawals were; the LP splits regional
+    irrigation by ``share_mode_up`` = availability share. Keeping the file's
+    per-basin values put the 2030 seed's renewable capacity in other basins
+    than the 2035 irrigation, so the seed overflowed into fossil groundwater
+    (765 -> 1,268 km3 world) that the LP then abandoned. Regional totals are
+    kept; a basin's capacity becomes its availability share of them. Both
+    ``historical_new_capacity`` and the dispatch ceilings use the result.
+    Returns one row per basin of `shares` with the capacity file's columns,
+    ``BCU_name`` unprefixed.
+    """
+    region_of = shares.set_index("BCU_name")["region"]
+    cap = df_hist.set_index("BCU_name")
+    out = shares[["BCU_name", "region", "share"]].copy()
+    for col in ("hist_cap_sw_km3_year", "hist_cap_gw_km3_year"):
+        regional = cap[col].groupby(cap.index.map(region_of)).sum()
+        out[col] = out["share"] * out["region"].map(regional).fillna(0.0)
+    return out.drop(columns=["region", "share"]).reset_index(drop=True)
+
+
 def zero_share_bounds(share: pd.DataFrame) -> pd.DataFrame:
     """``bound_activity_up`` = 0 on every ``basin_to_reg_*`` mode whose share is 0.
 
@@ -267,6 +313,9 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     # Filter to only include valid basins (nexus mode only)
     if cfg.nexus_set == "nexus":
         df_hist = df_hist[df_hist["BCU_name"].isin(cfg.valid_basins)]
+        df_hist = redistribute_capacity_by_availability(
+            df_hist, basin_availability_shares(context)
+        )
         df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     if cfg.nexus_set == "cooling":

@@ -13,7 +13,10 @@ from message_ix_models.model.water.data.demands import (
     groundwater_share_floor,
     read_water_availability,
 )
-from message_ix_models.model.water.data.water_supply import map_basin_region_wat
+from message_ix_models.model.water.data.water_supply import (
+    basin_availability_shares,
+    redistribute_capacity_by_availability,
+)
 from message_ix_models.model.water.utils import (
     GW_ELEC_DEPTH_ADDER_GWA_KM3,
     GW_FOSSIL_ELEC_MULTIPLIER,
@@ -67,10 +70,11 @@ def basin_capacities(
 ) -> tuple[pd.Series, pd.Series, pd.Series]:
     """Dispatch ceilings (MCM/yr) of the three extractors over every basin.
 
-    Surface and groundwater take the capacity file's values and zero where the
-    file has no row (8 of the 214 R12 basins); fossil groundwater is unbounded
-    everywhere. Dispatching only the file's rows left the unlisted basins with
-    no ``historical_activity`` at all, which the growth constraint turned into
+    Surface and groundwater take `df_hist` (the capacity file after
+    :func:`~.water_supply.redistribute_capacity_by_availability`) and zero
+    where it has no row; fossil groundwater is unbounded everywhere.
+    Dispatching only the file's own rows left 8 of the 214 R12 basins with no
+    ``historical_activity`` at all, which the growth constraint turned into
     zero renewable extraction for the whole horizon.
     """
     cap = df_hist.set_index("BCU_name").reindex(basins)
@@ -78,28 +82,6 @@ def basin_capacities(
     gw = (KM3_TO_MCM * cap["hist_cap_gw_km3_year"]).fillna(0.0).rename_axis("BCU_name")
     fossil = pd.Series(np.inf, index=basins).rename_axis("BCU_name")
     return sw, gw, fossil
-
-
-def basin_availability_shares(context: "Context") -> pd.DataFrame:
-    """Each basin's share of its region's surface-water availability.
-
-    The same key ``share_mode_up`` applies to ``basin_to_reg_*`` in the LP
-    (:func:`map_basin_region_wat`), taken at the first model year so the seed
-    splits regional irrigation the way the model will. Columns ``BCU_name``
-    (unprefixed), ``region``, ``share``.
-    """
-    info = context["water build info"]
-    df = map_basin_region_wat(context)
-    node = "region" if "region" in df.columns else "node"
-    df = df[df["year"] == info.Y[0]]
-    df = df.groupby(["MSGREG", node], as_index=False)["share"].mean()
-    return pd.DataFrame(
-        {
-            "BCU_name": df[node].str.replace("^B", "", regex=True),
-            "region": df["MSGREG"],
-            "share": df["share"].fillna(0.0),
-        }
-    )
 
 
 def allocate_regional_series(regional: pd.Series, shares: pd.DataFrame) -> pd.Series:
@@ -294,7 +276,9 @@ def add_water_hist_dispatch(context: "Context") -> dict[str, pd.DataFrame]:
     sub_time = list(cfg.time)
 
     basins = pd.Index(sorted("B" + b for b in cfg.valid_basins), name="BCU_name")
-    df_hist = read_hist_capacity(context)
+    df_hist = redistribute_capacity_by_availability(
+        read_hist_capacity(context), basin_availability_shares(context)
+    )
     df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
     # hist_cap_*_km3_year is installed historical capacity; the dispatch uses it

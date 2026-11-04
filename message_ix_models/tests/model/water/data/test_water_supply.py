@@ -7,6 +7,7 @@ from message_ix_models.model.water.data.water_supply import (
     add_water_supply,
     eflow_bound_rows,
     map_basin_region_wat,
+    redistribute_capacity_by_availability,
     renewable_initial_activity,
     zero_share_bounds,
 )
@@ -148,3 +149,32 @@ def test_eflow_bound_rows() -> None:
     )  # 2000 MCM capped at 70 % of 2000
     assert rows[("BX", 2040)] == 0.0  # negative e-flow -> 0
     assert rows[("BY", 2030)] == pytest.approx(10000.0)  # below the 70 % cap
+
+
+def test_redistribute_capacity_by_availability_keeps_regional_totals():
+    df_hist = pd.DataFrame(
+        {
+            "BCU_name": ["1|A", "2|A", "9|B"],
+            "hist_cap_sw_km3_year": [10.0, 0.0, 5.0],
+            "hist_cap_gw_km3_year": [2.0, 2.0, 1.0],
+        }
+    )
+    shares = pd.DataFrame(
+        {
+            "BCU_name": ["1|A", "2|A", "3|A", "9|B"],
+            "region": ["R12_A", "R12_A", "R12_A", "R12_B"],
+            "share": [0.2, 0.5, 0.3, 1.0],
+        }
+    )
+    out = redistribute_capacity_by_availability(df_hist, shares).set_index("BCU_name")
+
+    assert list(out.columns) == ["hist_cap_sw_km3_year", "hist_cap_gw_km3_year"]
+    # a basin's capacity is its share of the regional total of the file
+    assert out.loc["2|A", "hist_cap_sw_km3_year"] == pytest.approx(5.0)
+    # a basin absent from the file still gets its share
+    assert out.loc["3|A", "hist_cap_gw_km3_year"] == pytest.approx(1.2)
+    # regional totals are preserved
+    assert out.loc[
+        ["1|A", "2|A", "3|A"], "hist_cap_sw_km3_year"
+    ].sum() == pytest.approx(10.0)
+    assert out.loc["9|B", "hist_cap_gw_km3_year"] == pytest.approx(1.0)
