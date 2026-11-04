@@ -7,7 +7,7 @@ date
 
 # User's home directory (network drive)
 # NB this is different from $HOME on the worker node
-HHOME=/hdrive/u045/{{ username }}
+HHOME=/hdrive/all_users/{{ username }}
 
 # Python virtual environment
 VENV=$SLURM_TMPDIR/venv/{{ python_version }}
