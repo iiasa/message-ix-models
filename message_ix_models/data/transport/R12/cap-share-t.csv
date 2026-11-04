@@ -180,10 +180,10 @@ R12_EEU,  FR_ICAe,         0.0001
 R12_EEU,  FR_ICE_H,        0.0001
 R12_EEU,  FR_ICE_L,        0.0001
 R12_EEU,  FR_ICE_M,        0.0001
-R12_EEU,  FR_ICH,          0.986712
+R12_EEU,  FR_ICH,          0.9867
 R12_EEU,  f road electr,   0.0001
-R12_EEU,  f road gas fc,   0.006294
-R12_EEU,  f road gas ic,   0.006294
+R12_EEU,  f road gas fc,   0.0063
+R12_EEU,  f road gas ic,   0.0063
 R12_EEU,  f road methanol, 0.0001
 
 R12_FSU,  FR_FCH,          0.0001
@@ -213,21 +213,21 @@ R12_NAM,  FR_ICAe,         0.0001
 R12_NAM,  FR_ICE_H,        0.0001
 R12_NAM,  FR_ICE_L,        0.0001
 R12_NAM,  FR_ICE_M,        0.0001
-R12_NAM,  FR_ICH,          0.99927
+R12_NAM,  FR_ICH,          0.9991
 R12_NAM,  f road electr,   0.0001
-R12_NAM,  f road gas fc,   0.000003
-R12_NAM,  f road gas ic,   0.000031
+R12_NAM,  f road gas fc,   0.0001
+R12_NAM,  f road gas ic,   0.0001
 R12_NAM,  f road methanol, 0.0001
 
 R12_RCPA, FR_FCH,          0.0001
-R12_RCPA, FR_ICAe,         0.1
+R12_RCPA, FR_ICAe,         0.1000
 R12_RCPA, FR_ICE_H,        0.0001
 R12_RCPA, FR_ICE_L,        0.0001
 R12_RCPA, FR_ICE_M,        0.0001
-R12_RCPA, FR_ICH,          0.898622
+R12_RCPA, FR_ICH,          0.8986
 R12_RCPA, f road electr,   0.0001
-R12_RCPA, f road gas fc,   0.000389
-R12_RCPA, f road gas ic,   0.000389
+R12_RCPA, f road gas fc,   0.0004
+R12_RCPA, f road gas ic,   0.0004
 R12_RCPA, f road methanol, 0.0001
 
 R12_SAS,  FR_FCH,          0.0001
@@ -246,8 +246,8 @@ R12_WEU,  FR_ICAe,         0.0001
 R12_WEU,  FR_ICE_H,        0.0001
 R12_WEU,  FR_ICE_L,        0.0001
 R12_WEU,  FR_ICE_M,        0.0001
-R12_WEU,  FR_ICH,          0.997216
+R12_WEU,  FR_ICH,          0.9973
 R12_WEU,  f road electr,   0.0003
-R12_WEU,  f road gas fc,   0.000942
-R12_WEU,  f road gas ic,   0.000942
+R12_WEU,  f road gas fc,   0.0009
+R12_WEU,  f road gas ic,   0.0009
 R12_WEU,  f road methanol, 0.0001
