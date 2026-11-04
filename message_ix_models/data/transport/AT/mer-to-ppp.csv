@@ -1,0 +1,19 @@
+# Exchange rate from MER to PPP
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,    year, value
+Austria, 2010, 1.222
+Austria, 2020, 1.176
+Austria, 2030, 1.131
+Austria, 2040, 1.085
+Austria, 2050, 1.034
+Austria, 2060, 0.978
+Austria, 2070, 0.92
+Austria, 2080, 0.886
+Austria, 2090, 0.861
+Austria, 2100, 0.85
+Austria, 2110, 0.85

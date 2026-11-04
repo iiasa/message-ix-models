@@ -1,0 +1,11 @@
+# Calibration factor for LDV fuel economy
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,       scenario,  value
+# Austria,  lo,        1.3528618454763552
+Austria,    xx,        1.34
+# Austria,  hi,        1.2401233583533242

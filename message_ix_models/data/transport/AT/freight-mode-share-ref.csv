@@ -1,0 +1,12 @@
+# Mode shares of freight activity in the model base year
+#
+# Source:
+# - Duplicated manually from corresponding R12 data as of 2025-04-07.
+#
+# Units: dimensionless
+#
+node,     technology, value
+Austria,  ROAD,       0.750
+Austria,  RAIL,       0.190
+Austria,  WATER,      0.059
+Austria,  AIR,        0.001
