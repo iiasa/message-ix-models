@@ -1032,6 +1032,38 @@ METH_H2_CO2_RELATIONS = ("CO2_Emission", "CO2_Emission_Global_Total")
 METH_H2_CO2_COEFFICIENT = 0.549
 
 
+def add_initial_activity_for_elec_i(context, scenario):
+    """Copy ``initial_activity_up`` from ``hp_el_i`` onto ``elec_i``.
+
+    Same node/year/value rows; only the technology code is remapped. Used for the
+    ``o_1p5c`` buildings experiment after loading MixB demand.
+    """
+    del context
+    src = scenario.par(
+        "initial_activity_up",
+        filters={"technology": "hp_el_i"},
+    )
+    if src.empty:
+        log.warning(
+            "No initial_activity_up for hp_el_i in %s/%s; skipping copy to elec_i",
+            scenario.model,
+            scenario.scenario,
+        )
+        return scenario
+
+    dst = src.assign(technology="elec_i")
+    with scenario.transact("Copy initial_activity_up from hp_el_i to elec_i"):
+        scenario.add_par("initial_activity_up", dst)
+
+    log.info(
+        "Copied %d initial_activity_up rows from hp_el_i to elec_i for %s/%s",
+        len(dst),
+        scenario.model,
+        scenario.scenario,
+    )
+    return scenario
+
+
 def qf_remove_meth_h2_co2_relations(context, scenario):
     """Match upstream PR #537 by removing both meth_h2 CO2 relation charges.
 

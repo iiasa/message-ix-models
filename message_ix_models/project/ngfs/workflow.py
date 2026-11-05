@@ -26,6 +26,7 @@ from message_ix_models.project.engage.workflow import (
     step_4,
 )
 from message_ix_models.project.ngfs import (
+    add_initial_activity_for_elec_i,
     interpolate_c_price,
     qf_remove_meth_h2_co2_relations,
 )
@@ -888,6 +889,7 @@ def step_0(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenar
     if scen == "o_1p5c":
         # call_sturm(context, scenario)
         call_buildings_demand(context, scenario)
+        add_initial_activity_for_elec_i(context, scenario)
 
     # o_1p5c experiment: Zero TCE / TCE_non-CO2 emission_factor on buildings techs
     # if scen == "o_1p5c":
@@ -1729,7 +1731,7 @@ def generate(context: Context) -> Workflow:
         "o_1p5c base built",
         "baseline reported",
         step_0,
-        target=f"{model_name}/o_1p5c_base_test_d",
+        target=f"{model_name}/o_1p5c_base_test_e",
         clone=dict(keep_solution=False),
     )
 
@@ -1811,7 +1813,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN1",
             f"{scen} base built",
             step_1_and_solve,
-            target=f"{model_name}/{scen}_EN1_test_d",
+            target=f"{model_name}/{scen}_EN1_test_e",
             clone=dict(keep_solution=False),
         )
 
@@ -1819,7 +1821,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN2",
             f"{scen} EN1",
             step_2_and_solve,
-            target=f"{model_name}/{scen}_EN2_test_d",
+            target=f"{model_name}/{scen}_EN2_test_e",
             # Must have solution to retrieve emission trajectories.
             clone=dict(keep_solution=True),
         )
@@ -1834,7 +1836,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN3",
             f"{scen} EN2",
             step_3_and_solve,
-            target=f"{model_name}/{scen}_EN3_test_d",
+            target=f"{model_name}/{scen}_EN3_test_e",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
@@ -1849,7 +1851,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} EN4",
             f"{scen} EN3",
             step_4_and_solve,
-            target=f"{model_name}/{scen}_EN4_test_d",
+            target=f"{model_name}/{scen}_EN4_test_e",
             # Must have solution to retrieve prices.
             clone=dict(keep_solution=True),
         )
@@ -1879,7 +1881,7 @@ def generate(context: Context) -> Workflow:
             f"{scen} solved",
             f"{scen} anchor mixb called",
             iterate_mixB,
-            target=f"{model_name}/{scen}_test_d",
+            target=f"{model_name}/{scen}_test_e",
             clone=dict(keep_solution=False),
         )
 
