@@ -103,7 +103,7 @@ Other submodules are documented on their respective pages:
    api/tools
    api/tools-bilateralize
    api/tools-costs
-   api/tools-ict
+   ict/index
    api/tools-messagev
    api/data-sources
    api/workflow

@@ -49,7 +49,7 @@ missing = {
 
 
 def fetch() -> "Path":
-    """Retrieve data for `version` of the Climate Policy Database from Zenodo."""
+    """Retrieve supplementary information data of Fan et al. 2026."""
     from message_ix_models.util import pooch
 
     # Ensure sources for this module are registered
@@ -59,6 +59,7 @@ def fetch() -> "Path":
 
 
 def read_hist_data() -> pd.DataFrame:
+    """Read historic data center energy demand data."""
     pre_2030 = pd.read_excel(
         fetch(), sheet_name="2|Pre2030 Regionally", usecols=[0, 1, 3]
     )
@@ -144,6 +145,7 @@ def read_data_centre_count_shares(n: str, merge_regions=True) -> pd.DataFrame:
 
 
 def get_dc_numbers() -> pd.DataFrame:
+    """Get number of data centers per country."""
     pycountry.COUNTRY_NAME.update(missing)
     sh_name = "4|Countries & Classification"
 

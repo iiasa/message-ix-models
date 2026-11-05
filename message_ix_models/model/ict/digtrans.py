@@ -33,7 +33,7 @@ SOURCE = {  # noqa: E501
 
 
 def fetch() -> "Path":
-    """Retrieve data for `version` of the Climate Policy Database from Zenodo."""
+    """Retrieve data for digital transformation index."""
     from message_ix_models.util import pooch
 
     # Ensure sources for this module are registered

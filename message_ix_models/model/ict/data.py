@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
 
 def gen_data(ctx: "Context", sinfo: "ScenarioInfo", s: "Spec") -> "ParameterData":
+    """Generate parameter data for ICT model"""
     demand_map = {
         "Low": gen_ict_demand,
         "High": gen_ict_demand,
@@ -54,6 +55,7 @@ def gen_data(ctx: "Context", sinfo: "ScenarioInfo", s: "Spec") -> "ParameterData
 
 
 def gen_ict_demand(ctx: "Context") -> pd.DataFrame:
+    """Generate demand data for ICT model"""
     regression_cfg = {
         "Low": {"Sensitivity": "Efficiency Dominant", "Period": "2012-2017"},
         "High": {"Sensitivity": "Service Demand Dominant", "Period": "2020-2025"},
@@ -124,6 +126,7 @@ def gen_ict_demand(ctx: "Context") -> pd.DataFrame:
 
 
 def gen_infra_demand(df: pd.DataFrame, cfg: Config, tec_code: str) -> pd.DataFrame:
+    """Generate telecom electricity demand projection."""
     tc2020 = df[df["year_act"] == 2020].assign(value=lambda x: x["value"] * 0.91)
     tc_post_2020 = df[df["year_act"] != 2020].assign(
         value=lambda x: x["value"] * cfg.tele_comm_ratio
@@ -135,6 +138,7 @@ def gen_infra_demand(df: pd.DataFrame, cfg: Config, tec_code: str) -> pd.DataFra
 def format_to_parameter(
     df: pd.DataFrame, tec: str, sinfo: "ScenarioInfo"
 ) -> "ParameterData":
+    """Format electricity demand data to MESSAGEix parameter shape."""
     par_data = (
         make_df(
             "fixed_activity",
@@ -155,6 +159,7 @@ def format_to_parameter(
 
 
 def gen_input(df: pd.DataFrame) -> "ParameterData":
+    """Generate input parameter data for ICT technologies."""
     dims = dict(time_origin="year", commodity="electr", level="final")
     inp = (
         make_df("input", **df, **dims)
@@ -165,6 +170,7 @@ def gen_input(df: pd.DataFrame) -> "ParameterData":
 
 
 def build_avg_distribution(ctx: "Context") -> None:
+    """Compute mean of Low and High data center projections."""
     ctx.ict.scenario = "Low"
     low = gen_ict_demand(ctx)
     ctx.ict.scenario = "High"
@@ -173,6 +179,7 @@ def build_avg_distribution(ctx: "Context") -> None:
 
 
 def build_weighted_distribution(ctx: "Context") -> pd.DataFrame:
+    """Compute weighted mean of Low and High data center projections."""
     iea_2035 = read_2035_world_projections().loc[
         "Electricity consumption (TWh)", "Total", "2035"
     ]
@@ -188,6 +195,7 @@ def build_weighted_distribution(ctx: "Context") -> pd.DataFrame:
 
 
 def get_data_center_tec_code(s: "Spec", name: str) -> str:
+    """Retrieve technology codes for ICT technologies."""
     codes = s.add.set["technology"]
     return [c for c in codes if c.name.localizations["en"] == name][0].id
 
@@ -195,6 +203,7 @@ def get_data_center_tec_code(s: "Spec", name: str) -> str:
 def project_demand(
     dig_trans: pd.DataFrame, years: list[int], pars: tuple, anchor: pd.DataFrame, scen
 ) -> pd.DataFrame:
+    """Project demand for given `years` using `pars`, `anchor` and `dig_trans`."""
     d_ene = pd.DataFrame()
     weu_share = get_weu_eeu_share()
     for yr0, yr1 in zip(years[:-1], years[1:]):
@@ -225,6 +234,7 @@ def project_demand(
 
 
 def gen_disaggregation_shares(pre_2030: pd.DataFrame) -> pd.DataFrame:
+    """Generate data center shares of R12 regions as children of native regions."""
     dc_count = read_data_centre_count_shares("R12", True)
     chn_shr = (
         pre_2030.loc["China"]
@@ -247,7 +257,7 @@ def gen_disaggregation_shares(pre_2030: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_pre2030_data() -> pd.DataFrame:
-    # read and merge IEA and historical data from Fan et al. 2026
+    """Read IEA data & historical data from Fan et al. 2026 and merge."""
     iea = read_iea_data()
     hist_yrs = iea.index.get_level_values("Year").unique()
     fan_et_al = read_hist_data()
@@ -261,6 +271,7 @@ def get_pre2030_data() -> pd.DataFrame:
 
 
 def get_long_term_elasticity() -> tuple[float, float]:
+    """Estimate long-term elasticity using 2010 historical and 2030 IEA projection."""
     ene = get_pre2030_data()
     eu_aggr = (
         ene.loc["Western Europe"]

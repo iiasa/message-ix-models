@@ -109,6 +109,62 @@ The other submodules implement the supporting methods, calculations, and data ha
 3. :mod:`~.ict.data_center` reads the supplementary materials of Fan et al., 2026.
 4. :mod:`~.ict.data` combines the data from the previous three submodules to generate demand projections and build the model structure.
 
-.. automodule:: message_ix_models.tools.ict
 .. automodule:: message_ix_models.model.ict
    :members:
+
+.. currentmodule:: message_ix_models.model.ict.iea
+
+Digital transformation index (:mod:`~.ict.digtrans`)
+---------------------------------------------------------------
+
+.. automodule:: message_ix_models.model.ict.digtrans
+   :members:
+
+   .. autosummary::
+
+        fetch
+        read_country_data
+        read_region_data
+        aggregate_to_region
+
+IEA data (:mod:`~.ict.iea`)
+---------------------------------------------------------------
+
+.. automodule:: message_ix_models.model.ict.iea
+   :members:
+
+   .. autosummary::
+
+        fetch
+        read_iea_data
+        get_weo_iso_map
+        read_2035_world_projections
+
+Data center projections (:mod:`~.ict.data_center`)
+---------------------------------------------------------------
+
+.. automodule:: message_ix_models.model.ict.data_center
+   :members:
+
+   .. autosummary::
+
+        fetch
+        read_hist_data
+        get_cisco_region_mapping
+        get_ignored_countries
+        read_data_centre_count_shares
+        get_dc_numbers
+        read_regr_pars
+
+Computation and data handling (:mod:`~.ict.data`)
+---------------------------------------------------------------
+
+.. currentmodule:: message_ix_models.model.ict
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+
+   :recursive:
+
+   data
