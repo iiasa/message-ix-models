@@ -10,6 +10,13 @@ from message_ix_models.util import pycountry
 if TYPE_CHECKING:
     from pathlib import Path
 
+__all__ = [
+    "fetch",
+    "read_country_data",
+    "read_region_data",
+    "aggregate_to_region",
+]
+
 #: Pooch information for fetching required files.
 SOURCE = {  # noqa: E501
     "ssp-digitrans": dict(

@@ -13,6 +13,16 @@ from message_ix_models.util import pycountry
 if TYPE_CHECKING:
     from pathlib import Path
 
+__all__ = [
+    "fetch",
+    "read_hist_data",
+    "get_cisco_region_mapping",
+    "get_ignored_countries",
+    "read_data_centre_count_shares",
+    "get_dc_numbers",
+    "read_regr_pars",
+]
+
 #: Pooch information for fetching required files.
 SOURCE = {  # noqa: E501
     "fan_et_al_2026-SI": dict(

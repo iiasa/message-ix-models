@@ -1,9 +1,9 @@
-.. currentmodule:: message_ix_models.tools.ict
+.. currentmodule:: message_ix_models.model.ict
 
-ICT sector demand projections (:mod:`.tools.ict`)
+ICT sector demand projections (:mod:`.model.ict`)
 *************************************************
 
-:mod:`.tools.ict` implements the methods of Fan et al. (2026) :cite:`fan_2026_data_center_energy` to **project future electricity demand by ICT equipment** and provides functionality to represent them explicitly in MESSAGEix-GLOBIOM family models.
+:mod:`.model.ict` implements the methods of Fan et al. (2026) :cite:`fan_2026_data_center_energy` to **project future electricity demand by ICT equipment** and provides functionality to represent them explicitly in MESSAGEix-GLOBIOM family models.
 
 .. contents::
    :local:
@@ -84,7 +84,7 @@ See the documentation at :mod:`message_ix_models.project.ssp.data`.
 
 Next, create a :class:`.Config` object and extend the :class:`.Context` object::
 
-   from message_ix_models.tools.ict import build, Config
+   from message_ix_models.model.ict import build, Config
 
    # Use default settings
    cfg = Config()
@@ -110,4 +110,5 @@ The other submodules implement the supporting methods, calculations, and data ha
 4. :mod:`~.ict.data` combines the data from the previous three submodules to generate demand projections and build the model structure.
 
 .. automodule:: message_ix_models.tools.ict
+.. automodule:: message_ix_models.model.ict
    :members:

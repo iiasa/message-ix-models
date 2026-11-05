@@ -5,7 +5,7 @@ import pandas as pd
 import pint
 from message_ix import make_df
 
-from message_ix_models.tools.ict.data_center import (
+from message_ix_models.model.ict.data_center import (
     get_cisco_region_mapping,
     get_ignored_countries,
     missing,
@@ -13,8 +13,8 @@ from message_ix_models.tools.ict.data_center import (
     read_hist_data,
     read_regr_pars,
 )
-from message_ix_models.tools.ict.digtrans import aggregate_to_region, read_country_data
-from message_ix_models.tools.ict.iea import (
+from message_ix_models.model.ict.digtrans import aggregate_to_region, read_country_data
+from message_ix_models.model.ict.iea import (
     get_weo_iso_map,
     read_2035_world_projections,
     read_iea_data,

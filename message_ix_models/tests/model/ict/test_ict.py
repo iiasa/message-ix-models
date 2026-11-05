@@ -1,9 +1,8 @@
 import pytest
 
+from message_ix_models.model.ict import Config, build
+from message_ix_models.model.ict.build import make_spec
 from message_ix_models.testing import bare_res
-from message_ix_models.tools.ict import build
-from message_ix_models.tools.ict.build import make_spec
-from message_ix_models.tools.ict.config import Config
 
 
 def test_make_spec() -> None:

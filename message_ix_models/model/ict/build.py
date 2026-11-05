@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Any
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
+from message_ix_models.model.ict.data import gen_data
 from message_ix_models.model.structure import generate_set_elements
-from message_ix_models.tools.ict.data import gen_data
 from message_ix_models.util import load_package_data, package_data_path
 
 if TYPE_CHECKING:

@@ -33,6 +33,29 @@ def get_weu_eeu_share() -> float:
 
 
 def run_regression(ln_dig, ln_ene) -> tuple[float, float, float]:
+    """Run a linear regression on the given data.
+
+    Parameters
+    ----------
+    ln_dig :
+        Natural logarithm of digitalization data.
+    ln_ene :
+        Natural logarithm of energy data.
+    """
     beta, global_constant, r, p, se = linregress(ln_dig, ln_ene)
     resid = ln_ene.sub(beta * ln_dig + global_constant, axis=0)
     return beta, global_constant, resid
+
+
+def maybe_return_iso(x: str) -> str:
+    """Try to match input string with ISO3 code, otherwise return input.
+
+    Parameters
+    ----------
+    x :
+        Country name to check for ISO 3166-1 alpha-3 code.
+    """
+    result = pycountry.iso_3166_alpha_3(x)
+    if result:
+        return result
+    return x

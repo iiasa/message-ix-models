@@ -5,9 +5,17 @@ import pandas as pd
 
 from message_ix_models.util import pycountry
 
+from .util import maybe_return_iso
+
 if TYPE_CHECKING:
     from pathlib import Path
 
+__all__ = [
+    "fetch",
+    "read_iea_data",
+    "get_weo_iso_map",
+    "read_2035_world_projections",
+]
 
 iea_weo_map = {
     "Africa": ["North Africa", "Sub-Saharan Africa"],
@@ -235,12 +243,6 @@ def fetch(file_key) -> "Path":
 
 def read_iea_data() -> pd.DataFrame:
     """Read and format data center electricity demand statistics from IEA documents."""
-
-    # user_agent = (
-    #     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 "
-    #     "(KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
-    # )
-    # ("https://iea.blob.core.windows.net/assets/3179f7f8-01f6-4dd6-bffa-c9f7b73f1dc9/KeyQuestionsonEnergyandAI.pdf")
     p = fetch("iea-energy-ai-2025")
     df2020 = (
         camelot.read_pdf(p, pages="260", flavor="stream", suppress_stdout=True)[0]
@@ -281,13 +283,6 @@ def read_iea_data() -> pd.DataFrame:
     return iea_hist
 
 
-def maybe_return_iso(x: str) -> str:
-    if pycountry.iso_3166_alpha_3(x):
-        return pycountry.iso_3166_alpha_3(x)
-    else:
-        return x
-
-
 def get_weo_iso_map() -> dict[str, str]:
     iea_weo_map_flat = {}
     iea_weo_map_child_regs = {
@@ -309,6 +304,7 @@ def get_weo_iso_map() -> dict[str, str]:
 
 
 def read_2035_world_projections() -> pd.DataFrame:
+    """Read and format table A.1 from IEA (2025) Energy and AI report."""
     p = fetch("iea-energy-ai-2025")
     df = camelot.read_pdf(p, pages="258", flavor="stream")[0].df
 
