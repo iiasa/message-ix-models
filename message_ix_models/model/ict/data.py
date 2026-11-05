@@ -26,7 +26,7 @@ from .util import compute_delta_ene, get_weu_eeu_share, run_regression
 
 if TYPE_CHECKING:
     from message_ix_models import Context, ScenarioInfo, Spec
-    from message_ix_models.types import ParameterData
+    from message_ix_models.types import MutableParameterData, ParameterData
 
 
 def gen_data(ctx: "Context", sinfo: "ScenarioInfo", s: "Spec") -> "ParameterData":
@@ -75,7 +75,7 @@ def gen_ict_demand(ctx: "Context") -> pd.DataFrame:
     ignored = get_ignored_countries()
     cmap = {k: v for k, v in get_cisco_region_mapping().items() if k not in ignored}
     pycountry.COUNTRY_NAME.update(missing)
-    cmap = {pycountry.iso_3166_alpha_3(k): v for k, v in cmap.items()}
+    cmap = {str(pycountry.iso_3166_alpha_3(k)): v for k, v in cmap.items()}
     if ict_scen == "High":
         cmap = {
             k: v.replace("Latin America", "Central and South America")
@@ -137,7 +137,7 @@ def gen_infra_demand(df: pd.DataFrame, cfg: Config, tec_code: str) -> pd.DataFra
 
 def format_to_parameter(
     df: pd.DataFrame, tec: str, sinfo: "ScenarioInfo"
-) -> "ParameterData":
+) -> "MutableParameterData":
     """Format electricity demand data to MESSAGEix parameter shape."""
     par_data = (
         make_df(
@@ -158,7 +158,7 @@ def format_to_parameter(
     return {"fixed_activity": par_data}
 
 
-def gen_input(df: pd.DataFrame) -> "ParameterData":
+def gen_input(df: pd.DataFrame) -> "MutableParameterData":
     """Generate input parameter data for ICT technologies."""
     dims = dict(time_origin="year", commodity="electr", level="final")
     inp = (
@@ -307,7 +307,7 @@ def get_long_term_elasticity() -> tuple[float, float]:
         for k, v in cmap.items()
     }
     pycountry.COUNTRY_NAME.update(missing)
-    cmap = {pycountry.iso_3166_alpha_3(k): v for k, v in cmap.items()}
+    cmap = {str(pycountry.iso_3166_alpha_3(k)): v for k, v in cmap.items()}
     if ict_scen == "High":
         cmap = {
             k: v.replace("Latin America", "Central and South America")

@@ -285,7 +285,7 @@ def read_iea_data() -> pd.DataFrame:
 
 def get_weo_iso_map() -> dict[str, str]:
     """Get mapping of ISO country codes to IEA WEO regions."""
-    iea_weo_map_flat = {}
+    iea_weo_map_flat: dict[str, list[str]] = {}
     iea_weo_map_child_regs = {
         k for k in iea_weo_map if k in [j for i in iea_weo_map.values() for j in i]
     }
