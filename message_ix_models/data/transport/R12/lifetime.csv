@@ -16,10 +16,10 @@ scenario,    technology, node,     year, value
 *,           LDV,        R12_CHN,  2110, 18
 *,           LDV,        R12_EEU,  1990, 24
 *,           LDV,        R12_EEU,  2025, 24
-*,           LDV,        R12_EEU,  2110, 20
+*,           LDV,        R12_EEU,  2110, 24
 *,           LDV,        R12_FSU,  1990, 20
 *,           LDV,        R12_FSU,  2025, 20
-*,           LDV,        R12_FSU,  2110, 15
+*,           LDV,        R12_FSU,  2110, 20
 *,           LDV,        R12_LAM,  1990, 25
 *,           LDV,        R12_LAM,  2025, 25
 *,           LDV,        R12_LAM,  2110, 20
