@@ -28,12 +28,12 @@ F ROAD,          electr,    growth_new_capacity_up,    0.1392
 
 F ROAD,          *,         initial_new_capacity_up,   2.0
 
-LDV,             *,         growth_activity_lo,       -0.0700
+# LDV,             *,         growth_activity_lo,       -0.0700
 ELC_100,         *,         growth_activity_lo,       -0.0192
 ICE_conv,        *,         growth_activity_lo,       -0.1392
 
 # Some LDV technologies
-ELC_100,         *,         growth_new_capacity_lo,   -0.0090
+ELC_100,         *,         growth_new_capacity_lo,   -0.0192
 ELC_100,         *,         growth_new_capacity_up,    0.1392
 ICE_conv,        *,         growth_new_capacity_lo,   -0.1392
 ICE_conv,        *,         growth_new_capacity_up,    0.0539
