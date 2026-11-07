@@ -94,6 +94,7 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     df_spec_new = pd.DataFrame(
         columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
     )
+    spec_parts = []
     for r in df_spec["REGION"].unique():
         df_spec_temp = df_spec.loc[df_spec["REGION"] == r]
         df_spec_total_temp = df_spec_total.loc[df_spec_total["REGION"] == r]
@@ -101,7 +102,9 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
             df_spec_temp.loc[:, "RESULT"]
             / df_spec_total_temp.loc[:, "RESULT"].values[0]
         )
-        df_spec_new = pd.concat([df_spec_temp, df_spec_new], ignore_index=True)
+        spec_parts.append(df_spec_temp)
+    # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+    df_spec_new = pd.concat([*reversed(spec_parts), df_spec_new], ignore_index=True)
 
     df_spec_new.drop(["FUEL", "RYEAR", "UNIT_OUT", "RESULT"], axis=1, inplace=True)
     df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] = (
@@ -121,12 +124,15 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
     df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
     df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
 
+    feed_parts = []
     for r in df_feed["REGION"].unique():
         i = 0
         df_feed_temp.at[i, "REGION"] = r
         df_feed_temp.at[i, "i_feed"] = 1
         i = i + 1
-        df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
+        feed_parts.append(df_feed_temp.copy())
+    # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+    df_feed_new = pd.concat([*reversed(feed_parts), df_feed_new], ignore_index=True)
 
     # Retreive data for i_therm
     # 67% of chemical thermal energy chemicals comes from primary chemicals. (IEA)
@@ -159,6 +165,7 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
         columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
     )
 
+    therm_parts = []
     for r in df_therm["REGION"].unique():
         df_therm_temp = df_therm.loc[df_therm["REGION"] == r]
         df_therm_total_temp = df_therm_total.loc[df_therm_total["REGION"] == r]
@@ -166,8 +173,12 @@ def modify_demand_and_hist_activity(scen: "Scenario") -> None:
             df_therm_temp.loc[:, "RESULT"]
             / df_therm_total_temp.loc[:, "RESULT"].values[0]
         )
-        df_therm_new = pd.concat([df_therm_temp, df_therm_new], ignore_index=True)
-        df_therm_new = df_therm_new.drop(["RESULT"], axis=1)
+        therm_parts.append(df_therm_temp)
+    if therm_parts:
+        # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+        df_therm_new = pd.concat(
+            [*reversed(therm_parts), df_therm_new], ignore_index=True
+        ).drop(["RESULT"], axis=1)
 
     df_therm_new.drop(["FUEL", "RYEAR", "UNIT_OUT"], axis=1, inplace=True)
     df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"] = (
@@ -456,21 +467,17 @@ def get_hist_act(
     s_info = ScenarioInfo(scen)
     fmy = s_info.y0
     if use_cached:
-        df = pd.DataFrame()
-        for type_tec in ["i_spec", "i_therm"]:
-            df = pd.concat(
-                [
-                    df,
-                    pd.read_csv(
-                        package_data_path(
-                            "material",
-                            "other",
-                            "activity",
-                            f"{type_tec}_tecs_hist_act.csv",
-                        )
-                    ),
-                ]
-            )
+        # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+        df = pd.concat(
+            [
+                pd.read_csv(
+                    package_data_path(
+                        "material", "other", "activity", f"{type_tec}_tecs_hist_act.csv"
+                    )
+                )
+                for type_tec in ["i_spec", "i_therm"]
+            ]
+        )
     else:
         df = get_2020_industry_activity(years, iea_file_path)
         ind_tecs = [

@@ -178,8 +178,7 @@ def read_material_intensities(
     ]
     data_lca = data_lca[keep_columns]
 
-    data_lca_final = pd.DataFrame()
-
+    lca_parts = []
     for n in data_lca["node"].unique():
         for t in data_lca["technology"].unique():
             for c in data_lca["commodity"].unique():
@@ -195,7 +194,9 @@ def read_material_intensities(
                     temp["value"] = temp["value"].interpolate(
                         method="linear", limit_direction="forward", axis=0
                     )
-                    data_lca_final = pd.concat([temp, data_lca_final])
+                    lca_parts.append(temp)
+    # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+    data_lca_final = pd.concat(lca_parts[::-1]) if lca_parts else pd.DataFrame()
 
     # extract node, technology, commodity, level, and year list from LCA
     # data set
@@ -212,9 +213,9 @@ def read_material_intensities(
     ####################################################################
 
     # new data frames for parameters
-    input_cap_new = pd.DataFrame()
-    input_cap_ret = pd.DataFrame()
-    output_cap_ret = pd.DataFrame()
+    input_cap_new_parts = []
+    input_cap_ret_parts = []
+    output_cap_ret_parts = []
 
     for n in node_list:
         for t in tec_list:
@@ -242,24 +243,21 @@ def read_material_intensities(
                     ]["value"].values[0]
                     val_cap_new = val_cap_new * 0.001
 
-                    input_cap_new = pd.concat(
-                        [
-                            input_cap_new,
-                            pd.DataFrame(
-                                {
-                                    "node_loc": n,
-                                    "technology": t,
-                                    "year_vtg": str(y),
-                                    "node_origin": n,
-                                    "commodity": c,
-                                    "level": "product",
-                                    "time_origin": "year",
-                                    "value": val_cap_new,
-                                    "unit": "t/kW",
-                                },
-                                index=[0],
-                            ),
-                        ]
+                    input_cap_new_parts.append(
+                        pd.DataFrame(
+                            {
+                                "node_loc": n,
+                                "technology": t,
+                                "year_vtg": str(y),
+                                "node_origin": n,
+                                "commodity": c,
+                                "level": "product",
+                                "time_origin": "year",
+                                "value": val_cap_new,
+                                "unit": "t/kW",
+                            },
+                            index=[0],
+                        )
                     )
 
                     val_cap_input_ret = data_lca_final.loc[
@@ -271,24 +269,21 @@ def read_material_intensities(
                     ]["value"].values[0]
                     val_cap_input_ret = val_cap_input_ret * 0.001
 
-                    input_cap_ret = pd.concat(
-                        [
-                            input_cap_ret,
-                            pd.DataFrame(
-                                {
-                                    "node_loc": n,
-                                    "technology": t,
-                                    "year_vtg": str(y),
-                                    "node_origin": n,
-                                    "commodity": c,
-                                    "level": "product",
-                                    "time_origin": "year",
-                                    "value": val_cap_input_ret,
-                                    "unit": "t/kW",
-                                },
-                                index=[0],
-                            ),
-                        ]
+                    input_cap_ret_parts.append(
+                        pd.DataFrame(
+                            {
+                                "node_loc": n,
+                                "technology": t,
+                                "year_vtg": str(y),
+                                "node_origin": n,
+                                "commodity": c,
+                                "level": "product",
+                                "time_origin": "year",
+                                "value": val_cap_input_ret,
+                                "unit": "t/kW",
+                            },
+                            index=[0],
+                        )
                     )
 
                     val_cap_output_ret = data_lca_final.loc[
@@ -300,25 +295,33 @@ def read_material_intensities(
                     ]["value"].values[0]
                     val_cap_output_ret = val_cap_output_ret * 0.001
 
-                    output_cap_ret = pd.concat(
-                        [
-                            output_cap_ret,
-                            pd.DataFrame(
-                                {
-                                    "node_loc": n,
-                                    "technology": t,
-                                    "year_vtg": str(y),
-                                    "node_dest": n,
-                                    "commodity": c,
-                                    "level": "end_of_life",
-                                    "time_dest": "year",
-                                    "value": val_cap_output_ret,
-                                    "unit": "t/kW",
-                                },
-                                index=[0],
-                            ),
-                        ]
+                    output_cap_ret_parts.append(
+                        pd.DataFrame(
+                            {
+                                "node_loc": n,
+                                "technology": t,
+                                "year_vtg": str(y),
+                                "node_dest": n,
+                                "commodity": c,
+                                "level": "end_of_life",
+                                "time_dest": "year",
+                                "value": val_cap_output_ret,
+                                "unit": "t/kW",
+                            },
+                            index=[0],
+                        )
                     )
+
+    # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+    input_cap_new = (
+        pd.concat(input_cap_new_parts) if input_cap_new_parts else pd.DataFrame()
+    )
+    input_cap_ret = (
+        pd.concat(input_cap_ret_parts) if input_cap_ret_parts else pd.DataFrame()
+    )
+    output_cap_ret = (
+        pd.concat(output_cap_ret_parts) if output_cap_ret_parts else pd.DataFrame()
+    )
 
     return {
         "input_cap_new": input_cap_new,

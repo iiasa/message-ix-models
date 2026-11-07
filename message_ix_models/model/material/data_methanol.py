@@ -256,7 +256,7 @@ def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
         name of MESSAGEix parameter
     """
     df_final = df
-    df_final_full = pd.DataFrame()
+    parts = []
 
     for i in df_final.index:
         # parse strings of node columns to dictionary
@@ -290,7 +290,9 @@ def unpivot_input_data(df: pd.DataFrame, par_name: str) -> pd.DataFrame:
             df_bc_node = broadcast_years(df_bc_node, yr_col_out, yr_cols_codes, col)
         df_bc_node[yr_col_out] = df_bc_node[yr_col_out].astype(int)
 
-        df_final_full = pd.concat([df_final_full, df_bc_node])
+        parts.append(df_bc_node)
+    # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+    df_final_full = pd.concat(parts) if parts else pd.DataFrame()
     df_final_full = df_final_full.drop_duplicates().reset_index(drop=True)
 
     # special treatment for relation_activity dataframes:

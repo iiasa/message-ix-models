@@ -209,7 +209,7 @@ def add_cement_ccs_co2_tr_relation(scen: message_ix.Scenario) -> None:
     scen.commit("New CCS technologies added to the CO2 accounting relations.")
 
 
-def add_emission_accounting(scen: message_ix.Scenario) -> None:
+def add_emission_accounting(scen: message_ix.Scenario) -> None:  # noqa: C901
     """
 
     Parameters
@@ -323,8 +323,7 @@ def add_emission_accounting(scen: message_ix.Scenario) -> None:
         ],
     }
 
-    # Create an empty dataframe
-    df_non_co2_emissions = pd.DataFrame()
+    non_co2_parts = []
 
     # Find the technology, year_act, year_vtg, emission, node_loc combination
     emissions = [e for e in emission_df["emission"].unique()]
@@ -333,7 +332,8 @@ def add_emission_accounting(scen: message_ix.Scenario) -> None:
     # emissions.remove("CO2_industry")
     # emissions.remove("CO2_res_com")
 
-    for t in emission_df["technology"].unique():
+    emission_tecs = emission_df["technology"].unique()
+    for t in emission_tecs:
         for e in emissions:
             # This should be a dataframe
             emission_df_filt = emission_df.loc[
@@ -362,8 +362,11 @@ def add_emission_accounting(scen: message_ix.Scenario) -> None:
                 df_merged["node_rel"] = df_merged["node_loc"]
                 df_merged["year_rel"] = df_merged["year_act"]
                 df_merged["unit"] = "???"
-                df_non_co2_emissions = pd.concat([df_non_co2_emissions, df_merged])
+                non_co2_parts.append(df_merged)
 
+    if len(emission_tecs):
+        # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+        df_non_co2_emissions = pd.concat(non_co2_parts or [pd.DataFrame()])
         scen.check_out()
         scen.add_par("relation_activity", df_non_co2_emissions)
         scen.commit("Non-CO2 Emissions accounting for industry technologies added.")

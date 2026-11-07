@@ -204,7 +204,7 @@ def gen_data(
         },
     )
     for p in pars:
-        conv_cost_df = pd.DataFrame()
+        conv_parts = []
         df = par_dict[p]
         for tec in tec_list:
             year_col = "year_vtg" if p == "inv_cost" else "year_act"
@@ -219,7 +219,9 @@ def gen_data(
             df_tecs["diff"] = df_tecs["diff"] * (1 - df_tecs["convergence"])
             df_tecs["new_val"] = df_tecs["value_x"] - df_tecs["diff"]
             df_tecs["value"] = df_tecs["new_val"]
-            conv_cost_df = pd.concat([conv_cost_df, make_df(p, **df_tecs)])
+            conv_parts.append(make_df(p, **df_tecs))
+        # Concat once after the loop: per-iteration concat is quadratic in pandas 3
+        conv_cost_df = pd.concat(conv_parts) if conv_parts else pd.DataFrame()
         par_dict[p] = pd.concat([df[~df["technology"].isin(tec_list)], conv_cost_df])
 
     # HACK: quick fix to enable compatibility with water build
