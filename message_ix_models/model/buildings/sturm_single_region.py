@@ -90,7 +90,7 @@ def run(context: Context, prices: pd.DataFrame | None = None) -> None:
     else:
         log.info("No prices passed; keeping existing STURM price file")
 
-    scenario_id = config.code or config.sturm_scenario or "SSP2"
+    scenario_id = config.code or "SSP2"
     _write_scenario_config(
         code_dir.joinpath("message_linking", "config.yaml"),
         [scenario_id],

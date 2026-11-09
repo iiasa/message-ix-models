@@ -1,0 +1,20 @@
+# BMT single-region (WEU / NEST) workflow configuration
+#
+# Loaded by apply_bmt_config(..., path=.../config_single_region.yaml).
+
+model_name: "WEU_NEST_EXP1.2"
+
+buildings:
+  method: B
+  code: "SSP2"
+  data_paths:
+      # prices: message_ix_buildings/sturm/data/
+      prices: "input_prices_R12.csv"
+      # resid/comm: message_ix_buildings/sturm/message_linking/ (not sturm/output/)
+      sturm_r: "resid_sturm_SSP2.csv"
+      sturm_c: "comm_sturm_SSP2.csv"
+      # Placeholder — build_single_region uses an empty table until GLANCE exists
+      demand_static: "resid_comm_glance_aligned_SSP2.csv"
+  with_materials: False
+
+macro: "SSP2_WEU_NEST_EXP1.2_macro.xlsx"

@@ -1,0 +1,10 @@
+# Single-region NEST / MESSAGE-WEU node list.
+# Used by buildings get_spec via context.model.regions = "WEU".
+
+World:
+  name: World # though no World in cutout examples
+  description: Single-region NEST WEU
+
+WEU:
+  parent: World
+  name: Western Europe
