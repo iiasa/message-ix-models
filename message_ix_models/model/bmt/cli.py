@@ -27,21 +27,37 @@ def cli(context, bmt_scenario):
     pass
 
 
+_WORKFLOWS = {
+    "default": "workflow",
+    "single-region": "workflow_single_region",
+}
+
+
 # Define run command
 @cli.command("run")
 @common_params("dry_run")
+@click.option(
+    "--workflow",
+    "workflow_name",
+    type=click.Choice(sorted(_WORKFLOWS), case_sensitive=False),
+    default="default",
+    show_default=True,
+    help="Which BMT workflow graph to run.",
+)
 @click.option("--from", "truncate_step", help="Run workflow from this step.")
 @click.argument("target_step", metavar="TARGET")
 @click.pass_obj
-def run(context, truncate_step, target_step):
+def run(context, workflow_name, truncate_step, target_step):
     """Run the BMT workflow up to step TARGET.
 
     --from is interpreted as a regular expression, and the workflow is truncated at
     every point matching this expression.
     """
-    from . import workflow
+    from importlib import import_module
 
-    wf = workflow.generate(context)
+    module = import_module(f".{_WORKFLOWS[workflow_name]}", package=__package__)
+    log.info("Using BMT workflow %r (%s.generate)", workflow_name, module.__name__)
+    wf = module.generate(context)
 
     # Compile the regular expression for truncating the workflow
     try:
@@ -66,7 +82,7 @@ def run(context, truncate_step, target_step):
 
     # If dry_run is enabled, visualize the workflow instead of executing it
     if context.dry_run:
-        path = context.get_local_path("bmt-workflow.svg")
+        path = context.get_local_path(f"bmt-workflow-{workflow_name}.svg")
         wf.visualize(str(path))
         log.info(f"Workflow diagram written to {path}")
         return
