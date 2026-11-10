@@ -38,7 +38,8 @@ parser.add_argument("--symbols", nargs="+", default=["ACT", "CAP"],
                     help="Variables to filter")
 args = parser.parse_args()
 
-Container()  # finds the GAMS system directory and loads the GDX library
+SYSDIR = Container().system_directory  # GAMS system directory, found as gams.transfer does
+print(f"GAMS system directory: {SYSDIR}")
 
 LEVEL, MARGINAL = gdx.GMS_VAL_LEVEL, gdx.GMS_VAL_MARGINAL
 key_arr = gdx.intArray(gdx.GMS_MAX_INDEX_DIM)  # reused for every record written
@@ -54,8 +55,12 @@ def check(result, what):
 
 
 def handle():
+    # Load the GDX library from the GAMS system directory, as gams.transfer does
+    # (gdxCreate without a directory depends on the library search path)
     h = gdx.new_gdxHandle_tp()
-    check(gdx.gdxCreate(h, gdx.GMS_SSSIZE), "gdxCreate")
+    rc, msg = gdx.gdxCreateD(h, SYSDIR, gdx.GMS_SSSIZE)
+    if not rc:
+        raise SystemExit(f"Cannot load the GDX library from {SYSDIR}: {msg}")
     return h
 
 
