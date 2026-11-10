@@ -32,10 +32,12 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: R files for the WEU single-region STURM run (start with resid + comm).
+#: R files for the WEU single-region STURM run.
 RSCRIPT_WEU_FILES = [
     "run_STURM_resid_WEU_2026.R",
     "run_STURM_comm_WEU_2026.R",
+    "run_GLANCE_placeholder_WEU.R",
+    "run_MIXB_aligner_WEU.R",
 ]
 
 #: RC final energy techs
@@ -89,19 +91,17 @@ def _write_scenario_config(path: Path, scenarios: list[str]) -> Path:
     return path
 
 
-def get_rc_final_energy(
-    context: Context, scenario: "message_ix.Scenario"
-) -> pd.DataFrame:
-    """Return RC final energy from genno ``in`` (input × ACT) for :data:`RC_FE_TECHS`.
+def get_rc_final_energy(scenario: "message_ix.Scenario") -> pd.DataFrame:
+    """Return RC final energy from message_ix ``in`` for :data:`RC_FE_TECHS`.
     """
-    from message_ix_models.report import prepare_reporter
+    from message_ix import Reporter
 
     if not scenario.has_solution():
         raise ValueError(
             f"Scenario {scenario.url} has no solution; cannot compute RC final energy"
         )
 
-    rep, _ = prepare_reporter(context, scenario=scenario)
+    rep = Reporter.from_scenario(scenario)
     rep.add("rc fe in", "select", "in:nl-t-ya-c-l", dict(t=list(RC_FE_TECHS)))
     qty = rep.get("rc fe in")
     df = (
@@ -144,7 +144,7 @@ def write_rc_final_energy(
     code_dir, _ = _ensure_sturm_dirs(context)
     out = path or code_dir.joinpath("message_linking", DEFAULT_FE_CSV)
     out.parent.mkdir(parents=True, exist_ok=True)
-    df = get_rc_final_energy(context, scenario)
+    df = get_rc_final_energy(scenario)
     df.to_csv(out, index=False)
     log.info("Wrote RC final energy (%d rows) to %s", len(df), out)
     return out

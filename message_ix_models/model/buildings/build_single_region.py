@@ -84,11 +84,17 @@ def _remap_demand_nodes(df: pd.DataFrame, target: str | None) -> pd.DataFrame:
     return out
 
 
+def _data_path_name(context: Context, key: str) -> str:
+    """Basename from :attr:`.Config.data_paths`, with ``{code}`` filled in."""
+    raw = str(context.buildings.data_paths[key])
+    return Path(raw.format(code=context.buildings.code)).name
+
+
 def _resolve_input_csv(
     context: Context, key: str, *, search: list[Path]
 ) -> Path | None:
     """Resolve a :attr:`.Config.data_paths` entry under STURM dirs."""
-    name = Path(context.buildings.data_paths[key]).name
+    name = _data_path_name(context, key)
     for base in search:
         path = base.joinpath(name)
         if path.exists():
@@ -121,14 +127,14 @@ def _prepare_method_b_inputs(
         raise FileNotFoundError(
             "WEU STURM linking CSVs not found under "
             f"{linking_dir} (looked for "
-            f"{context.buildings.data_paths['sturm_r']!r} / "
-            f"{context.buildings.data_paths['sturm_c']!r}). "
+            f"{_data_path_name(context, 'sturm_r')!r} / "
+            f"{_data_path_name(context, 'sturm_c')!r}). "
             "Run STURM first or set data_paths in config_single_region.yaml."
         )
     if prices_src is None:
         raise FileNotFoundError(
             f"STURM prices CSV not found under {input_dir} "
-            f"({context.buildings.data_paths['prices']!r})."
+            f"({_data_path_name(context, 'prices')!r})."
         )
 
     sturm_r = pd.read_csv(sturm_r_src)
@@ -149,7 +155,7 @@ def _prepare_method_b_inputs(
         ("demand_static", demand_static, None),
         ("prices", pd.read_csv(prices_src), prices_src),
     ):
-        dest = work.joinpath(Path(context.buildings.data_paths[key]).name)
+        dest = work.joinpath(_data_path_name(context, key))
         df.to_csv(dest, index=False)
         paths[key] = dest
         log.info("METHOD B input %s: %s -> %s (%d rows)", key, src, dest, len(df))
@@ -200,19 +206,21 @@ def main(
     )
 
     prices = get_prices_for_sturm(context, scenario) if update_prices else None
-    sturm_single_region.run(context, prices=prices)
+    sturm_single_region.run(context, prices=prices, scenario=scenario)
 
-    paths = _prepare_method_b_inputs(context, scenario)
-    # Absolute paths so build.main does not use private_data_path.
+    paths = _prepare_method_b_inputs(context, scenario)  # CSV IO only; no solution
     config.data_paths = {
         "prices": paths["prices"],
         "sturm_r": paths["sturm_r"],
         "sturm_c": paths["sturm_c"],
         "demand_static": paths["demand_static"],
     }
-    # Honour buildings.method from config_single_region.yaml (YAML yields str "B").
     method = config.method
     config.method = method if isinstance(method, METHOD) else METHOD[str(method)]
+
+    if scenario.has_solution():
+        log.info("Removing solution before build.main edits")
+        scenario.remove_solution()
 
     log.info(
         "Calling build.main (%s) for %s/%s with_materials=%s",

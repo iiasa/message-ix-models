@@ -148,7 +148,7 @@ def generate(context: Context) -> Workflow:
         name,
         build_B,
         target=f"{url}/base_B",
-        clone=dict(keep_solution=False),
+        clone=dict(keep_solution=True),
         update_prices=False,
     )
 
