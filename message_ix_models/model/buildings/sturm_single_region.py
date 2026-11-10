@@ -3,6 +3,8 @@
 Mirrors :func:`message_ix_models.model.buildings.sturm._sturm_rscript_B`:
 
 - Write a prices data frame to STURM ``data/input_prices_R12.csv``.
+- Write RC final energy (genno ``in`` for :data:`RC_FE_TECHS`) to
+  :file:`message_linking/final_energy_rc.csv`.
 - Write the scenario assumption set to :file:`message_linking/config.yaml`
   (WEU runners).
 - Invoke the message-ix-buildings runners.
@@ -24,6 +26,8 @@ from message_ix_models import Context
 from message_ix_models.model.buildings.sturm import METHOD as STURM_METHOD
 
 if TYPE_CHECKING:
+    import message_ix
+
     from message_ix_models.model.buildings.config import Config
 
 log = logging.getLogger(__name__)
@@ -33,6 +37,27 @@ RSCRIPT_WEU_FILES = [
     "run_STURM_resid_WEU_2026.R",
     "run_STURM_comm_WEU_2026.R",
 ]
+
+#: RC final energy techs
+RC_FE_TECHS = [
+    "biomass_rc",
+    "coal_rc",
+    "elec_rc",
+    "eth_rc",
+    "foil_rc",
+    "gas_rc",
+    "h2_fc_RC",
+    "h2_rc",
+    "heat_rc",
+    "hp_el_rc",
+    "loil_rc",
+    "meth_rc",
+    "sp_el_RC",
+    "sp_el_RC_RT",
+]
+
+#: Default CSV name under STURM ``message_linking/`` for RC final energy.
+DEFAULT_FE_CSV = "final_energy_rc.csv"
 
 
 def _ensure_sturm_dirs(context: Context) -> tuple[Path, Path]:
@@ -64,7 +89,72 @@ def _write_scenario_config(path: Path, scenarios: list[str]) -> Path:
     return path
 
 
-def run(context: Context, prices: pd.DataFrame | None = None) -> None:
+def get_rc_final_energy(
+    context: Context, scenario: "message_ix.Scenario"
+) -> pd.DataFrame:
+    """Return RC final energy from genno ``in`` (input × ACT) for :data:`RC_FE_TECHS`.
+    """
+    from message_ix_models.report import prepare_reporter
+
+    if not scenario.has_solution():
+        raise ValueError(
+            f"Scenario {scenario.url} has no solution; cannot compute RC final energy"
+        )
+
+    rep, _ = prepare_reporter(context, scenario=scenario)
+    rep.add("rc fe in", "select", "in:nl-t-ya-c-l", dict(t=list(RC_FE_TECHS)))
+    qty = rep.get("rc fe in")
+    df = (
+        qty.to_dataframe()
+        .reset_index()
+        .rename(
+            columns={
+                "nl": "node",
+                "t": "technology",
+                "ya": "year",
+                "c": "commodity",
+                "l": "level",
+            }
+        )
+    )
+    value_col = "value" if "value" in df.columns else df.columns[-1]
+    if value_col != "value":
+        df = df.rename(columns={value_col: "value"})
+
+    unit = str(getattr(qty, "units", "") or "") or "GWa/a"
+    df = df.assign(unit=unit)
+
+    keep = ["node", "technology", "year", "commodity", "level", "value", "unit"]
+    df = df.loc[:, [c for c in keep if c in df.columns]]
+    log.info(
+        "RC final energy (in): %d rows for %d techs on %s",
+        len(df),
+        df["technology"].nunique() if not df.empty else 0,
+        scenario.url,
+    )
+    return df
+
+
+def write_rc_final_energy(
+    context: Context,
+    scenario: "message_ix.Scenario",
+    path: Path | None = None,
+) -> Path:
+    """Write :func:`get_rc_final_energy` to STURM ``message_linking/`` (or `path`)."""
+    code_dir, _ = _ensure_sturm_dirs(context)
+    out = path or code_dir.joinpath("message_linking", DEFAULT_FE_CSV)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df = get_rc_final_energy(context, scenario)
+    df.to_csv(out, index=False)
+    log.info("Wrote RC final energy (%d rows) to %s", len(df), out)
+    return out
+
+
+def run(
+    context: Context,
+    prices: pd.DataFrame | None = None,
+    scenario: "message_ix.Scenario | None" = None,
+) -> None:
     """Run WEU STURM scripts (METHOD-B style).
 
     Parameters
@@ -75,6 +165,9 @@ def run(context: Context, prices: pd.DataFrame | None = None) -> None:
         If given, written to STURM ``data/input_prices_R12.csv`` (same as
         :func:`._sturm_rscript_B`). If :obj:`None`, the existing price file is
         left unchanged (baseline / no price feedback).
+    scenario :
+        If given (and solved), write RC final energy via
+        :func:`write_rc_final_energy` before invoking R.
     """
     from .config import DEFAULT_DATA_PATHS
 
@@ -89,6 +182,11 @@ def run(context: Context, prices: pd.DataFrame | None = None) -> None:
         log.info("Updated prices written to %s (%d rows)", price_input, len(prices))
     else:
         log.info("No prices passed; keeping existing STURM price file")
+
+    if scenario is not None:
+        write_rc_final_energy(context, scenario)
+    else:
+        log.info("No scenario passed; skipping RC final energy export")
 
     scenario_id = config.code or "SSP2"
     _write_scenario_config(
