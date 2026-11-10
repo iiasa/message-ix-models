@@ -55,6 +55,81 @@ def _scenario_name() -> str:
 # ---------------------------------------------------------------------------
 
 
+def prep_for_macro(
+    context: Context, scenario: message_ix.Scenario
+) -> message_ix.Scenario:
+    """Prepare a WEU scenario for MACRO after :py:`shift_first_model_year=2030`.
+
+    Mirrors :func:`.bmt.workflow.prep_for_macro` / :file:`run_exp12.py` ``macro_prep``:
+
+    1. Drop ``initializeyear_macro`` / ``baseyear_macro`` from ``cat_year``.
+    2. Drop ``rc_spec`` / ``rc_therm`` from ``sector`` (buildings demand stays
+       exogenous; MACRO covers ``i_spec``, ``i_therm``, ``i_feed``, ``transport``).
+    3. Solve with :py:`model="MESSAGE"` only.
+    """
+    log.info("Preparing WEU scenario for MACRO (FMY=%s)", scenario.firstmodelyear)
+    scenario.set_as_default()
+
+    df = scenario.set(
+        "cat_year", {"type_year": ["initializeyear_macro", "baseyear_macro"]}
+    )
+    if df is not None and len(df) > 0:
+        with scenario.transact("Remove init and baseyear for macro"):
+            scenario.remove_set("cat_year", df)
+
+    # Buildings end-uses stay exogenous; keep industry + transport for MACRO.
+    # ``sector`` is a MACRO set — absent until MACRO was added previously.
+    if "sector" in scenario.set_list():
+        sectors_to_remove = ["rc_spec", "rc_therm"]
+        existing = set(map(str, scenario.set("sector").tolist()))
+        to_remove = [s for s in sectors_to_remove if s in existing]
+        if to_remove:
+            with scenario.transact("Remove rc_spec, rc_therm from sector set"):
+                scenario.remove_set("sector", to_remove)
+    else:
+        log.info(
+            "No MACRO sector set yet; MACRO sectors come from the workbook "
+            "(exclude rc_spec / rc_therm there)"
+        )
+
+    solve(context, scenario, **solve_args())
+    return scenario
+
+
+def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Add MACRO from the BMT workbook and solve MESSAGE-MACRO."""
+    import pandas as pd
+
+    from message_ix_models.model.material.data_util import (
+        _filter_macro_data_to_scenario,
+    )
+
+    macro_file = getattr(context, "macro", None)
+    if macro_file is None:
+        bmt = getattr(context, "bmt", None)
+        macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
+    if not macro_file:
+        raise ValueError(
+            "No MACRO workbook configured; set macro: in config_single_region.yaml"
+        )
+
+    path = package_data_path("bmt", Path(macro_file).name)
+    if not path.exists():
+        raise FileNotFoundError(f"MACRO calibration workbook not found: {path}")
+
+    log.info("Adding MACRO from %s", path)
+    data = {
+        k: v for k, v in pd.read_excel(path, sheet_name=None).items() if k != "README"
+    }
+    _filter_macro_data_to_scenario(data, scenario)
+    scenario = scenario.add_macro(data, check_convergence=False)
+    scenario.set_as_default()
+
+    log.info("MACRO added; solving MESSAGE-MACRO")
+    solve(context, scenario, **solve_args("MESSAGE-MACRO"))
+    return scenario
+
+
 def load_from_excel(context: Context) -> message_ix.Scenario:
     """Load a MESSAGE scenario from Excel onto :data:`PLATFORM_NAME`.
 
@@ -153,5 +228,19 @@ def generate(context: Context) -> Workflow:
     )
 
     name = wf.add_step("B solved", name, solve, **solve_args())
+
+    name = wf.add_step(
+        "B prep macro",
+        name,
+        prep_for_macro,
+        target=f"{url}/base_B_message",
+        clone=dict(shift_first_model_year=2030),
+    )
+    name = wf.add_step(
+        "B macro",
+        name,
+        add_macro,
+        target=f"{url}/base_B_message_macro",
+    )
 
     return wf
