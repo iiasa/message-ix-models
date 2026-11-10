@@ -220,9 +220,9 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             out_scenario.add_set("cat_year", ["lastmodelyear", last_model_year])
 
     print("Solve scenario")
-    out_scenario.solve(quiet = False,
-                       model = 'MESSAGE',
+    out_scenario.solve(quiet=False, model="MESSAGE",
                        solve_options={"scaind": "-1"},
-                       gams_args=["--foresight=15"])
+                       gams_args=["--foresight=15"],
+                       equ_list=["COMMODITY_BALANCE_GT"])
 
     return out_scenario

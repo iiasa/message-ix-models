@@ -117,7 +117,7 @@ def generate(context: Context) -> Workflow:
         "Base cloned",
         "Base",
         _set_default,
-        target = "ixmp://mydb/fuel_security/baseline_DEFAULT", # This has to be named baseline_DEFAULT to match policy tool requirement
+        target = "ixmp://localdb/fuel_security/baseline_DEFAULT", # This has to be named baseline_DEFAULT to match policy tool requirement
         clone = dict(keep_solution = True)
     ) # Clone baseline scenario to fuel_security/baseline_DEFAULT
 
@@ -125,7 +125,7 @@ def generate(context: Context) -> Workflow:
         "Clone INDC2030i_forever",
         "INDC2030i_forever",
         _set_default,
-        target = "ixmp://mydb/fuel_security/INDC2030i_forever",
+        target = "ixmp://localdb/fuel_security/INDC2030i_forever",
         clone = dict(keep_solution = True)
     ) # Clone INDC2030i_forever to fuel_security/INDC2030i_forever
 
@@ -133,20 +133,20 @@ def generate(context: Context) -> Workflow:
         "INDC2030i_forever_gdp",
         "Clone INDC2030i_forever",
         add_gdp_price_growth,
-        target = "ixmp://mydb/fuel_security/INDC2030i_forever_gdp",
+        target = "ixmp://localdb/fuel_security/INDC2030i_forever_gdp",
     ) # Grow INDC2030i_forever's flat carbon price with GDP, capped at 300 USD/tCO2
 
     wf.add_step(
         "Add and solve NPi2030",
         "Base cloned",
         add_NPi2030,
-        target = "ixmp://mydb/fuel_security/NPi2030"
+        target = "ixmp://localdb/fuel_security/NPi2030"
     ) # Add and solve NPi2030 onto baseline_DEFAULT to create fuel_security/NPi2030
 
-    # Load the (solved) base scenarios already on mydb. Bilateralize steps start from
+    # Load the (solved) base scenarios already on localdb. Bilateralize steps start from
     # these instead of from the clone/policy steps above, so a bilateralize run only
-    # opens mydb: it does not connect to ixmp-dev or re-clone/re-solve the base. This
-    # also means the JVM is started by mydb's platform config, so its "jvmargs" (Java
+    # opens localdb: it does not connect to ixmp-dev or re-clone/re-solve the base. This
+    # also means the JVM is started by localdb's platform config, so its "jvmargs" (Java
     # heap) apply when reading the bilateral solution back into the database.
     # Run the step that creates each base (e.g. "Base cloned") once beforehand.
     for name, scen in (
@@ -155,34 +155,34 @@ def generate(context: Context) -> Workflow:
         ("INDC2030i_forever local", "INDC2030i_forever"),
         ("INDC2030i_forever_gdp local", "INDC2030i_forever_gdp"),
     ):
-        wf.add_step(name, None, target=f"ixmp://mydb/fuel_security/{scen}")
+        wf.add_step(name, None, target=f"ixmp://localdb/fuel_security/{scen}")
 
     wf.add_step(
         "Baseline bilateralized",
         "Base local",
         _bilateralize,
-        target="ixmp://mydb/fuel_security/baseline_bilateral"
+        target="ixmp://localdb/fuel_security/baseline_bilateral"
     ) # Bilateralize fuel_security/baseline_DEFAULT to create fuel_security/baseline_bilateral
 
     wf.add_step(
         "NPi2030 bilateralized",
         "NPi2030 local",
         _bilateralize,
-        target="ixmp://mydb/fuel_security/NPi2030_bilateral"
+        target="ixmp://localdb/fuel_security/NPi2030_bilateral"
     ) # Bilateralize NPi2030 to create fuel_security/NPi2030_bilateral
 
     wf.add_step(
         "INDC2030i_forever bilateralized",
         "INDC2030i_forever local",
         _bilateralize,
-        target="ixmp://mydb/fuel_security/INDC2030i_forever_bilateral"
+        target="ixmp://localdb/fuel_security/INDC2030i_forever_bilateral"
     ) # Bilateralize INDC2030i_forever to create fuel_security/INDC2030i_forever_bilateral
 
     wf.add_step(
         "INDC2030i_forever_gdp bilateralized",
         "INDC2030i_forever_gdp local",
         _bilateralize,
-        target="ixmp://mydb/fuel_security/INDC2030i_forever_gdp_bilateral"
+        target="ixmp://localdb/fuel_security/INDC2030i_forever_gdp_bilateral"
     ) # Bilateralize INDC2030i_forever_gdp to create fuel_security/INDC2030i_forever_gdp_bilateral
         
     wf.add_step(
@@ -190,7 +190,7 @@ def generate(context: Context) -> Workflow:
         "Baseline bilateralized",
         _FSU_restriction,
         friction_endyear=2100,
-        target="ixmp://mydb/fuel_security/baseline_FSU2100"
+        target="ixmp://localdb/fuel_security/baseline_FSU2100"
     ) # Run FSU2100 scenario on baseline bilateralized to create fuel_security/baseline_FSU2100
 
     wf.add_step(
@@ -198,7 +198,7 @@ def generate(context: Context) -> Workflow:
         "Baseline bilateralized",
         _FSU_restriction,
         friction_endyear=2040,
-        target="ixmp://mydb/fuel_security/baseline_FSU2040"
+        target="ixmp://localdb/fuel_security/baseline_FSU2040"
     ) # Run FSU2040 scenario on baseline bilateralized to create fuel_security/baseline_FSU2040
 
     wf.add_step(
@@ -206,7 +206,7 @@ def generate(context: Context) -> Workflow:
         "NPi2030 bilateralized",
         _FSU_restriction,
         friction_endyear=2100,
-        target="ixmp://mydb/fuel_security/NPi2030_FSU2100"
+        target="ixmp://localdb/fuel_security/NPi2030_FSU2100"
     ) # Run FSU2100 scenario on NPi2030 bilateralized to create fuel_security/NPi2030_FSU2100
 
     wf.add_step(
@@ -214,7 +214,7 @@ def generate(context: Context) -> Workflow:
         "NPi2030 bilateralized",
         _FSU_restriction,
         friction_endyear=2040,
-        target="ixmp://mydb/fuel_security/NPi2030_FSU2040"
+        target="ixmp://localdb/fuel_security/NPi2030_FSU2040"
     ) # Run FSU2040 scenario on NPi2030 bilateralized to create fuel_security/NPi2030_FSU2040
 
     wf.add_step(
@@ -222,7 +222,7 @@ def generate(context: Context) -> Workflow:
         "INDC2030i_forever bilateralized",
         _FSU_restriction,
         friction_endyear=2100,
-        target="ixmp://mydb/fuel_security/INDC2030i_forever_FSU2100"
+        target="ixmp://localdb/fuel_security/INDC2030i_forever_FSU2100"
     ) # Run FSU2100 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2100
 
     wf.add_step(
@@ -238,7 +238,7 @@ def generate(context: Context) -> Workflow:
         "INDC2030i_forever_gdp bilateralized",
         _FSU_restriction,
         friction_endyear=2100,
-        target="ixmp://mydb/fuel_security/INDC2030i_forever_gdp_FSU2100"
+        target="ixmp://localdb/fuel_security/INDC2030i_forever_gdp_FSU2100"
     ) # Run FSU2100 scenario on INDC2030i_forever_gdp bilateralized to create fuel_security/INDC2030i_forever_gdp_FSU2100
 
     wf.add_step(
@@ -246,7 +246,7 @@ def generate(context: Context) -> Workflow:
         "INDC2030i_forever_gdp bilateralized",
         _FSU_restriction,
         friction_endyear=2040,
-        target="ixmp://mydb/fuel_security/INDC2030i_forever_gdp_FSU2040"
+        target="ixmp://localdb/fuel_security/INDC2030i_forever_gdp_FSU2040"
     ) # Run FSU2040 scenario on INDC2030i_forever_gdp bilateralized to create fuel_security/INDC2030i_forever_gdp_FSU2040
 
     # MEA conflict shock sensitivities: applied to each bilateralized base and
@@ -274,7 +274,7 @@ def generate(context: Context) -> Workflow:
                 base_step,
                 _mea_conflict,
                 conf_level=level,
-                target=f"ixmp://mydb/fuel_security/{base_name}_MEACON_{level}"
+                target=f"ixmp://localdb/fuel_security/{base_name}_MEACON_{level}"
             ) # Apply MEA conflict shock (level={level}) onto {base_name}
 
     # NAM export boost sensitivities: applied to each bilateralized base and
@@ -289,7 +289,7 @@ def generate(context: Context) -> Workflow:
                 base_step,
                 _nam_boost,
                 bound_level_ej=level,
-                target=f"ixmp://mydb/fuel_security/{base_name}_NAM{level}EJ"
+                target=f"ixmp://localdb/fuel_security/{base_name}_NAM{level}EJ"
             ) # Apply NAM export boost (level={level}EJ) onto {base_name}
 
     return wf
