@@ -16,7 +16,7 @@ def _modules_arg(context, param, value):
 
 
 @click.command(name="report")
-@common_params("dry_run urls_from_file")
+@common_params("dest dry_run urls_from_file")
 @click.option(
     "--config",
     "config_file",
@@ -25,6 +25,12 @@ def _modules_arg(context, param, value):
     help="Path or stem for reporting config file.",
 )
 @click.option("--legacy", "-L", is_flag=True, help="Invoke 'legacy' reporting.")
+@click.option(
+    "--legacy-config",
+    metavar="NAME",
+    help="Path or stem of a legacy reporting config file in data/report/legacy; "
+    "implies --legacy.",
+)
 @click.option(
     "--module",
     "-m",
@@ -44,7 +50,7 @@ def _modules_arg(context, param, value):
 )
 @click.argument("key", default="message::default")
 @click.pass_obj
-def cli(context, config_file, legacy, cli_output, key, **kwargs):
+def cli(context, config_file, legacy, legacy_config, cli_output, key, **kwargs):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message::default', but may also be the
@@ -55,6 +61,10 @@ def cli(context, config_file, legacy, cli_output, key, **kwargs):
 
     With --urls-from-file, read multiple Scenario identifiers from FILE, and report each
     one. In this usage, --output-path may only be a directory.
+
+    With --legacy or --legacy-config, --output gives the directory for output of the
+    legacy reporting. With --dest, legacy reporting is done on a clone of the scenario
+    at the destination URL, rather than on the scenario itself.
 
     If --verbose is given to the top-level CLI, the full description of the steps to
     calculate KEY is printed, as well as the entire result, if any.
@@ -70,6 +80,8 @@ def cli(context, config_file, legacy, cli_output, key, **kwargs):
     context.report = Config(
         from_file=config_file, key=key, cli_output=cli_output, _legacy=legacy
     )
+    if legacy_config:
+        context.report.use_legacy_file(legacy_config)
 
     # Prepare a list of Context objects, each referring to one Scenario.
     contexts = []

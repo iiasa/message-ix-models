@@ -320,11 +320,17 @@ def report(context: Context, *args, **kwargs) -> None:
 
 
 def _invoke_legacy_reporting(context):
-    from .legacy import iamc_report_hackathon
+    """Invoke legacy reporting according to :attr:`.Config.legacy`.
 
-    log.info("Using .report.legacy.iamc_report_hackathon.report")
+    Keys of :attr:`.Config.legacy` other than those described there are passed to the
+    :py:`report()` function of the legacy reporting module.
+    """
+    from importlib import import_module
+    from inspect import signature
 
-    # Convert "legacy" config to kwargs for .legacy.iamc_report_hackathon.report()
+    from .legacy import country
+
+    # Convert "legacy" config to kwargs for the legacy report() function
     kwargs = deepcopy(context.report.legacy)
     kwargs.pop("use")
 
@@ -334,15 +340,67 @@ def _invoke_legacy_reporting(context):
         with open(config_file_path, "r") as f:
             kwargs.update(yaml.safe_load(f))
 
-    # Retrieve the Scenario and Platform
-    scen = context.get_scenario()
+    # Settings handled here, rather than by report()
+    module = import_module(
+        kwargs.pop("module", None)
+        or "message_ix_models.report.legacy.iamc_report_hackathon"
+    )
+    clear = kwargs.pop("clear_timeseries", False)
+    materials = kwargs.pop("materials", False)
+    _country = kwargs.pop("country", False)
+    country_cfg = _country if isinstance(_country, dict) else {}
+
+    log.info(f"Using {module.__name__}.report")
+    if module.__name__.startswith("message_data"):
+        from message_data import __version__
+
+        log.info(f"message_data {__version__}")
+
+    # Retrieve the Scenario and Platform; clone to --dest, if given
+    if context.core.dest and not context.core.dry_run:
+        scen = context.clone_to_dest(create=False)
+    else:
+        scen = context.get_scenario()
     mp = scen.platform
+
+    # Output directory
+    out_dir = kwargs.setdefault(
+        "out_dir",
+        (context.report.cli_output or context.report.output_dir).joinpath(
+            f"{scen.model}_{scen.scenario}"
+        ),
+    )
+    if context.core.dry_run:
+        log.info(f"(DRY RUN) Would report {scen.url} to {out_dir}")
+        if "context" in signature(module.report).parameters:
+            module.report(mp=mp, scen=scen, context=context, **kwargs)
+        return
+
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    if _country:
+        country.register_regions(scen)
+    if clear:
+        country.clear_timeseries(scen)
+    if materials:
+        country.report_materials(
+            scen, Path(out_dir), **(materials if isinstance(materials, dict) else {})
+        )
 
     mark_time()
 
-    # `context` is passed only for the "dry_run" setting; the function receives all its
-    # other settings via the `kwargs`
-    return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **kwargs)
+    if "context" in signature(module.report).parameters:
+        # `context` is passed only for the "dry_run" setting; the function receives all
+        # its other settings via the `kwargs`
+        kwargs["context"] = context
+    result = module.report(mp=mp, scen=scen, **kwargs)
+
+    if _country:
+        country.add_stat_diff(scen, region=country_cfg.get("region"))
+        scen.timeseries().to_csv(Path(out_dir, "timeseries.csv"), index=False)
+        country.log_closure(scen)
+        log.info(f"Reported {scen.url}; output in {out_dir}")
+
+    return result
 
 
 def prepare_reporter(

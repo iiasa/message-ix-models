@@ -1,0 +1,25 @@
+# Legacy reporting of a model of one country, built from a MESSAGEix-GLOBIOM R12
+# SSP scenario (v6.5) by removing every node but one.
+#
+# Use with: mix-models … report --legacy-config=country
+#
+# These settings repeat the reporting recipe of the R12 SSP scenarios in the
+# message_data ssp_dev branch: the materials reporting, summed into the global region
+# R12_GLB and stored as time series data, then the message_data legacy reporting with
+# merge_hist, merge_ts and materials_daccs_run_config.yaml. They need a message_data
+# version that handles a scenario without land-use emulator or regional fil files,
+# such as the project/osce branch. See doc/api/report/legacy.rst.
+
+# Keys handled by message_ix_models.report.report()
+module: message_data.tools.post_processing.iamc_report_hackathon
+clear_timeseries: true
+materials:
+  region: R12_GLB
+country:
+  region: R12_GLB
+
+# Keyword arguments to message_data.tools.post_processing.iamc_report_hackathon.report()
+merge_hist: true
+merge_ts: true
+run_config: materials_daccs_run_config.yaml
+verbose: true

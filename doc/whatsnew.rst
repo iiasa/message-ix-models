@@ -4,6 +4,8 @@ What's new
 Next release
 ============
 
+- Report models of one country with the legacy reporting of :mod:`message_data`: new option :program:`mix-models report --legacy-config`, file :file:`data/report/legacy/country.yaml`, and module :mod:`.report.legacy.country`; :program:`--dest` and :program:`--output` apply to legacy reporting (:ref:`report-legacy-country`, :pull:`XXX`).
+- The materials reporting (:mod:`.material.report`) skips technologies and labels that a scenario lacks (:pull:`XXX`).
 - :func:`.bare.create_res` accepts a caller-supplied spec and data (:pull:`559`).
 - New module :ref:`tools-gem` to read power units from the Global Integrated Power Tracker; new function :func:`.load_energy_import_value` for the value of a country's energy imports by product from BACI (:pull:`XXX`).
 - New class :class:`.ESTAT_ENERGY_BALANCE_UNSD` and module :ref:`tools-energy-balance`: the energy balance of any country in one vocabulary, from Eurostat or UNSD (:pull:`XXX`).

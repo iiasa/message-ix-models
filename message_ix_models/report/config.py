@@ -104,7 +104,20 @@ class Config(ConfigHelper):
     use_scenario_path: bool = True
 
     #: Keyword arguments for :func:`.report.legacy.iamc_report_hackathon.report`, plus
-    #: the key "use", which should be :any:`True` if legacy reporting is to be used.
+    #: the following keys, handled by :func:`.report.report`:
+    #:
+    #: - "use": :any:`True` if legacy reporting is to be used.
+    #: - "config_file_path": path to a YAML file with further keys and values; see
+    #:   :meth:`use_legacy_file`.
+    #: - "module": name of a module whose :py:`report()` function is used instead of
+    #:   :func:`.iamc_report_hackathon.report`, for instance
+    #:   :py:`"message_data.tools.post_processing.iamc_report_hackathon"`.
+    #: - "clear_timeseries": :any:`True` to remove time series data from the first model
+    #:   year on before reporting.
+    #: - "materials": :any:`True` or keyword arguments to run
+    #:   :func:`.material.report.run_reporting.run` before the legacy reporting.
+    #: - "country": :any:`True` or a mapping with the key "region", for a model of one
+    #:   country. See :ref:`report-legacy-country`.
     legacy: dict = field(
         default_factory=lambda: dict(use=False, merge_hist=True), kw_only=True
     )
@@ -169,6 +182,36 @@ class Config(ConfigHelper):
 
         self.callback.append(callback)
         return name
+
+    def use_legacy_file(self, file_path: Path | str) -> None:
+        """Use legacy reporting with settings from a (YAML) file at `file_path`.
+
+        The file's keys and values update :attr:`legacy`; see there.
+
+        Parameters
+        ----------
+        file_path : PathLike
+            Either the complete path to any existing file, or a stem like "country",
+            referring to a file such as :file:`country.yaml` in
+            :file:`MESSAGE_MODELS_PATH/data/report/legacy/`.
+        """
+        try:
+            path = next(
+                filter(
+                    Path.exists,
+                    (
+                        Path(file_path),
+                        package_data_path("report", "legacy", file_path).with_suffix(
+                            ".yaml"
+                        ),
+                    ),
+                )
+            )
+        except StopIteration:
+            raise FileNotFoundError(
+                f"Legacy reporting configuration in '{file_path}(.yaml)'"
+            )
+        self.legacy.update(use=True, config_file_path=path)
 
     def set_output_dir(self, arg: Path | None) -> None:
         """Set :attr:`output_dir`, the output directory.
