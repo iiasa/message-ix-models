@@ -93,3 +93,23 @@ def test_split_fe_other(reporter: Reporter) -> None:
         "model name",
         "scenario name",
     )
+
+
+def test_set_filters() -> None:
+    """:func:`.run_reporting.set_filters` drops technologies the scenario lacks."""
+    from message_ix_models.model.material.report.run_reporting import set_filters
+
+    class R:
+        def get(self, key):
+            assert "t" == key
+            return ["a", "b"]
+
+        def set_filters(self, **filters):
+            self.filters = filters
+
+    rep = R()
+    set_filters(rep, t=["a", "c"], c=["x"])  # type: ignore [arg-type]
+    assert dict(t=["a"], c=["x"]) == rep.filters
+
+    set_filters(rep, c=["x"])  # type: ignore [arg-type]
+    assert dict(c=["x"]) == rep.filters

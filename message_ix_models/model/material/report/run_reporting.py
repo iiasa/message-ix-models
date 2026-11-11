@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import message_ix
@@ -12,6 +13,21 @@ from message_ix_models.model.material.report.reporter_utils import (
 from message_ix_models.util import broadcast
 
 from .config import Config
+
+log = logging.getLogger(__name__)
+
+
+def set_filters(rep: message_ix.Reporter, **filters) -> None:
+    """Set `filters` on `rep`, keeping only technologies that the scenario has.
+
+    A model of one country, for instance, lacks some technologies of the global model.
+    """
+    if filters.get("t"):
+        have = set(rep.get("t"))
+        if absent := sorted(set(filters["t"]) - have):
+            log.info(f"Technologies absent from the scenario: {absent}")
+        filters["t"] = [t for t in filters["t"] if t in have]
+    rep.set_filters(**filters)
 
 
 def pyam_df_from_rep(
@@ -32,7 +48,7 @@ def pyam_df_from_rep(
         col: list(mapping_df.index.get_level_values(col).unique())
         for col in mapping_df.index.names
     }
-    rep.set_filters(**filters_dict)
+    set_filters(rep, **filters_dict)
     df_var = pd.DataFrame(rep.get(f"{reporter_var}:nl-t-ya-m-c-l"))
     df = (
         df_var.join(mapping_df[["iamc_name", "unit"]])
@@ -332,7 +348,8 @@ def split_fe_other(
     """
     add_biometh_final_share(rep, mode="fuel")
     # set temporary filter on Reporter to speed up queries
-    rep.set_filters(
+    set_filters(
+        rep,
         t=[
             "meth_bunker",
             "meth_tobunker",
@@ -351,7 +368,7 @@ def split_fe_other(
             "meth_imp",
             "meth_ind_fs",
             "furnace_methanol_refining",
-        ]
+        ],
     )
     for c, full_name in zip(
         ["coal", "gas", "bio", "h2"],
@@ -530,7 +547,8 @@ def split_mto_feedstock(
 ) -> pyam.IamDataFrame:
     """Splits Final Energy|Non-Energy Use|*|Liquids|Other values."""
     add_biometh_final_share(rep, mode="feedstock")
-    rep.set_filters(
+    set_filters(
+        rep,
         t=[
             "meth_bunker",
             "meth_tobunker",
@@ -548,7 +566,7 @@ def split_mto_feedstock(
             "meth_exp",
             "meth_imp",
             "meth_ind_fs",
-        ]
+        ],
     )
     for c, full_name in zip(
         ["coal", "gas", "bio", "h2"],

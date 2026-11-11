@@ -1,5 +1,40 @@
+import logging
+from collections.abc import Hashable, Mapping
+from typing import Any
+
+import genno.operator
 import message_ix
 from genno import Key
+
+log = logging.getLogger(__name__)
+
+
+def select(qty: "genno.Quantity", indexers: Mapping[Hashable, Any], **kwargs):
+    """:func:`genno.operator.select` that accepts absent scalar labels.
+
+    A scalar label that is not among the coords of `qty`—for instance a technology
+    that a model of one country lacks—gives zeros over the other dimensions, instead of
+    :class:`KeyError`.
+    """
+    idx: dict[Hashable, Any] = dict(indexers)
+    absent = False
+    for dim, label in indexers.items():
+        if dim not in qty.dims or not isinstance(label, str):
+            continue
+        have = list(qty.coords[dim].data)
+        if label not in have and have:
+            log.info(f"{dim}={label!r} absent; selected values are zero")
+            idx[dim], absent = have[0], True
+    result = genno.operator.select(qty, idx, **kwargs)
+    return result * 0 if absent else result
+
+
+def group_sum(qty: "genno.Quantity", group: str, sum: str) -> "genno.Quantity":
+    """:func:`genno.operator.group_sum` that also accepts an empty `qty`."""
+    if len(qty) == 0:
+        return qty.sum(dim=sum)
+    return genno.operator.group_sum(qty, group=group, sum=sum)
+
 
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
@@ -39,17 +74,17 @@ def add_methanol_share_calculations(rep: message_ix.Reporter, mode: str = "feeds
     if mode == "feedstock":
         t_filter2.update({"l": ["primary_material"]})
 
-    rep.add("out::methanol-prod", "select", "out:nl-t-ya-c-l", t_filter2)
+    rep.add("out::methanol-prod", select, "out:nl-t-ya-c-l", t_filter2)
     rep.add(
         "out::methanol-prod-by-tec",
-        "group_sum",
+        group_sum,
         "out::methanol-prod",
         group="t",
         sum="c",
     )
     rep.add(
         "out::methanol-prod-total",
-        "group_sum",
+        group_sum,
         "out::methanol-prod",
         group=["nl", "ya"],
         sum="t",
@@ -84,10 +119,10 @@ def add_meth_export_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
     """
     add_methanol_share_calculations(rep, mode=mode)
     t_filter2 = {"t": "meth_exp", "m": mode}
-    rep.add("out::methanol-export", "select", "out:nl-t-ya-m", t_filter2)
+    rep.add("out::methanol-export", select, "out:nl-t-ya-m", t_filter2)
     rep.add(
         "out::methanol-export-total",
-        "group_sum",
+        group_sum,
         "out::methanol-export",
         group="ya",
         sum="nl",
@@ -116,11 +151,11 @@ def add_meth_import_calculations(rep: message_ix.Reporter, mode: str = "feedstoc
     """
     add_meth_export_calculations(rep, mode=mode)
     t_filter2 = {"t": "meth_imp", "m": mode}
-    rep.add("out::methanol-import", "select", "out:nl-t-ya-m", t_filter2)
+    rep.add("out::methanol-import", select, "out:nl-t-ya-m", t_filter2)
     for comm in comm_tec_map.keys():
         rep.add(
             f"out::{comm}methanol-export-total",
-            "group_sum",
+            group_sum,
             f"out::{comm}methanol-export",
             group="ya",
             sum="nl",
