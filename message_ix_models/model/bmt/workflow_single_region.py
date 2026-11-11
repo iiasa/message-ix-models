@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 SCENARIO_XLSX = "SSP2_Baseline_WEU_NEST_EXP1.1"
 
 #: ixmp platform that receives / already holds the scenario.
-PLATFORM_NAME = "local"
+PLATFORM_NAME = "message-jdbc-pg"
 
 #: Model name on the platform (scenario name comes from :data:`SCENARIO_XLSX`).
 MODEL_NAME = "WEU_NEST_EXP1.2"
