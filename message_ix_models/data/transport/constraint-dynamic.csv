@@ -20,11 +20,15 @@ F ROAD,          electr,    growth_activity_lo,       -0.0139
 F ROAD,          lightoil,  growth_activity_lo,       -0.1392
 F ROAD,          gas,       growth_activity_lo,       -0.1392
 
-F ROAD,          *,         growth_new_capacity_up,    0.0700
+F ROAD,          gas,       growth_activity_up,        0.0020
+F ROAD,          lightoil,  growth_activity_up,        0.0139
+F ROAD,          electr,    growth_activity_up,        0.1392
 
+
+F ROAD,          *,         growth_new_capacity_up,    0.0700
 F ROAD,          gas,       growth_new_capacity_up,    0.0020
 F ROAD,          electr,    growth_new_capacity_up,    0.1392
-
+F ROAD,          lightoil,  growth_new_capacity_up,    0.0139
 
 F ROAD,          *,         initial_new_capacity_up,   2.0
 
