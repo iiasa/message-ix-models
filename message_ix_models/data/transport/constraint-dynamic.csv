@@ -18,7 +18,7 @@ F RAIL,          *,         initial_new_capacity_up,   3.0
 F ROAD,          *,         growth_activity_lo,       -0.0192
 F ROAD,          electr,    growth_activity_lo,       -0.0139
 F ROAD,          lightoil,  growth_activity_lo,       -0.1392
-F ROAD,          gas,       growth_activity_lo,       -0.0696
+F ROAD,          gas,       growth_activity_lo,       -0.1392
 
 F ROAD,          *,         growth_new_capacity_up,    0.0139
 
@@ -28,7 +28,7 @@ F ROAD,          electr,    growth_new_capacity_up,    0.1392
 
 F ROAD,          *,         initial_new_capacity_up,   2.0
 
-# LDV,             *,         growth_activity_lo,       -0.0700
+LDV,             *,         growth_activity_lo,       -0.0700
 ELC_100,         *,         growth_activity_lo,       -0.0192
 ICE_conv,        *,         growth_activity_lo,       -0.1392
 
