@@ -287,6 +287,7 @@ def _update_buildings_demand_only(
     context: Context, scenario: message_ix.Scenario, paths: dict[str, Path]
 ) -> None:
     """Replace buildings ``demand`` from STURM CSVs; do not touch structure/techs."""
+    from message_ix_models.model.buildings.build import MATERIALS
     from message_ix_models.util import load_package_data
 
     sturm_r = _load_demand_csv(paths["sturm_r"])
@@ -311,6 +312,16 @@ def _update_buildings_demand_only(
     buildings_commodities = set(commodity_info.keys())
     demand = pd.concat(parts, ignore_index=True)
     demand = demand[demand["commodity"].isin(buildings_commodities)].copy()
+    # Same as prepare_data_B: materials/floor → demand, energy → useful
+    demand = demand.assign(
+        level=demand["commodity"].map(
+            lambda c: (
+                "demand"
+                if ("floor" in str(c) or any(m in str(c).lower() for m in MATERIALS))
+                else "useful"
+            )
+        )
+    )
 
     if scenario.has_solution():
         log.info("Removing solution before demand-only update")
@@ -328,6 +339,13 @@ def _update_buildings_demand_only(
         if not to_remove.empty:
             scenario.remove_par("demand", to_remove)
         scenario.add_par("demand", demand)
+
+    scenario.set_as_default()
+    log.info(
+        "Demand-only update done; has_solution=%s; set as default: %s",
+        scenario.has_solution(),
+        scenario.url,
+    )
 
 
 def main(

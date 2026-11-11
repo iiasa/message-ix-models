@@ -35,6 +35,12 @@ PLATFORM_NAME = "local"
 #: Model name on the platform (scenario name comes from :data:`SCENARIO_XLSX`).
 MODEL_NAME = "WEU_NEST_EXP1.2"
 
+#: Carbon price at year :data:`MITIG_PRICE_YEAR` (USD / tC); linear from 0 at FMY.
+MITIG_CARBON_PRICE = 400.0
+
+#: Year at which :data:`MITIG_CARBON_PRICE` is reached.
+MITIG_PRICE_YEAR = 2110
+
 
 def _scenario_xlsx_path() -> Path:
     """Resolve ``data/bmt/{SCENARIO_XLSX}.xlsx``."""
@@ -93,6 +99,64 @@ def prep_for_macro(
         )
 
     solve(context, scenario, **solve_args())
+    return scenario
+
+
+def add_mitig(
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    price: float = MITIG_CARBON_PRICE,
+    price_year: int = MITIG_PRICE_YEAR,
+) -> message_ix.Scenario:
+    """Add a TCE carbon tax (linear 0→`price` from FMY→`price_year`) and solve MM.
+
+    ``tax_emission`` uses ``type_emission="TCE"``, node ``WEU``, ``type_tec="all"``.
+    `price` is already in USD/tC.
+    """
+    import pandas as pd
+    from message_ix import make_df
+
+    from message_ix_models import ScenarioInfo
+
+    if scenario.has_solution():
+        scenario.remove_solution()
+
+    info = ScenarioInfo(scenario)
+    fmy = int(info.y0)
+    years = [int(y) for y in info.Y]
+    if price_year <= fmy:
+        raise ValueError(f"price_year={price_year} must be after FMY={fmy}")
+
+    # Linear ramp: 0 at FMY → price at price_year (clamp after).
+    span = float(price_year - fmy)
+    frac = pd.Series(
+        [min(max((y - fmy) / span, 0.0), 1.0) for y in years],
+        index=pd.Index(years, name="year"),
+    )
+    values = price * frac
+
+    data = make_df(
+        "tax_emission",
+        value=values.values,
+        type_year=values.index,
+        node="WEU",
+        type_emission="TCE",
+        type_tec="all",
+        unit="USD/tC",
+    )
+    log.info(
+        "Adding tax_emission on TCE: linear 0→%.1f USD/tC from %s→%s",
+        price,
+        fmy,
+        price_year,
+    )
+    with scenario.transact("Added linear TCE carbon price"):
+        scenario.add_par("tax_emission", data)
+    scenario.set_as_default()
+
+    log.info("Solving MESSAGE-MACRO mitigation scenario")
+    solve(context, scenario, **solve_args("MESSAGE-MACRO"))
     return scenario
 
 
@@ -225,6 +289,7 @@ def generate(context: Context) -> Workflow:
         target=f"{url}/base_B",
         clone=dict(keep_solution=True),
         update_prices=False,
+        update_demand_only=False,
     )
 
     name = wf.add_step("B solved", name, solve, **solve_args())
@@ -243,4 +308,29 @@ def generate(context: Context) -> Workflow:
         target=f"{url}/base_B_message_macro",
     )
 
+    name = wf.add_step(
+        "B mitig",
+        name,
+        add_mitig,
+        target=f"{url}/mitig_B",
+        clone=dict(keep_solution=False),
+        price=MITIG_CARBON_PRICE,
+        price_year=MITIG_PRICE_YEAR,
+    )
+
+    name = wf.add_step(
+        "B mitig iterated",
+        name,
+        build_B,
+        target=f"{url}/mitig_B_iterated",
+        clone=dict(keep_solution=True),
+        update_prices=True,
+        update_demand_only=True,
+    )
+    name = wf.add_step(
+        "B mitig iterated solved",
+        name,
+        solve,
+        **solve_args(),
+    )
     return wf
