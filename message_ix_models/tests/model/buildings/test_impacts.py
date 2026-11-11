@@ -186,3 +186,49 @@ def test_apply_theta_missing_node_raises() -> None:
     demand = pd.DataFrame({"node": ["R12_XYZ"], "year": [2050], "value": [1.0]})
     with pytest.raises(ValueError, match="Missing theta"):
         _apply_theta(demand, "heat", "SSP2")
+
+
+def test_scenario_data_rejects_unknown_files(tmp_path):
+    from message_ix_models.model.buildings.impacts import check_scenario_data
+
+    with pytest.raises(FileNotFoundError):
+        check_scenario_data(tmp_path / "absent")
+    with pytest.raises(ValueError, match="no data files"):
+        check_scenario_data(tmp_path)
+    (tmp_path / "region_EI_cool_gwl_binned_passive.nc").write_text("")
+    with pytest.raises(ValueError, match="Unexpected files"):
+        check_scenario_data(tmp_path)
+
+
+def test_scenario_data_replaces_only_what_it_holds(tmp_path):
+    """Packaged copies reproduce the default; a scaled gamma table scales its part."""
+    import shutil
+
+    from message_ix_models.model.buildings.impacts import _buildings_data_path
+    from message_ix_models.util import package_data_path
+
+    years = [2030, 2050, 2100]
+    gmt = flat_gmt(2.0)
+    cool0, heat0 = compute_building_cids(gmt, years, "SSP2")
+
+    same = tmp_path / "same"
+    same.mkdir()
+    shutil.copy(
+        package_data_path("impacts", "rime", "region_EI_cool_gwl_binned.nc"), same
+    )
+    name = "correction_coefficients_cool_SSP2_resid.csv"
+    shutil.copy(_buildings_data_path("correction_coefficients", name), same)
+    cool1, heat1 = compute_building_cids(gmt, years, "SSP2", data_dir=same)
+    pd.testing.assert_frame_equal(cool0, cool1)
+    pd.testing.assert_frame_equal(heat0, heat1)
+
+    double = tmp_path / "double"
+    double.mkdir()
+    cc = load_correction_coefficients("cool", "resid")
+    cc["correction_coeff"] *= 2
+    cc.to_csv(double / name, index=False)
+    cool2, heat2 = compute_building_cids(gmt, years, "SSP2", data_dir=double)
+    pd.testing.assert_frame_equal(heat0, heat2)
+    ratio = (cool2["value"] / cool0["value"]).dropna()
+    # Residential doubles, commercial does not: every node rises, none past 2x.
+    assert (ratio > 1).all() and (ratio <= 2 + 1e-9).all()

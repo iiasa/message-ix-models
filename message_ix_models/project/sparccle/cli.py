@@ -53,6 +53,24 @@ cli.add_command(
                     " --magicc-root (e.g. '_p95' for the p95 envelope tree)."
                 ),
             ),
+            click.Option(
+                ["--buildings-data", "buildings_data"],
+                type=click.Path(exists=True, file_okay=False, path_type=Path),
+                default=None,
+                help=(
+                    "Buildings scenario data directory: EI surfaces and gamma"
+                    " tables replacing the packaged ones. Needs --buildings-label."
+                ),
+            ),
+            click.Option(
+                ["--buildings-label", "buildings_label"],
+                type=str,
+                default=None,
+                help=(
+                    "Short label for --buildings-data, added to the CI_b and"
+                    " CI_bp names as _b<label>."
+                ),
+            ),
         ],
     )
 )

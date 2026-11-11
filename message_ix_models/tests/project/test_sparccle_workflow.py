@@ -48,6 +48,8 @@ def test_load_config_fills_defaults(tmp_path: Path) -> None:
         "min_year": None,
         "response_percentile": None,
         "climate_label": None,
+        "buildings_data": None,
+        "buildings_label": None,
     }
     assert config["regions"] == "R12"
 
@@ -391,3 +393,27 @@ def test_cli_run_missing_config_fails(mix_models_cli, tmp_path: Path) -> None:
     result = mix_models_cli.invoke(["sparccle", "run", f"--config={missing}"])
     assert result.exit_code != 0
     assert "does not exist" in result.output
+
+
+class TestBuildingsToken:
+    """Buildings scenario data must change the buildings names, and only those."""
+
+    def test_absent_data_leaves_names_unchanged(self):
+        assert workflow.buildings_token({"buildings_data": None}) == ""
+
+    def test_label_names_the_data(self):
+        cfg = {"buildings_data": "/some/dir", "buildings_label": "PAS"}
+        assert workflow.buildings_token(cfg) == "_bPAS"
+
+    def test_data_without_label_is_refused(self):
+        with pytest.raises(ValueError, match="buildings_label"):
+            workflow.buildings_token({"buildings_data": "/some/dir"})
+
+    def test_cooling_only_name_is_not_checked_against_the_buildings_label(self):
+        # 46 + "_cooling_CI_p" fits; with the label only the CI_b/CI_bp names
+        # grow, so only those can be reported.
+        config = {"starters": [{"scenario": "x" * 46}]}
+        with pytest.raises(ValueError) as exc:
+            validate_names(config, "", "_bPOSA")
+        assert "_cooling_CI_bp_bPOSA" in str(exc.value)
+        assert "_cooling_CI_p " not in str(exc.value)

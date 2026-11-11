@@ -81,4 +81,22 @@ The per-starter ``magicc_output_dir`` in :file:`scenario_config.yaml` can be ove
 Precedence: ``--magicc-file`` > ``--magicc-root`` > YAML.
 This lets one packaged YAML serve multiple delivery variants whose only difference is the MAGICC tree location.
 
+Buildings scenario data
+=======================
+
+A buildings scenario (a different building envelope, cooling setpoint, AC adoption or insulation path) changes the climate response of energy intensity (the CHILLED EI surfaces) or the STURM-derived gamma tables.
+Such a scenario is a directory holding replacements for some of these files, under their packaged names:
+
+- ``region_EI_{cool,heat}_gwl_binned.nc``
+- ``correction_coefficients_{cool,heat}_SSP2_{resid,comm}.csv``
+
+Files the directory does not hold are read from the package, and any other file in it is an error.
+Theta stays the packaged calibration, so the scenario demand is a change against the same calibrated base.
+
+- ``--buildings-data <dir>`` (YAML: ``cid.buildings_data``) selects the directory for the ``CI_b`` and ``CI_bp`` steps.
+- ``--buildings-label <label>`` (YAML: ``cid.buildings_label``, required with the directory) adds ``_b<label>`` to the ``CI_b`` and ``CI_bp`` names, so scenarios on one starter do not share a name.
+  ``CI_p`` keeps its name.
+
+The gamma tables are SSP2-derived for every SSP, like the packaged ones.
+
 See :doc:`/global/impacts/index` for the impact application modules and :doc:`/api/tools-impacts` for the underlying GMT-to-impact toolkit.

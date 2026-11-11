@@ -4,6 +4,7 @@ See :doc:`/global/impacts/index` for the calibration-layer definitions.
 """
 
 import logging
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -35,20 +36,72 @@ def _buildings_data_path(*parts: str):
     return package_data_path("buildings", *parts)
 
 
-def _load_ei_dataset(mode: Literal["cool", "heat"]) -> xr.Dataset:
-    return open_rime_dataset(f"region_EI_{mode}_gwl_binned.nc")
+#: File names a scenario data directory may hold in place of the packaged files.
+#: Any other file in the directory is an error, so a misnamed file cannot be
+#: silently ignored.
+SCENARIO_DATA_FILES = frozenset(
+    [f"region_EI_{m}_gwl_binned.nc" for m in ("cool", "heat")]
+    + [
+        f"correction_coefficients_{m}_{_CORRECTION_COEFFICIENT_SCENARIO}_{s}.csv"
+        for m in ("cool", "heat")
+        for s in ("resid", "comm")
+    ]
+)
+
+
+def check_scenario_data(data_dir: str | Path) -> list[str]:
+    """Return the scenario data files in *data_dir*; raise on anything else.
+
+    A scenario data directory replaces some of the packaged EI surfaces
+    (``region_EI_{cool,heat}_gwl_binned.nc``, e.g. a different building
+    envelope or cooling setpoint) and gamma tables
+    (``correction_coefficients_{cool,heat}_SSP2_{resid,comm}.csv``, e.g. a
+    different AC adoption or insulation path in STURM). Files it does not hold
+    are read from the package.
+    """
+    path = Path(data_dir)
+    if not path.is_dir():
+        raise FileNotFoundError(f"buildings scenario data directory not found: {path}")
+    names = sorted(p.name for p in path.iterdir() if p.is_file())
+    if unknown := [n for n in names if n not in SCENARIO_DATA_FILES]:
+        raise ValueError(
+            f"Unexpected files in buildings scenario data {path}: {unknown}; "
+            f"allowed: {sorted(SCENARIO_DATA_FILES)}"
+        )
+    if not names:
+        raise ValueError(f"buildings scenario data {path} holds no data files")
+    return names
+
+
+def _ei_source(mode: Literal["cool", "heat"], data_dir: str | Path | None) -> str:
+    """EI dataset to read: the scenario's file if it has one, else the packaged one."""
+    name = f"region_EI_{mode}_gwl_binned.nc"
+    if data_dir is not None and (Path(data_dir) / name).is_file():
+        return str((Path(data_dir) / name).resolve())
+    return name
+
+
+def _load_ei_dataset(
+    mode: Literal["cool", "heat"], data_dir: str | Path | None = None
+) -> xr.Dataset:
+    return open_rime_dataset(_ei_source(mode, data_dir))
 
 
 def load_correction_coefficients(
     mode: Literal["cool", "heat"],
     sector: Literal["resid", "comm"] = "resid",
+    data_dir: str | Path | None = None,
 ) -> pd.DataFrame:
-    """Load gamma and floor-area terms for archetype-level STURM calibration."""
-    path = _buildings_data_path(
-        "correction_coefficients",
-        "correction_coefficients_"
-        f"{mode}_{_CORRECTION_COEFFICIENT_SCENARIO}_{sector}.csv",
-    )
+    """Load gamma and floor-area terms for archetype-level STURM calibration.
+
+    *data_dir*, if given and holding the matching file, replaces the packaged
+    table (see :func:`check_scenario_data`).
+    """
+    scenario = _CORRECTION_COEFFICIENT_SCENARIO
+    name = f"correction_coefficients_{mode}_{scenario}_{sector}.csv"
+    path = _buildings_data_path("correction_coefficients", name)
+    if data_dir is not None and (Path(data_dir) / name).is_file():
+        path = Path(data_dir) / name
     return pd.read_csv(path, comment="#")
 
 
@@ -79,6 +132,7 @@ def predict_building_ei(
     mode: Literal["cool", "heat"],
     *,
     percentile: int | str | None = None,
+    data_dir: str | Path | None = None,
 ) -> np.ndarray:
     """Predict EI at native RIME resolution, mean-reduced across the ensemble.
 
@@ -91,6 +145,8 @@ def predict_building_ei(
         ``"cool"`` or ``"heat"``.
     percentile
         Conditional response percentile within each RIME GWL window.
+    data_dir
+        Optional scenario data directory (see :func:`check_scenario_data`).
 
     Returns
     -------
@@ -100,7 +156,7 @@ def predict_building_ei(
     gmt_clipped = clip_gmt(gmt_array, gmt_min=0.6, gmt_ceil=0.9)
     return predict_rime(
         gmt_clipped,
-        f"region_EI_{mode}_gwl_binned.nc",
+        _ei_source(mode, data_dir),
         f"EI_{mode}",
         aggregate="mean",
         percentile=percentile,
@@ -169,12 +225,13 @@ def _compute_sector_energy(
     sector: Literal["resid", "comm"],
     ei_df: pd.DataFrame,
     mfh_ei_df: pd.DataFrame,
+    data_dir: str | Path | None = None,
 ) -> pd.DataFrame:
     """Compute energy demand for one mode/sector via vectorized join.
 
     Returns DataFrame with columns [region, year, value] in EJ.
     """
-    coeff = load_correction_coefficients(mode, sector)
+    coeff = load_correction_coefficients(mode, sector, data_dir)
     valid = coeff["correction_coeff"].notna() & (coeff["floor_Mm2"] > 0)
     coeff = coeff[valid]
 
@@ -242,6 +299,7 @@ def compute_building_cids(
     reference_scenario: str,
     regions: str = "R12",
     response_percentile: int | str | None = None,
+    data_dir: str | Path | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Compute building energy CIDs from a GMT ensemble.
 
@@ -262,6 +320,11 @@ def compute_building_cids(
         RIME EI datasets and STURM floor-area files.
     response_percentile
         Conditional response percentile within each RIME GWL window.
+    data_dir
+        Optional scenario data directory replacing some packaged EI surfaces
+        and gamma tables (see :func:`check_scenario_data`). Theta stays the
+        packaged one, so demand is a scenario change against the same
+        calibration.
 
     Returns
     -------
@@ -273,6 +336,12 @@ def compute_building_cids(
         raise NotImplementedError(
             f"regions={regions!r}; this kernel currently only supports R12 "
             "(RIME EI datasets and STURM floor-area files are R12-coded)."
+        )
+    if data_dir is not None:
+        log.info(
+            "Buildings scenario data from %s: %s",
+            data_dir,
+            check_scenario_data(data_dir),
         )
     values = np.asarray(gmt.values)
     years = np.asarray(gmt.years, dtype=int)
@@ -302,13 +371,15 @@ def compute_building_cids(
 
     results = {}
     for mode in ("cool", "heat"):
-        ei_all = predict_building_ei(gmt_subset, mode, percentile=response_percentile)
-        ds = _load_ei_dataset(mode)
+        ei_all = predict_building_ei(
+            gmt_subset, mode, percentile=response_percentile, data_dir=data_dir
+        )
+        ds = _load_ei_dataset(mode, data_dir)
         ei_df = _ei_to_dataframe(ei_all, ds, msg_years)
         mfh_ei_df = _mfh_weighted_ei(ei_df, resid_floor)
 
-        resid = _compute_sector_energy(mode, "resid", ei_df, mfh_ei_df)
-        comm = _compute_sector_energy(mode, "comm", ei_df, mfh_ei_df)
+        resid = _compute_sector_energy(mode, "resid", ei_df, mfh_ei_df, data_dir)
+        comm = _compute_sector_energy(mode, "comm", ei_df, mfh_ei_df, data_dir)
 
         total = (
             pd.concat([resid, comm], ignore_index=True)
