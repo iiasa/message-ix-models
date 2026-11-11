@@ -157,24 +157,38 @@ def add_mitig(
 
     log.info("Solving MESSAGE-MACRO mitigation scenario")
     solve(context, scenario, **solve_args("MESSAGE-MACRO"))
+    scenario.set_as_default()
+
     return scenario
 
 
-def add_macro(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Add MACRO from the BMT workbook and solve MESSAGE-MACRO."""
+def add_macro(
+    context: Context,
+    scenario: message_ix.Scenario,
+    *,
+    macro_file: str | None = None,
+) -> message_ix.Scenario:
+    """Add MACRO from a BMT workbook and solve MESSAGE-MACRO.
+
+    `macro_file` overrides the default from ``config_single_region.yaml``
+    (``macro:`` / ``context.macro``). Pass it via :meth:`.Workflow.add_step`
+    when different branches need different calibration workbooks.
+    """
     import pandas as pd
 
     from message_ix_models.model.material.data_util import (
         _filter_macro_data_to_scenario,
     )
 
-    macro_file = getattr(context, "macro", None)
+    if macro_file is None:
+        macro_file = getattr(context, "macro", None)
     if macro_file is None:
         bmt = getattr(context, "bmt", None)
         macro_file = bmt.get("macro") if isinstance(bmt, dict) else None
     if not macro_file:
         raise ValueError(
-            "No MACRO workbook configured; set macro: in config_single_region.yaml"
+            "No MACRO workbook configured; pass macro_file= to the step or set "
+            "macro: in config_single_region.yaml"
         )
 
     path = package_data_path("bmt", Path(macro_file).name)
@@ -279,21 +293,43 @@ def generate(context: Context) -> Workflow:
     base_url = f"ixmp://{PLATFORM_NAME}/{MODEL_NAME}/{_scenario_name()}"
     url = f"ixmp://{PLATFORM_NAME}/{MODEL_NAME}"
 
-    name = wf.add_step("M", None, target=base_url)
-    name = wf.add_step("M solved", name, solve, **solve_args())
+    name = wf.add_step("base", None, target=base_url)
+    name = wf.add_step("base solved", name, solve, **solve_args())
+
+    name = wf.add_step(
+        "base prep macro",
+        "base solved",
+        prep_for_macro,
+        target=f"{url}/base_message",
+        clone=dict(shift_first_model_year=2030),
+    )
+    name = wf.add_step(
+        "base macro",
+        name,
+        add_macro,
+        target=f"{url}/base_message_macro",
+        macro_file="SSP2_WEU_NEST_EXP1.2_macro.xlsx",
+    )
+    name = wf.add_step(
+        "mitig",
+        name,
+        add_mitig,
+        target=f"{url}/mitig",
+        clone=dict(keep_solution=False),
+        price=MITIG_CARBON_PRICE,
+        price_year=MITIG_PRICE_YEAR,
+    )
 
     name = wf.add_step(
         "B built",
-        name,
+        "base solved",
         build_B,
         target=f"{url}/base_B",
         clone=dict(keep_solution=True),
         update_prices=False,
         update_demand_only=False,
     )
-
     name = wf.add_step("B solved", name, solve, **solve_args())
-
     name = wf.add_step(
         "B prep macro",
         name,
@@ -306,8 +342,8 @@ def generate(context: Context) -> Workflow:
         name,
         add_macro,
         target=f"{url}/base_B_message_macro",
+        macro_file="SSP2_WEU_NEST_EXP1.2_macro_b_added.xlsx",
     )
-
     name = wf.add_step(
         "B mitig",
         name,
@@ -317,7 +353,6 @@ def generate(context: Context) -> Workflow:
         price=MITIG_CARBON_PRICE,
         price_year=MITIG_PRICE_YEAR,
     )
-
     name = wf.add_step(
         "B mitig iterated",
         name,
@@ -333,4 +368,5 @@ def generate(context: Context) -> Workflow:
         solve,
         **solve_args(),
     )
+
     return wf
