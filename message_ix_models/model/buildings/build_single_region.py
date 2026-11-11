@@ -5,10 +5,8 @@ Mirrors the METHOD-B path in :mod:`.buildings.build` / :mod:`.buildings.workflow
 1. Optionally refresh STURM energy prices from the solved scenario
    (:func:`.build.get_prices_B`).
 2. Run WEU STURM (:func:`.sturm_single_region.run`).
-3. Build demand / technologies into MESSAGE: load
-   ``message_linking/{resid,comm}_sturm_*.csv`` (METHOD-B schema), remap nodes
-   if needed, keep ``demand_static`` empty for now, then call
-   :func:`.build.main` with :attr:`~.buildings.config.METHOD.B`.
+3. Either update buildings ``demand`` only, or full METHOD-B build
+   (:func:`.build.main`) from ``message_linking/{resid,comm}_sturm_*.csv``.
 """
 
 from __future__ import annotations
@@ -38,15 +36,128 @@ _NODE_ALIASES = {
 }
 
 
+#: MESSAGE single-region node → STURM ``input_prices_R12*.csv`` node.
+#: The STURM file is named ``*_R12`` but stores R11 labels (``R11_WEU``).
+# YJ: this should really be fixed...before 2027!
+_WEU_PRICE_NODE = {"WEU": "R11_WEU", "R12_WEU": "R11_WEU", "R11_WEU": "R11_WEU"}
+_STURM_WEU_NODE = "R11_WEU"
+
+
+def _drop_unnamed_cols(df: pd.DataFrame) -> pd.DataFrame:
+    return df.loc[:, [c for c in df.columns if not str(c).startswith("Unnamed")]]
+
+
 def get_prices_for_sturm(
     context: Context, scenario: message_ix.Scenario
 ) -> pd.DataFrame:
-    """Return STURM price table via :func:`.build.get_prices_B`."""
+    """Return full STURM ``input_prices_R12`` table with only WEU rows updated.
+
+    Unlike :func:`.build.get_prices_B` (R12 → R11 adapt of all regions), this:
+
+    1. Keeps the existing multi-region price CSV structure intact.
+    2. Takes ``PRICE_COMMODITY`` from the single-region scenario (node ``WEU``).
+    3. Maps ``WEU`` → ``R11_WEU`` (label used in the STURM price files).
+    4. Applies the same electr / floor rules as :func:`.build.get_prices_B`, but
+       only for ``R11_WEU`` rows; all other nodes are left unchanged.
+    """
+    import numpy as np
+
     from message_ix_models.model.buildings import sturm_single_region
-    from message_ix_models.model.buildings.build import get_prices_B
+    from message_ix_models.model.buildings.build import get_prices
+    from message_ix_models.model.buildings.config import DEFAULT_DATA_PATHS
 
     _, input_dir = sturm_single_region._ensure_sturm_dirs(context)
-    return get_prices_B(scenario, input_dir)
+    config: "Config" = context.buildings
+    price_name = Path(
+        config.data_paths.get("prices", DEFAULT_DATA_PATHS["prices"])
+    ).name
+    price_path = input_dir.joinpath(price_name)
+    default_path = input_dir.joinpath("input_prices_R12_default.csv")
+
+    if not price_path.exists():
+        if not default_path.exists():
+            raise FileNotFoundError(
+                f"STURM price file not found: {price_path} (nor {default_path})"
+            )
+        price_path = default_path
+
+    df_full = _drop_unnamed_cols(pd.read_csv(price_path))
+    df_floor = _drop_unnamed_cols(
+        pd.read_csv(default_path) if default_path.exists() else df_full.copy()
+    )
+
+    df_scen = get_prices(scenario).copy()
+    if df_scen.empty:
+        raise ValueError(
+            f"No PRICE_COMMODITY (final fuels) on {scenario.url}; "
+            "cannot update STURM WEU prices"
+        )
+
+    df_scen["node"] = df_scen["node"].astype(str).replace(_WEU_PRICE_NODE)
+    unknown = sorted(set(df_scen["node"]) - {_STURM_WEU_NODE})
+    if unknown:
+        log.warning(
+            "Dropping non-WEU price nodes from single-region update: %s", unknown
+        )
+        df_scen = df_scen[df_scen["node"] == _STURM_WEU_NODE]
+    if df_scen.empty:
+        raise ValueError(
+            f"No WEU prices after node remap on {scenario.url} "
+            f"(looked for nodes in {_WEU_PRICE_NODE})"
+        )
+
+    cols = [
+        c
+        for c in ("node", "commodity", "level", "year", "time")
+        if c in df_scen.columns and c in df_floor.columns
+    ]
+    weu_floor = df_floor.loc[df_floor["node"].astype(str) == _STURM_WEU_NODE].copy()
+    merged = pd.merge(
+        weu_floor,
+        df_scen[cols + ["lvl"]],
+        on=cols,
+        how="left",
+        suffixes=("", "_new"),
+    )
+
+    lvl_original = merged["lvl"].copy()
+    lvl_scenario = merged["lvl_new"].fillna(merged["lvl"])
+    factor = np.where(lvl_original != 0, lvl_scenario / lvl_original, np.nan)
+    has_scenario = merged["lvl_new"].notna()
+    below_reference = (factor < 1) & has_scenario
+    use_reference_floor = below_reference & (merged["commodity"] != "electr")
+    merged["lvl"] = np.where(use_reference_floor, lvl_original, lvl_scenario)
+    merged = merged.drop(columns=["lvl_new"])
+
+    # Full table: non-WEU unchanged; R11_WEU replaced with merged values.
+    out = df_full.copy()
+    weu_mask = out["node"].astype(str) == _STURM_WEU_NODE
+    updated = merged.copy()
+    for c in out.columns:
+        if c not in updated.columns:
+            # e.g. keep original ``mrg`` if present on the WEU block
+            updated[c] = out.loc[weu_mask, c].to_numpy() if weu_mask.any() else np.nan
+    updated = updated.loc[:, out.columns]
+
+    out = pd.concat([out.loc[~weu_mask], updated], ignore_index=True)
+    node_cats = list(dict.fromkeys(df_full["node"].astype(str)))
+    out = (
+        out.assign(
+            node=pd.Categorical(
+                out["node"].astype(str), categories=node_cats, ordered=True
+            )
+        )
+        .sort_values(["node", "commodity", "level", "year", "time"], kind="mergesort")
+        .assign(node=lambda d: d["node"].astype(str))
+        .reset_index(drop=True)
+    )
+
+    log.info(
+        "Updated STURM WEU prices: %d R11_WEU rows (%d matched scenario lvl)",
+        len(updated),
+        int(has_scenario.sum()),
+    )
+    return out
 
 
 def _target_node(scenario: message_ix.Scenario, source_nodes: set[str]) -> str | None:
@@ -163,21 +274,76 @@ def _prepare_method_b_inputs(
     return paths
 
 
+def _load_demand_csv(path: Path) -> pd.DataFrame:
+    """Load a METHOD-B demand CSV, keeping :data:`_DEMAND_COLUMNS` only."""
+    df = pd.read_csv(path)
+    missing = [c for c in _DEMAND_COLUMNS if c not in df.columns]
+    if missing:
+        raise ValueError(f"{path}: missing demand columns {missing}")
+    return df.loc[:, _DEMAND_COLUMNS]
+
+
+def _update_buildings_demand_only(
+    context: Context, scenario: message_ix.Scenario, paths: dict[str, Path]
+) -> None:
+    """Replace buildings ``demand`` from STURM CSVs; do not touch structure/techs."""
+    from message_ix_models.util import load_package_data
+
+    sturm_r = _load_demand_csv(paths["sturm_r"])
+    sturm_c = _load_demand_csv(paths["sturm_c"])
+    demand_static = _load_demand_csv(paths["demand_static"])
+
+    # Same 2110 fill as :func:`.build.prepare_data_B`.
+    parts = []
+    for df in (sturm_r, sturm_c, demand_static):
+        if df.empty:
+            continue
+        if 2110 not in df["year"].values and 2100 in df["year"].values:
+            df_2110 = df[df["year"] == 2100].copy()
+            df_2110["year"] = 2110
+            df = pd.concat([df, df_2110], ignore_index=True)
+        parts.append(df)
+
+    if not parts:
+        raise ValueError("No STURM / static demand rows to update")
+
+    commodity_info = load_package_data("buildings", "commodity.yaml")
+    buildings_commodities = set(commodity_info.keys())
+    demand = pd.concat(parts, ignore_index=True)
+    demand = demand[demand["commodity"].isin(buildings_commodities)].copy()
+
+    if scenario.has_solution():
+        log.info("Removing solution before demand-only update")
+        scenario.remove_solution()
+
+    existing = scenario.par("demand")
+    to_remove = existing[existing["commodity"].isin(buildings_commodities)]
+    log.info(
+        "Updating buildings demand only: remove %d / add %d rows (%s)",
+        len(to_remove),
+        len(demand),
+        scenario.url,
+    )
+    with scenario.transact("Update WEU buildings demand from STURM (demand-only)"):
+        if not to_remove.empty:
+            scenario.remove_par("demand", to_remove)
+        scenario.add_par("demand", demand)
+
+
 def main(
     context: Context,
     scenario: message_ix.Scenario,
     *,
     update_prices: bool = False,
+    update_demand_only: bool = False,
 ) -> message_ix.Scenario:
     """WEU buildings build step.
 
     1. Optionally refresh STURM energy prices from the solved scenario
     (:func:`.build.get_prices_B`).
     2. Run WEU STURM (:func:`.sturm_single_region.run`).
-    3. Build demand / technologies into MESSAGE: load
-    ``message_linking/{resid,comm}_sturm_*.csv`` (METHOD-B schema), remap nodes
-    if needed, keep ``demand_static`` empty for now, then call
-    :func:`.build.main` with :attr:`~.buildings.config.METHOD.B`.
+    3. Either update buildings ``demand`` only (`update_demand_only`), or full
+    METHOD-B build via :func:`.build.main` (technologies / sets / demand).
 
     Parameters
     ----------
@@ -189,6 +355,10 @@ def main(
         If :obj:`True` (mitigation / carbon-budget runs), refresh STURM prices
         from `scenario` before running R. If :obj:`False` (baseline), keep the
         existing STURM price file.
+    update_demand_only :
+        If :obj:`True`, still run steps 1–2, then only replace buildings
+        ``demand`` from the STURM linking CSVs (no tech/set rebuild). Default
+        :obj:`False` runs the full :func:`.build.main` path.
     """
     from message_ix_models.model.buildings import build, sturm_single_region
     from message_ix_models.model.buildings.config import METHOD
@@ -199,8 +369,10 @@ def main(
         log.info("Setting context.model.regions=WEU for single-region build")
         context.model.regions = "WEU"
     log.info(
-        "WEU buildings build (update_prices=%s, code=%r, regions=%r)",
+        "WEU buildings build (update_prices=%s, update_demand_only=%s, "
+        "code=%r, regions=%r)",
         update_prices,
+        update_demand_only,
         config.code,
         context.model.regions,
     )
@@ -215,6 +387,11 @@ def main(
         "sturm_c": paths["sturm_c"],
         "demand_static": paths["demand_static"],
     }
+
+    if update_demand_only:
+        _update_buildings_demand_only(context, scenario, paths)
+        return scenario
+
     method = config.method
     config.method = method if isinstance(method, METHOD) else METHOD[str(method)]
 
