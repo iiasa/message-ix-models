@@ -4,8 +4,10 @@ import pytest
 from message_ix_models.report import report
 from message_ix_models.report.legacy.country import (
     GWa_to_EJ,
+    _transact_ts,
     closure,
     stat_diff_data,
+    write_xlsx,
 )
 from message_ix_models.testing import bare_res
 
@@ -123,3 +125,27 @@ def test_report_legacy_country(caplog, request, tmp_path, test_context) -> None:
     assert any(f"Would report {scenario.url} to {exp}" in m for m in caplog.messages)
     # Nothing written
     assert not exp.exists()
+
+
+def test_write_xlsx(request, test_context, tmp_path) -> None:
+    """The workbook holds all stored time series data, including data added later."""
+    scenario = bare_res(request, test_context, solved=False)
+    data = pd.DataFrame(
+        dict(
+            region="World",
+            variable="Statistical Difference|gas|secondary",
+            unit="EJ/yr",
+            year=[2020],
+            value=[0.25],
+        )
+    )
+    with _transact_ts(scenario, "Add test data"):
+        scenario.add_timeseries(data)
+
+    path = write_xlsx(scenario, tmp_path)
+
+    assert f"{scenario.model}_{scenario.scenario}.xlsx" == path.name
+    df = pd.read_excel(path, sheet_name="data")
+    assert ["Model", "Scenario", "Region", "Variable", "Unit"] == list(df.columns[:5])
+    row = df[df.Variable == "Statistical Difference|gas|secondary"]
+    assert [("World", "EJ/yr", 0.25)] == list(zip(row.Region, row.Unit, row[2020]))

@@ -397,6 +397,9 @@ def _invoke_legacy_reporting(context):
     if _country:
         country.add_stat_diff(scen, region=country_cfg.get("region"))
         scen.timeseries().to_csv(Path(out_dir, "timeseries.csv"), index=False)
+        # Rewrite the legacy workbook, which was written before the statistical
+        # differences were added
+        country.write_xlsx(scen, Path(out_dir))
         country.log_closure(scen)
         log.info(f"Reported {scen.url}; output in {out_dir}")
 

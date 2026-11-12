@@ -21,6 +21,9 @@ log = logging.getLogger(__name__)
 #: takes it up (mode M2, input), or enters a relation (:par:`relation_activity`).
 STAT_DIFF = "stat_diff_"
 
+#: Lower-case IAMC index columns returned by :meth:`ixmp.TimeSeries.timeseries`.
+IAMC_COLS = ("model", "scenario", "region", "variable", "unit")
+
 #: Conversion factor from GWa to EJ.
 GWa_to_EJ = 8.76 * 3.6e-3
 
@@ -280,6 +283,25 @@ def closure(
     return pd.DataFrame(
         rows, columns=["check", "reference", "year", "reported", "expected", "ok"]
     )
+
+
+def write_xlsx(scenario: "Scenario", out_dir: Path) -> Path:
+    """Write all time series data of `scenario` to a workbook in `out_dir`.
+
+    The file has the name and layout of the one the legacy reporting writes: sheet
+    "data", the IAMC columns Model, Scenario, Region, Variable and Unit, then one
+    column per year. Call this after :func:`add_stat_diff`, so that the workbook also
+    contains the statistical differences.
+    """
+    df = (
+        scenario.timeseries(iamc=True)
+        .drop(columns="subannual", errors="ignore")
+        .rename(columns={c: c.title() for c in IAMC_COLS})
+    )
+    path = Path(out_dir, f"{scenario.model}_{scenario.scenario}.xlsx")
+    with pd.ExcelWriter(path, engine="xlsxwriter") as writer:
+        df.to_excel(writer, sheet_name="data", index=False)
+    return path
 
 
 def log_closure(scenario: "Scenario") -> pd.DataFrame:
