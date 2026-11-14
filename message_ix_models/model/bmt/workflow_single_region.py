@@ -366,7 +366,7 @@ def generate(context: Context) -> Workflow:
         "B mitig iterated solved",
         name,
         solve,
-        **solve_args(),
+        **solve_args("MESSAGE-MACRO"),
     )
 
     return wf
