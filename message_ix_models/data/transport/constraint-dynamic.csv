@@ -28,6 +28,9 @@ F ROAD,          *,         initial_new_capacity_up,   2.0
 LDV,             *,         growth_activity_lo,       -0.0539
 ELC_100,         *,         growth_activity_lo,       -0.0192
 ICE_conv,        *,         growth_activity_lo,       -0.1617
+ELC_100,         *,         growth_activity_lo,       -0.0192
+ELC_100,         *,         growth_activity_up,        0.1617
+
 
 # Some LDV technologies
 ELC_100,         *,         growth_new_capacity_lo,   -0.0539
@@ -56,7 +59,7 @@ ICE_L_ptrp,      *,         growth_new_capacity_up,    0.0192
 #      mode.
 LDV,             *,         initial_new_capacity_up,  10.0
 
-usage LDV,       *,         growth_activity_up,        0.0539
+# usage LDV,       *,         growth_activity_up,        0.0539
 usage LDV,       *,         initial_activity_up,       1000000
 
 P ex LDV,        *,         growth_activity_lo,       -0.0192
