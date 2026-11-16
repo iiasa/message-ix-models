@@ -22,7 +22,7 @@ F ROAD,          gas,       growth_activity_up,        0.00750
 
 F ROAD,          *,         growth_new_capacity_up,    0.1617
 F ROAD,          gas,       growth_new_capacity_up,    0.0075
-F ROAD,          *,         initial_new_capacity_up,   0.00002
+F ROAD,          *,         initial_new_capacity_up,   0.0002
 
 LDV,             *,         growth_activity_lo,       -0.0539
 ELC_100,         *,         growth_activity_lo,       -0.0192
