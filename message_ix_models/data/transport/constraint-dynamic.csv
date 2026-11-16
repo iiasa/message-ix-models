@@ -8,6 +8,7 @@
 #
 # Units: dimensionless
 #
+technology,      commodity, name,                     value
 F RAIL,          *,         growth_activity_lo,       -0.0192
 F RAIL,          electr,    growth_activity_lo,        0.0
 
