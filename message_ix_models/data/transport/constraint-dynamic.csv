@@ -29,7 +29,7 @@ LDV,             *,         growth_activity_lo,       -0.0539
 ELC_100,         *,         growth_activity_lo,       -0.0192
 ICE_conv,        *,         growth_activity_lo,       -0.1617
 ELC_100,         *,         growth_activity_lo,       -0.0192
-ELC_100,         *,         growth_activity_up,        0.1617
+ELC_100,         *,         growth_activity_up,        0.2617
 
 
 # Some LDV technologies
