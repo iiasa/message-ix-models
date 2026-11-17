@@ -300,51 +300,12 @@ conE_ar:
   report: Air|Biofuel
   message-v-id: AIRp_BIO
 
-FR_ICE_H:
-  name: High-efficiency light oil truck
-  description: >-
-    High-efficiency internal combustion engine freight truck using
-    gasoline/diesel
-  input: {commodity: lightoil, level: final}
-  report: Truck|Combustion light oil high efficiency
-  message-v-id: FRT_ICE_H
-  gains-technology: [End_Use_Transport_HDT_HLF]
-
-FR_ICE_M:
-  name: Medium-efficiency light oil truck
-  description: >-
-    Medium-efficiency internal combustion engine freight truck using
-    gasoline/diesel
-  input: {commodity: lightoil}
-  report: Truck|Combustion light oil medium efficiency
-  message-v-id: FRT_ICE_M
-  gains-technology: [End_Use_Transport_HDT_HLF]
-
-FR_ICE_L:
-  name: Low-efficiency light oil truck
-  description: >-
-    Low-efficiency internal combustion engine freight truck using
-    gasoline/diesel
-  input: {commodity: lightoil}
-  report: Truck|Combustion light oil low efficiency
-  message-v-id: FRT_ICE_L
-  gains-technology: [End_Use_Transport_HDT_HLF]
-
 FR_ICAe:
   name: Biofuel truck
   description: Internal combustion engine freight truck using biofuels
   input: {commodity: ethanol}
   report: Truck|Biofuel
   message-v-id: FRT_ICAe
-  gains-technology: [End_Use_Transport_HDT_HLF]
-
-FR_ICH:
-  name: Hybrid ICE truck
-  description: >-
-    Hybridized internal combustion engine freight truck using gasoline/diesel
-  input: {commodity: lightoil}
-  report: Truck|Hybrid combustion
-  message-v-id: FRT_ICH
   gains-technology: [End_Use_Transport_HDT_HLF]
 
 FR_FCH:
@@ -376,6 +337,15 @@ f road gas ic:
   report: Truck|Gas combustion
   message-v-id: [FR_ICG, FRT_ICG]
   gains-technology: [End_Use_Transport_NatGas]
+
+f road lightoil:
+  name: Light oil truck
+  description: >-
+    Internal combustion engine freight truck using gasoline/diesel,
+    possibly hybrid-electric.
+  input: {commodity: lightoil, level: final}
+  report: Truck|Combustion light oil
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 f road methanol:
   name: Synfuel truck
@@ -562,13 +532,10 @@ F ROAD:
   - f road electr
   - f road gas fc
   - f road gas ic
+  - f road lightoil
   - f road methanol
   - FR_FCH
   - FR_ICAe
-  - FR_ICE_H
-  - FR_ICE_L
-  - FR_ICE_M
-  - FR_ICH
   units: Gv km
   output: {commodity: transport F ROAD vehicle, level: useful}
   iea-eweb-flow: [ROAD]
