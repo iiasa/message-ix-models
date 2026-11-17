@@ -153,72 +153,72 @@ R12_WEU,  PHEV_ptrp,       0.004
 *,        f rail lightoil, 0.5
 
 # F ROAD
-*,        FR_FCH,          0.0001
-*,        FR_ICAe,         0.0500
+*,        f road hydrogen, 0.0001
+*,        f road ethanol,  0.0500
 *,        f road electr,   0.0001
 *,        f road gas fc,   0.0001
 *,        f road gas ic,   0.0001
 *,        f road lightoil, 0.9495
 *,        f road methanol, 0.0001
 
-R12_CHN,  FR_FCH,          0.0001
-R12_CHN,  FR_ICAe,         0.0500
+R12_CHN,  f road hydrogen, 0.0001
+R12_CHN,  f road ethanol,  0.0500
 R12_CHN,  f road electr,   0.0001
 R12_CHN,  f road gas fc,   0.007966
 R12_CHN,  f road gas ic,   0.007966
 R12_CHN,  f road lightoil, 0.933568
 R12_CHN,  f road methanol, 0.0001
 
-R12_EEU,  FR_FCH,          0.0001
-R12_EEU,  FR_ICAe,         0.0001
+R12_EEU,  f road hydrogen, 0.0001
+R12_EEU,  f road ethanol,  0.0001
 R12_EEU,  f road electr,   0.0001
 R12_EEU,  f road gas fc,   0.006294
 R12_EEU,  f road gas ic,   0.006294
 R12_EEU,  f road lightoil, 0.986512
 R12_EEU,  f road methanol, 0.0001
 
-R12_FSU,  FR_FCH,          0.0001
-R12_FSU,  FR_ICAe,         0.0001
+R12_FSU,  f road hydrogen, 0.0001
+R12_FSU,  f road ethanol,  0.0001
 R12_FSU,  f road electr,   0.0001
 R12_FSU,  f road gas fc,   0.062184
 R12_FSU,  f road gas ic,   0.062184
 R12_FSU,  f road lightoil, 0.875032
 R12_FSU,  f road methanol, 0.0001
 
-R12_LAM,  FR_FCH,          0.0001
-R12_LAM,  FR_ICAe,         0.0001
+R12_LAM,  f road hydrogen, 0.0001
+R12_LAM,  f road ethanol,  0.0001
 R12_LAM,  f road electr,   0.0001
 R12_LAM,  f road gas fc,   0.020114
 R12_LAM,  f road gas ic,   0.020114
 R12_LAM,  f road lightoil, 0.959172
 R12_LAM,  f road methanol, 0.0001
 
-R12_NAM,  FR_FCH,          0.0001
-R12_NAM,  FR_ICAe,         0.0001
+R12_NAM,  f road hydrogen, 0.0001
+R12_NAM,  f road ethanol,  0.0001
 R12_NAM,  f road electr,   0.0001
 R12_NAM,  f road gas fc,   0.000003
 R12_NAM,  f road gas ic,   0.000031
 R12_NAM,  f road lightoil, 0.99934
 R12_NAM,  f road methanol, 0.0001
 
-R12_RCPA, FR_FCH,          0.0001
-R12_RCPA, FR_ICAe,         0.1
+R12_RCPA, f road hydrogen, 0.0001
+R12_RCPA, f road ethanol,  0.1
 R12_RCPA, f road electr,   0.0001
 R12_RCPA, f road gas fc,   0.000389
 R12_RCPA, f road gas ic,   0.000389
 R12_RCPA, f road lightoil, 0.898922
 R12_RCPA, f road methanol, 0.0001
 
-R12_SAS,  FR_FCH,          0.0001
-R12_SAS,  FR_ICAe,         0.0500
+R12_SAS,  f road hydrogen, 0.0001
+R12_SAS,  f road ethanol,  0.0500
 R12_SAS,  f road electr,   0.0001
 R12_SAS,  f road gas fc,   0.025455
 R12_SAS,  f road gas ic,   0.025455
 R12_SAS,  f road lightoil, 0.89859
 R12_SAS,  f road methanol, 0.0001
 
-R12_WEU,  FR_FCH,          0.0001
-R12_WEU,  FR_ICAe,         0.0001
+R12_WEU,  f road hydrogen, 0.0001
+R12_WEU,  f road ethanol,  0.0001
 R12_WEU,  f road electr,   0.0001
 R12_WEU,  f road gas fc,   0.000942
 R12_WEU,  f road gas ic,   0.000942

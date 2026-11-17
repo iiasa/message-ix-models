@@ -284,4 +284,4 @@ def test_navigate_ele(test_context, regions, years, options):
     assert {"ICAe_ffv", "ICE_nga", "IGH_ghyb", "f road lightoil"} <= techs
 
     # Electric technologies are not constrained
-    assert {"ELC_100", "FR_FCH"}.isdisjoint(techs)
+    assert {"ELC_100", "f road hydrogen"}.isdisjoint(techs)
