@@ -300,25 +300,18 @@ conE_ar:
   report: Air|Biofuel
   message-v-id: AIRp_BIO
 
-FR_ICAe:
-  name: Biofuel truck
-  description: Internal combustion engine freight truck using biofuels
-  input: {commodity: ethanol}
-  report: Truck|Biofuel
-  message-v-id: FRT_ICAe
-  gains-technology: [End_Use_Transport_HDT_HLF]
-
-FR_FCH:
-  name: Fuel cell truck
-  description: Hybridized fuel cell freight truck using hydrogen
-  input: {commodity: hydrogen}
-  report: Truck|Fuel cell hydrogen
-  message-v-id: FRT_HFC
-
 f road electr:
   name: Freight road vehicle powered by electricity
   input: {commodity: electr}
   report: Truck|Battery-Electric
+
+f road ethanol:
+  name: Biofuel truck
+  description: Internal combustion engine freight truck using biofuels
+  input: {commodity: ethanol}
+  report: Truck|Biofuel
+  message-v-id: [FR_ICAe, FRT_ICAe]
+  gains-technology: [End_Use_Transport_HDT_HLF]
 
 f road gas fc:
   name: Gas fuel cell truck
@@ -337,6 +330,13 @@ f road gas ic:
   report: Truck|Gas combustion
   message-v-id: [FR_ICG, FRT_ICG]
   gains-technology: [End_Use_Transport_NatGas]
+
+f road hydrogen:
+  name: Fuel cell truck
+  description: Hybridized fuel cell freight truck using hydrogen
+  input: {commodity: hydrogen}
+  report: Truck|Fuel cell hydrogen
+  message-v-id: [FR_FCH, FRT_HFC]
 
 f road lightoil:
   name: Light oil truck
@@ -530,12 +530,12 @@ F ROAD:
     In MESSAGE-V, the output of all freight technologies was labelled: f-u
   child:
   - f road electr
+  - f road ethanol
   - f road gas fc
   - f road gas ic
+  - f road hydrogen
   - f road lightoil
   - f road methanol
-  - FR_FCH
-  - FR_ICAe
   units: Gv km
   output: {commodity: transport F ROAD vehicle, level: useful}
   iea-eweb-flow: [ROAD]
