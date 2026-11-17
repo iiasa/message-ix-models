@@ -1,4 +1,4 @@
-"""Demand calculation for MESSAGEix-Transport."""
+"""Passenger transport demand calculation for MESSAGEix-Transport."""
 
 import logging
 from typing import TYPE_CHECKING

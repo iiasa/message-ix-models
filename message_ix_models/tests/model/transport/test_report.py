@@ -11,7 +11,8 @@ from packaging.version import Version as V
 from pytest import mark, param
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.transport import CL_SCENARIO, Config, build, key
+from message_ix_models.model.transport import CL_SCENARIO, Config, build
+from message_ix_models.model.transport import key as K
 from message_ix_models.model.transport.report import configure_legacy_reporting, multi
 from message_ix_models.model.transport.testing import (
     built_transport,
@@ -154,8 +155,9 @@ def test_bare(
     from message_ix_models.report import Config
 
     # Update configuration
-    # key = "transport all"  # All including plots, etc.
-    key = "transport::iamc+all"  # IAMC-structured data stored and written to file
+    # key = K.report.all  # All reporting, including plots etc.
+    # key = "transport::iamc+all"  # IAMC-structured data stored and written to file
+    key = "transport::iamc+csv"  # IAMC-structured data written to CSV
     test_context.update(
         regions=regions,
         years=years,
@@ -182,6 +184,9 @@ def test_bare(
     # commented: Generate 'full' task graphs for presentation materials
     # rep.visualize("transport-report.svg", "transport all", rankdir="LR")
     # rep.visualize("transport-build.svg", "add transport data", rankdir="LR")
+
+    # commented: Describe the calculations to be performed
+    # print(rep.describe(key1))
 
     # Reporting `key` succeeds
     rep.get(key1)
@@ -231,7 +236,7 @@ def test_simulated(
     assert 0 < len(result)
 
     # SDMX data for message_ix_models.project.edits can be computed
-    result = rep.get(key.report.sdmx)
+    result = rep.get(K.report.sdmx)
 
     # The task returns the directory in which output is written
     p = result
