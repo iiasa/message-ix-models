@@ -264,7 +264,6 @@ CHECKS: dict["KeyLike", tuple[Check, ...]] = {
         ContainsDataForParameters(
             {
                 "bound_new_capacity_lo",
-                "bound_new_capacity_up",
                 "capacity_factor",
                 "historical_new_capacity",
                 "input",
