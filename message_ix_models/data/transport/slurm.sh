@@ -67,6 +67,9 @@ UV=$UV_UNMANAGED_INSTALL/uv
 # Store cache in the shared-scratch disk mounted on runners
 export UV_CACHE_DIR=$SHARED_SCRATCH/uv-cache/$USER
 
+# Check out Git LFS files when installing packages from Git repos
+export UV_GIT_LFS=1
+
 # Shared-scratch and the job work directory are on different filesystems.
 # Silence an uv warning about this.
 export UV_LINK_MODE=copy

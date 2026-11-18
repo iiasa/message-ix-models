@@ -111,7 +111,7 @@ def test_factor_input(test_context, options, any_change) -> None:
     k = 5 if any_change else 0
     t = "ELC_100"
     assert all((1 - 0.015) ** k == result.sel(y=2050, t=t) / result.sel(y=2045, t=t))
-    t = "FR_ICE_L"
+    t = "f road lightoil"
     assert all((1 - 0.02) ** k == result.sel(y=2050, t=t) / result.sel(y=2045, t=t))
     t = "con_ar"
     assert all((1 - 0.013) ** k == result.sel(y=2050, t=t) / result.sel(y=2045, t=t))

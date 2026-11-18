@@ -281,7 +281,7 @@ def test_navigate_ele(test_context, regions, years, options):
     # Certain fossil fueled technologies are constrained
     techs = set(bncu["technology"].unique())
     # print(f"{techs = }")
-    assert {"ICAe_ffv", "ICE_nga", "IGH_ghyb", "FR_ICE_M", "FR_ICE_L"} <= techs
+    assert {"ICAe_ffv", "ICE_nga", "IGH_ghyb", "f road lightoil"} <= techs
 
     # Electric technologies are not constrained
-    assert {"ELC_100", "FR_FCH"}.isdisjoint(techs)
+    assert {"ELC_100", "f road hydrogen"}.isdisjoint(techs)
