@@ -1,6 +1,5 @@
 """Prepare data for adding demands"""
 
-import os
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
@@ -10,7 +9,11 @@ import xarray as xr
 from message_ix import make_df
 
 from message_ix_models.model.water.config import Config
-from message_ix_models.model.water.utils import KM3_TO_MCM
+from message_ix_models.model.water.utils import (
+    KM3_TO_MCM,
+    ssp2_rate_files,
+    variable_from_stem,
+)
 from message_ix_models.util import broadcast, package_data_path
 
 if TYPE_CHECKING:
@@ -186,12 +189,13 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     # defines path to read in demand data
     region = f"{context.regions}"
     sub_time = cfg.time
+    ssp = context.ssp.lower()  # "SSP2" → "ssp2"
     path = package_data_path("water", "demands", "harmonized", region, ".")
-    # make sure all of the csvs have format, otherwise it might not work
-    list_of_csvs = list(path.glob("ssp2_regional_*.csv"))
-    # define names for variables
-    fns = [os.path.splitext(os.path.basename(x))[0] for x in list_of_csvs]
-    fns = " ".join(fns).replace("ssp2_regional_", "").split()
+    rate_files = ssp2_rate_files(path)
+    list_of_csvs = [
+        p for p in path.glob(f"{ssp}_regional_*.csv") if p not in rate_files
+    ] + rate_files
+    fns = [variable_from_stem(x.stem) for x in list_of_csvs]
     # dictionary for reading csv files
     d: dict[str, pd.DataFrame] = {}
 
@@ -235,17 +239,17 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     # withdrawals and return flows with monthly data and also add industrial
     if "year" not in cfg.time:
         PATH = package_data_path(
-            "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
+            "water", "demands", "harmonized", region, f"{ssp}_m_water_demands.csv"
         )
         df_m: pd.DataFrame = pd.read_csv(PATH)
         df_m.value *= 30  # from mcm/day to mcm/month
         df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
         df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
-            "urban_withdrawal2_baseline"
+            "urban_withdrawal_domestic_baseline"
         )
         df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
-            "urban_return2_baseline"
+            "urban_return_domestic_baseline"
         )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
         df_m.columns = pd.Index(["year", "node", "variable", "value", "time"])
@@ -257,11 +261,11 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         df_dmds = df_dmds[
             ~df_dmds["variable"].isin(
                 [
-                    "urban_withdrawal2_baseline",
+                    "urban_withdrawal_domestic_baseline",
                     "rural_withdrawal_baseline",
                     "manufacturing_withdrawal_baseline",
                     "manufacturing_return_baseline",
-                    "urban_return2_baseline",
+                    "urban_return_domestic_baseline",
                     "rural_return_baseline",
                 ]
             )
@@ -269,7 +273,9 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         # attach the monthly demand
         df_dmds = pd.concat([df_dmds, df_m])
 
-    urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal2_baseline"]
+    urban_withdrawal_df = df_dmds[
+        df_dmds["variable"] == "urban_withdrawal_domestic_baseline"
+    ]
     rual_withdrawal_df = df_dmds[df_dmds["variable"] == "rural_withdrawal_baseline"]
     industrial_withdrawals_df = df_dmds[
         df_dmds["variable"] == "manufacturing_withdrawal_baseline"
@@ -277,7 +283,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     industrial_return_df = df_dmds[
         df_dmds["variable"] == "manufacturing_return_baseline"
     ]
-    urban_return_df = df_dmds[df_dmds["variable"] == "urban_return2_baseline"]
+    urban_return_df = df_dmds[df_dmds["variable"] == "urban_return_domestic_baseline"]
     urban_return_df.reset_index(drop=True, inplace=True)
     rural_return_df = df_dmds[df_dmds["variable"] == "rural_return_baseline"]
     rural_return_df.reset_index(drop=True, inplace=True)
@@ -733,7 +739,7 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
             "availability",
             f"qtot_5y_{cfg.RCP}_{cfg.REL}_{context.regions}.csv",
         )
-        # Read rcp 2.6 data
+        # Read SSP-keyed surface-water data
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
 
@@ -850,6 +856,22 @@ def read_water_availability(context: "Context") -> Sequence[pd.DataFrame]:
     return df_sw, df_gw
 
 
+def groundwater_share_floor(
+    df_sw: pd.DataFrame, df_gw: pd.DataFrame, buffer: float = 0.95
+) -> pd.Series:
+    """Lower-bound groundwater share per basin-year: ``gw / (sw + gw) * buffer``.
+
+    Single source for both the ``share_low_lim_GWat`` constraint
+    (:func:`add_water_availability`) and the hist_dispatch seed floor
+    (:func:`.add_water_hist_dispatch`), so the in-horizon constraint and the
+    historical anchor cannot drift apart. ``df_sw`` and ``df_gw`` are the
+    row-aligned availability frames from :func:`read_water_availability`.
+    The ``buffer`` leaves headroom against numerical error in the LP.
+    """
+    share = (df_gw["value"] / (df_sw["value"] + df_gw["value"]) * buffer).fillna(0)
+    return share.clip(lower=0, upper=1)
+
+
 def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water supply constraints
@@ -910,13 +932,9 @@ def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
         node_share="B" + df_gw["Region"].astype(str),
         year_act=df_gw["year"],
         time=df_gw["time"],
-        value=df_gw["value"]
-        / (df_sw["value"] + df_gw["value"])
-        * 0.95,  # 0.95 buffer factor to avoid numerical error
+        value=groundwater_share_floor(df_sw, df_gw),
         unit="-",
     )
-    df_share["value"] = df_share["value"].fillna(0)
-    df_share["value"] = np.clip(df_share["value"], 0, 1)
     results["share_commodity_lo"] = df_share
 
     return results
