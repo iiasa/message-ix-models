@@ -11,6 +11,7 @@ from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.lt_contracts import add_contract_bounds
 
 import os
+import pandas as pd
 from ixmp import Platform
 
 # Clear bare files
@@ -97,9 +98,36 @@ def add_missing_history(scenario, history_scenario, new_technologies):
         scenario.add_par("historical_new_capacity", cap)
 
 
+def limit_pipeline_build(scenario, growth=0.05, initial=100.0, prefix="gas_pipe_"):
+    """
+    Limit how fast new pipeline length can be built on each route
+
+    With the defaults a route with no recent build can add ~550 km/yr (~2,800 km
+    per 5-year period, about one Power of Siberia), and the rate can grow 5%/yr.
+
+    Args:
+        growth: growth_new_capacity_up (per year)
+        initial: initial_new_capacity_up (km/yr)
+        prefix: Technologies to constrain
+    """
+    techs = [t for t in scenario.set("technology") if t.startswith(prefix)]
+    nodes = (scenario.par("output", filters={"technology": techs})
+             [["node_loc", "technology"]].drop_duplicates())
+    if nodes.empty:
+        return
+    years = [int(y) for y in scenario.set("year") if int(y) >= scenario.firstmodelyear]
+    df = nodes.merge(pd.DataFrame({"year_vtg": years}), how="cross")
+    print(f"Limit new pipeline build on {len(nodes)} routes "
+          f"(growth {growth}/yr, initial {initial} km/yr)")
+    with scenario.transact("Limit new pipeline build"):
+        scenario.add_par("growth_new_capacity_up", df.assign(value=growth, unit="km"))
+        scenario.add_par("initial_new_capacity_up", df.assign(value=initial, unit="km"))
+
+
 def bilateralize_scenario(project_name, config_name, scenario, target_scenario = None,
                           history_scenario = None, last_model_year = None,
-                          lt_contracts = True, **contract_kwargs):
+                          lt_contracts = True, pipeline_build_limit = True,
+                          **contract_kwargs):
     """
     Bilateralize a given scenario
 
@@ -120,6 +148,8 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
         lt_contracts: If True (default), add long-term LNG/pipeline gas contracts as
             bound_activity_lo on the bilateral trade technologies (see
             :func:`.lt_contracts.add_contract_bounds`).
+        pipeline_build_limit: If True (default), limit the build rate of new gas
+            pipeline length (see :func:`limit_pipeline_build`).
         **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
             ``contract_share`` (default 0.9).
     """
@@ -225,6 +255,9 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             if len(old):
                 out_scenario.remove_set("cat_year", old)
             out_scenario.add_set("cat_year", ["lastmodelyear", last_model_year])
+
+    if pipeline_build_limit:
+        limit_pipeline_build(out_scenario)
 
     if lt_contracts:
         print("Add long-term gas contract bounds")
