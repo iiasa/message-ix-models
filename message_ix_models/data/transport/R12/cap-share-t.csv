@@ -180,9 +180,9 @@ R12_EEU,  f road methanol, 0.0001
 R12_FSU,  f road hydrogen, 0.0001
 R12_FSU,  f road ethanol,  0.0001
 R12_FSU,  f road electr,   0.0001
-R12_FSU,  f road gas fc,   0.062184
+R12_FSU,  f road gas fc,   0.002184
 R12_FSU,  f road gas ic,   0.062184
-R12_FSU,  f road lightoil, 0.875032
+R12_FSU,  f road lightoil, 0.935232
 R12_FSU,  f road methanol, 0.0001
 
 R12_LAM,  f road hydrogen, 0.0001
