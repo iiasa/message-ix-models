@@ -221,8 +221,10 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
 
     print("Solve scenario")
     out_scenario.solve(quiet=False, model="MESSAGE",
-                       solve_options={"scaind": "-1"},
-                       gams_args=["--foresight=15"],
-                       equ_list=["COMMODITY_BALANCE_GT"])
+                       solve_options={"lpmethod": "4", "scaind": "1", "solutiontype": "1", "threads": "8",
+                                      "numericalemphasis":"1", "baralg":"1"},
+                       gams_args=["--foresight=15", "--clean_tol=1e-10", "--myopic_fix_tol=1e-3"],
+                       equ_list=["COMMODITY_BALANCE_GT"],
+                       check_solution = False)
 
     return out_scenario

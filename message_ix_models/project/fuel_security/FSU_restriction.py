@@ -85,6 +85,9 @@ def run_friction_scenario(base_scenario: message_ix.Scenario,
                 target_scenario.remove_par(par, basepar)
                 
     if solve_scenario == True:
-        target_scenario.solve(quiet = False,
-                              model = 'MESSAGE',
-                              solve_options={"scaind":"-1"})
+        target_scenario.solve(quiet=False, model="MESSAGE",
+                              solve_options={"lpmethod": "4", "scaind": "1", "solutiontype": "1", "threads": "8",
+                                             "numericalemphasis":"1", "baralg":"1"},
+                              gams_args=["--foresight=15", "--clean_tol=1e-10", "--myopic_fix_tol=1e-3"],
+                              equ_list=["COMMODITY_BALANCE_GT"],
+                              check_solution = False)

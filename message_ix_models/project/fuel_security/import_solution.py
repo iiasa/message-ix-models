@@ -23,8 +23,8 @@ from datetime import datetime
 from pathlib import Path
 
 import ixmp
+import jpype
 import message_ix
-from ixmp.backend import ItemType
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model")
@@ -55,8 +55,27 @@ if scen.has_solution():
     raise SystemExit(f"{scen.url} already has a solution")
 
 print(f"Importing solution into {scen.url}")
-mp._backend.read_file(gdx, ItemType.MODEL, filters=dict(scenario=scen),
-                      check_solution=True, comment="Import solution from GDX",
-                      equ_list=args.equ, var_list=args.var)
+# Call the Java method directly rather than via mp._backend.read_file(): ixmp turns a
+# Java exception into a one-line RuntimeError, and when the import fails Java's own
+# cleanup (discardChanges) can throw "not checked out", hiding the actual cause.
+ArrayList = jpype.JClass("java.util.ArrayList")
+
+
+def jlist(items):
+    out = ArrayList()
+    for i in items:
+        out.add(i)
+    return out
+
+
+try:
+    mp._backend.jindex[scen].readSolutionFromGDX(
+        str(gdx.parent), gdx.name, "Import solution from GDX",
+        jlist(args.var), jlist(args.equ), True)
+except jpype.JException as e:
+    print(e.stacktrace())
+    mp.close_db()
+    raise SystemExit("Import failed; see the Java stack trace above (incl. 'Caused by')")
+mp._backend.cache_invalidate(scen)
 print("has_solution:", scen.has_solution())
 mp.close_db()
