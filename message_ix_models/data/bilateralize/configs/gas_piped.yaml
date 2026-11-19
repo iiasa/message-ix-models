@@ -58,4 +58,4 @@ gas_piped_trade:
   trade_technical_lifetime:
       1
   flow_technical_lifetime:
-      20
+      40 # Trunk pipelines operate 40-50 years

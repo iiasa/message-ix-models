@@ -954,7 +954,8 @@ def build_flow_technical_lifetime(
         "technical_lifetime",
         network_df=network_setup[tec],
         col_values=dict(
-            value=20,  # Default is 20y
+            # From the technology config (flow_technical_lifetime), default 20y
+            value=config_dict.get("flow_technical_lifetime", {}).get(tec) or 20,
             unit="y",
         ),
         export_only=True,
@@ -1343,6 +1344,9 @@ def prepare_edit_files(
             flow_commodity="gas_pipeline_capacity",
             project_name=project_name,
             config_name=config_name,
+            # ~5-7 MUSD/km for large-diameter trunk lines (e.g. Power of Siberia 1:
+            # ~3,000 km, ~USD 20bn for the pipeline)
+            inv_cost_per_km=6.0,
         )
 
         for tradetec in ["crudeoil_piped", "foil_piped", "loil_piped"]:

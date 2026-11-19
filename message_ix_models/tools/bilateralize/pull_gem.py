@@ -61,6 +61,7 @@ def import_gem(
     config_name: str | None = None,
     first_model_year: int = 2030,
     regional_specification: str = "R12",
+    inv_cost_per_km: float | None = None,
 ):
     """
     Import Global Energy Monitor data
@@ -74,6 +75,9 @@ def import_gem(
         project_name: Name of project
         config_name: Name of config file
         first_model_year: First model year
+        inv_cost_per_km: If given, investment cost (MUSD/km) used for every route of
+            the flow technology instead of the GEM-derived values. GEM's CostUSD is
+            missing for many segments, so cost/length per route is unreliable.
     """
 
     # Pull in configuration
@@ -228,6 +232,8 @@ def import_gem(
         inv_cost["value"] < 2, 2, # Make investment cost floor 2MUSD/km
         inv_cost["value"]
     )
+    if inv_cost_per_km is not None:
+        inv_cost["value"] = inv_cost_per_km  # Uniform cost on all routes
 
     inv_cost["year_vtg"] = "broadcast"
     inv_cost["unit"] = "USD/km"
