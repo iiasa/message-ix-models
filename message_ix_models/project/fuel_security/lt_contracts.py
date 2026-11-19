@@ -212,22 +212,89 @@ def resolve_bound_conflicts(scenario: message_ix.Scenario) -> pd.DataFrame:
     return m
 
 
+def fit_dynamic_constraints(scenario: message_ix.Scenario, bounds: pd.DataFrame) -> pd.DataFrame:
+    """``initial_activity_up`` needed so each lower bound in `bounds` is reachable.
+
+    MESSAGE's ACTIVITY_CONSTRAINT_UP is, per (node, technology, year, time)::
+
+        ACT(y) <= initial * A + ACT(y-1) * (1 + g)^d,   A = ((1 + g)^d - 1) / g  (d if g = 0)
+
+    with g = ``growth_activity_up``, d = ``duration_period``, and ACT(y-1) replaced by
+    ``historical_activity`` before the first model year. Taking ACT(y-1) at its
+    smallest allowed value (its lower bound, or its history) gives the initial term
+    that guarantees ACT(y) can reach the bound in `bounds`:
+
+        initial >= (bound(y) - base(y-1) * (1 + g)^d) / A
+
+    Only rows that already have a dynamic constraint are considered, and an existing
+    ``initial_activity_up`` is only ever raised. The soft relaxation is ignored, so the
+    result is conservative. Growth is still capped by g above the contracted volume.
+
+    Returns:
+        ``initial_activity_up`` rows to add (empty if the bounds already fit).
+    """
+    keys = ["node_loc", "technology", "year_act", "time"]
+    techs = list(bounds["technology"].unique())
+    g = scenario.par("growth_activity_up", filters={"technology": techs})
+    i = scenario.par("initial_activity_up", filters={"technology": techs})
+    dyn = pd.concat([g[keys], i[keys]]).drop_duplicates()
+    need = bounds.groupby(keys, as_index=False)["value"].sum().merge(dyn, on=keys)
+    if need.empty:
+        return i.iloc[0:0]
+
+    years = sorted(int(y) for y in scenario.set("year"))
+    prev = dict(zip(years[1:], years[:-1]))
+    fmy = scenario.firstmodelyear
+    dp = scenario.par("duration_period")
+    dur = dict(zip(dp["year"].astype(int), dp["value"]))
+    # Lower bounds as they stand after the contracts were added, summed over modes
+    lo = scenario.par("bound_activity_lo", filters={"technology": techs}).groupby(keys)["value"].sum()
+    hist = scenario.par("historical_activity", filters={"technology": techs}).groupby(keys)["value"].sum()
+    gv = g.set_index(keys)["value"]
+    iv = i.set_index(keys)["value"]
+
+    rows = []
+    for r in need.itertuples(index=False):
+        k = (r.node_loc, r.technology, r.year_act, r.time)
+        py = prev.get(r.year_act)
+        base = (lo if py is not None and py >= fmy else hist).get(
+            (r.node_loc, r.technology, py, r.time), 0.0)
+        d, gr = dur[r.year_act], gv.get(k, 0.0)
+        growth = (1 + gr) ** d
+        a = (growth - 1) / gr if gr else d
+        req = (r.value - base * growth) / a
+        if req > iv.get(k, 0.0) + 1e-9:
+            # Small margin so the bound is not exactly on the dynamic limit
+            rows.append(dict(zip(keys, k), value=round(req * 1.001 + 1e-4, 4)))
+
+    unit = i["unit"].iloc[0] if not i.empty else "GWa"
+    return pd.DataFrame(rows, columns=keys + ["value"]).assign(unit=unit)
+
+
 def add_contract_bounds(
     scenario: message_ix.Scenario,
-    relax_dynamic_constraints: bool = True,
+    dynamic_constraints: str = "fit",
     **kwargs,
 ) -> pd.DataFrame:
     """Add long-term contract lower bounds to `scenario` (in place).
 
     Args:
-        relax_dynamic_constraints: Remove ``growth_activity_up``/``initial_activity_up``
-            on bounded (node, technology, year), so that contract volumes are not
-            blocked by growth limits from a low historical base.
+        dynamic_constraints: How to keep growth limits (``growth_activity_up`` /
+            ``initial_activity_up``) from blocking contract volumes:
+
+            - "fit" (default): keep them, and raise ``initial_activity_up`` only where
+              a bound would otherwise be unreachable (:func:`fit_dynamic_constraints`).
+            - "remove": delete them on every bounded (node, technology, year). This
+              leaves those routes with no upper growth limit at all and lets them
+              expand far beyond the contracts (FSU->CHN reached 1,747 GWa by 2070).
+            - "keep": leave them unchanged (may be infeasible).
         **kwargs: Passed to :func:`contract_bounds`.
 
     Returns:
         The ``bound_activity_lo`` data added.
     """
+    if dynamic_constraints not in ("fit", "remove", "keep"):
+        raise ValueError(f"dynamic_constraints={dynamic_constraints!r}")
     bounds = contract_bounds(scenario, **kwargs)
     log.info(f"Adding {len(bounds)} contract bounds; total by year (GWa):\n"
              f"{bounds.groupby('year_act')['value'].sum().round(1).to_string()}")
@@ -242,7 +309,13 @@ def add_contract_bounds(
                 scenario.remove_par("bound_activity_lo", old[idx])
         scenario.add_par("bound_activity_lo", bounds)
 
-        if relax_dynamic_constraints:
+        if dynamic_constraints == "fit":
+            init = fit_dynamic_constraints(scenario, bounds)
+            if not init.empty:
+                log.info(f"...raising initial_activity_up on {len(init)} entries so "
+                         "contract bounds are reachable under the growth limits")
+                scenario.add_par("initial_activity_up", init)
+        elif dynamic_constraints == "remove":
             for par in ("growth_activity_up", "initial_activity_up"):
                 cur = scenario.par(par, filters={"technology": list(bounds["technology"].unique())})
                 rem = cur.merge(bounds[["node_loc", "technology", "year_act"]], on=["node_loc", "technology", "year_act"])
