@@ -11,13 +11,29 @@
    until changes are reviewed and merged via :pull:`425`.
 
 These pages document the IIASA Integrated Assessment Modeling (IAM) framework,
-referred to as **MESSAGEix-GLOBIOM-GAINS**,
-owing to the fact that the energy model and framework |MESSAGEix|,
-the land use model GLOBIOM,
-and pollution data from the model GAINS
-are its most important components.
-|name| was developed for the quantification of the so-called Shared Socio-economic Pathways (SSPs)
-which are the first application of the IAM framework.
+whose name, **MESSAGEix-GLOBIOM-GAINS**, marks its three central models.
+|MESSAGEix| resolves the energy system technology by technology,
+GLOBIOM represents the agriculture, forestry and other land use (AFOLU) system,
+returning bioenergy supply potentials, AFOLU emissions,
+and the cost of abating them,
+and GAINS supplies air pollutant and non-CO2 greenhouse gas emissions
+and their abatement options.
+
+The version documented here produced the |name| contribution to
+the `Scenario Model Intercomparison Project (ScenarioMIP)
+<https://wcrp-cmip.org/mips/scenariomip/>`_,
+as part of the seventh phase of the
+`Coupled Model Intercomparison Project (CMIP7)
+<https://wcrp-cmip.org/cmip-phases/cmip7/>`_,
+whose design is set out in van Vuuren et al., 2026
+:cite:`van_vuuren_scenariomip_2026`.
+It builds on the predecessor version **MESSAGEix-GLOBIOM**
+(Krey et al., 2020 :cite:`message_globiom_2020`),
+which was developed for the quantification of the
+Shared Socio-economic Pathways (SSPs)
+(O’Neill et al., 2017 :cite:`oneill_roads_2017`, Riahi et al., 2017 :cite:`riahi_shared_2017`),
+and produced their SSP2 marker scenario
+(Fricko et al., 2017 :cite:`fricko_marker_2017`).
 
 .. note:: The documentation in this section was originally available at https://docs.messageix.org/global/ and maintained in a separate repository at `iiasa/message_doc <https://github.com/iiasa/message_doc>`_.
    In the future, it will be maintained in `iiasa/message-ix-models <https://github.com/iiasa/message_doc>`_ and appear at the current URL.
@@ -35,7 +51,7 @@ please use the following citations: [1]_
 .. bibliography::
    :list: bullet
    :style: unsrt
-   :filter: key in {"message_globiom_2020", "fricko_havlik_2017"}
+   :filter: key in {"message_globiom_gains_2026", "fricko_wu_2026"}
 
 .. [1] Download these citations in :download:`RIS </messageix-globiom.ris>` or :download:`BibTeX </messageix-globiom.bib>` format (web only).
 
