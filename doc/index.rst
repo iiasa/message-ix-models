@@ -46,6 +46,9 @@ describing in detail how it represents global energy systems:
    :hidden:
 
    global/index
+   conceptual/materials/index
+   conceptual/buildings/index
+   conceptual/transport/index
 
 - :doc:`global/index`
 
