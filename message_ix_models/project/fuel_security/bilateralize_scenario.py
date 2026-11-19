@@ -8,6 +8,7 @@ from message_ix_models.tools.bilateralize.bare_to_scenario import *
 from message_ix_models.tools.bilateralize.load_and_solve import *
 from message_ix_models.project.fuel_security.liquefaction_calibration import *
 from message_ix_models.project.fuel_security.adjust_reexports import *
+from message_ix_models.project.fuel_security.lt_contracts import add_contract_bounds
 
 import os
 from ixmp import Platform
@@ -97,7 +98,8 @@ def add_missing_history(scenario, history_scenario, new_technologies):
 
 
 def bilateralize_scenario(project_name, config_name, scenario, target_scenario = None,
-                          history_scenario = None, last_model_year = None):
+                          history_scenario = None, last_model_year = None,
+                          lt_contracts = True, **contract_kwargs):
     """
     Bilateralize a given scenario
 
@@ -115,6 +117,11 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
         last_model_year: If given, set as cat_year "lastmodelyear" so the myopic
             solve loop stops after this period (later periods are still in the
             foresight window of the last iteration, but are not solved on their own).
+        lt_contracts: If True (default), add long-term LNG/pipeline gas contracts as
+            bound_activity_lo on the bilateral trade technologies (see
+            :func:`.lt_contracts.add_contract_bounds`).
+        **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
+            ``contract_share`` (default 0.9).
     """
     target_scenario = (target_scenario or f"{scenario.scenario}_bilateral").replace(
         "_DEFAULT", ""
@@ -218,6 +225,10 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             if len(old):
                 out_scenario.remove_set("cat_year", old)
             out_scenario.add_set("cat_year", ["lastmodelyear", last_model_year])
+
+    if lt_contracts:
+        print("Add long-term gas contract bounds")
+        add_contract_bounds(out_scenario, **contract_kwargs)
 
     print("Solve scenario")
     out_scenario.solve(quiet=False, model="MESSAGE",
