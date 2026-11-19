@@ -18,8 +18,9 @@ solved activity (ACT summed over vintages) and reports:
 
 If the scenario has no contract bounds (e.g. solved without lt_contracts), or with
 --from-data, the bounds are built from the contract dataset as bilateralize_scenario
-would add them, and compared with the unconstrained solution: "binding" then means the
-contract would force more trade on that route than the model chooses. No duals then.
+would add them, and compared with the unconstrained solution: section 2 then lists the
+bounds that would bind (ACT below the bound) with their shortfall (bound - ACT, the
+trade the contract would force), and totals the shortfall by exporter. No duals then.
 
 Duals: ACTIVITY_BOUND_LO is only in the database if it was in the solve's equ_list.
 Otherwise the script reads it from the solution GDX (--gdx, default message_ix's
@@ -82,7 +83,7 @@ if PROSPECTIVE:
 
     print("No contract bounds in the scenario: comparing the bounds the dataset "
           f"would add (contract_share={args.contract_share}) with the unconstrained "
-          "solution. 'binding' here means ACT is below the would-be bound.")
+          "solution. 'would bind' means ACT is below the would-be bound.")
     lo = contract_bounds(scen, contract_share=args.contract_share)
 up = scen.par("bound_activity_up", filters={"technology": techs})
 
@@ -98,6 +99,8 @@ else:
 df["slack"] = df["lvl"] - df["bound_lo"]
 df["binding"] = df["slack"] <= args.tol * df["bound_lo"].abs() + 1e-6
 df["violated"] = df["slack"] < -(args.tol * df["bound_lo"].abs() + 1e-6)
+# Trade the bound forces beyond what the solution has (0 where ACT >= bound)
+df["shortfall"] = (-df["slack"]).clip(lower=0.0)
 
 # --- Duals ----------------------------------------------------------------------------
 def read_duals():
@@ -155,13 +158,26 @@ print("\nAll modelled gas trade (ACT on every export technology):")
 print(tot_trade.round(1).to_string())
 
 # --- 2. Binding bounds ----------------------------------------------------------------
-print(f"\n=== 2. Binding contract bounds (slack <= {args.tol:g} x bound) ===")
-b = df[df["binding"]].sort_values(["year_act", "bound_lo"], ascending=[True, False])
 cols = ["year_act", "node_loc", "technology", "bound_lo", "lvl", "bound_up", "mrg"]
-print(b[cols].round(3).to_string(index=False) if len(b) else "None binding")
-if df["violated"].any():
-    print("\nWARNING: activity below the lower bound (solution violates the bound):")
-    print(df.loc[df["violated"], cols].round(3).to_string(index=False))
+if PROSPECTIVE:
+    # No duals, and every "binding" bound is below ACT, so "violated" adds nothing.
+    # Instead report how much trade each would-be bound forces.
+    print("\n=== 2. Contract bounds that would bind (ACT below the would-be bound) ===")
+    b = df[df["binding"]].sort_values(["year_act", "shortfall"], ascending=[True, False])
+    cols = ["year_act", "node_loc", "technology", "bound_lo", "lvl", "shortfall"]
+    print(b[cols].round(3).to_string(index=False) if len(b) else "None would bind")
+
+    print("\nShortfall by exporter (GWa of trade the bounds would force):")
+    sf = df.groupby(["node_loc", "year_act"])["shortfall"].sum().unstack("year_act")
+    sf = sf.loc[sf.sum(axis=1) > 0]
+    print(sf.round(1).to_string() if len(sf) else "None")
+else:
+    print(f"\n=== 2. Binding contract bounds (slack <= {args.tol:g} x bound) ===")
+    b = df[df["binding"]].sort_values(["year_act", "bound_lo"], ascending=[True, False])
+    print(b[cols].round(3).to_string(index=False) if len(b) else "None binding")
+    if df["violated"].any():
+        print("\nWARNING: activity below the lower bound (solution violates the bound):")
+        print(df.loc[df["violated"], cols + ["shortfall"]].round(3).to_string(index=False))
 
 # --- 3. Coverage by exporter ----------------------------------------------------------
 exp = all_act.groupby(["node_loc", "year_act"])["lvl"].sum().rename("exports")
