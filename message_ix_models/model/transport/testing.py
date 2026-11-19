@@ -161,6 +161,11 @@ def built_transport(
     log.info(f"Clone to '{model_name}/{request.node.name}'")
     result = scenario.clone(scenario=request.node.name, keep_solution=solved)
 
+    # commented: remove some periods from the model horizon, to aid with debugging
+    # with result.transact("foo"):
+    #     y = [2035, 2040, 2045, 2050, 2055, 2060, 2070, 2080, 2090, 2100, 2110]
+    #     result.remove_set("year", y)
+
     if solved and not result.has_solution():
         log.info(f"Solve {result.url}")
         result.solve(**SOLVE_OPTIONS)

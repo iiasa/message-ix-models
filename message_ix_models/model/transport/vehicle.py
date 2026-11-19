@@ -14,6 +14,7 @@ from message_ix_models.util.genno import Collector
 
 from . import key as K
 from . import util
+from .build import add_parameter_data
 from .util import COMMON
 
 if TYPE_CHECKING:
@@ -34,17 +35,17 @@ MODE = ["F", "P ex LDV", "LDV"]
 # Shorthand
 Vi = "vehicle+ixmp"
 
-#: Target key that collects all data generated in this module.
+#: Key for a task that collects all data generated in this module.
 TARGET = f"transport::{Vi}"
 
-
+#: Collect parameter data in `TARGET`.
 collect = Collector(TARGET, "{}+ixmp".format)
 
 
 def prepare_computer(c: "Computer") -> None:
-    # Collect data in `TARGET` and connect to the "add transport data" key
-    collect.computer = c
-    c.add("transport_data", __name__, key=TARGET)
+    """Prepare `c` to calculate and add data for transport vehicles."""
+    collect.computer = c  # Connect `collect` to `c`
+    add_parameter_data(__name__, TARGET)  # Add all parameter data to the build
 
     context = c.graph["context"]
     techs = context.transport.spec.add.set["technology"]
@@ -127,10 +128,12 @@ def input_output(c: "Computer") -> None:
     k = Key("input", NTY, "vehicle")
 
     # Concatenate data from (a) file (InputVehicle.key) and (b) IEA Future of Trucks
-    c.add(k[0], "concat", InputVehicle.key, "energy intensity of VDT:n-t")
+    prev = c.add(k[0], "concat", InputVehicle.key, "energy intensity of VDT:n-t")
 
     # Broadcast over dimensions (c, l, y, yv, ya)
-    prev = c.add(k[1], "mul", k[0], K.bcast_tcl.input, K.bcast_y.all)
+    prev = c.add(k, "mul", k[0], K.bcast_tcl.input, K.bcast_y.all)
+    # Check that the resulting key is the same as expected in .key.input
+    assert prev == K.input.vehicle * "y"
 
     # Convert to MESSAGE data structure; add to `target`
     collect(
@@ -151,10 +154,10 @@ def input_output(c: "Computer") -> None:
     # Convert to MESSAGE data structure
     prev = c.add(k[2], "as_message_df", prev, name="output", dims=DIMS, common=COMMON)
     # Reduce entries to a diagonal band
-    prev = c.add(k[3], "yv_ya_banded", prev, "y0", diff=30)
+    c.add(k, "yv_ya_banded", prev, "y0", diff=30)
     # Convert units; add to `TARGET`
     # TODO convert_units appears to have no effect; check and adjust/remove
-    collect("output::vehicle", convert_units, prev, "transport info")
+    collect("output::vehicle", convert_units, k, "transport info")
 
 
 #: 3-:class:`tuple` of keys for each :data:`MODE`:
@@ -184,27 +187,26 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     """
     info: "ScenarioInfo" = c.graph["context"].transport.base_model_info
 
+    # Keys specific to this `mode`
     k = Keys(
         stock=f"stock:n-t-y:{mode}",
         sales_nty=f"sales:n-t-y:{mode}",
         sales=f"sales:nl-t-yv:{mode}",
     )
 
-    # Retrieve starting keys specific to `mode`
+    # Retrieve starting keys specific to `mode`:
     # - Total activity
-    # - Load factor
+    # - Load factor (occupancy)
     # - Age of vehicles as of the model base period
     k.total_activity, k.load_factor, k.age = STOCK_KEYS[mode]
 
-    # - Divide total activity by (1) annual driving distance per vehicle and (2) load
-    #   factor (occupancy) to obtain implied stock.
-    # - Correct units: "load factor ldv:n-y" is dimensionless, should be
-    #   passenger/vehicle
+    # - Divide total activity by (1) load factor and (2) annual driving distance per
+    #   vehicle to obtain implied stock.
     # - Replace t = {F RAIL, F ROAD, LDV, ...} with coords for individual techs.
     # - Select only the base-period value.
     # - Multiply by exogenous technology shares.
-    c.add(k.stock[0], "div", k.total_activity, K.exo.activity_vehicle[mode])
-    c.add(k.stock[1], "div", k.stock[0], k.load_factor)
+    c.add(k.stock[0], "div", k.total_activity, k.load_factor)
+    c.add(k.stock[1], "div", k.stock[0], K.exo.activity_vehicle[mode])
     c.add(k.stock[2], "call", "t::transport map", k.stock[1])
     c.add(k.stock[3] / "y", "select", k.stock[2], "y0::coord", sums=True)
     c.add(k.stock, "mul", k.stock[3] / "y", K.exo.cap_share_t)
@@ -227,10 +229,6 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     # Convert units
     c.add(k.sales[0], "convert_units", k.sales, units="million * vehicle / year")
 
-    # historical_new_capacity: select only data prior to y₀
-    kw: dict[str, Any] = dict(common={}, dims=util.DIMS, name="historical_new_capacity")
-    # Select only data prior to y₀
-    c.add(k.sales[1], "select", k.sales[0], K.coord.yv_hist)
     # Adjust for MESSAGE representation of historical capacity.
     # - sales_fraction_annual(), above, assigns some historical new capacity to vintages
     #   that are beyond the technical_lifetime. For example, some vintages may be >20
@@ -238,17 +236,22 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     # - MESSAGE considers these older vintages past end-of-life and not usable in y₀,
     #   thus would choose a larger CAP_NEW for a feasible solution.
     # - We apply a fixed correction factor to obtain a smooth(er) transition from
-    #   historical_new_capacity to CAP_NEW.
-    c.add(k.sales[2], "mul", k.sales[1], 1.5)
+    #   historical_new_capacity to CAP_NEW/bound_new_capacity_{lo,up}.
+    c.add(k.sales[1], "mul", k.sales[0], 2.0)
+
+    # historical_new_capacity: select only data prior to y₀
+    kw: dict[str, Any] = dict(common={}, dims=util.DIMS, name="historical_new_capacity")
+    # Select only data prior to y₀
+    c.add(k.sales[2], "select", k.sales[1], K.coord.yv_hist)
     collect(f"{kw['name']}::{mode}", "as_message_df", k.sales[2], **kw)
 
     # CAP_NEW/bound_new_capacity_{lo,up}
-    # - Select only data from y₀ and later.
+    # - Select only data from y₀ and later, with the adjustment described above.
     # - Discard values for dominant technologies.
     #   TODO Do not hard code these labels; instead, identify the technologies with the
     #   largest share.
-    c.add(k.sales[3], "select", k.sales[0], indexers=dict(yv=info.Y))
-    indexers = dict(t=["FR_ICH", "ICE_H_moto", "ICE_conv", "f rail lightoil"])
+    c.add(k.sales[3], "select", k.sales[1], indexers=dict(yv=info.Y))
+    indexers = dict(t=["ICE_H_moto", "ICE_conv", "f rail lightoil"])
     c.add(k.sales[4], "select", k.sales[3], indexers=indexers, inverse=True)
 
     # Subset of values from new-capacity.csv: 1 period after the model initial period
@@ -259,10 +262,18 @@ def stock(c: "Computer", mode: str, *, margin: float = 0.2) -> None:
     # Concatenate to previous
     c.add(k.sales[5], "concat", k.sales[4], k.sales["exo"])
 
-    # Add both upper and lower constraints to ensure the solution contains the given
-    # values.
-    for kind in ("lo", "up"):
+    # commented: This causes infeasibilities, because in some instances demand requires
+    #            a large increase in the initial periods
+    # # Add lower+upper bounds to ensure the solution matches the sales values exactly
+    # for kind in ("lo", "up"):
+
+    # Add lower bounds to ensure continues sales at the historical level
+    for kind in ("lo",):
         kw["name"] = f"bound_new_capacity_{kind}"
+
+        # Apply a relative margin so that the upper and lower bound are not identical
         factor = 1 + (-1 if kind == "lo" else 1) * margin
         c.add(k.sales[kind], "mul", k.sales[5], factor)
+
+        # Convert to MESSAGE-structure data frame
         collect(f"{kw['name']}::{mode}", "as_message_df", k.sales[kind], **kw)

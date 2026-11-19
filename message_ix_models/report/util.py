@@ -1,4 +1,5 @@
 import logging
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
@@ -18,11 +19,8 @@ log = logging.getLogger(__name__)
 #: These are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see the
 #: documentation of that method.
 #:
-#: - Applied to whole strings along each dimension.
-#: - These columns have :meth:`str.title` applied before these replacements.
-#:
 #: See also :func:`add_replacements`.
-REPLACE_DIMS: dict[str, dict[str, str]] = {
+REPLACE_DIMS: dict[str, dict[str | re.Pattern, str]] = {
     "c": {
         # in land_out, for CH4 emissions from GLOBIOM
         "Agri_Ch4": "GLOBIOM|Emissions|CH4 Emissions Total",
@@ -210,20 +208,23 @@ class IAMCConversion:
 def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
     """Callback for the `collapse` argument to :meth:`~.Reporter.convert_pyam`.
 
-    Replacements from :data:`REPLACE_DIMS` and :data:`REPLACE_VARS` are applied.
-    The dimensions listed in the `var` argument are automatically dropped from the
-    returned :class:`pyam.IamDataFrame`. If :py:`var[0]` contains the word "emissions",
-    then :func:`collapse_gwp_info` is invoked.
-
-    Adapted from :func:`genno.compat.pyam.collapse`.
+    1. :meth:`str.title` is applied to columns "c", "l", and "t" (if any)
+    2. " Energy" is appended to column "l" (if any)
+    3. If :py:`var[0]` contains the word "emissions", then :func:`collapse_gwp_info` is
+       invoked.
+    4. Replacements from :data:`REPLACE_DIMS` are applied to individual columns.
+    5. :func:`genno.compat.pyam.collapse` is called, passing the `var` argument.
+       These columns are thereby removed from the returned :class:`pyam.IamDataFrame`.
+    6. Replacements from :data:`REPLACE_VARS` are applied to constructed IAMC "variable"
+       strings.
 
     Parameters
     ----------
     var : list of str, optional
         Strings or dimensions to concatenate to a 'variable' string. The first of these
         usually a :class:`str` used to populate the column; others may be fixed strings
-        or the IDs of dimensions in the input data. The components are joined using the
-        pipe ('|') character.
+        or the IDs of dimensions in the input data (that is, columns of `df`). The
+        components are joined using the pipe ('|') character.
 
     See also
     --------
@@ -237,7 +238,7 @@ def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
         df[dim] = df[dim].astype(str).str.title()
 
     if "l" in df.columns:
-        # Level: to title case, add the word 'energy'
+        # Level: append the word 'energy'
         df["l"] = df["l"] + " Energy"
 
     if len(var) and "emissions" in var[0].lower():
@@ -330,9 +331,11 @@ def add_replacements(dim: str, codes: Iterable[Code]) -> None:
 
        qux: {}  # No "report" annotation → no mapping
 
-    …results in entries :py:`{"Foo": "fOO", "Bar": "Baz"}` added to :data:`REPLACE_DIMS`
-    and used by :func:`collapse`.
+    …results in entries in :py:`REPLACE_DIMS[dim]` like
+    :py:`{"Foo": "fOO", "Bar": "Baz"}`. The keys are regular expressions that match
+    a whole string with the flag :data:`re.IGNORECASE`.
     """
+    REPLACE_DIMS.setdefault(dim, dict())
     for code in codes:
         # List of candidates
         candidates = [code.id, code.name]
@@ -346,7 +349,7 @@ def add_replacements(dim: str, codes: Iterable[Code]) -> None:
         label = next(filter(None, map(str, reversed(candidates))))
 
         if label != code.id:
-            REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
+            REPLACE_DIMS[dim][re.compile(f"^{code.id}$", re.I)] = label
 
 
 # FIXME Type as "Computer" str alias, when supported by genno.Computer.apply()

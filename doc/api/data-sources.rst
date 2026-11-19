@@ -181,6 +181,14 @@ These files were characterized by:
 
 This source is discontinued and will not publish subsequent editions of the data.
 
+.. _tools-jgcri:
+
+Joint Global Change Research Institute (:mod:`.tools.jgcri`)
+============================================================
+
+.. automodule:: message_ix_models.tools.jgcri
+   :members:
+
 .. _tools-newclimate:
 
 NewClimate Institute (:mod:`.tools.newclimate`)

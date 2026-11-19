@@ -17,13 +17,16 @@ from message_ix_models.model.transport import (
     Config,
     build,
     check,
+    demand,
     report,
     structure,
 )
 from message_ix_models.model.transport.testing import configure_build
+from message_ix_models.project.ssp import SSP_2017
 from message_ix_models.testing import bare_res
 
 if TYPE_CHECKING:
+    from genno.types import KeyLike
     from sdmx.model.common import Code
 
 
@@ -136,38 +139,32 @@ def test_bare_res(
 @mark.transport_build_data
 @build.get_computer.minimum_version
 @mark.parametrize(
-    "regions, years, options",
+    "key, options",
     (
-        # commented: Reduce runtimes of GitHub Actions jobs
-        # ("R11", "A", {}),
-        # ("R11", "B", {}),
-        # ("R11", "B", dict(futures_scenario="A---")),
-        # ("R11", "B", dict(futures_scenario="debug")),
-        ("R12", "B", dict(code="SSP2")),
-        ("R12", "B", dict(code="SSP2 tax")),
-        ("R12", "B", dict(code="SSP2 exo price a30e")),
-        # ("R12", "B", dict(navigate_scenario="act+ele+tec")),
-        ("R12", "B", dict(code="LED-SSP2")),
-        ("R12", "B", dict(code="EDITS-CA")),
-        ("R12", "B", dict(code="DIGSY-BEST-C")),
+        (demand.TARGET, dict(ssp=SSP_2017["2"])),
+        (demand.TARGET, dict(code="SSP1")),
+        ("", dict(code="SSP2")),
+        (demand.TARGET, dict(code="SSP3")),
+        (demand.TARGET, dict(code="SSP4")),
+        (demand.TARGET, dict(code="SSP5")),
+        ("", dict(code="SSP2 tax")),
+        ("", dict(code="SSP2 exo price a30e")),
+        ("", dict(code="LED-SSP2")),
+        ("", dict(code="EDITS-CA")),
+        ("", dict(code="DIGSY-BEST-C")),
         pytest.param(
-            "R12",
-            "B",
+            "",
             dict(code="SSP2", extra_modules=["material"]),
             marks=mark.message_ix_cap_comm,
         ),
-        # param("R14", "B", {}, marks=mark.R14_no_data),
-        # param("ISR", "A", {}, marks=mark.ISR_not_implemented),
     ),
 )
 def test_debug(
     request: "pytest.FixtureRequest",
     test_context: Context,
     tmp_path: Path,
-    regions: str,
-    years: str,
+    key: "KeyLike",
     options: dict,
-    N_node: int,
     *,
     verbosity: Literal[0, 1, 2, 3] = 0,
 ):
@@ -186,27 +183,32 @@ def test_debug(
     verbosity : int
         Passed to :func:`.verbose_check`.
     """
+    # These were previously parametrized, but the cases were commented/skipped
+    regions = "R12"
+    years = "B"
+
     # Get a Computer prepared to build the model with the given options
     c, _ = configure_build(
         test_context, regions, years, tmp_path, with_base=request, options=options
     )
 
     # Insert key-specific and common checks
-    result = check.insert(c, N_node, verbosity, tmp_path)
+    result = check.insert(c, verbosity, tmp_path)
 
-    k = "test_debug"
+    if key == "":
+        key = "test_debug"
     # DEBUG Show and compute a different key
-    # k = key.pdt_cny
+    # key = key.pdt_cny
 
     # Show what will be computed
     # verbosity = True  # DEBUG Force printing the description
     if verbosity:
-        print(c.describe(k))
+        print(c.describe(key))
 
     # return  # DEBUG Exit before doing any computation
 
     # Compute the test key
-    tmp = c.get(k)
+    tmp = c.get(key)
 
     # DEBUG Handle a subset of the result for inspection
     # print(tmp)

@@ -7,7 +7,7 @@ date
 
 # User's home directory (network drive)
 # NB this is different from $HOME on the worker node
-HHOME=/hdrive/u045/{{ username }}
+HHOME=/hdrive/all_users/{{ username }}
 
 # Python virtual environment
 VENV=$SLURM_TMPDIR/venv/{{ python_version }}
@@ -66,6 +66,9 @@ UV=$UV_UNMANAGED_INSTALL/uv
 
 # Store cache in the shared-scratch disk mounted on runners
 export UV_CACHE_DIR=$SHARED_SCRATCH/uv-cache/$USER
+
+# Check out Git LFS files when installing packages from Git repos
+export UV_GIT_LFS=1
 
 # Shared-scratch and the job work directory are on different filesystems.
 # Silence an uv warning about this.
