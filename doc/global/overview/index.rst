@@ -128,7 +128,7 @@ for human health and ecosystems, and on greenhouse gases.
 It covers SO2, NOx, PM, NMVOC, NH3, CO2, CH4, N2O and F-gases,
 together with the interrelations between them
 and the effects they contribute to,
-across 183 world regions,
+across 182 world regions,
 drawing on source- and technology-specific emission and cost factors
 and more than a thousand control options.
 It enters |name| through two linkages.
@@ -144,7 +144,7 @@ GAINS also supplies the matching abatement options,
 which enter as explicit technologies rather than as a
 marginal abatement cost curve,
 so that their own energy requirements, lifetimes and costs
-are part of the optimisation (see :ref:`gains`).
+are part of the optimisation (see :ref:`gains_abatement`).
 
 Air pollutant emissions are derived after the energy and land-use
 solution is complete.
