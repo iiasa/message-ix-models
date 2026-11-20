@@ -124,9 +124,83 @@ def limit_pipeline_build(scenario, growth=0.05, initial=100.0, prefix="gas_pipe_
         scenario.add_par("initial_new_capacity_up", df.assign(value=initial, unit="km"))
 
 
+#: Upper bounds (GWa) on pipeline routes, from existing and announced projects;
+#: 1 bcm/yr ~ 1.14 GWa. Each value holds from its year until the next listed year.
+ROUTE_ACTIVITY_UP = {
+    ("R12_FSU", "gas_piped_exp_chn"): {
+        # Central Asia-China A/B/C (55) + Power of Siberia 1 (38) + Far East (10)
+        2030: 118.0,
+        # + Power of Siberia 2 (50 bcm, agreed Sep 2025)
+        2035: 175.0,
+        # + Central Asia-China Line D (30 bcm, shelved)
+        2040: 210.0,
+    },
+}
+
+
+def bound_route_activity(scenario, bounds=None):
+    """
+    Add ``bound_activity_up`` on specific trade routes
+
+    Args:
+        bounds: {(node_loc, technology): {year: GWa}}. Each value applies from its
+            year until the next listed year (the last one to the end of the horizon).
+            Default: :data:`ROUTE_ACTIVITY_UP`.
+    """
+    bounds = ROUTE_ACTIVITY_UP if bounds is None else bounds
+    years = sorted(int(y) for y in scenario.set("year") if int(y) >= scenario.firstmodelyear)
+    rows = []
+    for (node, tec), path in bounds.items():
+        steps = sorted(path.items())
+        for y in years:
+            value = [v for y0, v in steps if y0 <= y]
+            if value:
+                rows.append(dict(node_loc=node, technology=tec, year_act=y,
+                                 mode="M1", time="year", value=value[-1], unit="GWa"))
+    if not rows:
+        return
+    df = pd.DataFrame(rows)
+    print(f"Bound activity on {len(bounds)} trade routes")
+    with scenario.transact("Bound trade route activity"):
+        scenario.add_par("bound_activity_up", df)
+
+
+def set_import_growth(scenario, techs=("LNG_shipped_imp",), growth_up=0.05,
+                      growth_lo=-0.05):
+    """
+    Add growth rates to import technologies that only have ``initial_activity_*``
+
+    Without a growth rate the dynamic constraints let imports change by only
+    initial_activity (2 GWa/yr, i.e. +/-10 GWa per period), whatever their level.
+    Rows that already have a growth rate are kept.
+
+    Args:
+        techs: Import technologies to update
+        growth_up: growth_activity_up (per year)
+        growth_lo: growth_activity_lo (per year, negative)
+    """
+    idx = ["node_loc", "technology", "year_act", "time"]
+    with scenario.transact("Add growth rates to import technologies"):
+        for side, value in (("up", growth_up), ("lo", growth_lo)):
+            init = scenario.par(f"initial_activity_{side}",
+                                filters={"technology": list(techs)})
+            if init.empty:
+                continue
+            have = scenario.par(f"growth_activity_{side}",
+                                filters={"technology": list(techs)})
+            df = init[idx].merge(have[idx], how="left", indicator=True)
+            df = df[df["_merge"] == "left_only"].drop(columns="_merge")
+            if df.empty:
+                continue
+            print(f"Add growth_activity_{side} = {value} on {len(df)} rows of {techs}")
+            scenario.add_par(f"growth_activity_{side}",
+                             df.assign(value=value, unit="%"))
+
+
 def bilateralize_scenario(project_name, config_name, scenario, target_scenario = None,
                           history_scenario = None, last_model_year = None,
                           lt_contracts = True, pipeline_build_limit = True,
+                          route_bounds = True, import_growth = True,
                           **contract_kwargs):
     """
     Bilateralize a given scenario
@@ -150,6 +224,10 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             :func:`.lt_contracts.add_contract_bounds`).
         pipeline_build_limit: If True (default), limit the build rate of new gas
             pipeline length (see :func:`limit_pipeline_build`).
+        route_bounds: If True (default), cap activity on routes in
+            :data:`ROUTE_ACTIVITY_UP` (see :func:`bound_route_activity`).
+        import_growth: If True (default), add growth rates to LNG imports (see
+            :func:`set_import_growth`).
         **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
             ``contract_share`` (default 0.9).
     """
@@ -258,6 +336,12 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
 
     if pipeline_build_limit:
         limit_pipeline_build(out_scenario)
+
+    if route_bounds:
+        bound_route_activity(out_scenario)
+
+    if import_growth:
+        set_import_growth(out_scenario)
 
     if lt_contracts:
         print("Add long-term gas contract bounds")
