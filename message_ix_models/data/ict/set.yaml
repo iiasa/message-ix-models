@@ -1,0 +1,18 @@
+# Set configuration for the ICT module.
+
+# For each set in the MESSAGEix framework, the group contains:
+# - 'require': elements that must be present for the model to be set up.
+# - 'remove': elements to remove.
+# - 'add': elements to add.
+
+commodity:
+  require:
+  - electr
+
+level:
+  require:
+  - final
+
+mode:
+  require:
+  - M1
