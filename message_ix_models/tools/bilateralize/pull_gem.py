@@ -63,6 +63,8 @@ def import_gem(
     regional_specification: str = "R12",
     inv_cost_per_km: float | None = None,
     ref_line_capacity: float = 20.0,
+    statuses: tuple[str, ...] | None = ("operating",),
+    min_vintage: int = 2000,
 ):
     """
     Import Global Energy Monitor data
@@ -81,6 +83,10 @@ def import_gem(
             missing for many segments, so cost/length per route is unreliable.
         ref_line_capacity: Capacity (GWa) of one new pipeline, used for routes with
             no GEM data: input = haversine distance (km) / ref_line_capacity.
+        statuses: GEM ``Status`` values to keep (default: operating lines only).
+            None keeps every status.
+        min_vintage: Earliest vintage year. Older lines are assigned this vintage,
+            so with a 40-year lifetime they retire in min_vintage + 40.
     """
 
     # Pull in configuration
@@ -97,6 +103,10 @@ def import_gem(
     df = pd.read_csv(os.path.join(gem_path, input_file), encoding="utf-8")
 
     df = df[df["StopYear"].isnull()]  # Only continuing projects
+    # Only lines in service: GEM also lists cancelled, shelved, mothballed (e.g.
+    # Nord Stream 2), idle (e.g. Yamal-Europe) and proposed lines without StopYear
+    if statuses is not None and "Status" in df.columns:
+        df = df[df["Status"].str.lower().isin([s.lower() for s in statuses])]
 
     df = df[
         [
@@ -140,6 +150,9 @@ def import_gem(
     df["YEAR"] = (
         round(df["StartYear1"].astype(float) / 5) * 5
     )  # Round year to the nearest 5
+    # Pipelines older than min_vintage (e.g. Transmed 1983, Maghreb-Europe 1996)
+    # are given vintage min_vintage so they survive into the model horizon
+    df["YEAR"] = df["YEAR"].clip(lower=min_vintage)
 
     df = (
         df.groupby(["EXPORTER", "IMPORTER", "YEAR"])[
