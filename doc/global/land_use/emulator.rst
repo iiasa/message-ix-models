@@ -344,10 +344,16 @@ Emissions from the energy sector remain unchanged, and total emissions are summe
 Up to 2025, all scenarios take their land-use results from the feedback run of the SSP2 High Emissions scenario, so that the historical period is identical across scenarios.
 The feedback run allows the land-use impacts of a scenario to be analyzed in greater detail and corrects the land-use emissions for the approximations of the emulator.
 
-:numref:`fig-GLOBIOM_feedback` compares the emulated land-use emissions with those of the feedback runs for the three SSP2 scenarios of :numref:`fig-Landuse_Pathway_Choice`.
-Land-use CH4 emissions differ by less than 9% between the two runs.
-This difference does not come from a misalignment between the two runs as such.
-For burning-related emissions, the emulator does not use the GLOBIOM emissions.
+GLOBIOM supplies the biomass quantity passed to it almost exactly.
+In the SSP2 Low scenario, the biomass supplied by the land system (energy crops, residues, roundwood, fuelwood and first-generation feedstocks)
+is 34.9 EJ/yr in 2050 and 115.6 EJ/yr in 2100 in the emulated run, against 34.8 EJ/yr and 114.9 EJ/yr in the feedback run.
+The two agree within 1% in all periods.
+In the other scenarios of the ScenarioMIP-CMIP7 scenario set the difference stays within 4%,
+with the exception of the High scenarios of SSP1 and SSP5 (8% and 6% in 2100, about 1 EJ/yr in both).
+
+:numref:`fig-GLOBIOM_feedback` compares the emulated land-use emissions with those of the feedback runs for the three SSP2 scenarios of :numref:`fig-Landuse_Pathway_Choice` and for the SSP2 Very Low scenario.
+Burning-related emissions are left out of the comparison,
+because the emulator does not use the GLOBIOM emissions for them.
 It replaces them with historical emissions
 from the CMIP7 ScenarioMIP historical dataset (Nicholls et al., 2025 :cite:`nicholls_cmip7_2025`).
 For open burning, this dataset uses the BB4CMIP7 data (van Marle and van der Werf, 2025 :cite:`van_marle_bb4cmip7_2025`),
@@ -363,16 +369,64 @@ so for these categories the two runs differ by construction.
 When the feedback results are merged into the reporting of the scenario,
 the same replacement is applied again,
 so the final results use the CMIP7-based burning emissions driven by the GLOBIOM proxies.
-AFOLU GHG emissions are lower in the feedback runs in all three scenarios and all periods, mainly because of CO2.
-The largest difference is in the Low scenario in 2050, where the feedback run gives 1541 Mt CO2-equiv/yr against 3239 Mt CO2-equiv/yr in the emulated run.
-Relative to total GHG emissions, the differences are small, less than 2 Gt CO2-equiv/yr in all periods, for example 24.3 against 26.0 Gt CO2-equiv/yr in the Low scenario in 2050.
+Burning emissions are therefore the same in the final results of both runs.
+Without them, land-use CH4 emissions differ by less than 8% between the two runs.
+AFOLU GHG emissions are lower in the feedback runs of the Medium-Low, Low and Very Low scenarios in all periods after 2020, mainly because of CO2.
+In the Low and Very Low scenarios the difference is largest in 2050.
+In the Low scenario the feedback run gives 1213 Mt CO2-equiv/yr against 2813 Mt CO2-equiv/yr in the emulated run,
+and in the Very Low scenario -2204 Mt CO2-equiv/yr against 148 Mt CO2-equiv/yr.
+Total GHG emissions in 2050 are 24.0 against 25.6 Gt CO2-equiv/yr in the Low scenario
+and 8.9 against 11.2 Gt CO2-equiv/yr in the Very Low scenario.
+After 2070 the differences are below 1 Gt CO2-equiv/yr in all four scenarios.
 
 .. _fig-GLOBIOM_feedback:
 .. figure:: /_static/emulator_feedback.png
    :width: 800px
    :align: center
 
-   Emulated land-use emissions (solid lines) and GLOBIOM feedback runs (dotted lines) for the SSP2 Medium, Medium-Low and Low scenarios, World, 2010 to 2100. Panel a shows total GHG emissions (CO2, CH4 and N2O, AR4 GWP100) in Gt CO2-equiv/yr, panel b AFOLU GHG emissions in Mt CO2-equiv/yr, panel c AFOLU CO2 emissions in Mt CO2/yr and panel d AFOLU CH4 emissions in Mt CH4/yr. In panel a, the feedback line replaces the emulated AFOLU emissions with those of GLOBIOM and keeps all other sectors. F-gases are not included.
+   Emulated land-use emissions (solid lines) and GLOBIOM feedback runs (dotted lines) for the SSP2 Medium, Medium-Low, Low and Very Low scenarios, World, 2020 to 2100. Burning emissions are left out of both runs. Panel a shows total GHG emissions (CO2, CH4 and N2O, AR4 GWP100) in Gt CO2-equiv/yr, panel b AFOLU GHG emissions in Mt CO2-equiv/yr, panel c AFOLU CO2 emissions in Mt CO2/yr and panel d AFOLU CH4 emissions in Mt CH4/yr. In panel a, the feedback line replaces the emulated AFOLU emissions with those of GLOBIOM and keeps all other sectors. F-gases are not included.
+
+Land cover differs much less between the two runs than emissions do (:numref:`fig-GLOBIOM_feedback_land_cover`).
+In the Low scenario, forest area grows by 374 million ha between 2020 and 2100 in the emulated run and by 388 million ha in the feedback run.
+Cropland grows by 170 against 149 million ha, pasture declines by 73 against 41 million ha
+and other natural land declines by 471 against 496 million ha.
+The area of afforestation and reforestation agrees within 25 million ha in all four scenarios.
+The largest difference in any of the four categories and scenarios is 120 million ha, for other natural land in the Very Low scenario.
+The lower emissions of the feedback runs therefore do not come from a different amount of land being converted,
+but from the emissions and removals that GLOBIOM-G4M attaches to a given land-use change.
+
+.. _fig-GLOBIOM_feedback_land_cover:
+.. figure:: /_static/emulator_feedback_land_cover.png
+   :width: 800px
+   :align: center
+
+   Land cover in the emulated runs (solid lines) and in the GLOBIOM feedback runs (dotted lines) for the SSP2 Medium, Medium-Low, Low and Very Low scenarios, World, as change relative to 2020 in million ha. Panel a shows forest, panel b cropland including energy crops, panel c pasture and panel d other natural land.
+
+The difference between the two runs grows with the stringency of the scenario.
+In the Medium scenario the two runs agree within 0.5 Gt CO2-equiv/yr in all periods and in the Medium-Low scenario within 0.8 Gt CO2-equiv/yr.
+In the Low scenario the feedback run is lower by 1.6 Gt CO2-equiv/yr in 2050 and in the Very Low scenario by 2.4 Gt CO2-equiv/yr.
+Over 2020 to 2100 the feedback run of the Low scenario is lower by 73 Gt CO2-equiv, about 4% of cumulative total GHG emissions.
+The same pattern is found in the other SSPs of the ScenarioMIP-CMIP7 scenario set.
+In all seven Low, Low Overshoot and Very Low scenarios of SSP1, SSP2, SSP4 and SSP5, the feedback run is lower than the emulated run,
+by 1.5 to 3.8 Gt CO2-equiv/yr in 2050 and by 21 to 110 Gt CO2-equiv over 2020 to 2100.
+In the High scenarios, where little land-based mitigation is used, the two runs agree within 0.4 Gt CO2-equiv/yr in 2050, with the exception of SSP4 (0.9 Gt CO2-equiv/yr).
+
+Regionally the differences are concentrated.
+In the SSP2 Low scenario, the largest difference in any period from 2030 to 2100 stays at or below 5% of the total GHG emissions of the region in 2020 for ten of the twelve regions.
+It reaches 14% in Sub-Saharan Africa (R12_AFR) and in Latin America (R12_LAM), which together account for 57 of the 73 Gt CO2-equiv.
+Across all scenarios at least eight of the twelve regions stay at or below 10%, and the largest values are found in these same two regions in most cases.
+
+Two features of the emulator are likely to contribute to these differences.
+The first is the transitional constraint, which uses a single phase-out rate of at most 5% per year for all regions, scenarios and SSP narratives.
+This rate reproduces the transitions of GLOBIOM in most regions and scenarios, but it cannot match all of them.
+The second is the spacing of the twelve carbon price categories.
+The categories are chosen to cover the full range of mitigation responses across regions.
+They need to resolve the response to small price increases at low prices, and they are spaced more widely at high prices,
+where the regional response differs and levels off in some regions.
+A response that lies between two widely spaced categories is therefore only approximated,
+which matters most in stringent scenarios and in regions with a large land-based mitigation potential.
+Both choices trade accuracy for an individual region or scenario against a single setup that is applicable across regions, periods and SSP narratives.
+A setup that is differentiated by region or by narrative is a direction for future development.
 
 The approach has limits that follow from its design.
 Both prices apply to all biomass feedstocks and all land-use GHGs at once.
