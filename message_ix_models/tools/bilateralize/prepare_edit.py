@@ -738,10 +738,10 @@ def build_flow_output(
 
     df_output = df_output.drop_duplicates()
 
-    df_output["value"] = 1 # For shipping
-    df_output["value"] = np.where(df_output["technology"].str.contains("gas_pipe_"), 20, df_output["value"])
-    df_output["value"] = np.where(df_output["technology"].str.contains("oil_pipe_"), 10, df_output["value"])
-    
+    # Pipelines: 1 km of pipe gives 1 unit of capacity commodity; the trade
+    # technology input (km/GWa, from GEM) sets how much trade each km carries
+    df_output["value"] = 1
+
     output_out = pd.concat([parameter_outputs[tec]["flow"]["output"], df_output])
     parameter_outputs[tec]["flow"]["output"] = output_out
 
@@ -1358,6 +1358,7 @@ def prepare_edit_files(
                 flow_commodity="oil_pipeline_capacity",
                 project_name=project_name,
                 config_name=config_name,
+                ref_line_capacity=10.0,
             )
 
         # Add MariTEAM calibration for maritime shipping

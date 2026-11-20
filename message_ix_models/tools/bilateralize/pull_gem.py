@@ -62,6 +62,7 @@ def import_gem(
     first_model_year: int = 2030,
     regional_specification: str = "R12",
     inv_cost_per_km: float | None = None,
+    ref_line_capacity: float = 20.0,
 ):
     """
     Import Global Energy Monitor data
@@ -78,6 +79,8 @@ def import_gem(
         inv_cost_per_km: If given, investment cost (MUSD/km) used for every route of
             the flow technology instead of the GEM-derived values. GEM's CostUSD is
             missing for many segments, so cost/length per route is unreliable.
+        ref_line_capacity: Capacity (GWa) of one new pipeline, used for routes with
+            no GEM data: input = haversine distance (km) / ref_line_capacity.
     """
 
     # Pull in configuration
@@ -352,28 +355,28 @@ def import_gem(
         os.path.join(flow_dir_out, "historical_new_capacity.csv"), index=False
     )
 
-    # Input
-    inputdf_capacity = (
-        df.groupby(["EXPORTER", "IMPORTER"])[["Capacity (GWa)"]]
+    # Input: km of pipeline per GWa of trade (K/C)
+    # K = total pipeline length on the route, C = total GEM throughput capacity on
+    # the route. The flow technology has output = 1 (see prepare_edit), so a route's
+    # historical pipeline stock (K km) supports exactly C GWa of trade, and new
+    # build costs K/C km per GWa. Use the same vintages as historical_new_capacity.
+    route = df[(df["YEAR"] > 1999) & (df["YEAR"] < first_model_year)]
+    route = (
+        route.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm", "Capacity (GWa)"]]
         .sum()
         .reset_index()
     )
-    inputdf_capacity = inputdf_capacity.rename(columns = {"Capacity (GWa)": "Total Capacity (GWa/km)"})
-    inputdf = df.merge(inputdf_capacity, left_on=["EXPORTER", "IMPORTER"], right_on=["EXPORTER", "IMPORTER"], how="left")
-    inputdf['Capacity Share'] = inputdf['Capacity (GWa)'] / inputdf['Total Capacity (GWa/km)']
-    inputdf['LengthMergedKm Weighted'] = inputdf['LengthMergedKm'] * inputdf['Capacity Share']
-    
-    inputdf = (
-        inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]]
-        .sum()
-        .reset_index()
+    route = route[(route["LengthMergedKm"] > 0) & (route["Capacity (GWa)"] > 0)]
+    route["km_per_GWa"] = route["LengthMergedKm"] / route["Capacity (GWa)"]
+    inputdf = route[["EXPORTER", "IMPORTER", "km_per_GWa"]]
+
+    # Routes with GEM data in only one direction use the reverse direction's value
+    reverse = inputdf.rename(columns={"EXPORTER": "IMPORTER", "IMPORTER": "EXPORTER"})
+    reverse = reverse.merge(
+        inputdf[["EXPORTER", "IMPORTER"]], how="left", indicator=True
     )
-    #inputdf["Capacity (GWa/km)"] = inputdf["Capacity (GWa)"] / inputdf["LengthMergedKm"]
-    inputdf = inputdf[["EXPORTER", "IMPORTER", "LengthMergedKm Weighted"]].drop_duplicates() # Capacity (GWa/km)
-    inputdf2 = inputdf.copy()
-    inputdf2 = inputdf2.rename(columns = {"EXPORTER": "IMPORTER", "IMPORTER": "EXPORTER"})
-    inputdf = pd.concat([inputdf, inputdf2])
-    inputdf = inputdf.groupby(["EXPORTER", "IMPORTER"])[["LengthMergedKm Weighted"]].min().reset_index()
+    reverse = reverse[reverse["_merge"] == "left_only"].drop(columns="_merge")
+    inputdf = pd.concat([inputdf, reverse], ignore_index=True)
 
     inputdf["node_loc"] = inputdf["EXPORTER"]
     inputdf["technology"] = (
@@ -381,7 +384,7 @@ def import_gem(
         + "_exp_"
         + inputdf["IMPORTER"].str.lower().str.split("_").str[-1]
     )
-    inputdf["value_update"] = round(inputdf["LengthMergedKm Weighted"], 0) # round((1 / inputdf["Capacity (GWa/km)"]), 0)
+    inputdf["value_update"] = round(inputdf["km_per_GWa"], 1)
     inputdf["commodity"] = (
         flow_commodity + "_" + inputdf["IMPORTER"].str.lower().str.split("_").str[-1]
     )
@@ -389,15 +392,18 @@ def import_gem(
 
     basedf = pd.read_csv(os.path.join(trade_dir, "input.csv"))
     
-    # Where historical pipeline is missing, use haversine distance formula
+    # Where historical pipeline is missing, assume one new line of length equal to
+    # the haversine distance and capacity ref_line_capacity (GWa)
     haversine_distances = calculate_pipeline_distances(regional_specification)
-    
+
     basedf['Node1'] = basedf['node_loc']
     basedf['Node2'] = regional_specification + '_' + basedf['technology'].str.split('_').str[-1].str.upper()
     basedf = basedf.merge(haversine_distances, left_on=["Node1", "Node2"], right_on=["Node1", "Node2"], how="left")
 
     basedf["value"] = np.where(
-        basedf["commodity"].str.contains(flow_commodity), basedf['Distance_km'], basedf["value"]
+        basedf["commodity"].str.contains(flow_commodity),
+        basedf["Distance_km"] / ref_line_capacity,
+        basedf["value"],
     )
     basedf = basedf.drop(["Node1", "Node2", "Distance_km"], axis=1)
     
