@@ -14,5 +14,16 @@ In a second step, the HRU layer is intersected with a 0.5 x 0.5 degree grid and 
 land category/use data, irrigation data, etc. In total, 212,707 SimUs are delineated by clustering 5 x 5 minutes of arc pixels according to five criteria: altitude, slope, and soil class, 0.5 x 0.5
 degrees grid, and the country boundaries. The SimUs are the basis for estimation of land use/management parameters in all other supporting models as well. For each SimU a number of land management
 options are simulated using the bio-physical process model EPIC (Environmental Policy Integrated Climate) (Izaurralde et al., 2006 :cite:`izaurralde_simulating_2006`; Williams and Singh, 1995 :cite:`williams_computer_1995`).
-For the SSP application of GLOBIOM, in order to ease computation time, the input data sets and the model resolution were agregated to 2 x 2 degree cells disaggregated only by country boundaries and by three agro-ecological
-zones used in the livestock production system classification: arid, humid, temperate and tropical highlands. This led to a total of 10,894 different Supply Units.
+Within each simulation unit,
+alternative production systems are represented with distinct productivity levels and input requirements
+(see :ref:`crop`, :ref:`livestock` and :ref:`forestry`),
+and land allocation decisions are taken at the same unit.
+This representation captures the spatial heterogeneity of environmental conditions and production potential in detail.
+To increase computation efficiency,
+the input data sets and the model resolution are aggregated to 2 x 2 degree cells,
+disaggregated only by country boundaries
+and by the three agro-ecological zones used in the livestock production system classification,
+that is arid, humid, and temperate or tropical highlands.
+This gives a total of 10,894 Supply Units.
+Results are downscaled from these units back to 0.5 x 0.5 degree resolution through a downscaling module,
+so that the gain in computation efficiency does not cost spatial detail in the output.

@@ -21,6 +21,9 @@ monogastrics are not linked in the model to specific spatial features, like gras
 Livestock products
 ~~~~~~~~~~~~~~~~~~
 Each livestock category is characterized by product yield, feed requirements, and a set of direct GHG emission coefficients. On the output side, seven products are defined: bovine meat and milk, small ruminant meat and milk, pig meat, poultry meat, and eggs. For each region, production type and production system, individual productivities are determined.
+Besides the marketed products,
+each livestock category carries manure production and nitrogen excretion,
+which together with the emission coefficients form the environmental output of livestock production.
 
 Bovine and small ruminant productivities are estimated through the RUMINANT model (Herrero et al., 2008 :cite:`herrero_systems_2008`; Herrero et al., 2013 :cite:`herrero_global_2013`), in a three steps process which 
 consists of first, specifying a plausible feed ration; second, calculating in RUMINANT the corresponding yield; and finally confronting at the region level with FAOSTAT (Supply Utilization Accounts) data on production. 
@@ -55,7 +58,7 @@ forage production systems and all are confronted with considerable uncertainty d
 These limitations precluded reliance on any single source of information or output from a single model. Therefore three different grass productivity sources were considered: CENTURY on native grasslands, 
 CENTURY on native and managed grasslands, and EPIC on managed grasslands.  
 
-A systematic process was developed for selecting the suitable productivity source for each of GLOBIOM’s 30 regions. This process allowed reliance on sound productivity estimates that are consistent with 
+A systematic process was developed for selecting the suitable productivity source for each GLOBIOM region. This process allowed reliance on sound productivity estimates that are consistent with 
 other GLOBIOM datasets like spatial livestock distribution and feed requirements. Within this selection process, the area of utilized grasslands corresponding to the base year 2000 was determined simultaneously 
 with the suitable forage productivity layer. Two selection criteria were used: livestock requirements for forage and area of permanent meadows and pastures from FAOSTAT. The selection process was based on 
 simultaneous minimization of  i) the difference between livestock demand for forage and the model-estimates of forage supply and ii) the difference between the utilized grassland area and FAOSTAT statistics on 
@@ -104,6 +107,9 @@ Livestock dynamics
 ~~~~~~~~~~~~~~~~~~
 In general, the number of animals of a given species and production type in a particular production system and Supply Unit is an endogenous variable. This means that it will decrease or increase in relation to changes in 
 demand and the relative profitability with respect to competing activities.
+Switches between production systems allow feedstuffs to be substituted
+and livestock production to intensify or extensify
+in response to changes in relative factor prices, and to land values in particular.
 
 Herd dynamics constraints need however to be respected. First, dairy herds are constituted of adult females and followers, and expansion therefore occurs in predefined proportions in the two groups. Moreover, 
 for regions where the specialized meat herds are insignificant (no suckler cows), expansion of meat animals (surplus heifers and males) is also assumed proportional in size to the dairy herd. 
