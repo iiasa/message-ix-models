@@ -271,9 +271,144 @@ def fit_dynamic_constraints(scenario: message_ix.Scenario, bounds: pd.DataFrame)
     return pd.DataFrame(rows, columns=keys + ["value"]).assign(unit=unit)
 
 
+def pipeline_trade_capacity(scenario: message_ix.Scenario,
+                            techs: Optional[Iterable[str]] = None) -> pd.DataFrame:
+    """Most trade (GWa) each pipeline export technology can carry, by model year.
+
+    A pipeline export technology (e.g. ``gas_piped_exp_weu``) needs ``input`` km of
+    pipeline capacity commodity per GWa, supplied by a pipeline technology (e.g.
+    ``gas_pipe_weu``) at the same node. The pipeline stock in year y is
+
+    - historical: ``historical_new_capacity`` x ``duration_period`` of every vintage
+      that has a ``technical_lifetime`` and is still alive in y (vintages without a
+      lifetime get no capacity in MESSAGE), plus
+    - new build at the most NEW_CAPACITY_CONSTRAINT_UP allows (as in MESSAGE's
+      model_core.gms)::
+
+        CAP_NEW(y) <= (CAP_NEW(y-1) + historical_new_capacity(y-1) + initial(y)) * k
+        k = G1(y-1) * G2(y) / G2(y-1),  G1 = (1 + g)^d,
+        G2 = (G1 - 1) / (d * ln(1 + g))  (1 if g = 0)
+
+      capped by ``bound_new_capacity_up``. Soft relaxations are ignored
+      (conservative).
+
+    Trade capacity = stock x output x capacity_factor / input, capped by
+    ``bound_total_capacity_up`` on the pipeline technology.
+
+    Returns:
+        Columns node_loc, technology (trade), year_act, value (GWa).
+    """
+    fmy = scenario.firstmodelyear
+    years = sorted(int(y) for y in scenario.set("year"))
+    model_years = [y for y in years if y >= fmy]
+    prev = dict(zip(years[1:], years[:-1]))
+    dp = scenario.par("duration_period")
+    dur = dict(zip(dp["year"].astype(int), dp["value"]))
+
+    inp = scenario.par("input", filters={"technology": list(techs)} if techs else None)
+    inp = inp[inp["commodity"].str.contains("pipeline_capacity")
+              & (inp["year_vtg"] == inp["year_act"])]
+    if inp.empty:
+        return pd.DataFrame(columns=["node_loc", "technology", "year_act", "value"])
+    inp = inp.groupby(["node_loc", "technology", "commodity", "year_act"],
+                      as_index=False)["value"].sum()
+
+    out = scenario.par("output", filters={"commodity": list(inp["commodity"].unique())})
+    out = out[out["year_vtg"] == out["year_act"]]
+    pipes = out[["node_loc", "technology", "commodity"]].drop_duplicates()
+    pipe_techs = list(pipes["technology"].unique())
+
+    def par(name, cols):
+        df = scenario.par(name, filters={"technology": pipe_techs})
+        return df.assign(**{c: df[c].astype(int) for c in cols if c.startswith("year")})
+
+    life = par("technical_lifetime", ["year_vtg"]).set_index(
+        ["node_loc", "technology", "year_vtg"])["value"]
+    hist = par("historical_new_capacity", ["year_vtg"]).set_index(
+        ["node_loc", "technology", "year_vtg"])["value"]
+    init = par("initial_new_capacity_up", ["year_vtg"]).set_index(
+        ["node_loc", "technology", "year_vtg"])["value"]
+    grow = par("growth_new_capacity_up", ["year_vtg"]).set_index(
+        ["node_loc", "technology", "year_vtg"])["value"]
+    bnew = par("bound_new_capacity_up", ["year_vtg"]).set_index(
+        ["node_loc", "technology", "year_vtg"])["value"]
+    btot = par("bound_total_capacity_up", ["year_act"]).set_index(
+        ["node_loc", "technology", "year_act"])["value"]
+    cf = par("capacity_factor", ["year_vtg", "year_act"])
+    cf = cf[cf["year_vtg"] == cf["year_act"]].groupby(
+        ["node_loc", "technology", "year_act"])["value"].min()
+    outv = out.assign(year_act=out["year_act"].astype(int)).groupby(
+        ["node_loc", "technology", "year_act"])["value"].sum()
+
+    rows = []
+    for p in pipes.itertuples(index=False):
+        n, t = p.node_loc, p.technology
+        alive = lambda v, y: (n, t, v) in life.index and v + life[(n, t, v)] > y  # noqa: E731
+        hvint = [v for (n0, t0, v) in hist.index if (n0, t0) == (n, t)]
+        def g1(y):
+            return (1 + grow.get((n, t, y), 0.0)) ** dur.get(y, 5)
+
+        def g2(y):
+            g = grow.get((n, t, y), 0.0)
+            return (g1(y) - 1) / (dur.get(y, 5) * np.log(1 + g)) if g else 1.0
+
+        new = {}
+        for y in model_years:
+            k = (n, t, y)
+            py = prev.get(y)
+            if k in init.index or k in grow.index:
+                base = new.get(py, 0.0) + hist.get((n, t, py), 0.0) + init.get(k, 0.0)
+                cap_new = base * g1(py) * g2(y) / g2(py)
+            else:
+                cap_new = np.inf
+            cap_new = min(cap_new, bnew.get(k, np.inf))
+            new[y] = cap_new
+            stock = sum(hist[(n, t, v)] * dur.get(v, 5) for v in hvint if alive(v, y))
+            stock += sum(new[v] * dur[v] for v in new if alive(v, y))
+            stock = min(stock, btot.get(k, np.inf))
+            rows.append(dict(node_loc=n, pipe=t, commodity=p.commodity, year_act=y,
+                             km=stock * outv.get(k, 1.0) * cf.get(k, 1.0)))
+    km = pd.DataFrame(rows)
+    if km.empty:
+        return pd.DataFrame(columns=["node_loc", "technology", "year_act", "value"])
+
+    inp = inp.assign(year_act=inp["year_act"].astype(int))
+    m = inp.merge(km, on=["node_loc", "commodity", "year_act"])
+    m["value"] = m["km"] / m["value"]
+    return m[["node_loc", "technology", "year_act", "value"]]
+
+
+def clip_to_pipeline_capacity(scenario: message_ix.Scenario, bounds: pd.DataFrame,
+                              margin: float = 0.99) -> pd.DataFrame:
+    """Clip pipeline contract bounds to what the route can physically carry.
+
+    A contract floor above :func:`pipeline_trade_capacity` makes the scenario
+    infeasible (e.g. ``CAPACITY_CONSTRAINT(R12_MEA,gas_pipe_weu,2030,2030,year)``).
+    Such bounds are lowered to `margin` x the capacity; bounds on other technologies
+    are returned unchanged.
+    """
+    cap = pipeline_trade_capacity(scenario, bounds["technology"].unique())
+    if cap.empty:
+        return bounds
+    b = bounds.assign(_y=bounds["year_act"].astype(int)).merge(
+        cap.rename(columns={"value": "cap", "year_act": "_y"}),
+        on=["node_loc", "technology", "_y"], how="left")
+    over = b["cap"].notna() & (b["value"] > margin * b["cap"])
+    if over.any():
+        log.warning(
+            "Contract floors above pipeline capacity, clipped to "
+            f"{margin:.0%} of capacity (GWa):\n"
+            + b.loc[over, ["node_loc", "technology", "year_act", "value", "cap"]]
+            .round(2).to_string(index=False))
+        b.loc[over, "value"] = (margin * b.loc[over, "cap"]).clip(lower=0).round(4)
+    b = b.drop(columns=["_y", "cap"])
+    return b[b["value"] > 0].reset_index(drop=True)
+
+
 def add_contract_bounds(
     scenario: message_ix.Scenario,
     dynamic_constraints: str = "fit",
+    clip_pipeline: bool = True,
     **kwargs,
 ) -> pd.DataFrame:
     """Add long-term contract lower bounds to `scenario` (in place).
@@ -288,6 +423,10 @@ def add_contract_bounds(
               leaves those routes with no upper growth limit at all and lets them
               expand far beyond the contracts (FSU->CHN reached 1,747 GWa by 2070).
             - "keep": leave them unchanged (may be infeasible).
+        clip_pipeline: If True (default), lower pipeline contract floors that exceed
+            the route's pipeline capacity (:func:`clip_to_pipeline_capacity`).
+            Needs the pipeline build limits in place, so call after
+            ``limit_pipeline_build``.
         **kwargs: Passed to :func:`contract_bounds`.
 
     Returns:
@@ -296,6 +435,8 @@ def add_contract_bounds(
     if dynamic_constraints not in ("fit", "remove", "keep"):
         raise ValueError(f"dynamic_constraints={dynamic_constraints!r}")
     bounds = contract_bounds(scenario, **kwargs)
+    if clip_pipeline:
+        bounds = clip_to_pipeline_capacity(scenario, bounds)
     log.info(f"Adding {len(bounds)} contract bounds; total by year (GWa):\n"
              f"{bounds.groupby('year_act')['value'].sum().round(1).to_string()}")
 
