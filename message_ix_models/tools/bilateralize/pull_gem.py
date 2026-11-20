@@ -64,7 +64,7 @@ def import_gem(
     inv_cost_per_km: float | None = None,
     ref_line_capacity: float = 20.0,
     statuses: tuple[str, ...] | None = ("operating",),
-    min_vintage: int = 2000,
+    min_vintage: int | None = None,
 ):
     """
     Import Global Energy Monitor data
@@ -86,7 +86,9 @@ def import_gem(
         statuses: GEM ``Status`` values to keep (default: operating lines only).
             None keeps every status.
         min_vintage: Earliest vintage year. Older lines are assigned this vintage,
-            so with a 40-year lifetime they retire in min_vintage + 40.
+            so with a 40-year lifetime they retire in min_vintage + 40. Default: the
+            first year of ``timeframes.year_vtg_list`` in the config. Vintages before
+            that get no technical_lifetime, so MESSAGE gives them no capacity.
     """
 
     # Pull in configuration
@@ -94,6 +96,8 @@ def import_gem(
         project_name=project_name, config_name=config_name
     )
     p_drive = config["p_drive_location"]
+    if min_vintage is None:
+        min_vintage = min(int(y) for y in config["timeframes"]["year_vtg_list"])
 
     # Data paths
     data_path = os.path.join(p_drive, "MESSAGE_trade")
@@ -151,7 +155,8 @@ def import_gem(
         round(df["StartYear1"].astype(float) / 5) * 5
     )  # Round year to the nearest 5
     # Pipelines older than min_vintage (e.g. Transmed 1983, Maghreb-Europe 1996)
-    # are given vintage min_vintage so they survive into the model horizon
+    # are given vintage min_vintage: earlier vintages have no technical_lifetime in
+    # the scenario, so their capacity would be dropped
     df["YEAR"] = df["YEAR"].clip(lower=min_vintage)
 
     df = (
