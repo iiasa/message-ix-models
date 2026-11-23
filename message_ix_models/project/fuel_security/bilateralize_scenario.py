@@ -235,8 +235,9 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             history (grades, mpen, resource extraction, new capacity) to IEA World
             Energy Balances production (see
             :func:`.rebase_extraction.rebase_extraction_history`).
-        shift_nam_gas: If True (default), move R12_NAM gas resource from gas_4 into
-            gas_2 so its cheap grades match US + Canadian proved reserves (see
+        shift_nam_gas: If True (default), move R12_NAM gas resource from the costlier
+            grades (gas_4, then gas_5-7) into gas_2 so its cheap grades hold the US
+            shale + tight gas technically recoverable resource (see
             :func:`.shift_resource_grades.shift_nam_gas_grades`).
         **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
             ``contract_share`` (default 0.9).
@@ -312,7 +313,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                                   config_name=config_name, year=2025)
 
     if shift_nam_gas:
-        print("Shift NAM gas resource from gas_4 to gas_2 to match proved reserves")
+        print("Shift NAM gas resource into gas_2 to match shale/tight TRR")
         shift_nam_gas_grades(out_scenario)
 
     for g in ['growth_activity_up']:
