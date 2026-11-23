@@ -746,6 +746,12 @@ def build_historical_activity(
         project_name=project_name,
         config_name=config_name,
     )
+    outdf = (
+        outdf.groupby(["node_loc", "technology", "year_act", "mode", "time"])["value"]
+        .sum()
+        .reset_index()
+    )
+
     outdf["unit"] = "GWa"
 
     return outdf.drop_duplicates()
