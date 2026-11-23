@@ -469,6 +469,114 @@ def import_iea_balances(
     iea_out.to_csv(os.path.join(data_paths["iea_web"], "WEB_TRADEFLOWS.csv"))
 
 
+#: IEA WEB product labels summed into each extraction fuel. Both long and short
+#: WEB product codes are listed, since the WORLDBIG extracts may use either.
+WEB_PRODUCTION_PRODUCTS = {
+    "oil": ["CRUDE_OIL", "CRUDEOIL", "NGL", "NATURAL_GAS_LIQUIDS"],
+    "gas": ["NATURAL_GAS", "NATGAS"],
+}
+
+#: IEA WEB flow labels for indigenous production (long and short codes).
+WEB_PRODUCTION_FLOWS = ["PRODUCTION", "INDPROD"]
+
+
+def import_iea_production(
+    project_name: str | None = None,
+    config_name: str | None = None,
+    reimport: bool = False,
+) -> pd.DataFrame:
+    """
+    Import indigenous oil and gas production from IEA World Energy Balances.
+
+    Reads the same WORLDBIG files as :func:`import_iea_balances`, keeps the
+    production flow (in TJ) for the products in :data:`WEB_PRODUCTION_PRODUCTS`,
+    and caches the result as ``WEB_PRODUCTION.csv`` next to them.
+
+    Args:
+        project_name: Name of project (e.g., 'newpathways')
+        config_name: Name of config file
+        reimport: If True, re-read the WORLDBIG files even if the cache exists
+
+    Returns:
+        DataFrame with columns REGION (IEA country label), PRODUCT, YEAR, VALUE (TJ)
+    """
+    data_paths = setup_datapath(project_name=project_name, config_name=config_name)
+    cache = os.path.join(data_paths["iea_web"], "WEB_PRODUCTION.csv")
+    if os.path.exists(cache) and not reimport:
+        return pd.read_csv(cache)
+
+    products = [p for v in WEB_PRODUCTION_PRODUCTS.values() for p in v]
+    frames = []
+    for fname in [
+        "WORLDBIG_by_COUNTRY_from_GIBRALTAR_to_RWANDA.txt",
+        "WORLDBIG_by_COUNTRY_from_SAUDIARABIA_to_MAURITANIA.txt",
+        "WORLDBIG_by_COUNTRY_from_WORLD_to_GHANA.txt",
+    ]:
+        df = pd.read_csv(
+            os.path.join(data_paths["iea_web"], fname), sep=r"\s+", header=None
+        )
+        df.columns = ["REGION", "PRODUCT", "YEAR", "FLOW", "UNIT", "VALUE", "STATERR"]
+        df = df[
+            df["FLOW"].isin(WEB_PRODUCTION_FLOWS)
+            & (df["UNIT"] == "TJ")
+            & df["PRODUCT"].isin(products)
+        ]
+        frames.append(df[["REGION", "PRODUCT", "YEAR", "VALUE"]])
+
+    out = pd.concat(frames)
+    # Non-numeric WEB codes (e.g. "..", "x", "c") mark missing/confidential values
+    out["VALUE"] = pd.to_numeric(out["VALUE"], errors="coerce")
+    out = out.dropna(subset=["VALUE"])
+    out["YEAR"] = pd.to_numeric(out["YEAR"], errors="coerce")
+    out = out.dropna(subset=["YEAR"]).astype({"YEAR": int})
+    if out.empty:
+        raise ValueError(
+            f"No production rows found in WORLDBIG files for flows "
+            f"{WEB_PRODUCTION_FLOWS} and products {products}; check the labels used"
+        )
+    out.to_csv(cache, index=False)
+    return out
+
+
+def iea_production_by_region(
+    message_regions: str = "R12",
+    project_name: str | None = None,
+    config_name: str | None = None,
+    reimport: bool = False,
+) -> pd.DataFrame:
+    """
+    IEA WEB oil and gas production aggregated to MESSAGE regions.
+
+    Countries are mapped to ISO3 with ``country_iso3.csv`` (as in
+    :func:`check_iea_balances`) and then to regions with the node code list.
+    WEB aggregates (WORLD, OECD, "Other Africa", ...) have no ISO3 and are dropped.
+
+    Returns:
+        DataFrame with columns node, fuel ('oil' or 'gas'), year, value (GWa/yr)
+    """
+    data_paths = setup_datapath(project_name=project_name, config_name=config_name)
+    web = import_iea_production(
+        project_name=project_name, config_name=config_name, reimport=reimport
+    )
+    ieacw = pd.read_csv(os.path.join(data_paths["iea_web"], "country_iso3.csv"))
+    web = web.merge(ieacw[["REGION", "ISO3"]], on="REGION", how="inner")
+
+    with open(package_data_path("node", message_regions + ".yaml"), encoding="utf8") as f:
+        nodes = yaml.safe_load(f)
+    iso_to_node = {
+        iso: n for n, v in nodes.items() if n != "World" for iso in v.get("child", [])
+    }
+    web["node"] = web["ISO3"].map(iso_to_node)
+    web = web.dropna(subset=["node"])
+
+    prod_to_fuel = {p: f for f, ps in WEB_PRODUCTION_PRODUCTS.items() for p in ps}
+    web["fuel"] = web["PRODUCT"].map(prod_to_fuel)
+
+    out = web.groupby(["node", "fuel", "YEAR"])["VALUE"].sum().reset_index()
+    out["value"] = out["VALUE"] * (3.1712 * 1e-5)  # TJ to GWa
+    return out.rename(columns={"YEAR": "year"})[["node", "fuel", "year", "value"]]
+
+
 def check_iea_balances(
     indf, project_name: str | None = None, config_name: str | None = None
 ):
