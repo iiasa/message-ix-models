@@ -10,6 +10,7 @@ from message_ix_models.project.fuel_security.liquefaction_calibration import *
 from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.lt_contracts import add_contract_bounds
 from message_ix_models.project.fuel_security.rebase_extraction import rebase_extraction_history
+from message_ix_models.project.fuel_security.shift_resource_grades import shift_nam_gas_grades
 
 import os
 import pandas as pd
@@ -202,7 +203,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                           history_scenario = None, last_model_year = None,
                           lt_contracts = True, pipeline_build_limit = True,
                           route_bounds = True, import_growth = True,
-                          rebase_extraction = True,
+                          rebase_extraction = True, shift_nam_gas = True,
                           **contract_kwargs):
     """
     Bilateralize a given scenario
@@ -234,6 +235,9 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             history (grades, mpen, resource extraction, new capacity) to IEA World
             Energy Balances production (see
             :func:`.rebase_extraction.rebase_extraction_history`).
+        shift_nam_gas: If True (default), move R12_NAM gas resource from gas_4 into
+            gas_2 so its cheap grades match US + Canadian proved reserves (see
+            :func:`.shift_resource_grades.shift_nam_gas_grades`).
         **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
             ``contract_share`` (default 0.9).
     """
@@ -306,6 +310,10 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
         print("Rebase 2025 oil/gas extraction history to IEA WEB")
         rebase_extraction_history(out_scenario, project_name=project_name,
                                   config_name=config_name, year=2025)
+
+    if shift_nam_gas:
+        print("Shift NAM gas resource from gas_4 to gas_2 to match proved reserves")
+        shift_nam_gas_grades(out_scenario)
 
     for g in ['growth_activity_up']:
         updf = out_scenario.par(g)
