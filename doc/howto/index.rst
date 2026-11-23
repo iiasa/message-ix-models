@@ -16,7 +16,8 @@ Each HOWTO is contained on its own page:
    :caption: HOWTO
 
    Run a baseline model <quickstart>
-   Run mix-models on UnICC <unicc>
+   Set up the MESSAGEix ecosystem <bootstrap>
+   Run MESSAGEix solves via SLURM <slurm>
    path
    pull-request
    Document research projects <doc-project>

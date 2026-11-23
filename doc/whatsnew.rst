@@ -141,6 +141,9 @@ Next release
 - New utility :func:`.import_from_fqn` (:pull:`486`).
 - New utility class :class:`.util.ixmp.Platforms` (:pull:`578`).
 - New guide on HOWTO :doc:`/howto/report` (:pull:`488`).
+- Replace :doc:`/howto/unicc` with two focused guides:
+  :doc:`/howto/bootstrap` (system-agnostic ecosystem setup) and
+  :doc:`/howto/slurm` (SLURM workflows for MESSAGE) (:pull:`483`).
 
 v2026.4.17
 ==========
