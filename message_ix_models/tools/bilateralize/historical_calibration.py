@@ -508,9 +508,9 @@ def import_iea_production(
     products = [p for v in WEB_PRODUCTION_PRODUCTS.values() for p in v]
     frames = []
     for fname in [
-        "WORLDBIG_by_COUNTRY_from_GIBRALTAR_to_RWANDA.txt",
-        "WORLDBIG_by_COUNTRY_from_SAUDIARABIA_to_MAURITANIA.txt",
-        "WORLDBIG_by_COUNTRY_from_WORLD_to_GHANA.txt",
+        "WORLDBIG_by_COUNTRY_from_GIBRALTAR_to_RWANDA.TXT",
+        "WORLDBIG_by_COUNTRY_from_SAUDIARABIA_to_MAURITANIA.TXT",
+        "WORLDBIG_by_COUNTRY_from_WORLD_to_GHANA.TXT",
     ]:
         df = pd.read_csv(
             os.path.join(data_paths["iea_web"], fname), sep=r"\s+", header=None
