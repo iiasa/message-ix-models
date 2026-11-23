@@ -848,6 +848,13 @@ def build_historical_price(
     )
     bacidf["YEAR"] = "broadcast"
 
+    # Add costs for piped gas based on LNG prices
+    bacidf_pg = bacidf[bacidf['MESSAGE COMMODITY'] == 'LNG_shipped'].copy()
+    bacidf_pg['MESSAGE COMMODITY'] = 'gas_piped'
+    print(bacidf_pg)
+    
+    bacidf = pd.concat([bacidf, bacidf_pg])
+    
     outdf = reformat_to_parameter(
         indf=bacidf,
         message_regions=message_regions,
@@ -860,7 +867,8 @@ def build_historical_price(
 
     outdf["value"] = outdf["value"] * 0.50  # TODO: Fix this deflator (2024-2005?)
     outdf["value"] = round(outdf["value"], 0)
-
+    print(outdf)
+    
     return outdf
 
 
