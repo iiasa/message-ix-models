@@ -206,6 +206,12 @@ postfix
 
 Some external model names include:
 
+MESSAGE V.3
+   .. todo:: Expand with a list of cases in which this model name has been used.
+
+MESSAGEix-GLOBIOM_GEI 1.0
+   .. todo:: Expand with a list of cases in which this model name has been used.
+
 MESSAGEix-GLOBIOM 1.0
    .. todo:: Expand with a list of cases in which this model name has been used.
 
@@ -216,6 +222,9 @@ MESSAGEix-GLOBIOM 1.1
    - B :doc:`year (period) list <pkg-data/year>`.
 
    .. todo:: Expand with a list of cases in which this model name has been used.
+
+MESSAGEix-GLOBIOM 1.2
+   This version was used in <https://doi.org/10.1038/s41560-021-00904-8>, and is similar to MESSAGEix-GLOBIOM 1.1, but incorporates COVID effects and has annual timesteps from 2020 to 2025.
 
 MESSAGEix-GLOBIOM 2.0
    Used for the 2023–2024 ScenarioMIP/SSP process.
