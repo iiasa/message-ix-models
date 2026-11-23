@@ -11,6 +11,7 @@ from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.lt_contracts import add_contract_bounds
 from message_ix_models.project.fuel_security.rebase_extraction import rebase_extraction_history
 from message_ix_models.project.fuel_security.shift_resource_grades import shift_nam_gas_grades
+from message_ix_models.project.fuel_security.lng_chain_costs import add_lng_chain_costs
 
 import os
 import pandas as pd
@@ -204,6 +205,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                           lt_contracts = True, pipeline_build_limit = True,
                           route_bounds = True, import_growth = True,
                           rebase_extraction = True, shift_nam_gas = True,
+                          lng_chain_costs = True,
                           **contract_kwargs):
     """
     Bilateralize a given scenario
@@ -239,6 +241,9 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             grades (gas_4, then gas_5-7) into gas_2 so its cheap grades hold the US
             shale + tight gas technically recoverable resource (see
             :func:`.shift_resource_grades.shift_nam_gas_grades`).
+        lng_chain_costs: If True (default), add liquefaction (LNG_prod) and
+            regasification (LNG_regas) var_cost and raise the LNG tanker var_cost,
+            uniformly across regions (see :func:`.lng_chain_costs.add_lng_chain_costs`).
         **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
             ``contract_share`` (default 0.9).
     """
@@ -315,6 +320,10 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
     if shift_nam_gas:
         print("Shift NAM gas resource into gas_2 to match shale/tight TRR")
         shift_nam_gas_grades(out_scenario)
+
+    if lng_chain_costs:
+        print("Add LNG liquefaction, regas and shipping costs")
+        add_lng_chain_costs(out_scenario)
 
     for g in ['growth_activity_up']:
         updf = out_scenario.par(g)
