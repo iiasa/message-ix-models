@@ -9,6 +9,7 @@ from message_ix_models.tools.bilateralize.load_and_solve import *
 from message_ix_models.project.fuel_security.liquefaction_calibration import *
 from message_ix_models.project.fuel_security.adjust_reexports import *
 from message_ix_models.project.fuel_security.lt_contracts import add_contract_bounds
+from message_ix_models.project.fuel_security.rebase_extraction import rebase_extraction_history
 
 import os
 import pandas as pd
@@ -201,6 +202,7 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
                           history_scenario = None, last_model_year = None,
                           lt_contracts = True, pipeline_build_limit = True,
                           route_bounds = True, import_growth = True,
+                          rebase_extraction = True,
                           **contract_kwargs):
     """
     Bilateralize a given scenario
@@ -228,6 +230,10 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             :data:`ROUTE_ACTIVITY_UP` (see :func:`bound_route_activity`).
         import_growth: If True (default), add growth rates to LNG imports (see
             :func:`set_import_growth`).
+        rebase_extraction: If True (default), rebase 2025 oil and gas extraction
+            history (grades, mpen, resource extraction, new capacity) to IEA World
+            Energy Balances production (see
+            :func:`.rebase_extraction.rebase_extraction_history`).
         **contract_kwargs: Passed to :func:`.lt_contracts.add_contract_bounds`, e.g.
             ``contract_share`` (default 0.9).
     """
@@ -295,6 +301,11 @@ def bilateralize_scenario(project_name, config_name, scenario, target_scenario =
             f"{out_scenario.firstmodelyear}; pass a solved history_scenario (e.g. "
             "baseline_bilateral) to provide trade history for the periods after 2025"
         )
+
+    if rebase_extraction:
+        print("Rebase 2025 oil/gas extraction history to IEA WEB")
+        rebase_extraction_history(out_scenario, project_name=project_name,
+                                  config_name=config_name, year=2025)
 
     for g in ['growth_activity_up']:
         updf = out_scenario.par(g)
