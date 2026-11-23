@@ -23,7 +23,13 @@ from message_ix_models.tools.bilateralize.utils import get_logger, load_config
 # %% Remove existing trade technologies
 def remove_trade_tech(scen: message_ix.Scenario, log, config_tec: dict, tec: str):
     """
-    Remove existing trade technologies
+    Remove existing trade technologies.
+
+    Args:
+        scen: Scenario to update
+        log: Logger
+        config_tec: Trade-technology-specific config dictionary
+        tec: Technology name
     """
     base_tec_name = tec.replace("_shipped", "")
     base_tec_name = base_tec_name.replace("_piped", "")
@@ -53,7 +59,13 @@ def remove_trade_tech(scen: message_ix.Scenario, log, config_tec: dict, tec: str
 # %% Add sets for trade technologies
 def add_trade_sets(scen: message_ix.Scenario, log, trade_dict: dict, tec: str):
     """
-    Add sets for trade technologies
+    Add sets for trade technologies.
+
+    Args:
+        scen: Scenario to update
+        log: Logger
+        trade_dict: Dictionary of parameter dataframes
+        tec: Technology name
     """
     new_sets = dict()
     for s in ["technology", "level", "commodity", "mode"]:
@@ -86,7 +98,13 @@ def add_trade_sets(scen: message_ix.Scenario, log, trade_dict: dict, tec: str):
 # %% Add parameters for bilateralized trade
 def add_trade_parameters(scen: message_ix.Scenario, log, trade_dict: dict, tec: str):
     """
-    Add parameters for bilateralized trade
+    Add parameters for bilateralized trade.
+
+    Args:
+        scen: Scenario to update
+        log: Logger
+        trade_dict: Dictionary of parameter dataframes
+        tec: Technology name
     """
     new_parameter_list = list(
         set(
@@ -118,7 +136,13 @@ def update_relation_parameters(
     scen: message_ix.Scenario, log, trade_dict: dict, tec: str
 ):
     """
-    Update relation parameters
+    Update relation parameters.
+
+    Args:
+        scen: Scenario to update
+        log: Logger
+        trade_dict: Dictionary of parameter dataframes
+        tec: Technology name
     """
     rel_parameter_list = list(
         set(
@@ -168,7 +192,13 @@ def update_relation_parameters(
 # %% Update bunker fuels
 def update_bunker_fuels(scen: message_ix.Scenario, tec: str, log, config_tec: dict):
     """
-    Update bunker fuels
+    Update bunker fuels.
+
+    Args:
+        scen: Scenario to update
+        tec: Technology name
+        log: Logger
+        config_tec: Trade-technology-specific config dictionary
     """
     bunker_tec = config_tec[tec][tec + "_trade"]["bunker_technology"]
     if bunker_tec is not None:
@@ -187,7 +217,12 @@ def update_additional_parameters(
     scen: message_ix.Scenario, extra_parameter_updates: dict | None = None
 ):
     """
-    Update additional parameters (separate from bilateralization)
+    Update additional parameters (separate from bilateralization).
+
+    Args:
+        scen: Scenario to update
+        extra_parameter_updates: Dictionary of additional parameter values or
+            multipliers, keyed by parameter name
     """
     if extra_parameter_updates is not None:
         for par in extra_parameter_updates.keys():
@@ -230,7 +265,12 @@ def remove_pao_coal_constraint(
     scen: message_ix.Scenario, log, MESSAGEix_GLOBIOM: bool = True
 ):
     """
-    Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM
+    Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM.
+
+    Args:
+        scen: Scenario to update
+        log: Logger
+        MESSAGEix_GLOBIOM: If True, remove the constraints
     """
     if MESSAGEix_GLOBIOM:
         with scen.transact("Remove PAO coal and gas constraints on primary energy"):
@@ -240,6 +280,37 @@ def remove_pao_coal_constraint(
                 relupp_df = scen.par("relation_upper", filters={"relation": rel})
                 scen.remove_par("relation_activity", relact_df)
                 scen.remove_par("relation_upper", relupp_df)
+
+
+# %% Ensure balance equality (no commodity left at shipped/piped level)
+def ensure_balance_equality(scen: message_ix.Scenario, log, covered_tec):
+    """
+    Ensure that there is no leftover shipped/piped commodity.
+
+    Args:
+        scen: Scenario to update
+        log: Logger
+        covered_tec: Trade technologies covered by the current project config
+    """
+    log.info("Remove import/export balance equality sets")
+    be_rem = scen.set("balance_equality")
+    be_rem = be_rem[
+        (be_rem["level"].str.contains("import"))
+        | (be_rem["level"].str.contains("export"))
+    ]
+    with scen.transact("remove balance equality for import/export"):
+        scen.remove_set("balance_equality", be_rem)
+
+    log.info("Add balance equality sets")
+    be_df = scen.par("output")
+    for tec in covered_tec:
+        log.info(f"---Add {tec}")
+        tecdf = be_df[be_df["technology"].str.contains(tec)].copy()
+        comdf = tecdf[["commodity", "level"]].drop_duplicates()
+        comdf = comdf[comdf["level"].isin(["piped", "shipped"])].drop_duplicates()
+
+        with scen.transact(f"add balance equality sets for {tec}"):
+            scen.add_set("balance_equality", comdf)
 
 
 # %% Write just the GDX files
@@ -271,6 +342,13 @@ def solve_or_save(
 ):
     """
     Solve or save scenario.
+
+    Args:
+        mp: ixmp platform
+        scen: Scenario to solve or save
+        solve: If True, solve the scenario
+        to_gdx: If True (and not `solve`), save the scenario to a GDX file
+        gdx_location: Directory to save the GDX file in; required if `to_gdx`
     """
     if to_gdx and not solve and gdx_location is not None:
         save_to_gdx(
@@ -299,16 +377,19 @@ def load_and_clone(
     target_scen: str | None = None,
     target_model: str | None = None,
 ) -> message_ix.Scenario:
-    """Load and clone scenario.
+    """
+    Load and clone scenario.
+
     Args:
         mp: ixmp platform
         log: Logger
-        project_name: Name of project
-        config_name: Name of config file
-        start_scen: Name of scenario to start from
-        start_model: Name of model to start from
-        target_scen: Name of scenario to target
-        target_model: Name of model to target
+        config_base: Base config dictionary
+        start_scen: Name of scenario to start from; if None, taken from `config_base`
+        start_model: Name of model to start from; if None, taken from `config_base`
+        target_scen: Name of scenario to target; if None, taken from `config_base`
+        target_model: Name of model to target; if None, taken from `config_base`
+    Returns:
+        scen: The cloned scenario, set as the default version
     """
     # Load config
     if start_model is None:
@@ -350,11 +431,10 @@ def load_and_solve(
     MESSAGEix_GLOBIOM: bool = True,
 ):
     """
-    Clone and update scenario.
+    Clone and update scenario (main function)
 
     Args:
         trade_dict: Dictionary of parameter dataframes
-    Optional Args:
         solve: If True, solve scenario
         to_gdx: If True, save scenario to a GDX file
         project_name: Name of project (message_ix_models/project/[THIS])
@@ -362,14 +442,12 @@ def load_and_solve(
             If None, uses default config from data/bilateralize/config_default.yaml
         start_scen: Name of scenario to start from
         start_model: Name of model to start from
-        start_model_name: Name of model to start from
         target_scen: Name of scenario to target
         target_model: Name of model to target
-        target_model_name: Name of model to target
         scenario: Scenario to update (if None, will clone from project yaml)
-        additional_parameter_updates: Dictionary of additional parameter updates
+        extra_parameter_updates: Dictionary of additional parameter updates
         gdx_location: Location to save GDX file
-        remove_pao_coal_constraint: Remove PAO coal and gas constraints
+        MESSAGEix_GLOBIOM: If True, remove PAO coal and gas constraints
     """
     # Load config
     config_base, config_path, config_tec = load_config(
@@ -422,6 +500,9 @@ def load_and_solve(
 
     # Remove PAO coal and gas constraints on MESSAGEix-GLOBIOM
     remove_pao_coal_constraint(scen=scen, log=log, MESSAGEix_GLOBIOM=MESSAGEix_GLOBIOM)
+
+    # Ensure balance equality
+    ensure_balance_equality(scen=scen, log=log, covered_tec=covered_tec)
 
     # Solve or save scenario
     solve_or_save(
