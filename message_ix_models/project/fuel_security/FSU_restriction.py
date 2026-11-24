@@ -90,61 +90,23 @@ def relax_lng_growth_bounds(scenario: message_ix.Scenario,
             print(f"...{par}: {len(df)} rows raised to {value}")
             scenario.add_par(par, df)
 
-def relax_lng_decline_bounds(scenario: message_ix.Scenario,
-                             sensitivity_scenario: str,
-                             friction_endyear: int,
-                             decline: float,
-                             first_shock_year: int = 2030):
-    """Loosen the decline floor on LNG_shipped_imp at the restricted importers.
-
-    growth_activity_lo ties each period's imports to the period before, so extra
-    LNG imported in the first shock year raises the minimum imports in later
-    periods. This sets growth_activity_lo to `decline` (a negative annual rate,
-    for example -0.3) for years after `first_shock_year` up to and including the
-    first period after friction_endyear. The first shock year keeps its floor, which
-    is set from history. Floors that are already looser are left alone.
-    """
-    if decline >= 0:
-        raise ValueError(f"decline must be a negative annual rate, got {decline}")
-
-    config, config_path = load_config(project_name = 'fuel_security', config_name = 'config.yaml')
-    sens_j = config['restriction'][sensitivity_scenario]['importers']
-
-    df = scenario.par("growth_activity_lo", filters = {"technology": ["LNG_shipped_imp"],
-                                                       "node_loc": sens_j})
-    if len(df) == 0:
-        return
-    years = sorted(df['year_act'].astype(int).unique())
-    later = [y for y in years if y > friction_endyear]
-    last_year = later[0] if later else friction_endyear
-
-    yr = df['year_act'].astype(int)
-    df = df[(yr > first_shock_year) & (yr <= last_year) & (df['value'] > decline)]
-    if len(df) == 0:
-        return
-    df['value'] = decline
-
-    with scenario.transact("Relax LNG import decline floor at restricted importers"):
-        print(f"...growth_activity_lo: {len(df)} rows lowered to {decline}")
-        scenario.add_par("growth_activity_lo", df)
-
 def run_friction_scenario(base_scenario: message_ix.Scenario,
                           friction_endyear = 2110,
                           solve_scenario = True,
                           relax_lng_growth: float | None = None,
                           relax_lng_initial: float | None = None,
-                          relax_lng_decline: float | None = None):
+                          post_shock_initial: float | None = 8):
     """Restrict FSU gas exports to WEU/EEU from 2030 to friction_endyear.
+
+    post_shock_initial: initial_activity_up (GWa/yr) on the restricted pipeline
+    routes after friction_endyear, so idle pipelines can restart faster than a new
+    route. With 2%/yr growth, 8 allows about 42 GWa in the first period after the
+    shock and 88 in the second. None keeps the base scenario's values.
 
     relax_lng_growth / relax_lng_initial: if either is given, LNG routes into
     WEU/EEU from other exporters get looser growth_activity_up (annual rate, for
     example 0.2) and/or initial_activity_up (GWa) over the same years (see
     relax_lng_growth_bounds). The output scenario name then ends in "_LNGrelax".
-
-    relax_lng_decline: if given (negative annual rate, for example -0.3), the
-    decline floor on WEU/EEU LNG_shipped_imp is loosened after 2030, through the
-    first period after friction_endyear (see relax_lng_decline_bounds). The output
-    scenario name then ends in "_LNGfloor".
     """
 
     # Import scenario and models
@@ -158,8 +120,6 @@ def run_friction_scenario(base_scenario: message_ix.Scenario,
     target_scenario_name = base_scenario.scenario.replace("_bilateral", "") + "_FSU" + str(friction_endyear)
     if relax:
         target_scenario_name += "_LNGrelax"
-    if relax_lng_decline is not None:
-        target_scenario_name += "_LNGfloor"
     target_scenario = base_scenario.clone('fuel_security', target_scenario_name, keep_solution = False)
     target_scenario.set_as_default()
 
@@ -169,22 +129,40 @@ def run_friction_scenario(base_scenario: message_ix.Scenario,
     # Shock supersedes long-term contract bounds on restricted technologies
     remove_contract_bounds(target_scenario, bound_out)
 
+    # Remove dynamic bounds on shocked technologies during the shock only (a decline
+    # floor would conflict with the zero bound). Bounds after friction_endyear are
+    # kept, so flows restart from zero at the routes' ramp-up rate instead of
+    # rebounding in a single period.
     with target_scenario.transact("Remove constraints on shocked technologies"):
         for par in ["growth_activity_lo", "growth_activity_up", "initial_activity_lo", "initial_activity_up"]:
-            basepar = target_scenario.par(par, filters = {"technology": bound_out['technology'],
-                                                          "node_loc": bound_out['node_loc']})
+            basepar = target_scenario.par(par, filters = {"technology": bound_out['technology'].unique().tolist(),
+                                                          "node_loc": bound_out['node_loc'].unique().tolist()})
+            basepar = basepar[basepar['year_act'].astype(int) <= friction_endyear]
             if len(basepar) != 0:
                 print(f"...{par}")
                 target_scenario.remove_par(par, basepar)
+
+    # Faster restart of the idle pipelines once the shock ends
+    if post_shock_initial is not None:
+        pipes = [t for t in bound_out['technology'].unique() if t.startswith("gas_piped_exp_")]
+        init = target_scenario.par("initial_activity_up",
+                                   filters = {"technology": pipes,
+                                              "node_loc": bound_out['node_loc'].unique().tolist()})
+        init = init[init['year_act'].astype(int) > friction_endyear]
+        if len(init) == 0 and friction_endyear < 2110:
+            print("...WARNING: no post-shock initial_activity_up rows on restricted pipelines; "
+                  "post_shock_initial not applied")
+        init = init[init['value'] < post_shock_initial]
+        if len(init) != 0:
+            init['value'] = post_shock_initial
+            with target_scenario.transact("Faster post-shock restart of restricted pipelines"):
+                print(f"...initial_activity_up: {len(init)} post-shock rows raised to {post_shock_initial}")
+                target_scenario.add_par("initial_activity_up", init)
 
     if relax:
         relax_lng_growth_bounds(target_scenario, "FSU", friction_endyear,
                                 growth = relax_lng_growth,
                                 initial = relax_lng_initial)
-
-    if relax_lng_decline is not None:
-        relax_lng_decline_bounds(target_scenario, "FSU", friction_endyear,
-                                 decline = relax_lng_decline)
 
     if solve_scenario == True:
         target_scenario.solve(quiet=False, model="MESSAGE",

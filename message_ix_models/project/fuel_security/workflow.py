@@ -66,15 +66,13 @@ def _bilateralize(context, scenario):
     )
 
 def _FSU_restriction(context, scenario, friction_endyear,
-                     relax_lng_growth=None, relax_lng_initial=None,
-                     relax_lng_decline=None):
+                     relax_lng_growth=None, relax_lng_initial=None):
     """Run FSU restriction scenario."""
     return run_friction_scenario(
         base_scenario=scenario,
         friction_endyear=friction_endyear,
         relax_lng_growth=relax_lng_growth,
         relax_lng_initial=relax_lng_initial,
-        relax_lng_decline=relax_lng_decline,
     )
 
 def _mea_conflict(context, scenario, conf_level):
@@ -211,18 +209,6 @@ def generate(context: Context) -> Workflow:
                 friction_endyear=year,
                 target=f"ixmp://localdb/fuel_security/{name}_FSU{year}",
             ) # Run FSU{year} restriction on {name}_bilateral
-
-    # Robustness check: FSU2040 with the WEU/EEU LNG import decline floor loosened
-    # after 2030, so a 2030 LNG surge doesn't lock in imports later. NPi2030 only:
-    # baseline_bilateral has no growth_activity_lo on LNG_shipped_imp to loosen.
-    wf.add_step(
-        "NPi2030 - FSU2040 - LNGfloor",
-        "NPi2030 bilateralized",
-        _FSU_restriction,
-        friction_endyear=2040,
-        relax_lng_decline=-0.3,
-        target="ixmp://localdb/fuel_security/NPi2030_FSU2040_LNGfloor",
-    ) # Run FSU2040 with relaxed LNG import decline on NPi2030_bilateral
 
     # MEA conflict shock sensitivities: applied to each bilateralized base and
     # each FSU-restricted variant, at 6 severity levels (1.0 = no shock)
