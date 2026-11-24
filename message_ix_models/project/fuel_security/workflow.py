@@ -61,13 +61,20 @@ def _bilateralize(context, scenario):
         target_scenario=f"{scenario.scenario}_bilateral",
         history_scenario=history_scenario,
         last_model_year=2060,
+        lt_contracts=True,  # long-term gas contracts as bound_activity_lo
+        contract_share=0.9,
     )
 
-def _FSU_restriction(context, scenario, friction_endyear):
+def _FSU_restriction(context, scenario, friction_endyear,
+                     relax_lng_growth=None, relax_lng_initial=None,
+                     relax_lng_decline=None):
     """Run FSU restriction scenario."""
     return run_friction_scenario(
         base_scenario=scenario,
-        friction_endyear=friction_endyear
+        friction_endyear=friction_endyear,
+        relax_lng_growth=relax_lng_growth,
+        relax_lng_initial=relax_lng_initial,
+        relax_lng_decline=relax_lng_decline,
     )
 
 def _mea_conflict(context, scenario, conf_level):
@@ -185,86 +192,44 @@ def generate(context: Context) -> Workflow:
         target="ixmp://localdb/fuel_security/INDC2030i_forever_gdp_bilateral"
     ) # Bilateralize INDC2030i_forever_gdp to create fuel_security/INDC2030i_forever_gdp_bilateral
         
-    wf.add_step(
-        "Baseline - FSU2100",
-        "Baseline bilateralized",
-        _FSU_restriction,
-        friction_endyear=2100,
-        target="ixmp://localdb/fuel_security/baseline_FSU2100"
-    ) # Run FSU2100 scenario on baseline bilateralized to create fuel_security/baseline_FSU2100
+    # FSU restriction sensitivities on each bilateralized base (which already carries
+    # the long-term contract bounds; the restriction supersedes them where it applies).
+    # run_friction_scenario names its output <name>_FSU<year>.
+    bilat_bases = [
+        ("Baseline bilateralized", "Baseline", "baseline"),
+        ("NPi2030 bilateralized", "NPi2030", "NPi2030"),
+        ("INDC2030i_forever bilateralized", "INDC2030i_forever", "INDC2030i_forever"),
+        ("INDC2030i_forever_gdp bilateralized", "INDC2030i_forever_gdp", "INDC2030i_forever_gdp"),
+    ]
+    fsu_years = [2100, 2040]
+    for bilat_step, label, name in bilat_bases:
+        for year in fsu_years:
+            wf.add_step(
+                f"{label} - FSU{year}",
+                bilat_step,
+                _FSU_restriction,
+                friction_endyear=year,
+                target=f"ixmp://localdb/fuel_security/{name}_FSU{year}",
+            ) # Run FSU{year} restriction on {name}_bilateral
 
+    # Robustness check: FSU2040 with the WEU/EEU LNG import decline floor loosened
+    # after 2030, so a 2030 LNG surge doesn't lock in imports later. NPi2030 only:
+    # baseline_bilateral has no growth_activity_lo on LNG_shipped_imp to loosen.
     wf.add_step(
-        "Baseline - FSU2040",
-        "Baseline bilateralized",
-        _FSU_restriction,
-        friction_endyear=2040,
-        target="ixmp://localdb/fuel_security/baseline_FSU2040"
-    ) # Run FSU2040 scenario on baseline bilateralized to create fuel_security/baseline_FSU2040
-
-    wf.add_step(
-        "NPi2030 - FSU2100",
+        "NPi2030 - FSU2040 - LNGfloor",
         "NPi2030 bilateralized",
         _FSU_restriction,
-        friction_endyear=2100,
-        target="ixmp://localdb/fuel_security/NPi2030_FSU2100"
-    ) # Run FSU2100 scenario on NPi2030 bilateralized to create fuel_security/NPi2030_FSU2100
-
-    wf.add_step(
-        "NPi2030 - FSU2040",
-        "NPi2030 bilateralized",
-        _FSU_restriction,
         friction_endyear=2040,
-        target="ixmp://localdb/fuel_security/NPi2030_FSU2040"
-    ) # Run FSU2040 scenario on NPi2030 bilateralized to create fuel_security/NPi2030_FSU2040
-
-    wf.add_step(
-        "INDC2030i_forever - FSU2100",
-        "INDC2030i_forever bilateralized",
-        _FSU_restriction,
-        friction_endyear=2100,
-        target="ixmp://localdb/fuel_security/INDC2030i_forever_FSU2100"
-    ) # Run FSU2100 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2100
-
-    wf.add_step(
-        "INDC2030i_forever - FSU2040",
-        "INDC2030i_forever bilateralized",
-        _FSU_restriction,
-        friction_endyear=2040,
-        target="fuel_security/INDC2030i_forever_FSU2040"
-    ) # Run FSU2040 scenario on INDC2030i_forever bilateralized to create fuel_security/INDC2030i_forever_FSU2040
-
-    wf.add_step(
-        "INDC2030i_forever_gdp - FSU2100",
-        "INDC2030i_forever_gdp bilateralized",
-        _FSU_restriction,
-        friction_endyear=2100,
-        target="ixmp://localdb/fuel_security/INDC2030i_forever_gdp_FSU2100"
-    ) # Run FSU2100 scenario on INDC2030i_forever_gdp bilateralized to create fuel_security/INDC2030i_forever_gdp_FSU2100
-
-    wf.add_step(
-        "INDC2030i_forever_gdp - FSU2040",
-        "INDC2030i_forever_gdp bilateralized",
-        _FSU_restriction,
-        friction_endyear=2040,
-        target="ixmp://localdb/fuel_security/INDC2030i_forever_gdp_FSU2040"
-    ) # Run FSU2040 scenario on INDC2030i_forever_gdp bilateralized to create fuel_security/INDC2030i_forever_gdp_FSU2040
+        relax_lng_decline=-0.3,
+        target="ixmp://localdb/fuel_security/NPi2030_FSU2040_LNGfloor",
+    ) # Run FSU2040 with relaxed LNG import decline on NPi2030_bilateral
 
     # MEA conflict shock sensitivities: applied to each bilateralized base and
     # each FSU-restricted variant, at 6 severity levels (1.0 = no shock)
-    mea_bases = [
-        ("Baseline bilateralized", "baseline_bilateral"),
-        ("Baseline - FSU2100", "baseline_FSU2100"),
-        ("Baseline - FSU2040", "baseline_FSU2040"),
-        ("NPi2030 bilateralized", "NPi2030_bilateral"),
-        ("NPi2030 - FSU2100", "NPi2030_FSU2100"),
-        ("NPi2030 - FSU2040", "NPi2030_FSU2040"),
-        ("INDC2030i_forever bilateralized", "INDC2030i_forever_bilateral"),
-        ("INDC2030i_forever - FSU2100", "INDC2030i_forever_FSU2100"),
-        ("INDC2030i_forever - FSU2040", "INDC2030i_forever_FSU2040"),
-        ("INDC2030i_forever_gdp bilateralized", "INDC2030i_forever_gdp_bilateral"),
-        ("INDC2030i_forever_gdp - FSU2100", "INDC2030i_forever_gdp_FSU2100"),
-        ("INDC2030i_forever_gdp - FSU2040", "INDC2030i_forever_gdp_FSU2040"),
-    ]
+    mea_bases = []
+    for bilat_step, label, name in bilat_bases:
+        mea_bases.append((bilat_step, f"{name}_bilateral"))
+        mea_bases += [(f"{label} - FSU{year}", f"{name}_FSU{year}") for year in fsu_years]
     mea_levels = [1.0, 0.9, 0.8, 0.75, 0.5, 0.25]
 
     for base_step, base_name in mea_bases:
