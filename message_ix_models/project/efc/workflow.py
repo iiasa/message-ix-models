@@ -65,7 +65,7 @@ log = logging.getLogger(__name__)
 
 # EFC ixmp platform and model name
 # Can rename for your local ixmp platform.
-EFC_PLATFORM_NAME = "local_efc"
+EFC_PLATFORM_NAME = "message-jdbc-pg"
 EFC_MODEL_NAME = "MESSAGEix-GLOBIOM-GAINS 2.1-MT-R12 EFC"
 
 
@@ -267,14 +267,16 @@ def generic_flow(
     """Write generic reporting to a local Excel file.
 
     in and out flows for all technologies are reported, plus stoichiometric
-    ``in|{NH3,methanol tech}|*|hydrogen|captive`` rows and R12-regional
-    international shipping bunker demand (downscaled from ``R12_GLB``).
-    No unit column.
+    ``in|{NH3,methanol tech}|*|hydrogen|captive`` rows, R12-regional
+    international shipping bunker demand (downscaled from ``R12_GLB``), and
+    selected ``inv_cost`` parameter rows (``inv_cost|{tech}`` with ``unit``).
+    in|/out| rows leave ``unit`` empty.
     """
     from message_ix.report import Reporter
 
     from message_ix_models.project.efc.generic_report import (
         append_captive_hydrogen,
+        append_inv_cost_parameter,
         append_regional_shipping,
         genno_generic,
     )
@@ -288,6 +290,7 @@ def generic_flow(
     )
     df = append_captive_hydrogen(df)
     df = append_regional_shipping(df, method="uniform_mix")
+    df = append_inv_cost_parameter(df, scenario)
 
     out_path = context.get_local_path(
         "efc",
@@ -295,7 +298,11 @@ def generic_flow(
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_excel(out_path, index=False)
-    log.info("Wrote generic in|/out| flow report to %s (%d rows)", out_path, len(df))
+    log.info(
+        "Wrote generic in|/out|/inv_cost report to %s (%d rows)",
+        out_path,
+        len(df),
+    )
 
     return scenario
 
@@ -400,11 +407,17 @@ def build_other_efc_techs(
     return scenario
 
 
-def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
-    """Copy 1p5c emission constraints and add CO2 storage AAS parameters.
+# IMO shipping CO₂ cap applied in ``add_1p5c`` (Mt C / a style units as in base).
+_SHIPPING_IMO_BOUND = 15.0
+_SHIPPING_IMO_YEAR_START = 2070
+_SHIPPING_IMO_YEAR_END = 2110
 
-    Adds ``bound_emission`` and ``tax_emission`` data from the donor scenario, then
-    applies ``growth_activity_up`` and ``share_mode_up`` for CO2 storage.
+
+def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scenario:
+    """Copy 1p5c emission constraints and cap international shipping CO₂.
+
+    Adds ``bound_emission`` and ``tax_emission`` data from the donor scenario,
+    then caps ``R12_GLB`` / ``CO2_shipping_IMO`` / ``bunkers`` at 15.
     """
     source = message_ix.Scenario(
         scenario.platform,
@@ -440,10 +453,39 @@ def add_1p5c(context: Context, scenario: message_ix.Scenario) -> message_ix.Scen
         scenario.scenario,
     )
 
+    years = sorted(
+        y
+        for y in map(int, scenario.set("year").tolist())
+        if _SHIPPING_IMO_YEAR_START <= y <= _SHIPPING_IMO_YEAR_END
+    )
+    with scenario.transact(
+        "Cap R12_GLB CO2_shipping_IMO bunkers bound_emission"
+    ):
+        existing = scenario.par(
+            "bound_emission",
+            filters={
+                "node": ["R12_GLB"],
+                "type_emission": ["CO2_shipping_IMO"],
+                "type_tec": ["bunkers"],
+            },
+        )
+        unit = str(existing["unit"].iloc[0]) if not existing.empty else "???"
+        df = message_ix.make_df(
+            "bound_emission",
+            node="R12_GLB",
+            type_emission="CO2_shipping_IMO",
+            type_tec="bunkers",
+            type_year=years,
+            value=_SHIPPING_IMO_BOUND,
+            unit=unit,
+        )
+        scenario.add_par("bound_emission", df)
     log.info(
-        "add_1p5c: additional assumptions added to %s/%s",
-        scenario.model,
-        scenario.scenario,
+        "add_1p5c: set bound_emission R12_GLB/CO2_shipping_IMO/bunkers=%s for %d year(s) %s–%s",
+        _SHIPPING_IMO_BOUND,
+        len(years),
+        years[0] if years else "?",
+        years[-1] if years else "?",
     )
 
     return scenario
