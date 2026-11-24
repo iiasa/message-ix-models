@@ -1,12 +1,19 @@
 """Generic reporting for all technologies (in|/out| flow).
-No unit column.
+
+Also appends selected ``inv_cost`` parameter rows as ``inv_cost|{tech}`` with a
+``unit`` column (in|/out| rows leave ``unit`` empty).
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 from message_ix.report import Reporter
+
+if TYPE_CHECKING:
+    import message_ix
 
 log = logging.getLogger(__name__)
 
@@ -14,15 +21,96 @@ log = logging.getLogger(__name__)
 _FLOW_KEY = "nl-t-ya-m-c-l"
 
 _ID_COLUMNS = ["model", "scenario", "region", "variable"]
+_ID_COLUMNS_WITH_UNIT = ["model", "scenario", "region", "variable", "unit"]
+
+# Techs whose MESSAGE ``inv_cost`` parameter is exported (no mode dim on inv_cost).
+_INV_COST_TECHS = frozenset(
+    {
+        # Chemicals / olefins
+        "steam_cracker_petro",
+        "MTO_petro",
+        "ethanol_to_ethylene_petro",
+        # International shipping bunkers
+        "foil_bunker",
+        "foil_occ_bunker",
+        "LNG_bunker",
+        "LNG_occ_bunker",
+        "meth_bunker",
+        "eth_bunker",
+        "NH3_bunker",
+        "LH2_bunker",
+        # Aviation
+        "con_ar",
+        "conh_ar",
+        "conm_ar",
+        "conE_ar",
+        # Power
+        "coal_ppl",
+        "coal_ppl_u",
+        "coal_adv",
+        "coal_adv_ccs",
+        "coal_adv_cfNH3",
+        "igcc",
+        "igcc_ccs",
+        "gas_cc",
+        "gas_cc_ccs",
+        "gas_ct",
+        "gas_ppl",
+        "h2_ct",
+        "solar_res1",
+        "wind_res1",
+        # Steel
+        "bf_steel",
+        "bf_ccs_steel",
+        "bf_biomass_steel",
+        "dri_coal_steel",
+        "dri_gas_steel",
+        "dri_h2_steel",
+        # Hydrogen
+        "h2_smr",
+        "h2_smr_ccs",
+        "h2_coal",
+        "h2_coal_ccs",
+        "h2_bio",
+        "h2_bio_ccs",
+        "h2_elec_alk",
+        "h2_elec_pem",
+        "h2_elec_soe",
+        "h2_pyro_elec",
+        "catalytic_reforming_ref",
+        "h2_co_gas",
+        # Methanol
+        "meth_ng",
+        "meth_ng_ccs",
+        "meth_coal",
+        "meth_coal_ccs",
+        "meth_bio",
+        "meth_bio_ccs",
+        "meth_h2",
+        # Ammonia
+        "gas_NH3",
+        "gas_NH3_ccs",
+        "coal_NH3",
+        "coal_NH3_ccs",
+        "biomass_NH3",
+        "biomass_NH3_ccs",
+        "electr_NH3",
+        "fueloil_NH3",
+        "fueloil_NH3_ccs",
+    }
+)
 
 
-def _long_to_wide(df: pd.DataFrame) -> pd.DataFrame:
+def _long_to_wide(
+    df: pd.DataFrame, *, id_columns: list[str] | None = None
+) -> pd.DataFrame:
     """Pivot long ``year`` / ``value`` rows to one column per year."""
+    ids = id_columns or _ID_COLUMNS
     if df.empty:
-        return pd.DataFrame(columns=_ID_COLUMNS)
+        return pd.DataFrame(columns=ids)
 
     wide = df.pivot_table(
-        index=_ID_COLUMNS,
+        index=ids,
         columns="year",
         values="value",
         aggfunc="sum",
@@ -145,6 +233,76 @@ def genno_generic(
         return pd.DataFrame(columns=_ID_COLUMNS)
 
     return pd.concat(dfs, ignore_index=True)
+
+
+def append_inv_cost_parameter(
+    df: pd.DataFrame,
+    scenario: "message_ix.Scenario",
+    *,
+    model_name: str | None = None,
+    scenario_name: str | None = None,
+    technologies: frozenset[str] = _INV_COST_TECHS,
+) -> pd.DataFrame:
+    """Append ``inv_cost|{technology}`` from ``scenario.par("inv_cost")``.
+
+    MESSAGE ``inv_cost`` is indexed by ``node_loc``, ``technology``, ``year_vtg``
+    only — there is **no mode**. Years are vintage years. 
+    """
+    model = model_name or scenario.model
+    scen = scenario_name or scenario.scenario
+    if not df.empty:
+        model = model_name or str(df["model"].iloc[0])
+        scen = scenario_name or str(df["scenario"].iloc[0])
+
+    techs = sorted(technologies)
+    par = scenario.par("inv_cost", filters={"technology": techs})
+    if par.empty:
+        log.info("No inv_cost rows for the selected tech pool; skip")
+        return df
+
+    present = set(par["technology"].astype(str))
+    missing = sorted(set(techs) - present)
+    if missing:
+        log.info("inv_cost missing for %d tech(s): %s", len(missing), missing)
+
+    units = sorted({str(u) for u in par["unit"].unique()})
+    log.info("inv_cost native unit(s) in selection: %s", units)
+
+    long = par.rename(columns={"node_loc": "region", "year_vtg": "year"}).copy()
+    long["year"] = long["year"].astype(int)
+    long["value"] = pd.to_numeric(long["value"], errors="coerce")
+    long = long.dropna(subset=["value"])
+    long = long[long["value"].abs() > 0]
+    if long.empty:
+        return df
+
+    long["variable"] = "inv_cost|" + long["technology"].astype(str)
+    long["unit"] = long["unit"].astype(str)
+    long = long.assign(model=model, scenario=scen)
+    wide = _long_to_wide(
+        long[_ID_COLUMNS_WITH_UNIT + ["year", "value"]],
+        id_columns=_ID_COLUMNS_WITH_UNIT,
+    )
+    inv_year_cols = [c for c in wide.columns if c not in _ID_COLUMNS_WITH_UNIT]
+    if inv_year_cols:
+        vals = wide[inv_year_cols].apply(pd.to_numeric, errors="coerce")
+        # Drop rows with no non-empty year values (all NaN / zero).
+        wide = wide.loc[vals.fillna(0).abs().gt(0).any(axis=1)].copy()
+    if wide.empty:
+        log.info("All inv_cost rows empty after year filter; skip")
+        return df
+    log.info("Appended %d inv_cost row(s) from scenario.par('inv_cost')", len(wide))
+    if df.empty:
+        return wide
+    if "unit" not in df.columns:
+        df = df.assign(unit=pd.NA)
+    # Keep id columns (with unit) before year columns.
+    year_cols = [
+        c
+        for c in dict.fromkeys([*df.columns, *wide.columns])
+        if c not in _ID_COLUMNS_WITH_UNIT
+    ]
+    return pd.concat([df, wide], ignore_index=True)[_ID_COLUMNS_WITH_UNIT + year_cols]
 
 
 # Captive H2 on a mass basis (Mt H2). meth_h2 omitted (merchant H2).
