@@ -1398,7 +1398,10 @@ def _retr_cpf_data(ds, ix, param, tec, formatting="standard"):
 
     filter = {"technology": tec}
     # checks if technology exists, if not then a proxy df is made.
-    if tec not in all_tecs.values:
+    # `tec` may be a str or a list. Compare as Python sets: `[tec] in array` relied on
+    # numpy broadcasting and raises ArrowInvalid on pyarrow-backed string arrays.
+    tecs = [tec] if isinstance(tec, str) else list(tec)
+    if not set(tecs) & set(all_tecs):
         if verbose:
             print((inspect.stack()[0][3], ": technology", tec, "not included in model"))
         if ix and formatting != "reporting":

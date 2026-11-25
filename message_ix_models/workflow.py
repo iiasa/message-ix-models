@@ -117,7 +117,12 @@ class WorkflowStep:
             target_name = self.platform_info.get("name")
             if target_name and target_name != s.platform.name:
                 log.info(f"  onto platform {target_name!r}")
-                clone_kw.setdefault("platform", Platform(**self.platform_info))
+                # Keep a strong reference: Scenario.platform is only a weakref proxy,
+                # so a Platform referenced nowhere else is garbage-collected once this
+                # step returns, and the next step fails with "weakly-referenced object
+                # no longer exists".
+                self._target_platform = Platform(**self.platform_info)
+                clone_kw.setdefault("platform", self._target_platform)
             s = s.clone(**clone_kw)
 
         if not self.action:
