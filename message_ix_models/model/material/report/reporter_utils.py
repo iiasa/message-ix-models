@@ -8,6 +8,22 @@ def _safe_div(num, denom):
     return result.where(np.isfinite(result), 0).fillna(0)
 
 
+#: Methanol flow below which an input is solver noise, in the model's energy units (GWa; ~3 TJ/yr).
+METHANOL_NOISE = 1e-4
+
+
+def _methanol_final_share(num, denom):
+    """Share of final methanol from one origin: 0 where the final input is solver noise, within [0, 1].
+
+    Where every final consumer of fuel methanol is at solver noise (R12_CHN 2070 in an SSP1 run: meth_t_d 0,
+    the cement and HVC furnaces -1e-6 and +1e-6 GWa), the plain ratio is huge and split_fe_other turns it into
+    equal and opposite bio-methanol final energy in two sectors.
+    """
+    real = denom.where(denom >= METHANOL_NOISE, np.inf)  # num / inf is 0
+    result = num / real
+    return result.where(np.isfinite(result), 0).fillna(0).clip(0.0, 1.0)
+
+
 comm_tec_map = {
     "coal": ["meth_coal", "meth_coal_ccs"],
     "gas": ["meth_ng", "meth_ng_ccs"],
@@ -190,7 +206,7 @@ def add_biometh_final_share(rep: message_ix.Reporter, mode: str = "feedstock"):
         )
         rep.add(
             f"share::{comm}methanol-final",
-            _safe_div,
+            _methanol_final_share,
             f"out::{comm}methanol-final",
             "in::methanol-final",
         )
